@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+python3 agdatex.py -v -f -e agda-generated.tex -r ../../agda ../../agda/Examples/*.agda ../../agda/Agdasubst/*.agda ../../agda/Agdasubst/Examples/*.agda

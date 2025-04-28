@@ -1,0 +1,116 @@
+\documentclass[screen,nonacm]{acmart}
+\usepackage[capitalize,noabbrev]{cleveref}
+\usepackage{agda}
+
+\input{agda-generated}
+\input{agdamacros}
+\input{unicodeletters}
+
+\begin{document}
+
+\title{Every Way to \AgdaPragma{REWRITE} the $\sigma$-Calculus in Agda}
+
+\author{Marius Weidner}
+\email{weidner@cs.uni-freiburg.de}
+\affiliation{%
+  \institution{University of Freiburg}
+  \country{Germany}}
+\orcid{0009-0008-1152-165X} % chktex 8
+\authornote{
+  I hereby declare that I am the sole author and composer of my thesis and that
+  no other sources or learning aids, other than those listed, have been used.
+  Furthermore, I declare that I have acknowledged the work of others by providing
+  detailed references of said work. \\
+  I hereby also declare that my Thesis has not been prepared for another
+  examination or assignment, either wholly or excerpts thereof.
+  \\
+  \\
+  \begin{tabular}{p{\textwidth/2} l}
+    Freiburg, XX.XX.2025       & yadda yadda                \\ % \includegraphics[width=0.1\textwidth]{signature.png} \\
+    \rule{\textwidth/3}{0.4pt} & \rule{\textwidth/3}{0.4pt} \\
+    Place, Date                & Signature
+  \end{tabular}
+}
+
+\begin{abstract}
+  yadda yadda
+\end{abstract}
+
+% \keywords{Agda, Dependent types, rewrite systems, explicit substiutions, sigma calculus, meta theory}
+
+\maketitle
+
+\section{Introduction}\label{sec:introduction}
+
+% - generic handling of substitutions is an well known ongoing research problem.
+% - 
+
+\subsection*{Contributions}
+
+\begin{itemize}
+  \item \cref{sec:multi} introduces the core idea of embedding an extension of the sigma
+        calculus into Agda using rewrite rules on the example of System F TBD
+  \item \cref{sec:agdasubst} explains how to derive the rewrite rules for multi-sorted
+        syntax automatically via abstractions for multi-sorted substitutions~\cite{saffrich:LIPIcs.ITP.2024.32}.
+  \item In \cref{sec:intrinsic}, we investigate System F in the intrinsically typed
+        setting. We observe that reasoning about substitutions at deeper levels of the
+        hierarchy substantially simplifies, but also requires an intuitive
+        extension of the rule set.
+\end{itemize}
+
+\textbf{The supplement contains the complete Agda code underlying this paper.}
+
+\section{Preliminaries}\label{sec:preliminaries}
+
+\begin{itemize}
+  \item Some basics of Agda and its rewrite mechanism, which enables the embedding of
+        custom $\beta$-reduction rules.
+  \item Explicit substitutions, in particular the $\sigma$-calculus, a terminating and
+        confluent rewrite system for terms with substitutions. We consider an
+        incomplete extension with first-class renamings, better suited for use in
+        theorem provers.
+  \item Multi-Sorted syntax as a way of only have to define renaming and substitutions
+        once for every sort
+\end{itemize}
+
+\subsection{Agda and Its Ability to \AgdaPragma{REWRITE}}
+
+\subsection{Explicit Substiutions and the $\sigma$-Calculus}
+
+\subsection{The Advantage of Mutli-Sorted Syntax}
+
+\section{Reasoning with Mutli-Sorted Substiutions}\label{sec:multi}
+
+\subsection{Discussion}\label{sec:discussion-1}
+
+\section{Agdasubst: Reasoning and Abstraction over Mutli-Sorted Substiutions}\label{sec:agdasubst}
+
+\subsection{Limitations}\label{sec:limitations}
+
+\subsection{Discussion}\label{sec:discussion-2}
+
+\section{The Intriguing Case of Intrinsically \emph{Typed} Syntax}\label{sec:intrinsic}
+
+\subsection{Soundness of the Big Step Semantics with Respect to Native Agda Semantics}\label{sec:soundness}
+
+\subsection{Discussion}\label{sec:discussion-3}
+
+\section{Related Work}\label{sec:related-work}
+
+\subsection{Autosubst}\label{sec:autosubst}
+
+\citet{10.1145/3293880.3294101}
+
+\subsection{Other Framkeworks}\label{sec:related-frameworks}
+
+\section{Conclusions}\label{sec:conclusions}
+
+\begin{acks}
+  Thank you, Peter, Hannes, and Janek, for listening to me ramble about this for a few weeks at our weekly Agda meeting.
+\end{acks}
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+
+\end{document}
+\endinput

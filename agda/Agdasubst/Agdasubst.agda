@@ -79,10 +79,10 @@ module WithSort (Sort : SortTy → Set) where
   ⋆wk : Tm d S s → Tm d (s' ∷ S) s
   ⋆wk T = T ⋆⋯ᵣ wkᵣ
 
-  opaque
-    unfolding _→ᵣ_ _⍟ᵣ_ idᵣ wkᵣ _∷ᵣ_ _⨟ᵣᵣ_
-    _→ₛ_ : List (Sort Var) → List (Sort Var) → Set
-    S₁ →ₛ S₂ = ∀ s → s ∈ S₁ → ScopedT S₂ s
+  --opaque
+  --  unfolding _→ᵣ_ _⍟ᵣ_ idᵣ wkᵣ _∷ᵣ_ _⨟ᵣᵣ_
+  --  _→ₛ_ : List (Sort Var) → List (Sort Var) → Set
+  --  S₁ →ₛ S₂ = ∀ s → s ∈ S₁ → Tm d S₂ s
 
   postulate
     ⋆⋯idᵣ′ : (T : Tm d S s) → T ⋆⋯ᵣ idᵣ ≡ T 
@@ -102,14 +102,14 @@ module WithSort (Sort : SortTy → Set) where
       (_⊢_ : ScopedT) 
       (iso : Tm d ≃ _⊢_) 
       (_⋯ᵣ_ : S₁ ⊢ s → S₁ →ᵣ S₂ → S₂ ⊢ s)
-      (_⋯ₛ_ : S₁ ⊢ s → S₁ →ₛ S₂ → S₂ ⊢ s)
+      -- (_⋯ₛ_ : S₁ ⊢ s → S₁ →ₛ S₂ → S₂ ⊢ s)
       where
     
 
       postulate 
-        ⋯idᵣ : (T : S ⊢ s) → T ⋯ᵣ idᵣ ≡ T 
+        ⋯idᵣ : (T : S ⊢ s) → {! T  !} ⋯ᵣ idᵣ ≡ {!   !} 
       
-      {-# REWRITE ⋯idᵣ #-}
+      --{-# REWRITE ⋯idᵣ #-}
   
 
 

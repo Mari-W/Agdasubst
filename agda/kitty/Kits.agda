@@ -28,7 +28,7 @@ record Syntax : Set₁ where
     st                         : SortTy
     s s₁ s₂ s₃ s' s₁' s₂' s₃'  : Sort st
     S S₁ S₂ S₃ S' S₁' S₂' S₃'  : List (Sort Var)
-    x x' y z x₁ x₂                : S ∋ s
+    x x₁ x₂ x₃ x' x₁' x₂' x₃'  : S ∋ s
 
   Scoped = List (Sort Var) → Sort Var → Set
 
@@ -82,7 +82,6 @@ record Syntax : Set₁ where
     _~_ : (ϕ₁ ϕ₂ : S₁ →ₖ S₂) → Set
     _~_ {S₁} ϕ₁ ϕ₂ = ∀ s (x : S₁ ∋ s) → x & ϕ₁ ≡ x & ϕ₂ 
 
-    -- Not necessary in the full framework.
     postulate
       ~-ext : ∀ {ϕ₁ ϕ₂ : S₁ →ₖ S₂} → ϕ₁ ~ ϕ₂ → ϕ₁ ≡ ϕ₂
 
@@ -380,172 +379,172 @@ record Syntax : Set₁ where
             -- wkᵣ-def            : (x : S ∋ s) → (wkm {s = s'}) ⍟ᵣ x ≡ there x
 
 
-      record Types : Set₁ where
-        field
-          ↑ᵗ : ∀ {st} → Sort st → ∃[ st' ] Sort st'
-
-        _∶⊢_ : ∀ {t} → List (Sort Var) → Sort t → Set
-        S ∶⊢ s = S ⊢ proj₂ (↑ᵗ s)
-
-        depth : ∀ {ℓ} {A : Set ℓ} {x : A} {xs : List A} → xs ∋ x → ℕ
-        depth zero     = zero
-        depth (suc x)  = suc (depth x)
-
-        -- We need to drop one extra using `suc`, because otherwise the types in a
-        -- context are allowed to use themselves.
-        drop-∈ :  ∀ {ℓ} {A : Set ℓ} {x : A} {xs : List A} →
-                  xs ∋ x → List A → List A
-        drop-∈ e xs = drop (suc (depth e)) xs
-
-        Ctx : List (Sort Var) → Set
-        Ctx S = ∀ s → (x : S ∋ s) → drop-∈ x S ∶⊢ s
-
-        []ₜ : Ctx []
-        []ₜ _ ()
-
-        _∷ₜ_ : S ∶⊢ s → Ctx S → Ctx (s ∷ S)
-        (t ∷ₜ Γ) _ zero     = t
-        (t ∷ₜ Γ) _ (suc x)  = Γ _ x
-
-        wk-drop-∈ : (x : S ∋ s) → drop-∈ x S ⊢ s' → S ⊢ s'
-        wk-drop-∈ zero     t = t ⋯ weakenᵣ _
-        wk-drop-∈ (suc x)  t = wk-drop-∈ x t ⋯ weakenᵣ _
-
-        wk-telescope : Ctx S → S ∋ s → S ∶⊢ s
-        wk-telescope Γ x = wk-drop-∈ x (Γ _ x)
-
-        infix   4  _∋_∶_
-        _∋_∶_ : Ctx S → S ∋ s → S ∶⊢ s → Set
-        Γ ∋ x ∶ t = wk-telescope Γ x ≡ t
-
-        record Typing : Set₁ where
-          infix   4  _⊢_∶_
-          field
-            _⊢_∶_ : ∀ {s : Sort st} → Ctx S → S ⊢ s → S ∶⊢ s → Set
-
-            ⊢` : ∀ {Γ : Ctx S} {x : S ∋ s} {t} →
-                Γ ∋ x ∶ t → Γ ⊢ ` x ∶ t
-
-          record TypingKit (K : Kit _∋/⊢_) : Set₁ where
-            private instance _ = K
-            infix   4  _∋/⊢_∶_  _∋*/⊢*_∶_
-            infixl  6  _∋↑/⊢↑_
-            field
-              _∋/⊢_∶_      : Ctx S → S ∋/⊢ s → S ∶⊢ s → Set
-              id/⊢`        : ∀ {t : S ∶⊢ s} {Γ : Ctx S} →
-                             Γ ∋ x ∶ t → Γ ∋/⊢ id/` x ∶ t
-              ⊢`/id        : ∀ {e : S ∋/⊢ s} {t : S ∶⊢ s} {Γ : Ctx S} →
-                             Γ ∋/⊢ e ∶ t → Γ ⊢ `/id e ∶ t
-              ∋wk/⊢wk      : ∀ (Γ : Ctx S) (t' : S ∶⊢ s) (e : S ∋/⊢ s')
-                               (t : S ∶⊢ s') →
-                             Γ ∋/⊢ e ∶ t →
-                             (t' ∷ₜ Γ) ∋/⊢ wk _ e ∶ (t ⋯ weakenᵣ _)
-            opaque
-              unfolding
-                _→ₖ_ _&_ wkm _∷ₖ_ _↑_ _↑*_ id ⦅_⦆ weaken id↑~id id↑*~id Kᵣ Kₛ Wᵣ Wₛ _·ₖ_ &/⋯-& dist-↑-· dist-↑*-· ↑-wk ⋯-↑-wk Cₛ Cₛ wk-cancels-⦅⦆-⋯ dist-↑-⦅⦆ dist-↑-⦅⦆-⋯
-              _∋*/⊢*_∶_ : Ctx S₂ → S₁ –[ K ]→ S₂ → Ctx S₁ → Set
-              _∋*/⊢*_∶_ {S₂} {S₁} Γ₂ ϕ Γ₁ =
-                ∀ {s₁} (x : S₁ ∋ s₁) (t : S₁ ∶⊢ s₁) →
-                Γ₁ ∋ x ∶ t →
-                Γ₂ ∋/⊢ (x & ϕ) ∶ (t ⋯ ϕ)
-  
-              _∋↑/⊢↑_ :
-                ⦃ W : WkKit K ⦄ ⦃ C₁ : ComposeKit K Kᵣ K ⦄
-                {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} {ϕ : S₁ –[ K ]→ S₂} →
-                Γ₂             ∋*/⊢* ϕ       ∶ Γ₁ →
-                (t : S₁ ∶⊢ s) →
-                ((t ⋯ ϕ) ∷ₜ Γ₂) ∋*/⊢* (ϕ ↑ s) ∶ (t ∷ₜ Γ₁)
-              _∋↑/⊢↑_ {S₁} {S₂} {s} {Γ₁} {Γ₂} {ϕ} ⊢ϕ t {sx} x@zero _ refl =
-                subst (  ((t ⋯ ϕ) ∷ₜ Γ₂) ∋/⊢ (zero & (ϕ ↑ s)) ∶_ )
-                      (  t ⋯ ϕ ⋯ weakenᵣ s                      ≡⟨ ⋯-↑-wk t ϕ s ⟩
-                         t ⋯ weakenᵣ s ⋯ (ϕ ↑ s)                ≡⟨⟩
-                         wk-telescope (t ∷ₜ Γ₁) zero ⋯ (ϕ ↑ s)  ∎ )
-                      (  id/⊢` {x = zero} {Γ = (t ⋯ ϕ) ∷ₜ Γ₂} refl )
-              _∋↑/⊢↑_ {S₁} {S₂} {s} {Γ₁} {Γ₂} {ϕ} ⊢ϕ t {sx} x@(suc y) _ refl =
-                subst (((t ⋯ ϕ) ∷ₜ Γ₂) ∋/⊢ (suc y & (ϕ ↑ s)) ∶_)
-                      (wk-telescope Γ₁ y ⋯ ϕ ⋯ weakenᵣ s         ≡⟨ ⋯-↑-wk _ ϕ s ⟩
-                       wk-telescope Γ₁ y ⋯ weakenᵣ s ⋯ (ϕ ↑ s)   ≡⟨⟩
-                       wk-telescope (t ∷ₜ Γ₁) (suc y) ⋯ (ϕ ↑ s)  ∎)
-                      (∋wk/⊢wk _ _ _ _ (⊢ϕ y _ refl))
-  
-              ⊢⦅_⦆ : ∀ {s S} {Γ : Ctx S} {t : S ∋/⊢ s} {T : S ∶⊢ s}
-                → Γ ∋/⊢ t ∶ T 
-                → Γ ∋*/⊢* ⦅ t ⦆ ∶ (T ∷ₜ Γ)
-              ⊢⦅_⦆ {s} {S} {Γ} {t} {T} ⊢x/t x@zero _ refl =
-                subst (Γ ∋/⊢ t ∶_)
-                      (T                                   ≡⟨ sym (wk-cancels-⦅⦆-⋯ T t) ⟩
-                       T ⋯ weakenᵣ _ ⋯ ⦅ t ⦆               ≡⟨⟩
-                       wk-telescope (T ∷ₜ Γ) zero ⋯ ⦅ t ⦆  ∎)
-                      ⊢x/t
-              ⊢⦅_⦆ {s} {S} {Γ} {t} {T} ⊢x/t x@(suc y) _ refl =
-                subst (Γ ∋/⊢ id/` y ∶_)
-                      (wk-telescope Γ y                       ≡⟨ sym (wk-cancels-⦅⦆-⋯ _ t) ⟩
-                       wk-telescope Γ y ⋯ weakenᵣ _ ⋯ ⦅ t ⦆   ≡⟨⟩
-                       wk-telescope (T ∷ₜ Γ) (suc y) ⋯ ⦅ t ⦆  ∎)
-                      (id/⊢` refl)
-
-          open TypingKit ⦃ … ⦄ public
-
-          infixl  5  _∋*/⊢*[_]_∶_
-          _∋*/⊢*[_]_∶_ :
-            ∀ {K : Kit _∋/⊢_} {S₁ S₂}
-            → Ctx S₂ → TypingKit K → S₁ –[ K ]→ S₂ → Ctx S₁ → Set
-          Γ₂ ∋*/⊢*[ TK ] ϕ ∶ Γ₁ = Γ₂ ∋*/⊢* ϕ ∶ Γ₁ where instance _ = TK
-
-          record TypingTraversal : Set₁ where
-            field
-              _⊢⋯_ :
-                ∀  ⦃ K : Kit _∋/⊢_ ⦄ ⦃ W : WkKit K ⦄ ⦃ TK : TypingKit K ⦄
-                   ⦃ C₁ : ComposeKit K Kᵣ K ⦄
-                   ⦃ C₂ : ComposeKit K K K ⦄
-                   ⦃ C₃ : ComposeKit K Kₛ Kₛ ⦄
-                   {S₁ S₂ st} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} {s : Sort st}
-                   {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} {ϕ : S₁ –[ K ]→ S₂} →
-                Γ₁ ⊢ e ∶ t →
-                Γ₂ ∋*/⊢*[ TK ] ϕ ∶ Γ₁ →
-                Γ₂ ⊢ e ⋯ ϕ ∶ t ⋯ ϕ
-
-            infixl  5  _⊢⋯_  _⊢⋯ᵣ_  _⊢⋯ₛ_
-
-            opaque
-              unfolding
-                _→ₖ_ _&_ wkm _∷ₖ_ _↑_ _↑*_ id ⦅_⦆ weaken id↑~id id↑*~id Kᵣ Kₛ Wᵣ Wₛ _·ₖ_ &/⋯-& dist-↑-· dist-↑*-· ↑-wk ⋯-↑-wk Cₛ Cₛ wk-cancels-⦅⦆-⋯ dist-↑-⦅⦆ dist-↑-⦅⦆-⋯ _∋*/⊢*_∶_ _∋↑/⊢↑_  ⊢⦅_⦆
-
-              instance
-                TKᵣ : TypingKit Kᵣ
-                TKᵣ = record
-                  { _∋/⊢_∶_     = _∋_∶_
-                  ; id/⊢`       = λ ⊢x → ⊢x
-                  ; ⊢`/id       = ⊢`
-                  ; ∋wk/⊢wk     = λ { Γ t' x t refl → refl } }
-
-                TKₛ : TypingKit Kₛ
-                TKₛ = record
-                  { _∋/⊢_∶_     = _⊢_∶_
-                  ; id/⊢`       = ⊢`
-                  ; ⊢`/id       = λ ⊢x → ⊢x
-                  ; ∋wk/⊢wk     = λ Γ t' e t ⊢e → ⊢e ⊢⋯ ∋wk/⊢wk Γ t' }
-
-            open TypingKit TKᵣ public using () renaming
-              (∋wk/⊢wk to ⊢wk; _∋*/⊢*_∶_ to _∋*_∶_; ⊢⦅_⦆ to ⊢⦅_⦆ᵣ)
-            open TypingKit TKₛ public using () renaming
-              (∋wk/⊢wk to ∋wk; _∋*/⊢*_∶_ to _⊢*_∶_; ⊢⦅_⦆ to ⊢⦅_⦆ₛ)
-
-            -- Renaming preserves typing
-
-            _⊢⋯ᵣ_ : ∀ {S₁ S₂ st} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} {s : Sort st}
-                      {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} {ρ : S₁ →ᵣ S₂} →
-                    Γ₁ ⊢ e ∶ t →
-                    Γ₂ ∋* ρ ∶ Γ₁ →
-                    Γ₂ ⊢ e ⋯ ρ ∶ t ⋯ ρ
-            _⊢⋯ᵣ_ = _⊢⋯_
-
-            -- Substitution preserves typing
-
-            _⊢⋯ₛ_ : ∀ {S₁ S₂ st} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} {s : Sort st}
-                      {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} {σ : S₁ →ₛ S₂} →
-                    Γ₁ ⊢ e ∶ t →
-                    Γ₂ ⊢* σ ∶ Γ₁ →
-                    Γ₂ ⊢ e ⋯ σ ∶ t ⋯ σ
-            _⊢⋯ₛ_ = _⊢⋯_
+      -- record Types : Set₁ where
+      --   field
+      --     ↑ᵗ : ∀ {st} → Sort st → ∃[ st' ] Sort st'
+-- 
+      --   _∶⊢_ : ∀ {t} → List (Sort Var) → Sort t → Set
+      --   S ∶⊢ s = S ⊢ proj₂ (↑ᵗ s)
+-- 
+      --   depth : ∀ {ℓ} {A : Set ℓ} {x : A} {xs : List A} → xs ∋ x → ℕ
+      --   depth zero     = zero
+      --   depth (suc x)  = suc (depth x)
+-- 
+      --   -- We need to drop one extra using `suc`, because otherwise the types in a
+      --   -- context are allowed to use themselves.
+      --   drop-∈ :  ∀ {ℓ} {A : Set ℓ} {x : A} {xs : List A} →
+      --             xs ∋ x → List A → List A
+      --   drop-∈ e xs = drop (suc (depth e)) xs
+-- 
+      --   Ctx : List (Sort Var) → Set
+      --   Ctx S = ∀ s → (x : S ∋ s) → drop-∈ x S ∶⊢ s
+-- 
+      --   []ₜ : Ctx []
+      --   []ₜ _ ()
+-- 
+      --   _∷ₜ_ : S ∶⊢ s → Ctx S → Ctx (s ∷ S)
+      --   (t ∷ₜ Γ) _ zero     = t
+      --   (t ∷ₜ Γ) _ (suc x)  = Γ _ x
+-- 
+      --   wk-drop-∈ : (x : S ∋ s) → drop-∈ x S ⊢ s' → S ⊢ s'
+      --   wk-drop-∈ zero     t = t ⋯ weakenᵣ _
+      --   wk-drop-∈ (suc x)  t = wk-drop-∈ x t ⋯ weakenᵣ _
+-- 
+      --   wk-telescope : Ctx S → S ∋ s → S ∶⊢ s
+      --   wk-telescope Γ x = wk-drop-∈ x (Γ _ x)
+-- 
+      --   infix   4  _∋_∶_
+      --   _∋_∶_ : Ctx S → S ∋ s → S ∶⊢ s → Set
+      --   Γ ∋ x ∶ t = wk-telescope Γ x ≡ t
+-- 
+      --   record Typing : Set₁ where
+      --     infix   4  _⊢_∶_
+      --     field
+      --       _⊢_∶_ : ∀ {s : Sort st} → Ctx S → S ⊢ s → S ∶⊢ s → Set
+-- 
+      --       ⊢` : ∀ {Γ : Ctx S} {x : S ∋ s} {t} →
+      --           Γ ∋ x ∶ t → Γ ⊢ ` x ∶ t
+-- 
+      --     record TypingKit (K : Kit _∋/⊢_) : Set₁ where
+      --       private instance _ = K
+      --       infix   4  _∋/⊢_∶_  _∋*/⊢*_∶_
+      --       infixl  6  _∋↑/⊢↑_
+      --       field
+      --         _∋/⊢_∶_      : Ctx S → S ∋/⊢ s → S ∶⊢ s → Set
+      --         id/⊢`        : ∀ {t : S ∶⊢ s} {Γ : Ctx S} →
+      --                        Γ ∋ x ∶ t → Γ ∋/⊢ id/` x ∶ t
+      --         ⊢`/id        : ∀ {e : S ∋/⊢ s} {t : S ∶⊢ s} {Γ : Ctx S} →
+      --                        Γ ∋/⊢ e ∶ t → Γ ⊢ `/id e ∶ t
+      --         ∋wk/⊢wk      : ∀ (Γ : Ctx S) (t' : S ∶⊢ s) (e : S ∋/⊢ s')
+      --                          (t : S ∶⊢ s') →
+      --                        Γ ∋/⊢ e ∶ t →
+      --                        (t' ∷ₜ Γ) ∋/⊢ wk _ e ∶ (t ⋯ weakenᵣ _)
+      --       opaque
+      --         unfolding
+      --           _→ₖ_ _&_ wkm _∷ₖ_ _↑_ _↑*_ id ⦅_⦆ weaken id↑~id id↑*~id Kᵣ Kₛ Wᵣ Wₛ _·ₖ_ &/⋯-& dist-↑-· dist-↑*-· ↑-wk ⋯-↑-wk Cₛ Cₛ wk-cancels-⦅⦆-⋯ dist-↑-⦅⦆ dist-↑-⦅⦆-⋯
+      --         _∋*/⊢*_∶_ : Ctx S₂ → S₁ –[ K ]→ S₂ → Ctx S₁ → Set
+      --         _∋*/⊢*_∶_ {S₂} {S₁} Γ₂ ϕ Γ₁ =
+      --           ∀ {s₁} (x : S₁ ∋ s₁) (t : S₁ ∶⊢ s₁) →
+      --           Γ₁ ∋ x ∶ t →
+      --           Γ₂ ∋/⊢ (x & ϕ) ∶ (t ⋯ ϕ)
+  -- 
+      --         _∋↑/⊢↑_ :
+      --           ⦃ W : WkKit K ⦄ ⦃ C₁ : ComposeKit K Kᵣ K ⦄
+      --           {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} {ϕ : S₁ –[ K ]→ S₂} →
+      --           Γ₂             ∋*/⊢* ϕ       ∶ Γ₁ →
+      --           (t : S₁ ∶⊢ s) →
+      --           ((t ⋯ ϕ) ∷ₜ Γ₂) ∋*/⊢* (ϕ ↑ s) ∶ (t ∷ₜ Γ₁)
+      --         _∋↑/⊢↑_ {S₁} {S₂} {s} {Γ₁} {Γ₂} {ϕ} ⊢ϕ t {sx} x@zero _ refl =
+      --           subst (  ((t ⋯ ϕ) ∷ₜ Γ₂) ∋/⊢ (zero & (ϕ ↑ s)) ∶_ )
+      --                 (  t ⋯ ϕ ⋯ weakenᵣ s                      ≡⟨ ⋯-↑-wk t ϕ s ⟩
+      --                    t ⋯ weakenᵣ s ⋯ (ϕ ↑ s)                ≡⟨⟩
+      --                    wk-telescope (t ∷ₜ Γ₁) zero ⋯ (ϕ ↑ s)  ∎ )
+      --                 (  id/⊢` {x = zero} {Γ = (t ⋯ ϕ) ∷ₜ Γ₂} refl )
+      --         _∋↑/⊢↑_ {S₁} {S₂} {s} {Γ₁} {Γ₂} {ϕ} ⊢ϕ t {sx} x@(suc y) _ refl =
+      --           subst (((t ⋯ ϕ) ∷ₜ Γ₂) ∋/⊢ (suc y & (ϕ ↑ s)) ∶_)
+      --                 (wk-telescope Γ₁ y ⋯ ϕ ⋯ weakenᵣ s         ≡⟨ ⋯-↑-wk _ ϕ s ⟩
+      --                  wk-telescope Γ₁ y ⋯ weakenᵣ s ⋯ (ϕ ↑ s)   ≡⟨⟩
+      --                  wk-telescope (t ∷ₜ Γ₁) (suc y) ⋯ (ϕ ↑ s)  ∎)
+      --                 (∋wk/⊢wk _ _ _ _ (⊢ϕ y _ refl))
+  -- 
+      --         ⊢⦅_⦆ : ∀ {s S} {Γ : Ctx S} {t : S ∋/⊢ s} {T : S ∶⊢ s}
+      --           → Γ ∋/⊢ t ∶ T 
+      --           → Γ ∋*/⊢* ⦅ t ⦆ ∶ (T ∷ₜ Γ)
+      --         ⊢⦅_⦆ {s} {S} {Γ} {t} {T} ⊢x/t x@zero _ refl =
+      --           subst (Γ ∋/⊢ t ∶_)
+      --                 (T                                   ≡⟨ sym (wk-cancels-⦅⦆-⋯ T t) ⟩
+      --                  T ⋯ weakenᵣ _ ⋯ ⦅ t ⦆               ≡⟨⟩
+      --                  wk-telescope (T ∷ₜ Γ) zero ⋯ ⦅ t ⦆  ∎)
+      --                 ⊢x/t
+      --         ⊢⦅_⦆ {s} {S} {Γ} {t} {T} ⊢x/t x@(suc y) _ refl =
+      --           subst (Γ ∋/⊢ id/` y ∶_)
+      --                 (wk-telescope Γ y                       ≡⟨ sym (wk-cancels-⦅⦆-⋯ _ t) ⟩
+      --                  wk-telescope Γ y ⋯ weakenᵣ _ ⋯ ⦅ t ⦆   ≡⟨⟩
+      --                  wk-telescope (T ∷ₜ Γ) (suc y) ⋯ ⦅ t ⦆  ∎)
+      --                 (id/⊢` refl)
+-- 
+      --     open TypingKit ⦃ … ⦄ public
+-- 
+      --     infixl  5  _∋*/⊢*[_]_∶_
+      --     _∋*/⊢*[_]_∶_ :
+      --       ∀ {K : Kit _∋/⊢_} {S₁ S₂}
+      --       → Ctx S₂ → TypingKit K → S₁ –[ K ]→ S₂ → Ctx S₁ → Set
+      --     Γ₂ ∋*/⊢*[ TK ] ϕ ∶ Γ₁ = Γ₂ ∋*/⊢* ϕ ∶ Γ₁ where instance _ = TK
+-- 
+      --     record TypingTraversal : Set₁ where
+      --       field
+      --         _⊢⋯_ :
+      --           ∀  ⦃ K : Kit _∋/⊢_ ⦄ ⦃ W : WkKit K ⦄ ⦃ TK : TypingKit K ⦄
+      --              ⦃ C₁ : ComposeKit K Kᵣ K ⦄
+      --              ⦃ C₂ : ComposeKit K K K ⦄
+      --              ⦃ C₃ : ComposeKit K Kₛ Kₛ ⦄
+      --              {S₁ S₂ st} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} {s : Sort st}
+      --              {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} {ϕ : S₁ –[ K ]→ S₂} →
+      --           Γ₁ ⊢ e ∶ t →
+      --           Γ₂ ∋*/⊢*[ TK ] ϕ ∶ Γ₁ →
+      --           Γ₂ ⊢ e ⋯ ϕ ∶ t ⋯ ϕ
+-- 
+      --       infixl  5  _⊢⋯_  _⊢⋯ᵣ_  _⊢⋯ₛ_
+-- 
+      --       opaque
+      --         unfolding
+      --           _→ₖ_ _&_ wkm _∷ₖ_ _↑_ _↑*_ id ⦅_⦆ weaken id↑~id id↑*~id Kᵣ Kₛ Wᵣ Wₛ _·ₖ_ &/⋯-& dist-↑-· dist-↑*-· ↑-wk ⋯-↑-wk Cₛ Cₛ wk-cancels-⦅⦆-⋯ dist-↑-⦅⦆ dist-↑-⦅⦆-⋯ _∋*/⊢*_∶_ _∋↑/⊢↑_  ⊢⦅_⦆
+-- 
+      --         instance
+      --           TKᵣ : TypingKit Kᵣ
+      --           TKᵣ = record
+      --             { _∋/⊢_∶_     = _∋_∶_
+      --             ; id/⊢`       = λ ⊢x → ⊢x
+      --             ; ⊢`/id       = ⊢`
+      --             ; ∋wk/⊢wk     = λ { Γ t' x t refl → refl } }
+-- 
+      --           TKₛ : TypingKit Kₛ
+      --           TKₛ = record
+      --             { _∋/⊢_∶_     = _⊢_∶_
+      --             ; id/⊢`       = ⊢`
+      --             ; ⊢`/id       = λ ⊢x → ⊢x
+      --             ; ∋wk/⊢wk     = λ Γ t' e t ⊢e → ⊢e ⊢⋯ ∋wk/⊢wk Γ t' }
+-- 
+      --       open TypingKit TKᵣ public using () renaming
+      --         (∋wk/⊢wk to ⊢wk; _∋*/⊢*_∶_ to _∋*_∶_; ⊢⦅_⦆ to ⊢⦅_⦆ᵣ)
+      --       open TypingKit TKₛ public using () renaming
+      --         (∋wk/⊢wk to ∋wk; _∋*/⊢*_∶_ to _⊢*_∶_; ⊢⦅_⦆ to ⊢⦅_⦆ₛ)
+-- 
+      --       -- Renaming preserves typing
+-- 
+      --       _⊢⋯ᵣ_ : ∀ {S₁ S₂ st} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} {s : Sort st}
+      --                 {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} {ρ : S₁ →ᵣ S₂} →
+      --               Γ₁ ⊢ e ∶ t →
+      --               Γ₂ ∋* ρ ∶ Γ₁ →
+      --               Γ₂ ⊢ e ⋯ ρ ∶ t ⋯ ρ
+      --       _⊢⋯ᵣ_ = _⊢⋯_
+-- 
+      --       -- Substitution preserves typing
+-- 
+      --       _⊢⋯ₛ_ : ∀ {S₁ S₂ st} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} {s : Sort st}
+      --                 {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} {σ : S₁ →ₛ S₂} →
+      --               Γ₁ ⊢ e ∶ t →
+      --               Γ₂ ⊢* σ ∶ Γ₁ →
+      --               Γ₂ ⊢ e ⋯ σ ∶ t ⋯ σ
+      --       _⊢⋯ₛ_ = _⊢⋯_
   

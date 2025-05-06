@@ -85,7 +85,7 @@ module WithSort (Sort : SortTy → Set) where
   --  S₁ →ₛ S₂ = ∀ s → s ∈ S₁ → Tm d S₂ s
 
   postulate
-    ⋆⋯idᵣ′ : (T : Tm d S s) → T ⋆⋯ᵣ idᵣ ≡ T 
+    ⋆⋯idᵣ′ : (T : Tm d S s) → T ⋯ id ≡ T 
 
   module WithDesc (d : Desc) where
 

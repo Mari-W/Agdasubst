@@ -79,15 +79,45 @@ module WithSort (Sort : SortTy → Set) where
   ⋆wk : Tm d S s → Tm d (s' ∷ S) s
   ⋆wk T = T ⋆⋯ᵣ wkᵣ
 
+<<<<<<< Updated upstream
   --opaque
   --  unfolding _→ᵣ_ _⍟ᵣ_ idᵣ wkᵣ _∷ᵣ_ _⨟ᵣᵣ_
   --  _→ₛ_ : List (Sort Var) → List (Sort Var) → Set
   --  S₁ →ₛ S₂ = ∀ s → s ∈ S₁ → Tm d S₂ s
+=======
+  module WithScoped (_⊢_ : ScopedT) where
+    opaque
+      unfolding _→ᵣ_ _⍟ᵣ_ idᵣ wkᵣ _∷ᵣ_ _⨟ᵣᵣ_
+      _→ₛ_ : List (Sort Var) → List (Sort Var) → Set
+      S₁ →ₛ S₂ = ∀ s → s ∈ S₁ → S₂ ⊢ s
+
+      -- _⍟ₛ_ : (σ : S₁ →ₛ S₂) → s ∈ S₁ → S₂ ⊢ s
+      -- σ ⍟ₛ x = σ _ x
+
+      -- idₛ : S →ₛ S
+      -- idₛ _ = `_
+
+      -- _∷ₛ_ : S₂ ⊢ s → S₁ →ₛ S₂ → (s ∷ S₁) →ₛ S₂
+      -- (t ∷ₛ _) _ (here refl) = t
+      -- (_ ∷ₛ σ) _ (there x) = σ _ x
+
+      -- _⨟ᵣₛ_ : S₁ →ᵣ S₂ → S₂ →ₛ S₃ → S₁ →ₛ S₃
+      -- (ρ₁ ⨟ᵣₛ σ₂) _ x = σ₂ _ (ρ₁ _ x)
+
+      -- _⨟ₛᵣ_ : S₁ →ₛ S₂ → S₂ →ᵣ S₃ → S₁ →ₛ S₃
+      -- (σ₁ ⨟ₛᵣ ρ₂) _ x = (σ₁ _ x) ⋯ᵣ ρ₂
+      
+>>>>>>> Stashed changes
 
   postulate
     ⋆⋯idᵣ′ : (T : Tm d S s) → T ⋯ id ≡ T 
 
   module WithDesc (d : Desc) where
+
+    open WithScoped (Tm d) renaming (_→ₛ_ to _⋆→ₛ_)
+
+    -- postulate
+    --   ⋆⋯idₛ′ : (T : Tm d S s) → T ⋆⋯ₛ idᵣ ≡ T
 
     record _≃_ (A B : ScopedT) : Set₁ where
       field
@@ -98,6 +128,7 @@ module WithSort (Sort : SortTy → Set) where
 
     open _≃_
 
+<<<<<<< Updated upstream
     module Derive 
       (_⊢_ : ScopedT) 
       (iso : Tm d ≃ _⊢_) 
@@ -110,6 +141,17 @@ module WithSort (Sort : SortTy → Set) where
         ⋯idᵣ : (T : S ⊢ s) → {! T  !} ⋯ᵣ idᵣ ≡ {!   !} 
       
       --{-# REWRITE ⋯idᵣ #-}
+=======
+    module WithSyntax (_⊢_ : ScopedT) (iso : Tm d ≃ _⊢_) where
+      
+      open WithScoped _⊢_
+
+      module WithTraversal (_⋯ᵣ_ : S₁ ⊢ s → S₁ →ᵣ S₂ → S₂ ⊢ s) (_⋯ₛ_ : S₁ ⊢ s → S₁ →ₛ S₂ → S₂ ⊢ s) where
+        
+        -- postulate 
+        --   ⋯idᵣ : (T : S ⊢ s) → T ⋯ᵣ idᵣ ≡ T 
+        -- {-# REWRITE ⋯idᵣ #-}
+>>>>>>> Stashed changes
   
 
 

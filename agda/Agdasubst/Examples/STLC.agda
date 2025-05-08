@@ -74,12 +74,12 @@ iso = record {
 
 -- DERIVE END
 
-open Derive _⊢_ iso
+-- open Derive _⊢_ iso
 
 -- {-# REWRITE ⋯idᵣ #-}
 
 `id : [] ⊢ expr
 `id = λx (` (here refl))
-
-test : _⋯ᵣ_ {s = s} (` here {xs = S} refl) idᵣ ≡ (` here refl) 
-test = refl
+-- 
+-- test : _⋯ᵣ_ {s = s} (` here {xs = S} refl) idᵣ ≡ (` here refl) 
+-- test = refl

@@ -1,27 +1,27 @@
 {-# OPTIONS --rewriting #-}
 module Prelude where
 
+
 open import Data.List using 
-  (
-    List 
+  ( List
   ; []
+  ; _∷_
   ; _++_
   ) public
 
-open import Sorts using 
-  (
-    Mode
+open import Variables using
+  ( Mode
   ; Var
   ; ¬Var
   ; _∋_
   ; zero
   ; suc 
-  ; module Sorted
   ) public
 
+open import Sorts using (module Sorted) public
+
 open import Substitution using 
-  ( 
-    Syntax
+  ( module Sub
   ) public
   
 open import Reflection_ using 
@@ -30,11 +30,9 @@ open import Reflection_ using
   ) public
 
 open import Generics using 
-  (
-    module Generic
+  ( module Generic
   ) public
 
-open import Rewrite using
-  (
-    module σ-Calculus
-  ) public
+-- open import Rewriting using
+--   ( module Rewrite
+--   ) public

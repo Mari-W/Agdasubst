@@ -1,7 +1,6 @@
 {-# OPTIONS --rewriting #-}
 module Examples.STLC where
 
-open import Data.List using (List; []; _∷_; _++_)
 open import Data.Product using (Σ; ∃-syntax; Σ-syntax; _×_; _,_)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; cong₂; trans; subst)
 
@@ -21,6 +20,16 @@ data _⊢_ : Scoped where
   _⇒_       : S ⊢ type → S ⊢ type → S ⊢ type 
 
 ---- DERIVE BEGIN
+-- SYNTAX
+open Sub Sort
+syn : Syntax
+syn = record 
+  { _⊢_ = _⊢_ 
+  ; `_ = `_
+  ; `-injective = λ { refl → refl } 
+  }
+
+-- GENERICS
 open import Generics
 open Generic Sort 
 
@@ -38,7 +47,10 @@ pattern _⋆·_ e₁ e₂ = `con ([·] , e₁ , e₂ , (refl , refl))
 pattern _⋆⇒_ t₁ t₂ = `con ([⇒] , t₁ , t₂ , (refl , refl))
 pattern ⋆`_ x      = `var x
 
-open Isomorphism
+-- ISO 
+open import Isomorphism using (module Iso)
+open Iso Sort
+
 to : Tm desc S s → S ⊢ s
 to (⋆` x)     = `_ x
 to (⋆λx e)    = λx to e
@@ -69,7 +81,4 @@ iso = record {
   ; from = from 
   ; from∘to = from∘to 
   ; to∘from = to∘from }
-
-open Substitution desc
-
 -- DERIVE END

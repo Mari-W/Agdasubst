@@ -8,7 +8,7 @@ open import Level using (Level; _⊔_) renaming (suc to lsuc; zero to lzero)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; trans; cong; cong₂; cong-app; subst; module ≡-Reasoning)
 open ≡-Reasoning
 
-open import Agdasubst.Kits
+open import kitty.Kits
 
 module WithSort(Sort : SortTy → Set) where
   private variable

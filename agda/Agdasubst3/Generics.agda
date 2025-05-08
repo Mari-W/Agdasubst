@@ -1,11 +1,12 @@
 module Generics where
 
-open import Data.List using (List; []; _∷_; _++_)
+open import Data.List using (List; []; _∷_; _++_) public
 open import Data.Product using (Σ; ∃-syntax; Σ-syntax; _×_; _,_)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; cong₂; trans; subst)
 
-open import Sorts
-open import Substitution as _
+open import Variables
+open import Sorts using (module Sorted)
+open import Substitution as _ using (module Sub) 
 
 module Generic (Sort : Mode → Set) where
   
@@ -29,41 +30,43 @@ module Generic (Sort : Mode → Set) where
     `var : S ∋ s → Tm d S s
     `con : ⟦ d ⟧ (Tm d) S s → Tm d S s
 
-  module Substitution (d : Desc) where
-    syn : Syntax
-    syn = record
-      { Sort        = Sort
-      ; _⊢_         = Tm d
-      ; `_          = `var
-      ; `-injective = λ { refl → refl }
-      }
+  open Sub Sort
 
-    open Syntax syn hiding (Sort; _⊢_; `_; `-injective)
+  module Substitution (d : Desc) where
+    private
+      syn : Syntax
+      syn = record
+        { _⊢_         = Tm d
+        ; `_          = `var
+        ; `-injective = λ { refl → refl }
+        }
+
+    open Syntax syn hiding (_⊢_; `_; `-injective) public
     
     opaque 
       unfolding _→ₖ_ _↑ₖ_ _↑ₖ*_ idₖ
              
       mutual
-        _⋯_ : ∀ {{K : Kit _∋/⊢_}} → Tm d S₁ s → S₁ →ₖ S₂ → Tm d S₂ s
-        _⋯_ (`var x)  f = `/id (f _ x)
-        _⋯_ (`con e′) f = `con (e′ ⋯′ f)
+        _⋯_ : ∀ {_∋/⊢_ : List (Sort Var) → Sort Var → Set} {{K : Kit _∋/⊢_}} → Tm d S₁ s → S₁ →ₖ S₂ → Tm d S₂ s
+        (`var x)  ⋯  ϕ = `/id (ϕ _ x)
+        (`con e′) ⋯ ϕ = `con (e′ ⋯′ ϕ)
 
-        _⋯′_ : ∀ {{K : Kit _∋/⊢_}} → ⟦ d′ ⟧ (Tm d) S₁ s → S₁ →ₖ S₂ → ⟦ d′ ⟧ (Tm d) S₂ s
-        _⋯′_ {d′ = `σ A d′}     (a , D′) f = a , D′ ⋯′ f
-        _⋯′_ {d′ = `X S′ M′ d′} (e , e′) f = e ⋯ (f ↑ₖ* S′) , e′ ⋯′ f
-        _⋯′_ {d′ = `■ M′}       e        f = e
+        _⋯′_ : ∀ {_∋/⊢_ : List (Sort Var) → Sort Var → Set} {{K : Kit _∋/⊢_}} → ⟦ d′ ⟧ (Tm d) S₁ s → S₁ →ₖ S₂ → ⟦ d′ ⟧ (Tm d) S₂ s
+        _⋯′_ {d′ = `σ A d′}     (a , D′) ϕ = a , D′ ⋯′ ϕ
+        _⋯′_ {d′ = `X S′ M′ d′} (e , e′) ϕ = e ⋯ (ϕ ↑ₖ* S′) , e′ ⋯′ ϕ
+        _⋯′_ {d′ = `■ M′}       e        ϕ = e
 
-      ⋯-var : ∀ {{K : Kit _∋/⊢_}} → (x : S₁ ∋ s) (ϕ : S₁ →ₖ S₂) →
+      ⋯-var : ∀ {_∋/⊢_ : List (Sort Var) → Sort Var → Set} {{K : Kit _∋/⊢_}} → (x : S₁ ∋ s) (ϕ : S₁ →ₖ S₂) →
                 `/id (x &ₖ ϕ) ≡ `/id (x &ₖ ϕ)
       ⋯-var x ϕ = refl
 
       mutual
-        ⋯-id : ∀ {{K : Kit _∋/⊢_}} → (t : Tm d S s) →
+        ⋯-id : ∀ {_∋/⊢_ : List (Sort Var) → Sort Var → Set} {{K : Kit _∋/⊢_}} → (t : Tm d S s) →
                  (t ⋯ idₖ) ≡ t
         ⋯-id (`var x) = `/`-is-` x
         ⋯-id (`con e) = cong `con (⋯-id′ e)
 
-        ⋯-id′ : ∀ {{K : Kit _∋/⊢_}} {s : Sort m} → (t : ⟦ d′ ⟧ (Tm d) S s) →
+        ⋯-id′ : ∀ {_∋/⊢_ : List (Sort Var) → Sort Var → Set} {{K : Kit _∋/⊢_}} {s : Sort m} → (t : ⟦ d′ ⟧ (Tm d) S s) →
                 (t ⋯′ idₖ) ≡ t
         ⋯-id′ {d′ = `σ A d′}     (a , D′)      = cong (a ,_) (⋯-id′ D′)
         ⋯-id′ {d′ = `X S′ M′ d′} (e , e′)      = cong₂ _,_ (trans (cong (e ⋯_) (~-ext (id↑*~id S′))) (⋯-id e)) (⋯-id′ e′)

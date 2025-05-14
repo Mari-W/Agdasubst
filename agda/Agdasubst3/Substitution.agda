@@ -1,4 +1,6 @@
+
 module Substitution where
+
 
 -- Imports 
 open import Data.List using (List; []; _∷_; _++_)
@@ -36,11 +38,16 @@ module Sub (Sort : Mode → Set) where
                             `/id x/t₁ ≡ `/id x/t₂ → x/t₁ ≡ x/t₂
         wk-id/`         : ∀ s' (x : S ∋ s) →
                             wk s' (id/` x) ≡ id/` (suc x)  
-  
+
       opaque 
+        
+        open import Data.Unit using (⊤; tt)
+        KIT : ⊤
+        KIT = tt
+
         _→ₖ_ : List (Sort Var) → List (Sort Var) → Set
         S₁ →ₖ S₂ = ∀ s → S₁ ∋ s → S₂ ∋/⊢ s
-  
+        
         infixl  8  _&ₖ_
         _&ₖ_ : S₁ ∋ s → S₁ →ₖ S₂ → S₂ ∋/⊢ s
         x &ₖ ϕ = ϕ _ x 
@@ -74,9 +81,8 @@ module Sub (Sort : Mode → Set) where
       postulate
         ~-ext : ∀ {ϕ₁ ϕ₂ : S₁ →ₖ S₂} → ϕ₁ ~ ϕ₂ → ϕ₁ ≡ ϕ₂
   
-      opaque
-        unfolding
-          _→ₖ_ _↑ₖ_ _↑ₖ*_ idₖ ⦅_⦆ₖ weakenₖ
+      opaque 
+        unfolding KIT
   
         id↑~id : (idₖ {S} ↑ₖ s) ~ idₖ {s ∷ S}
         id↑~id s zero    = refl
@@ -111,35 +117,90 @@ module Sub (Sort : Mode → Set) where
                    (` x) ⋯ ϕ ≡ `/id {{K}} (x &ₖ ϕ)
         ⋯-id   : ∀ {_∋/⊢_ : List (Sort Var) → Sort Var → Set} {{K : Kit _∋/⊢_}} → (t : S ⊢ s) →
                    t ⋯ idₖ {{K}} ≡ t
+      instance
+        Kᵣ : Kit _∋_
+        Kᵣ = record
+          { id/`            = λ x → x
+          ; `/id            = `_
+          ; wk              = λ s' x → suc x
+          ; `/`-is-`        = λ x → refl
+          ; id/`-injective  = λ eq → eq 
+          ; `/id-injective  = `-injective 
+          ; wk-id/`         = λ s' x → refl 
+          }
+
       opaque
-        unfolding
-          _→ₖ_ _&ₖ_ wkmₖ _∷ₖ_ _↑ₖ_ _↑ₖ*_ idₖ ⦅_⦆ₖ weakenₖ 
-          
-        instance
-          Kᵣ : Kit _∋_
-          Kᵣ = record
-            { id/`            = λ x → x
-            ; `/id            = `_
-            ; wk              = λ s' x → suc x
-            ; `/`-is-`        = λ x → refl
-            ; id/`-injective  = λ eq → eq
-            ; `/id-injective  = `-injective
-            ; wk-id/`         = λ s' x → refl }
-    
-          Kₛ : Kit _⊢_
-          Kₛ = record
-            { id/`            = `_
-            ; `/id            = λ t → t
-            ; `/`-is-`        = λ x → refl
-            ; wk              = λ s' t → t ⋯ (weakenₖ {{Kᵣ}} s')
-            ; id/`-injective  = `-injective
-            ; `/id-injective  = λ eq → eq
-            ; wk-id/`         = λ s' x → ⋯-var x (weakenₖ s') }
-            
+        unfolding KIT
+        private 
+          Kₛ-wk-id/` : {S : Sorts} {s : Sort Var} (s' : Sort Var) (x : S ∋ s) →
+                      (` x) ⋯ Kit.weakenₖ Kᵣ s' ≡ (` suc x)
+          Kₛ-wk-id/` = λ s' x → ⋯-var x (weakenₖ s')
+
+      instance
+        Kₛ : Kit _⊢_
+        Kₛ = record
+          { id/`            = `_
+          ; `/id            = λ t → t
+          ; wk              = λ s' t → t ⋯ (weakenₖ {{Kᵣ}} s')
+          ; `/`-is-`        = λ x → refl
+          ; id/`-injective  = `-injective
+          ; `/id-injective  = λ eq → eq 
+          ; wk-id/`         = Kₛ-wk-id/`
+          }
+
       open Kit Kᵣ public using () renaming 
         (_→ₖ_ to _→ᵣ_; wkmₖ to wkmᵣ; _∷ₖ_ to _∷ᵣ_; _↑ₖ_ to _↑ᵣ_; 
          _↑ₖ*_ to _↑ᵣ*_; idₖ to idᵣ; ⦅_⦆ₖ to ⦅_⦆ᵣ; weakenₖ to weakenᵣ)
       open Kit Kₛ public using () renaming 
         (_→ₖ_ to _→ₛ_; wkmₖ to wkmₛ; _∷ₖ_ to _∷ₛ_; _↑ₖ_ to _↑ₛ_; 
          _↑ₖ*_ to _↑ₛ*_; idₖ to idₛ; ⦅_⦆ₖ to ⦅_⦆ₛ; weakenₖ to weakenₛ)
-        
+
+      _⋯ᵣ_ : S₁ ⊢ s → S₁ →ᵣ S₂ → S₂ ⊢ s
+      t ⋯ᵣ ρ = t ⋯ ρ
+
+      _⋯ₛ_ : S₁ ⊢ s → S₁ →ₛ S₂ → S₂ ⊢ s
+      t ⋯ₛ σ = t ⋯ σ
+
+  module _ where
+    open import Isomorphism
+    open Iso Sort
+    open import Sorts
+    open Sorted Sort
+    open Meta
+  
+    record KitIso : Set₁ where
+      field
+        syn₁ syn₂ : Syntax
+        iso : (Syntax._⊢_ syn₁) ≃ (Syntax._⊢_ syn₂)
+      
+        -- Axiom
+        `_-is-`var : ∀ (x : S ∋ s) → _≃_.to iso (Syntax.`_ syn₁ x) ≡ (Syntax.`_ syn₂ x)
+      
+      open _≃_ iso
+
+      open import Relation.Binary.PropositionalEquality using (_≡_; refl; trans; cong; cong-app; subst; module ≡-Reasoning)
+      
+      to-Kit : ∀ {_∋/⊢_ : List (Sort Var) → Sort Var → Set} → Syntax.Kit syn₁ _∋/⊢_ → Syntax.Kit syn₂ _∋/⊢_
+      to-Kit record 
+        { id/` = id/`
+        ; `/id = `/id
+        ; wk = wk
+        ; `/`-is-` = `/`-is-`
+        ; id/`-injective = id/`-injective 
+        ; `/id-injective = `/id-injective 
+        ; wk-id/` = wk-id/` 
+        } = record 
+        { id/` = id/`
+        ; `/id = λ x → to ( `/id x)
+        ; wk = wk
+        ; `/`-is-` = λ x → trans (cong to (`/`-is-` x)) (`_-is-`var x)
+        ; id/`-injective = id/`-injective
+        ; `/id-injective = λ x → `/id-injective (to-injective x)
+        ; wk-id/` = wk-id/` 
+        }
+
+      opaque
+        unfolding Syntax.Kit.KIT
+        abc : ∀ (_∋/⊢_ : List (Sort Var) → Sort Var → Set) (K : Syntax.Kit syn₁ _∋/⊢_) → 
+             Syntax.Kit._→ₖ_ (to-Kit K) S₁ S₂ ≡ Syntax.Kit._→ₖ_ K S₁ S₂ 
+        abc _ _ = refl 

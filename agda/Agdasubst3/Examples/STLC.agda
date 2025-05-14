@@ -22,6 +22,7 @@ data _⊢_ : Scoped where
 ---- DERIVE BEGIN
 -- SYNTAX
 open Sub Sort
+
 syn : Syntax
 syn = record 
   { _⊢_ = _⊢_ 
@@ -42,43 +43,73 @@ desc = `σ Label λ where
   [·] → `X [] expr (`X [] expr (`■ expr))
   [⇒] → `X [] type (`X [] type (`■ type))
   
-pattern ⋆λx_ e     = `con ([λ] , e , (refl , refl))
-pattern _⋆·_ e₁ e₂ = `con ([·] , e₁ , e₂ , (refl , refl))
-pattern _⋆⇒_ t₁ t₂ = `con ([⇒] , t₁ , t₂ , (refl , refl))
+pattern ⋆λx_ e     = `con ([λ] , e , refl , refl)
+pattern _⋆·_ e₁ e₂ = `con ([·] , e₁ , e₂ , refl , refl)
+pattern _⋆⇒_ t₁ t₂ = `con ([⇒] , t₁ , t₂ , refl , refl)
 pattern ⋆`_ x      = `var x
 
 -- ISO 
 open import Isomorphism using (module Iso)
 open Iso Sort
 
-to : Tm desc S s → S ⊢ s
-to (⋆` x)     = `_ x
-to (⋆λx e)    = λx to e
-to (e₁ ⋆· e₂) = to e₁ · to e₂
-to (t₁ ⋆⇒ t₂) = to t₁ ⇒ to t₂ 
+to : S ⊢ s → Tm desc S s
+to (` x)     = `var x
+to (λx e)    = ⋆λx to e 
+to (e₁ · e₂) = to e₁ ⋆· to e₂ 
+to (t₁ ⇒ t₂) = to t₁ ⋆⇒  to t₂
 
-from : S ⊢ s → Tm desc S s
-from (` x)     = `var x
-from (λx e)    = ⋆λx from e 
-from (e₁ · e₂) = from e₁ ⋆· from e₂ 
-from (t₁ ⇒ t₂) = from t₁ ⋆⇒  from t₂
+from : Tm desc S s → S ⊢ s
+from (⋆` x)     = `_ x
+from (⋆λx e)    = λx from e
+from (e₁ ⋆· e₂) = from e₁ · from e₂
+from (t₁ ⋆⇒ t₂) = from t₁ ⇒ from t₂ 
 
-from∘to : (T : Tm desc S s) → from (to T) ≡ T
-from∘to (⋆` x) = refl
-from∘to (⋆λx e) = cong ⋆λx_ (from∘to e)
-from∘to (e₁ ⋆· e₂) = cong₂ _⋆·_ (from∘to e₁) (from∘to e₂)
-from∘to (t₁ ⋆⇒ t₂) = cong₂ _⋆⇒_ (from∘to t₁) (from∘to t₂)
+to∘from : (T : Tm desc S s) → to (from T) ≡ T
+to∘from (⋆` x) = refl
+to∘from (⋆λx e) = cong ⋆λx_ (to∘from e)
+to∘from (e₁ ⋆· e₂) = cong₂ _⋆·_ (to∘from e₁) (to∘from e₂)
+to∘from (t₁ ⋆⇒ t₂) = cong₂ _⋆⇒_ (to∘from t₁) (to∘from t₂)
 
-to∘from : (T : S ⊢ s) → to (from T) ≡ T
-to∘from (` x)     = refl
-to∘from (λx e)    = cong λx_ (to∘from e)
-to∘from (e₁ · e₂) = cong₂ _·_ (to∘from e₁) (to∘from e₂)
-to∘from (t₁ ⇒ t₂) = cong₂ _⇒_ (to∘from t₁) (to∘from t₂)
+from∘to : (T : S ⊢ s) → from (to T) ≡ T
+from∘to (` x)     = refl
+from∘to (λx e)    = cong λx_ (from∘to e)
+from∘to (e₁ · e₂) = cong₂ _·_ (from∘to e₁) (from∘to e₂)
+from∘to (t₁ ⇒ t₂) = cong₂ _⇒_ (from∘to t₁) (from∘to t₂)
 
-iso : Tm desc ≃ _⊢_ 
+postulate
+  to-injective :  ∀ (t₁ t₂ : S ⊢ s) → to t₁ ≡ to t₂ → t₁ ≡ t₂
+-- to-injective (`var x₁) (`var x₂) refl = refl
+-- to-injective (`var x) (⋆λx e) ()
+-- to-injective (`var x) (e₁ ⋆· e₂) ()
+-- to-injective (⋆λx e) (`var x₁) ()
+-- to-injective (e₁ ⋆· e₂) (`var x₁) ()
+-- to-injective (⋆λx e) (⋆λx e′) eq = cong ⋆λx_ {!  !}
+
+iso : _⊢_ ≃ Tm desc
 iso = record { 
     to = to 
   ; from = from 
   ; from∘to = from∘to 
-  ; to∘from = to∘from }
+  ; to∘from = to∘from
+  ; to-injective = to-injective _ _
+  }
+
+open import Rewriting using (module Rewrite)
+open Rewrite Sort
+
+σ-calculus : σ-Calculus
+σ-calculus = record {  
+    syn = syn
+  ; desc = desc
+  ; iso = iso 
+  ; `_-is-`var = λ _ → refl
+  }
+
+open σ-Calculus σ-calculus
 -- DERIVE END
+
+
+`id : [] ⊢ expr
+`id = λx (` zero)
+test : (` zero) ⋯ₛ ⦅ `id ⦆ₛ ≡ `id
+test = {!    !}

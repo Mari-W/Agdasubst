@@ -33,29 +33,29 @@ module Generic (Sort : Mode → Set) where
   open Sub Sort
 
   module Substitution (d : Desc) where
-    private
-      syn : Syntax
-      syn = record
-        { _⊢_         = Tm d
-        ; `_          = `var
-        ; `-injective = λ { refl → refl }
-        }
+    
+    syn : Syntax
+    syn = record
+      { _⊢_         = Tm d
+      ; `_          = `var
+      ; `-injective = λ { refl → refl }
+      }
 
     open Syntax syn hiding (_⊢_; `_; `-injective) public
     
+    mutual
+      _⋯_ : ∀ {_∋/⊢_ : List (Sort Var) → Sort Var → Set} {{K : Kit _∋/⊢_}} → Tm d S₁ s → S₁ →ₖ S₂ → Tm d S₂ s
+      (`var x)  ⋯ ϕ = `/id (x &ₖ ϕ)
+      (`con e′) ⋯ ϕ = `con (e′ ⋯′ ϕ)
+
+      _⋯′_ : ∀ {_∋/⊢_ : List (Sort Var) → Sort Var → Set} {{K : Kit _∋/⊢_}} → ⟦ d′ ⟧ (Tm d) S₁ s → S₁ →ₖ S₂ → ⟦ d′ ⟧ (Tm d) S₂ s
+      _⋯′_ {d′ = `σ A d′}     (a , D′) ϕ = a , D′ ⋯′ ϕ
+      _⋯′_ {d′ = `X S′ M′ d′} (e , e′) ϕ = e ⋯ (ϕ ↑ₖ* S′) , e′ ⋯′ ϕ
+      _⋯′_ {d′ = `■ M′}       e        ϕ = e
+    
     opaque 
-      unfolding _→ₖ_ _↑ₖ_ _↑ₖ*_ idₖ
-             
-      mutual
-        _⋯_ : ∀ {_∋/⊢_ : List (Sort Var) → Sort Var → Set} {{K : Kit _∋/⊢_}} → Tm d S₁ s → S₁ →ₖ S₂ → Tm d S₂ s
-        (`var x)  ⋯  ϕ = `/id (ϕ _ x)
-        (`con e′) ⋯ ϕ = `con (e′ ⋯′ ϕ)
-
-        _⋯′_ : ∀ {_∋/⊢_ : List (Sort Var) → Sort Var → Set} {{K : Kit _∋/⊢_}} → ⟦ d′ ⟧ (Tm d) S₁ s → S₁ →ₖ S₂ → ⟦ d′ ⟧ (Tm d) S₂ s
-        _⋯′_ {d′ = `σ A d′}     (a , D′) ϕ = a , D′ ⋯′ ϕ
-        _⋯′_ {d′ = `X S′ M′ d′} (e , e′) ϕ = e ⋯ (ϕ ↑ₖ* S′) , e′ ⋯′ ϕ
-        _⋯′_ {d′ = `■ M′}       e        ϕ = e
-
+      unfolding KIT
+            
       ⋯-var : ∀ {_∋/⊢_ : List (Sort Var) → Sort Var → Set} {{K : Kit _∋/⊢_}} → (x : S₁ ∋ s) (ϕ : S₁ →ₖ S₂) →
                 `/id (x &ₖ ϕ) ≡ `/id (x &ₖ ϕ)
       ⋯-var x ϕ = refl
@@ -72,8 +72,8 @@ module Generic (Sort : Mode → Set) where
         ⋯-id′ {d′ = `X S′ M′ d′} (e , e′)      = cong₂ _,_ (trans (cong (e ⋯_) (~-ext (id↑*~id S′))) (⋯-id e)) (⋯-id′ e′)
         ⋯-id′ {d′ = `■ M′}       (refl , refl) = refl
 
-      traversal : Traversal
-      traversal = record { _⋯_ = _⋯_ ; ⋯-var = ⋯-var ; ⋯-id  = ⋯-id }
+    traversal : Traversal
+    traversal = record { _⋯_ = _⋯_ ; ⋯-var = ⋯-var ; ⋯-id  = ⋯-id }
     
     
-       
+        

@@ -79,12 +79,6 @@ module WithSort (Sort : SortTy → Set) where
   ⋆wk : Tm d S s → Tm d (s' ∷ S) s
   ⋆wk T = T ⋆⋯ᵣ wkᵣ
 
-<<<<<<< Updated upstream
-  --opaque
-  --  unfolding _→ᵣ_ _⍟ᵣ_ idᵣ wkᵣ _∷ᵣ_ _⨟ᵣᵣ_
-  --  _→ₛ_ : List (Sort Var) → List (Sort Var) → Set
-  --  S₁ →ₛ S₂ = ∀ s → s ∈ S₁ → Tm d S₂ s
-=======
   module WithScoped (_⊢_ : ScopedT) where
     opaque
       unfolding _→ᵣ_ _⍟ᵣ_ idᵣ wkᵣ _∷ᵣ_ _⨟ᵣᵣ_
@@ -107,10 +101,9 @@ module WithSort (Sort : SortTy → Set) where
       -- _⨟ₛᵣ_ : S₁ →ₛ S₂ → S₂ →ᵣ S₃ → S₁ →ₛ S₃
       -- (σ₁ ⨟ₛᵣ ρ₂) _ x = (σ₁ _ x) ⋯ᵣ ρ₂
       
->>>>>>> Stashed changes
 
-  postulate
-    ⋆⋯idᵣ′ : (T : Tm d S s) → T ⋯ id ≡ T 
+  -- postulate
+  --   ⋆⋯idᵣ′ : (T : Tm d S s) → T ⋯ id ≡ T 
 
   module WithDesc (d : Desc) where
 
@@ -128,20 +121,6 @@ module WithSort (Sort : SortTy → Set) where
 
     open _≃_
 
-<<<<<<< Updated upstream
-    module Derive 
-      (_⊢_ : ScopedT) 
-      (iso : Tm d ≃ _⊢_) 
-      (_⋯ᵣ_ : S₁ ⊢ s → S₁ →ᵣ S₂ → S₂ ⊢ s)
-      -- (_⋯ₛ_ : S₁ ⊢ s → S₁ →ₛ S₂ → S₂ ⊢ s)
-      where
-    
-
-      postulate 
-        ⋯idᵣ : (T : S ⊢ s) → {! T  !} ⋯ᵣ idᵣ ≡ {!   !} 
-      
-      --{-# REWRITE ⋯idᵣ #-}
-=======
     module WithSyntax (_⊢_ : ScopedT) (iso : Tm d ≃ _⊢_) where
       
       open WithScoped _⊢_
@@ -151,7 +130,6 @@ module WithSort (Sort : SortTy → Set) where
         -- postulate 
         --   ⋯idᵣ : (T : S ⊢ s) → T ⋯ᵣ idᵣ ≡ T 
         -- {-# REWRITE ⋯idᵣ #-}
->>>>>>> Stashed changes
   
 
 

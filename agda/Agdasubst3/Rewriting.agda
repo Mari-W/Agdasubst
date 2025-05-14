@@ -5,7 +5,7 @@ module Rewriting where
 open import Agda.Builtin.Equality.Rewrite
 
 open import Data.List using (List)
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; cong-app; module ≡-Reasoning)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; trans; cong; cong-app; subst; module ≡-Reasoning)
 
 open import Variables
 open import Sorts using (module Sorted)
@@ -28,51 +28,49 @@ module Rewrite (Sort : Mode → Set) where
       desc : Desc
       iso : Syntax._⊢_ syn ≃ (Tm desc)
 
-      `var-is-`_ : {!  _≃_ !}
+      -- Axiom
+      `_-is-`var : ∀ (x : S ∋ s) → _≃_.to iso (Syntax.`_ syn x) ≡ `var x
 
-    open Syntax syn
+    open Syntax syn hiding (_⊢_; `_) public
+    open Syntax syn using (_⊢_; `_)
 
-    open import Level renaming (zero to lzero)
-    module _ (T : Set) where
-      bad : Setω
-      bad = {! (λ (ℓ : T → Level) → ∀ t → Set (ℓ t)) (λ _ → lzero)    !}
-    
-    open Substitution desc renaming 
+    open Substitution desc using () renaming 
       ( Kit to Kit∙
       ; _→ₖ_ to _→ₖ∙_
+      ; _↑ₖ_ to _↑ₖ∙_
+      ; _↑ₖ*_ to _↑ₖ*∙_
+      ; idₖ to idₖ∙
       ; _–[_]→_ to _–[_]→∙_
+      ; _⋯_ to _⋯∙_ 
+      ; ⋯-var to ⋯∙-var
+      ; ⋯-id to ⋯∙-id
+      ; syn to syn∙
       )
 
     open _≃_ iso
 
-    to∙Kit : ∀ {_∋/⊢_ : List (Sort Var) → Sort Var → Set} →  Kit _∋/⊢_ → Kit∙ _∋/⊢_
-    to∙Kit record 
-      { id/` = id/`
-      ; `/id = `/id
-      ; wk = wk
-      ; `/`-is-` = `/`-is-`
-      ; id/`-injective = id/`-injective 
-      ; `/id-injective = `/id-injective 
-      ; wk-id/` = wk-id/` 
-      } = record 
-      { id/` = id/`
-      ; `/id = λ x → to ( `/id x)
-      ; wk = wk
-      ; `/`-is-` = λ x → {! cong to (`/`-is-` x)   !}
-      }
+    open KitIso (record {syn₁ = syn; syn₂ = syn∙; iso = iso; `_-is-`var = `_-is-`var})
 
-    to∙ : ∀ {_∋/⊢_ : List (Sort Var) → Sort Var → Set} {{K : Kit _∋/⊢_}} → S₁ –[ K ]→ S₂ → S₁ –[ {! K  !} ]→∙ S₂ 
-    to∙ = {!   !}
-    
-    open _≃_ iso
+    foo : ∀ (_∋/⊢_ : List (Sort Var) → Sort Var → Set) (K : Syntax.Kit syn₁ _∋/⊢_) → 
+             Syntax.Kit._→ₖ_ K S₁ S₂ ≡ Syntax.Kit._→ₖ_ (to-Kit K) S₁ S₂
+    foo {S₁ = S₁} {S₂ = S₂} _ K  = {!   refl  !}
+      
+    -- _⋯_ : ∀ {_∋/⊢_ : List (Sort Var) → Sort Var → Set} {{K : Kit _∋/⊢_}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
+    -- _⋯_ {S₁ = S₁} {S₂ = S₂} {{K}} t ϕ = from (_⋯∙_ {{K = to-Kit K}} (to t) (to∙ ϕ))
 
-    -- _⋯ₖ_ : ∀ {{K : Kit _∋/⊢_}} → S₁ ⊢ s → S₁ →ₖ S₂ → S₂ ⊢ s
-    -- t ⋯ₖ ϕ = {! from ((to t) ⋯ ϕ)  !}
-    
-    -- ⋯ᵣ-id : {!   !}
-  
+    -- opaque 
+    --   unfolding KIT 
+    --   ⋯-var : ∀ {_∋/⊢_ : List (Sort Var) → Sort Var → Set} {{K : Kit _∋/⊢_}} → (x : S₁ ∋ s) (ϕ : S₁ –[ K ]→ S₂) → 
+    --           (` x) ⋯ ϕ ≡ `/id {{K}} (x &ₖ ϕ)
+    --   ⋯-var {{K}} x ϕ rewrite `_-is-`var x = from∘to _         
+-- 
+    --   ⋯-id : ∀ {_∋/⊢_ : List (Sort Var) → Sort Var → Set} {{K : Kit _∋/⊢_}} → 
+    --         (t : S ⊢ s) →  t ⋯ idₖ {{K}} ≡ t
+    --   ⋯-id {{K}} t = swap-to-from (⋯∙-id {{to-Kit∙ K}} (to t))
+-- 
+    -- traversal : Traversal
+    -- traversal = record { _⋯_ = _⋯_ ; ⋯-var = ⋯-var ; ⋯-id = ⋯-id }
+-- 
+    -- open Traversal traversal hiding (_⋯_; ⋯-var; ⋯-id) public
 
-  
-
-  
- 
+     

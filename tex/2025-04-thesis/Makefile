@@ -2,5 +2,4 @@
 
 run:
 	./runagdatex
-	bibtex main
 	pdflatex main

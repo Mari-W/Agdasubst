@@ -1,85 +1,102 @@
 {-# OPTIONS --rewriting #-}
 module Examples.STLC where
 
-open import Data.List using (List; []; _∷_; _++_)
-open import Data.List.Membership.Propositional public using (_∈_)
-open import Data.List.Relation.Unary.Any public using (here; there)
-open import Data.Product using (Σ; ∃-syntax; Σ-syntax; _×_; _,_)
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; trans; cong; cong₂; subst; module ≡-Reasoning)
+open import Agda.Builtin.Equality.Rewrite
+
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; subst; module ≡-Reasoning)
 open ≡-Reasoning
 
-open import Agda.Builtin.Equality.Rewrite
-open import Agdasubst
+open import Prelude
 
-data Sort : SortTy → Set where
-  expr : Sort Var
-  type : Sort NoVar
+data Sort : SORT where
+  expr : Sort Bind
+  type : Sort NoBind
 
-open WithSort Sort 
+open WithSort Sort
+open SortsMeta 
 
-data _⊢_ : ScopedT where
-  `_        : s ∈ S → S ⊢ s               
+data _⊢_ : SCOPED where
+  `_        : S ∋ s → S ⊢ s               
   λx_       : (expr ∷ S) ⊢ expr → S ⊢ expr        
   _·_       : S ⊢ expr → S ⊢ expr → S ⊢ expr      
-  _⇒_       : S ⊢ type → S ⊢ type → S ⊢ type       
+  _⇒_       : S ⊢ type → S ⊢ type → S ⊢ type 
 
--- DERIVE BEGIN 
-
-data Label : Set where
-  [λ] [·] [⇒] : Label
-
-desc : Desc
-desc = `σ Label λ where
-  [λ] → `X (expr ∷ []) expr (`■ expr)
-  [·] → `X [] expr (`X [] expr (`■ expr))
-  [⇒] → `X [] type (`X [] type (`■ type))
+syn : Syntax 
+syn = record 
+  { _⊢_ = _⊢_ 
+  ; `_ = `_
+  ; `-injective = λ { refl → refl } 
+  }
   
-pattern ⋆λx_ e     = `con ([λ] , e , (refl , refl))
-pattern _⋆·_ e₁ e₂ = `con ([·] , e₁ , e₂ , (refl , refl))
-pattern _⋆⇒_ t₁ t₂ = `con ([⇒] , t₁ , t₂ , (refl , refl))
-pattern ⋆`_ x      = `var x
+open Syntax syn hiding (_⊢_; `_)
 
-open WithDesc desc
+_⋯_ : ∀ ⦃ K : Kit _∋/⊢_ ⦄ → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
+(` x)           ⋯ ϕ = `/id (x &ₖ ϕ)
+(λx e)          ⋯ ϕ = λx (e ⋯ (ϕ ↑ₖ* _))
+(e₁ · e₂)       ⋯ ϕ = (e₁ ⋯ ϕ) · (e₂ ⋯ ϕ)
+(t₁ ⇒ t₂)       ⋯ ϕ = (t₁ ⋯ ϕ) ⇒ (t₂ ⋯ ϕ)
+ 
+opaque
+  unfolding all_kit_definitions
+    
+  ⋯-id : ∀ ⦃ K : Kit _∋/⊢_ ⦄ (t : S ⊢ s) → t ⋯ idₖ ⦃ K ⦄ ≡ t
+  ⋯-id ⦃ K ⦄ (` x)     = `/`-is-` ⦃ K ⦄ x
+  ⋯-id (λx t)          = cong λx_ (
+    t ⋯ (idₖ ↑ₖ expr)  ≡⟨ cong (t ⋯_) (~-ext id↑~id) ⟩
+    t ⋯ idₖ            ≡⟨ ⋯-id t ⟩
+    t                  ∎)
+  ⋯-id (t₁ · t₂)       = cong₂ _·_ (⋯-id t₁) (⋯-id t₂)
+  ⋯-id (t₁ ⇒ t₂)       = cong₂ _⇒_ (⋯-id t₁) (⋯-id t₂)
 
-to : Tm desc S s → S ⊢ s
-to (⋆` x)     = `_ x
-to (⋆λx e)    = λx to e
-to (e₁ ⋆· e₂) = to e₁ · to e₂
-to (t₁ ⋆⇒ t₂) = to t₁ ⇒ to t₂ 
+traversal : Traversal
+traversal = record
+  { _⋯_ = _⋯_ 
+  ; ⋯-id = ⋯-id 
+  ; ⋯-var = λ x ϕ → refl 
+  }
 
-from : S ⊢ s → Tm desc S s
-from (` x)     = `var x
-from (λx e)    = ⋆λx from e 
-from (e₁ · e₂) = from e₁ ⋆· from e₂ 
-from (t₁ ⇒ t₂) = from t₁ ⋆⇒  from t₂
+open Traversal traversal hiding (_⋯_; ⋯-id; ⋯-var)
 
-from∘to : (T : Tm desc S s) → from (to T) ≡ T
-from∘to (⋆` x) = refl
-from∘to (⋆λx e) = cong ⋆λx_ (from∘to e)
-from∘to (e₁ ⋆· e₂) = cong₂ _⋆·_ (from∘to e₁) (from∘to e₂)
-from∘to (t₁ ⋆⇒ t₂) = cong₂ _⋆⇒_ (from∘to t₁) (from∘to t₂)
+opaque
+  unfolding all_kit_and_compose_definitions
 
-to∘from : (T : S ⊢ s) → to (from T) ≡ T
-to∘from (` x)     = refl
-to∘from (λx e)    = cong λx_ (to∘from e)
-to∘from (e₁ · e₂) = cong₂ _·_ (to∘from e₁) (to∘from e₂)
-to∘from (t₁ ⇒ t₂) = cong₂ _⇒_ (to∘from t₁) (to∘from t₂)
+  ⋯-fusion :
+    ∀ ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ K : Kit _∋/⊢_ ⦄
+      ⦃ W₁ : WkKit K₁ ⦄ ⦃ C : ComposeKit K₁ K₂ K ⦄
+      (t : S₁ ⊢ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃)
+    → (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ t ⋯ (ϕ₁ ⨟ₖₖ ϕ₂)
+  ⋯-fusion (` x)          ϕ₁ ϕ₂ = sym (&/⋯-⋯ (ϕ₁ _ x) ϕ₂)
+  ⋯-fusion (λx t)         ϕ₁ ϕ₂ = cong λx_ (
+    (t ⋯ (ϕ₁ ↑ₖ expr)) ⋯ (ϕ₂ ↑ₖ expr)   ≡⟨ ⋯-fusion t (ϕ₁ ↑ₖ expr) (ϕ₂ ↑ₖ expr) ⟩
+    t ⋯ ((ϕ₁ ↑ₖ expr) ⨟ₖₖ (ϕ₂ ↑ₖ expr)) ≡⟨ cong (t ⋯_) (sym (~-ext (dist-↑-⨟ expr ϕ₁ ϕ₂))) ⟩
+    t ⋯ ((ϕ₁ ⨟ₖₖ ϕ₂) ↑ₖ expr)           ∎)
+  ⋯-fusion (t₁ · t₂)      ϕ₁ ϕ₂ = cong₂ _·_  (⋯-fusion t₁ ϕ₁ ϕ₂) (⋯-fusion t₂ ϕ₁ ϕ₂)
+  ⋯-fusion (t₁ ⇒ t₂)      ϕ₁ ϕ₂ = cong₂ _⇒_ (⋯-fusion t₁ ϕ₁ ϕ₂) (⋯-fusion t₂ ϕ₁ ϕ₂)
 
-iso : Tm desc ≃ _⊢_ 
-iso = record { 
-    to = to 
-  ; from = from 
-  ; from∘to = from∘to 
-  ; to∘from = to∘from }
+compose : ComposeTraversal
+compose = record { ⋯-fusion = ⋯-fusion }
 
--- DERIVE END
+open import SigmaCalculus
 
--- open Derive _⊢_ iso
+rules : Rules 
+rules = record 
+  { Sort = Sort 
+  ; syn = syn 
+  ; traversal = traversal 
+  ; compose = compose
+  }
+open Rules rules
 
--- {-# REWRITE ⋯idᵣ #-}
+{-# REWRITE 
+  &ᵣ-def₁ &ᵣ-def₂ idᵣ-def wkᵣ-def ∷ᵣ-def₁ ∷ᵣ-def₂ 
+  &ₛ-def₁ &ₛ-def₂ idₛ-def ∷ₛ-def₁ ∷ₛ-def₂
+  ⨟ᵣᵣ-def ⨟ᵣₛ-def ⨟ₛᵣ-def ⨟ₛₛ-def
 
-`id : [] ⊢ expr
-`id = λx (` (here refl))
--- 
--- test : _⋯ᵣ_ {s = s} (` here {xs = S} refl) idᵣ ≡ (` here refl) 
--- test = refl
+  left-idᵣᵣ right-idᵣᵣ left-idᵣₛ left-idₛᵣ right-idₛᵣ left-idₛₛ right-idₛₛ
+  interactᵣ interactₛ
+  associativityᵣᵣᵣ associativityᵣᵣₛ associativityᵣₛᵣ associativityᵣₛₛ associativityₛᵣᵣ associativityₛᵣₛ  associativityₛₛᵣ associativityₛₛₛ
+  η-idᵣ η-idₛ η-lawᵣ η-lawₛ
+  distributivityᵣᵣ distributivityᵣₛ distributivityₛᵣ distributivityₛₛ
+  ⋯idᵣ ⋯idₛ
+  compositionalityᵣᵣ compositionalityᵣₛ compositionalityₛᵣ compositionalityₛₛ  
+#-}

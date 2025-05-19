@@ -8,7 +8,7 @@
 
 \begin{document}
 
-\title{Every Way to \AgdaPragma{REWRITE} the $\sigma$-Calculus in Agda}
+\title{Agdasubst: Automated Equational Reasoning via Rewrite Rules for Substitutions over Multi-Sorted Syntaxes with Scoped Bindings}
 
 \author{Marius Weidner}
 \email{weidner@cs.uni-freiburg.de}
@@ -18,10 +18,10 @@
 \orcid{0009-0008-1152-165X} % chktex 8
 \authornote{
   I hereby declare that I am the sole author and composer of my thesis and that
-  no other sources or learning aids, other than those listed, have been used.
+  no other sources or learning aids, other than those listed, have been used.\\
   Furthermore, I declare that I have acknowledged the work of others by providing
-  detailed references of said work. \\
-  I hereby also declare that my Thesis has not been prepared for another
+  detailed references of said work.\\
+  I hereby also declare that my thesis has not been prepared for another
   examination or assignment, either wholly or excerpts thereof.
   \\
   \\
@@ -36,25 +36,25 @@
   yadda yadda
 \end{abstract}
 
-% \keywords{Agda, Dependent types, rewrite systems, explicit substiutions, sigma calculus, meta theory}
-
 \maketitle
 
 \section{Introduction}\label{sec:introduction}
-% - generic handling of substitutions is an well known ongoing research problem.
-% - 
 
 \subsection*{Contributions}
 
 \begin{itemize}
-  \item \cref{sec:multi} introduces the core idea of embedding an extension of the sigma
-        calculus into Agda using rewrite rules on the example of System F TBD
-  \item \cref{sec:agdasubst} explains how to derive the rewrite rules for multi-sorted
-        syntax automatically via abstractions for multi-sorted substitutions~\cite{saffrich:LIPIcs.ITP.2024.32}.
-  \item In \cref{sec:intrinsic}, we investigate System F in the intrinsically typed
-        setting. We observe that reasoning about substitutions at deeper levels of the
-        hierarchy substantially simplifies, but also requires an intuitive
-        extension of the rule set.
+  \item \cref{sec:multi} shows how to embed a suitable variant of the
+        sigma calculus into Agda using rewrite rules, explained through the example of System F.
+
+  \item \cref{sec:agdasubst} provides an overview of \texttt{Agdasubst} along with examples, 
+        explaining how to automatically derive all relevant equations for intrinsically scoped, 
+        multi-sorted syntax using reflection~\cite{saffrich:LIPIcs.ITP.2024.32} 
+        or generic syntax~\cite{allais2021typescopesafeuniverse}.
+
+  \item In \cref{sec:intrinsic}, we investigate the intrinsically \emph{typed} setting.
+        We observe that reasoning about substitutions at deeper levels of the indexing
+        hierarchy substantially simplifies, but also requires an intuitive extension of
+        the rule set.
 \end{itemize}
 
 \textbf{The supplement contains the complete Agda code underlying this paper.}
@@ -62,27 +62,34 @@
 \section{Preliminaries}\label{sec:preliminaries}
 
 \begin{itemize}
-  \item Some basics of Agda and its rewrite mechanism, which enables the embedding of
-        custom $\beta$-reduction rules.
-  \item Explicit substitutions, in particular the $\sigma$-calculus, a terminating and
-        confluent rewrite system for terms with substitutions. We consider an
-        incomplete extension with first-class renamings, better suited for use in
-        theorem provers.
-  \item Multi-Sorted syntax as a way of only have to define renaming and substitutions
-        once for every sort
+  \item Agda and its rewrite mechanism, which enables the embedding of custom
+        $\beta$-reduction rules.
+  \item Explicit substitutions, in particular the $\sigma_{SP}$-calculus, a terminating
+        and confluent rewrite system for terms with substitutions.
+  \item We present multi-sorted syntaxes and substitutions, along with abstractions over both, 
+        including generic scoped syntaxes~\cite{allais2021typescopesafeuniverse} and 
+        Kit abstractions that unify substitutions and renamings~\cite{stronglytyped,ren-sub}.
+
+
 \end{itemize}
 
 \subsection{Agda and Its Ability to \AgdaPragma{REWRITE}}
 
-\subsection{Explicit Substiutions and the $\sigma$-Calculus}
+\subsection{Explicit Substitutions and the $\sigma_{SP}$-Calculus}
 
-\subsection{The Advantage of Mutli-Sorted Syntax}
+\subsection{Mutli-Sorted Syntax and Substitutions}
 
-\section{Reasoning with Mutli-Sorted Substiutions}\label{sec:multi}
+\subsection*{Scope-Safe Universes of Syntaxes with Binding}
+
+\subsection*{Abstractions for Multi-Sorted Substitutions}
+
+\section{Reasoning with Mutli-Sorted Substitutions in Agda}\label{sec:multi}
 
 \subsection{Discussion}\label{sec:discussion-1}
 
-\section{Agdasubst: Reasoning and Abstraction over Mutli-Sorted Substiutions}\label{sec:agdasubst}
+\section{Agdasubst: Reasoning and Abstraction over Mutli-Sorted Substitutions}\label{sec:agdasubst}
+
+\subsection{Case Studies}
 
 \subsection{Limitations}\label{sec:limitations}
 
@@ -90,7 +97,7 @@
 
 \section{The Intriguing Case of Intrinsically \emph{Typed} Syntax}\label{sec:intrinsic}
 
-\subsection{Soundness of the Big Step Semantics with Respect to Native Agda Semantics}\label{sec:soundness}
+\subsection{Case Study: Soundness of the Big Step Semantics with Respect to Native Agda Semantics}\label{sec:soundness}
 
 \subsection{Discussion}\label{sec:discussion-3}
 
@@ -103,10 +110,6 @@
 \subsection{Other Framkeworks}\label{sec:related-frameworks}
 
 \section{Conclusions}\label{sec:conclusions}
-
-\begin{acks}
-  Thank you, Peter, Hannes, and Janek, for listening to me ramble about this for a few weeks at our weekly Agda meeting.
-\end{acks}
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}

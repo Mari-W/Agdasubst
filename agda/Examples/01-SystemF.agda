@@ -80,7 +80,6 @@ opaque
 _↑ᵣ_ : S₁ →ᵣ S₂ → (s : Sort Var) → (s ∷ S₁) →ᵣ (s ∷ S₂)
 ρ ↑ᵣ _ = here refl ∷ᵣ (ρ ⨟ᵣᵣ wkᵣ)
   
-
 _⋯ᵣ_ : S₁ ⊢ s → S₁ →ᵣ S₂ → S₂ ⊢ s
 (` x)         ⋯ᵣ ρ = ` (ρ ⍟ᵣ x)
 (λx e)        ⋯ᵣ ρ = λx (e ⋯ᵣ (ρ ↑ᵣ _))
@@ -336,16 +335,6 @@ opaque
   associativityₛₛₛ : (σ₁ : S₁ →ₛ S₂) (σ₂ : S₂ →ₛ S₃) (σ₃ : S₃ →ₛ S₄) → (σ₁ ⨟ₛₛ σ₂) ⨟ₛₛ σ₃ ≡ σ₁ ⨟ₛₛ (σ₂ ⨟ₛₛ σ₃)
   associativityₛₛₛ σ₁ _ _ = fun-ext λ _ → fun-ext λ x → compositionalityₛₛ _ _ (σ₁ _ x)
 
-  coincidence : (ρ : S₁ →ᵣ S₂) (T : S₁ ⊢ s) → T ⋯ₛ (ρ ⨟ᵣₛ idₛ) ≡ T ⋯ᵣ ρ
-  coincidence ρ (` x)        = refl
-  coincidence ρ (λx e)       = cong λx_ (trans (cong (e ⋯ₛ_) (fun-ext λ _ → fun-ext λ { (here refl) → refl  ; (there x) → refl })) (coincidence (ρ ↑ᵣ _) e))
-  coincidence ρ (Λα e)       = cong Λα_ (trans (cong (e ⋯ₛ_) (fun-ext λ _ → fun-ext λ { (here refl) → refl  ; (there x) → refl })) (coincidence (ρ ↑ᵣ _) e))
-  coincidence ρ (∀[α∶ k ] t) = cong₂ ∀[α∶_]_ (coincidence ρ k) (trans (cong (t ⋯ₛ_) (fun-ext λ _ → fun-ext λ { (here refl) → refl  ; (there x) → refl })) (coincidence (ρ ↑ᵣ _) t))
-  coincidence ρ (e₁ · e₂)    = cong₂ _·_ (coincidence ρ e₁) (coincidence ρ e₂)
-  coincidence ρ (e ∙ t)      = cong₂ _∙_ (coincidence ρ e) (coincidence ρ t)
-  coincidence ρ (t₁ ⇒ t₂)    = cong₂ _⇒_ (coincidence ρ t₁) (coincidence ρ t₂)
-  coincidence ρ ★            = refl
-
 {-# REWRITE 
   ⍟ᵣ-def₁ ⍟ᵣ-def₂ idᵣ-def wkᵣ-def ∷ᵣ-def₁ ∷ᵣ-def₂ 
   ⍟ₛ-def₁ ⍟ₛ-def₂ idₛ-def ∷ₛ-def₁ ∷ₛ-def₂
@@ -357,9 +346,9 @@ opaque
   η-idᵣ η-idₛ η-lawᵣ η-lawₛ
   distributivityᵣᵣ distributivityᵣₛ distributivityₛᵣ distributivityₛₛ
   ⋯idᵣ ⋯idₛ
-  compositionalityᵣᵣ compositionalityᵣₛ compositionalityₛᵣ compositionalityₛₛ 
-  coincidence 
+  compositionalityᵣᵣ compositionalityᵣₛ compositionalityₛᵣ compositionalityₛₛ  
 #-}
+
 
 variable
   ρ ρ₁ ρ₂ ρ₃ ρ₄ ρ' ρ₁' ρ₂' ρ₃' ρ₄' : S₁ →ᵣ S₂

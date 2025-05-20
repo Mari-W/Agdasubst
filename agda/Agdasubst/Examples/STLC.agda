@@ -57,21 +57,24 @@ traversal = record
 
 open Traversal traversal hiding (_⋯_; ⋯-id; ⋯-var)
 
+⋯id : ⦃ K : Kit _∋/⊢_ ⦄ (T : S ⊢ s) → T ⋯ idₖ ⦃ K ⦄ ≡ T 
+⋯id _ = ⋯-id _ 
+
 opaque
   unfolding all_kit_and_compose_definitions
 
   ⋯-fusion :
     ∀ ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ K : Kit _∋/⊢_ ⦄
-      ⦃ W₁ : WkKit K₁ ⦄ ⦃ C : ComposeKit K₁ K₂ K ⦄
+      ⦃ W₁ : WkKit K₁ ⦄ ⦃ C : ComposeKit K₁ K₂ K ⦄ 
       (t : S₁ ⊢ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃)
-    → (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ t ⋯ (ϕ₁ ⨟ₖₖ ϕ₂)
+    → (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ t ⋯ (ϕ₁ ⨟[ C ] ϕ₂)
   ⋯-fusion (` x)          ϕ₁ ϕ₂ = sym (&/⋯-⋯ (ϕ₁ _ x) ϕ₂)
   ⋯-fusion (λx t)         ϕ₁ ϕ₂ = cong λx_ (
-    (t ⋯ (ϕ₁ ↑ₖ expr)) ⋯ (ϕ₂ ↑ₖ expr)   ≡⟨ ⋯-fusion t (ϕ₁ ↑ₖ expr) (ϕ₂ ↑ₖ expr) ⟩
+    (t ⋯ (ϕ₁ ↑ₖ expr)) ⋯ (ϕ₂ ↑ₖ expr)  ≡⟨ ⋯-fusion t (ϕ₁ ↑ₖ expr) (ϕ₂ ↑ₖ expr) ⟩
     t ⋯ ((ϕ₁ ↑ₖ expr) ⨟ₖₖ (ϕ₂ ↑ₖ expr)) ≡⟨ cong (t ⋯_) (sym (~-ext (dist-↑-⨟ expr ϕ₁ ϕ₂))) ⟩
     t ⋯ ((ϕ₁ ⨟ₖₖ ϕ₂) ↑ₖ expr)           ∎)
   ⋯-fusion (t₁ · t₂)      ϕ₁ ϕ₂ = cong₂ _·_  (⋯-fusion t₁ ϕ₁ ϕ₂) (⋯-fusion t₂ ϕ₁ ϕ₂)
-  ⋯-fusion (t₁ ⇒ t₂)      ϕ₁ ϕ₂ = cong₂ _⇒_ (⋯-fusion t₁ ϕ₁ ϕ₂) (⋯-fusion t₂ ϕ₁ ϕ₂)
+  ⋯-fusion (t₁ ⇒ t₂)      ϕ₁ ϕ₂ = cong₂ _⇒_ (⋯-fusion t₁ ϕ₁ ϕ₂) (⋯-fusion t₂ ϕ₁ ϕ₂) 
 
 compose : ComposeTraversal
 compose = record { ⋯-fusion = ⋯-fusion }
@@ -97,6 +100,11 @@ open Rules rules
   associativityᵣᵣᵣ associativityᵣᵣₛ associativityᵣₛᵣ associativityᵣₛₛ associativityₛᵣᵣ associativityₛᵣₛ  associativityₛₛᵣ associativityₛₛₛ
   η-idᵣ η-idₛ η-lawᵣ η-lawₛ
   distributivityᵣᵣ distributivityᵣₛ distributivityₛᵣ distributivityₛₛ
-  ⋯idᵣ ⋯idₛ
-  compositionalityᵣᵣ compositionalityᵣₛ compositionalityₛᵣ compositionalityₛₛ  
+  ⋯id
+  ⋯-fusion
 #-}
+
+test : (` x) ⋯ idₛ ≡ ` x
+test = {!   !}
+-- idₛ
+-- compositionalityᵣᵣ compositionalityᵣₛ compositionalityₛᵣ compositionalityₛₛ  

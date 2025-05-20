@@ -28,10 +28,9 @@ record Rules : Set₁ where
   open ComposeTraversal compose
 
   opaque 
-    unfolding all_kit_and_compose_definitions
+    unfolding all_kit_and_instantiated_compose_definitions
 
     -- Renaming Definitions
-
     &ᵣ-def₁ : (ρ : S₁ →ᵣ S₂) → zero &ᵣ (x ∷ᵣ ρ)  ≡ x
     &ᵣ-def₁ _ = refl
 

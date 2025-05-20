@@ -106,12 +106,12 @@ module KitsWithSort (Sort : SORT) where
       record Traversal : Set₁ where
         infixl   5  _⋯_
 
-        field
-          _⋯_    : ∀ {{K : Kit _∋/⊢_}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
-          ⋯-var  : ∀ {{K : Kit _∋/⊢_}} → (x : S₁ ∋ s) (ϕ : S₁ –[ K ]→ S₂) →
-                     (` x) ⋯ ϕ ≡ `/id {{K}} (x &ₖ ϕ)
-          ⋯-id   : ∀ {{K : Kit _∋/⊢_}} → (t : S ⊢ s) →
-                     t ⋯ idₖ {{K}} ≡ t
+        field  
+          _⋯_    : ∀ ⦃ K : Kit _∋/⊢_ ⦄ → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
+          ⋯-var  : ∀ ⦃ K : Kit _∋/⊢_ ⦄ → (x : S₁ ∋ s) (ϕ : S₁ –[ K ]→ S₂) →
+                     (` x) ⋯ ϕ ≡ `/id ⦃ K ⦄ (x &ₖ ϕ)
+          ⋯-id   : ∀ ⦃ K : Kit _∋/⊢_ ⦄ → (t : S ⊢ s) →
+                     t ⋯ idₖ ⦃ K ⦄ ≡ t
         instance
           Kᵣ : Kit _∋_
           Kᵣ = record
@@ -136,7 +136,7 @@ module KitsWithSort (Sort : SORT) where
           Kₛ = record
             { id/`            = `_
             ; `/id            = λ t → t
-            ; wk′             = λ s′ t → t ⋯ (wkₖ {{Kᵣ}} s′)
+            ; wk′             = λ s′ t → t ⋯ (wkₖ ⦃ Kᵣ ⦄ s′)
             ; `/`-is-`        = λ x → refl
             ; id/`-injective  = `-injective
             ; `/id-injective  = λ eq → eq 
@@ -251,7 +251,7 @@ module KitsWithSort (Sort : SORT) where
               (((ϕ₁ ↑ₖ* S) ⨟ₖₖ (ϕ₂ ↑ₖ* S)) ↑ₖ s) sx x        ≡⟨ dist-↑-⨟ s (ϕ₁ ↑ₖ* S) (ϕ₂ ↑ₖ* S) sx x ⟩
               (((ϕ₁ ↑ₖ* S) ↑ₖ s) ⨟ₖₖ ((ϕ₂ ↑ₖ* S) ↑ₖ s)) sx x ≡⟨⟩
               ((ϕ₁ ↑ₖ* (s ∷ S)) ⨟ₖₖ (ϕ₂ ↑ₖ* (s ∷ S))) sx x ∎
-
+        
         _⨟[_]_  : ∀ {K₁ : Kit _∋/⊢₁_} {K₂ : Kit _∋/⊢₂_} {K₁⊔K₂ : Kit _∋/⊢_} →
                   S₁ –[ K₁ ]→ S₂ → ComposeKit K₁ K₂ K₁⊔K₂ →
                   S₂ –[ K₂ ]→ S₃ → S₁ –[ K₁⊔K₂ ]→ S₃
@@ -310,17 +310,24 @@ module KitsWithSort (Sort : SORT) where
                 ; &/⋯-⋯     = λ t ϕ → refl
                 ; &/⋯-wk-↑  = λ t ϕ → ⋯-↑-wk t ϕ _ }
           
-          _⨟ᵣᵣ_ : S₁ →ᵣ S₂ → S₂ →ᵣ S₃ → S₁ →ᵣ S₃
-          _⨟ᵣᵣ_ = _⨟ₖₖ_ 
+          opaque
+            unfolding all_kit_and_compose_definitions
 
-          _⨟ᵣₛ_ : S₁ →ᵣ S₂ → S₂ →ₛ S₃ → S₁ →ₛ S₃
-          _⨟ᵣₛ_ = _⨟ₖₖ_ 
+            import Data.Unit using (⊤; tt)
+            all_kit_and_instantiated_compose_definitions : Data.Unit.⊤
+            all_kit_and_instantiated_compose_definitions = Data.Unit.tt
 
-          _⨟ₛᵣ_ : S₁ →ₛ S₂ → S₂ →ᵣ S₃ → S₁ →ₛ S₃
-          _⨟ₛᵣ_ = _⨟ₖₖ_
-
-          _⨟ₛₛ_ : S₁ →ₛ S₂ → S₂ →ₛ S₃ → S₁ →ₛ S₃
-          _⨟ₛₛ_ = _⨟ₖₖ_
+            _⨟ᵣᵣ_ : S₁ →ᵣ S₂ → S₂ →ᵣ S₃ → S₁ →ᵣ S₃
+            _⨟ᵣᵣ_ = _⨟ₖₖ_ 
+  
+            _⨟ᵣₛ_ : S₁ →ᵣ S₂ → S₂ →ₛ S₃ → S₁ →ₛ S₃
+            _⨟ᵣₛ_ = _⨟ₖₖ_ 
+  
+            _⨟ₛᵣ_ : S₁ →ₛ S₂ → S₂ →ᵣ S₃ → S₁ →ₛ S₃
+            _⨟ₛᵣ_ = _⨟ₖₖ_
+  
+            _⨟ₛₛ_ : S₁ →ₛ S₂ → S₂ →ₛ S₃ → S₁ →ₛ S₃
+            _⨟ₛₛ_ = _⨟ₖₖ_
           
           opaque
             unfolding all_kit_and_compose_definitions

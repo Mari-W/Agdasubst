@@ -8,7 +8,7 @@
 
 \begin{document}
 
-\title{Agdasubst: Automated Equational Reasoning via Rewrite Rules for Substitutions over Multi-Sorted Syntaxes with Scoped Bindings}
+\title{Agdasubst: Automated Equational Reasoning for Substitutions over Multi-Sorted Syntaxes with Scoped Bindings}
 
 \author{Marius Weidner}
 \email{weidner@cs.uni-freiburg.de}
@@ -33,12 +33,67 @@
 }
 
 \begin{abstract}
-  yadda yadda
+
+  Working with substitutions for syntax with binders is a recurring aspect of
+  programming language formalization. However, defining and reasoning about
+  substitutions, renamings, and their associated laws is often repetitive and
+  tedious.
+
+  We present an Agda framework that automatically derives the substitution
+  infrastructure for intrinsically scoped, multi-sorted syntax with binders. From
+  a single syntax definition, our library derives renaming and substitution
+  operations along with corresponding equational laws.
+
+  Our approach is inspired by Autosubst 2 for Coq, which also derives equational
+  laws based on the confluent and terminating \(\sigma\)-calculus rewriting
+  system for terms with substitutions. We differ in three ways: we treat renaming
+  and substitution uniformly via a generic traversal based on McBride’s Kit
+  abstraction, derive equational laws using reflection instead of external code
+  generation, and use Agda’s \texttt{REWRITE} mechanism to embed suitable proven
+  equations as custom computation rules.
 \end{abstract}
 
 \maketitle
 
 \section{Introduction}\label{sec:introduction}
+
+Formalizing programming languages with binders requires careful treatment of
+variable binding, substitution, and renaming. While conceptually
+straightforward, these operations are notoriously tedious and repetitive to
+define and reason about.
+
+This work presents an Agda framework that automatically derives the
+substitution infrastructure and standard lemmas needed to work with
+intrinsically scoped syntax involving binders.
+
+Intrinsically scoped syntax encodes variable binding and scope information
+directly in the type of the syntax definition, unlike extrinsically scoped
+approaches, where well-formedness is enforced through additional extrinsic
+predicates on the syntax. It sits between extrinsically scoped syntax and
+intrinsically typed syntax (i.e.\ encode both scope and typing information in
+the type of the syntax), ensuring that terms are well scoped by construction
+without committing to the full complexity of typing.
+
+Given a syntax definition as an intrinsically scoped, multi-sorted data type,
+where all syntactic categories are encoded uniformly within a single indexed
+type, our library derives operations and lemmas for parallel renamings /
+substitutions, allowing multiple variables to be substituted simultaneously in
+a single traversal.
+
+Our approach is inspired by Autosubst 2, a library that solves the problem for
+de Bruijn representations in Coq. Like Autosubst, we derive equations inspired
+by the \(\sigma\)-calculus, a confluent and terminating rewriting system for
+terms with substitutions. However, unlike Autosubst, we make use of Agda’s
+\texttt{REWRITE} mechanism to embed selected equational lemmas as custom
+computation rules instead of proving a tactic based solver. This allows
+equational laws to be applied automatically during reduction.
+
+Another difference is that our system treats renaming and substitution
+uniformly using the Kit abstraction, originating from work by McBride. In this
+approach, renaming and substitution are instances of a single generic traversal
+function that pushes a mapping (from variables to variables or terms) through a
+term. This traversal is structurally recursive and guaranteed to preserve
+scope.
 
 \subsection*{Contributions}
 
@@ -46,9 +101,9 @@
   \item \cref{sec:multi} shows how to embed a suitable variant of the
         sigma calculus into Agda using rewrite rules, explained through the example of System F.
 
-  \item \cref{sec:agdasubst} provides an overview of \texttt{Agdasubst} along with examples, 
-        explaining how to automatically derive all relevant equations for intrinsically scoped, 
-        multi-sorted syntax using reflection~\cite{saffrich:LIPIcs.ITP.2024.32} 
+  \item \cref{sec:agdasubst} provides an overview of \texttt{Agdasubst} along with examples,
+        explaining how to automatically derive all relevant equations for intrinsically scoped,
+        multi-sorted syntax using reflection~\cite{saffrich:LIPIcs.ITP.2024.32}
         or generic syntax~\cite{allais2021typescopesafeuniverse}.
 
   \item In \cref{sec:intrinsic}, we investigate the intrinsically \emph{typed} setting.
@@ -66,9 +121,10 @@
         $\beta$-reduction rules.
   \item Explicit substitutions, in particular the $\sigma_{SP}$-calculus, a terminating
         and confluent rewrite system for terms with substitutions.
-  \item We present multi-sorted syntaxes and substitutions, along with abstractions over both, 
-        including generic scoped syntaxes~\cite{allais2021typescopesafeuniverse} and 
-        Kit abstractions that unify substitutions and renamings~\cite{stronglytyped,ren-sub}.
+  \item We present multi-sorted syntaxes and substitutions, along with abstractions
+        over both, including generic scoped
+        syntaxes~\cite{allais2021typescopesafeuniverse} and Kit abstractions that unify
+        substitutions and renamings~\cite{stronglytyped,ren-sub}.
 \end{itemize}
 
 \subsection{Agda and Its Ability to \AgdaPragma{REWRITE}}

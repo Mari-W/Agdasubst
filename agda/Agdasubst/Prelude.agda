@@ -9,5 +9,4 @@ module WithSort (Sort : SORT) where
 
   open import Kits
   open KitsWithSort Sort public
-
   

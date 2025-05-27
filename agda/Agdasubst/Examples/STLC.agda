@@ -21,29 +21,26 @@ data _⊢_ : SCOPED where
   _·_       : S ⊢ expr → S ⊢ expr → S ⊢ expr      
   _⇒_       : S ⊢ type → S ⊢ type → S ⊢ type 
 
-syn : Syntax 
-syn = record 
-  { _⊢_ = _⊢_ 
-  ; `_ = `_
-  ; `-injective = λ { refl → refl } 
-  }
+open import Derive
+
+unquoteDecl syn = deriveSyntax Sort _⊢_ `_ syn
   
 open Syntax syn hiding (_⊢_; `_)
 
 _⋯_ : ∀ ⦃ K : Kit _∋/⊢_ ⦄ → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
-(` x)           ⋯ ϕ = `/id (x &ₖ ϕ)
-(λx e)          ⋯ ϕ = λx (e ⋯ (ϕ ↑ₖ* _))
+(` x)           ⋯ ϕ = `/id (x & ϕ)
+(λx e)          ⋯ ϕ = λx (e ⋯ (ϕ ↑* _))
 (e₁ · e₂)       ⋯ ϕ = (e₁ ⋯ ϕ) · (e₂ ⋯ ϕ)
 (t₁ ⇒ t₂)       ⋯ ϕ = (t₁ ⋯ ϕ) ⇒ (t₂ ⋯ ϕ)
  
 opaque
   unfolding all_kit_definitions
     
-  ⋯-id : ∀ ⦃ K : Kit _∋/⊢_ ⦄ (t : S ⊢ s) → t ⋯ idₖ ⦃ K ⦄ ≡ t
+  ⋯-id : ∀ ⦃ K : Kit _∋/⊢_ ⦄ (t : S ⊢ s) → t ⋯ id ⦃ K ⦄ ≡ t
   ⋯-id ⦃ K ⦄ (` x)     = `/`-is-` ⦃ K ⦄ x
   ⋯-id (λx t)          = cong λx_ (
-    t ⋯ (idₖ ↑ₖ expr)  ≡⟨ cong (t ⋯_) (~-ext id↑~id) ⟩
-    t ⋯ idₖ            ≡⟨ ⋯-id t ⟩
+    t ⋯ (id ↑ expr)    ≡⟨ cong (t ⋯_) (~-ext id↑~id) ⟩
+    t ⋯ id             ≡⟨ ⋯-id t ⟩
     t                  ∎)
   ⋯-id (t₁ · t₂)       = cong₂ _·_ (⋯-id t₁) (⋯-id t₂)
   ⋯-id (t₁ ⇒ t₂)       = cong₂ _⇒_ (⋯-id t₁) (⋯-id t₂)
@@ -57,29 +54,43 @@ traversal = record
 
 open Traversal traversal hiding (_⋯_; ⋯-id; ⋯-var)
 
-⋯id : ⦃ K : Kit _∋/⊢_ ⦄ (T : S ⊢ s) → T ⋯ idₖ ⦃ K ⦄ ≡ T 
-⋯id _ = ⋯-id _ 
-
 opaque
   unfolding all_kit_and_compose_definitions
 
   ⋯-fusion :
     ∀ ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ K : Kit _∋/⊢_ ⦄
       ⦃ W₁ : WkKit K₁ ⦄ ⦃ C : ComposeKit K₁ K₂ K ⦄ 
-      (t : S₁ ⊢ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃)
-    → (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ t ⋯ (ϕ₁ ⨟[ C ] ϕ₂)
+      (t : S₁ ⊢ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) → 
+      (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ t ⋯ (ϕ₁ ⨟[ C ] ϕ₂)
   ⋯-fusion (` x)          ϕ₁ ϕ₂ = sym (&/⋯-⋯ (ϕ₁ _ x) ϕ₂)
   ⋯-fusion (λx t)         ϕ₁ ϕ₂ = cong λx_ (
-    (t ⋯ (ϕ₁ ↑ₖ expr)) ⋯ (ϕ₂ ↑ₖ expr)  ≡⟨ ⋯-fusion t (ϕ₁ ↑ₖ expr) (ϕ₂ ↑ₖ expr) ⟩
-    t ⋯ ((ϕ₁ ↑ₖ expr) ⨟ₖₖ (ϕ₂ ↑ₖ expr)) ≡⟨ cong (t ⋯_) (sym (~-ext (dist-↑-⨟ expr ϕ₁ ϕ₂))) ⟩
-    t ⋯ ((ϕ₁ ⨟ₖₖ ϕ₂) ↑ₖ expr)           ∎)
+    (t ⋯ (ϕ₁ ↑ expr)) ⋯ (ϕ₂ ↑ expr)  ≡⟨ ⋯-fusion t (ϕ₁ ↑ expr) (ϕ₂ ↑ expr) ⟩
+    t ⋯ ((ϕ₁ ↑ expr) ⨟ (ϕ₂ ↑ expr))   ≡⟨ cong (t ⋯_) (sym (~-ext (dist-↑-⨟ expr ϕ₁ ϕ₂))) ⟩
+    t ⋯ ((ϕ₁ ⨟ ϕ₂) ↑ expr)           ∎)
   ⋯-fusion (t₁ · t₂)      ϕ₁ ϕ₂ = cong₂ _·_  (⋯-fusion t₁ ϕ₁ ϕ₂) (⋯-fusion t₂ ϕ₁ ϕ₂)
   ⋯-fusion (t₁ ⇒ t₂)      ϕ₁ ϕ₂ = cong₂ _⇒_ (⋯-fusion t₁ ϕ₁ ϕ₂) (⋯-fusion t₂ ϕ₁ ϕ₂) 
 
-compose : ComposeTraversal
+compose : ComposeTraversal 
 compose = record { ⋯-fusion = ⋯-fusion }
 
+open ComposeTraversal compose hiding (⋯-fusion)
+
 open import SigmaCalculus
+
+⋯id : ⦃ K : Kit _∋/⊢_ ⦄ (T : S ⊢ s) → T ⋯ id ⦃ K ⦄ ≡ T 
+⋯id _ = ⋯-id _ 
+
+⋯-fusionᵣᵣ : (ρ₁ : S₁ →ᵣ S₂) (ρ₂ : S₂ →ᵣ S₃) (T : S₁ ⊢ s) → (T ⋯ ρ₁) ⋯ ρ₂ ≡ T ⋯ (ρ₁ ⨟ ρ₂)
+⋯-fusionᵣᵣ ρ₁ ρ₂ T = ⋯-fusion T ρ₁ ρ₂
+
+⋯-fusionᵣₛ : (ρ₁ : S₁ →ᵣ S₂) (σ₂ : S₂ →ₛ S₃) (T : S₁ ⊢ s) → (T ⋯ ρ₁) ⋯ σ₂ ≡ T ⋯ (ρ₁ ⨟ σ₂)
+⋯-fusionᵣₛ ρ₁ σ₂ T = ⋯-fusion T ρ₁ σ₂
+
+⋯-fusionₛᵣ : (σ₁ : S₁ →ₛ S₂) (ρ₂ : S₂ →ᵣ S₃) (T : S₁ ⊢ s) → (T ⋯ σ₁) ⋯ ρ₂ ≡ T ⋯ (σ₁ ⨟ ρ₂)
+⋯-fusionₛᵣ σ₁ ρ₂ T = ⋯-fusion T σ₁ ρ₂
+
+⋯-fusionₛₛ : (σ₁ : S₁ →ₛ S₂) (σ₂ : S₂ →ₛ S₃) (T : S₁ ⊢ s) → (T ⋯ σ₁) ⋯ σ₂ ≡ T ⋯ (σ₁ ⨟ σ₂)
+⋯-fusionₛₛ σ₁ σ₂ T = ⋯-fusion T σ₁ σ₂
 
 rules : Rules 
 rules = record 
@@ -91,8 +102,8 @@ rules = record
 open Rules rules
 
 {-# REWRITE 
-  &ᵣ-def₁ &ᵣ-def₂ idᵣ-def wkᵣ-def ∷ᵣ-def₁ ∷ᵣ-def₂ 
-  &ₛ-def₁ &ₛ-def₂ idₛ-def ∷ₛ-def₁ ∷ₛ-def₂
+  &-def₁ &-def₂ id-def ∷-def₁ ∷-def₂
+  wkᵣ-def
   ⨟ᵣᵣ-def ⨟ᵣₛ-def ⨟ₛᵣ-def ⨟ₛₛ-def
 
   left-idᵣᵣ right-idᵣᵣ left-idᵣₛ left-idₛᵣ right-idₛᵣ left-idₛₛ right-idₛₛ
@@ -101,10 +112,5 @@ open Rules rules
   η-idᵣ η-idₛ η-lawᵣ η-lawₛ
   distributivityᵣᵣ distributivityᵣₛ distributivityₛᵣ distributivityₛₛ
   ⋯id
-  ⋯-fusion
+  ⋯-fusionᵣᵣ ⋯-fusionᵣₛ ⋯-fusionₛᵣ ⋯-fusionₛₛ
 #-}
-
-test : (` x) ⋯ idₛ ≡ ` x
-test = {!   !}
--- idₛ
--- compositionalityᵣᵣ compositionalityᵣₛ compositionalityₛᵣ compositionalityₛₛ  

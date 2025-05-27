@@ -49,29 +49,29 @@ module GenericsWithSort (Sort : Mode → Set) where
    
     mutual
       _⋯_ : ∀ ⦃ K : Kit _∋/⊢_ ⦄ → Tm d S₁ s → S₁ →ₖ S₂ → Tm d S₂ s
-      (`var x)  ⋯ ϕ = `/id (x &ₖ ϕ)
+      (`var x)  ⋯ ϕ = `/id (x & ϕ)
       (`con e′) ⋯ ϕ = `con (e′ ⋯′ ϕ)
  
       _⋯′_ : ∀ ⦃ K : Kit _∋/⊢_ ⦄ → ⟦ d′ ⟧ (Tm d) S₁ s → S₁ →ₖ S₂ → ⟦ d′ ⟧ (Tm d) S₂ s
       _⋯′_ {d′ = `σ A d′}     (a , D′) ϕ = a , D′ ⋯′ ϕ
-      _⋯′_ {d′ = `X S′ M′ d′} (e , e′) ϕ = e ⋯ (ϕ ↑ₖ* S′) , e′ ⋯′ ϕ
+      _⋯′_ {d′ = `X S′ M′ d′} (e , e′) ϕ = e ⋯ (ϕ ↑* S′) , e′ ⋯′ ϕ
       _⋯′_ {d′ = `■ M′}       e        ϕ = e
    
     opaque 
       unfolding all_kit_definitions
             
       ⋯-var : ∀ ⦃ K : Kit _∋/⊢_ ⦄ → (x : S₁ ∋ s) (ϕ : S₁ →ₖ S₂) →
-                `/id (x &ₖ ϕ) ≡ `/id (x &ₖ ϕ)
+                `/id (x & ϕ) ≡ `/id (x & ϕ)
       ⋯-var x ϕ = refl
 
       mutual
         ⋯-id : ∀ ⦃ K : Kit _∋/⊢_ ⦄ → (t : Tm d S s) →
-                 (t ⋯ idₖ) ≡ t
+                 (t ⋯ id) ≡ t
         ⋯-id (`var x) = `/`-is-` x
         ⋯-id (`con e) = cong `con (⋯-id′ e)
  
         ⋯-id′ : ∀ ⦃ K : Kit _∋/⊢_ ⦄ {s : Sort m} → (t : ⟦ d′ ⟧ (Tm d) S s) →
-                (t ⋯′ idₖ) ≡ t
+                (t ⋯′ id) ≡ t
         ⋯-id′ {d′ = `σ A d′}     (a , D′)      = cong (a ,_) (⋯-id′ D′)
         ⋯-id′ {d′ = `X S′ M′ d′} (e , e′)      = cong₂ _,_ (trans (cong (e ⋯_) (~-ext (id↑*~id S′))) (⋯-id e)) (⋯-id′ e′)
         ⋯-id′ {d′ = `■ M′}       (refl , refl) = refl
@@ -91,16 +91,16 @@ module GenericsWithSort (Sort : Mode → Set) where
         ⋯-fusion  : ∀ {s : Sort m} ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ K : Kit _∋/⊢_ ⦄
                     ⦃ W₁ : WkKit K₁ ⦄ ⦃ C : ComposeKit K₁ K₂ K ⦄
                     (t : Tm d S₁ s) (ϕ₁ : S₁ →ₖ S₂) (ϕ₂ : S₂ →ₖ S₃) → 
-                    (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ t ⋯ (ϕ₁ ⨟ₖₖ ϕ₂)
+                    (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ t ⋯ (ϕ₁ ⨟ ϕ₂)
         ⋯-fusion (`var x)  ϕ₁ ϕ₂ = sym (&/⋯-⋯ (ϕ₁ _ x) ϕ₂)
         ⋯-fusion (`con e′) ϕ₁ ϕ₂ = cong `con (⋯-fusion′ e′ ϕ₁ ϕ₂)
 
         ⋯-fusion′  : ∀ {s : Sort m} ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ K : Kit _∋/⊢_ ⦄
                      ⦃ W₁ : WkKit K₁ ⦄ ⦃ C : ComposeKit K₁ K₂ K ⦄
                      (t : ⟦ d′ ⟧ (Tm d) S₁ s) (ϕ₁ : S₁ →ₖ S₂) (ϕ₂ : S₂ →ₖ S₃) → 
-                     (t ⋯′ ϕ₁) ⋯′ ϕ₂ ≡ t ⋯′ (ϕ₁ ⨟ₖₖ ϕ₂)
+                     (t ⋯′ ϕ₁) ⋯′ ϕ₂ ≡ t ⋯′ (ϕ₁ ⨟ ϕ₂)
         ⋯-fusion′ {d′ = `σ A d′}     (a , D′)      ϕ₁ ϕ₂ = cong (a ,_) (⋯-fusion′ D′ ϕ₁ ϕ₂)
-        ⋯-fusion′ {d′ = `X S′ M′ d′} (e₁ , e₂)     ϕ₁ ϕ₂ = cong₂ _,_ (trans (⋯-fusion e₁ (ϕ₁ ↑ₖ* S′) (ϕ₂ ↑ₖ* S′))
+        ⋯-fusion′ {d′ = `X S′ M′ d′} (e₁ , e₂)     ϕ₁ ϕ₂ = cong₂ _,_ (trans (⋯-fusion e₁ (ϕ₁ ↑* S′) (ϕ₂ ↑* S′))
           (cong (e₁ ⋯_) (sym (~-ext (dist-↑*-⨟ S′ ϕ₁ ϕ₂)))))
           (⋯-fusion′ e₂ ϕ₁ ϕ₂)
         ⋯-fusion′ {d′ = `■ M′}       (refl , refl) ϕ₁ ϕ₂ = refl

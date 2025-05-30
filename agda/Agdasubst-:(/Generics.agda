@@ -1,5 +1,6 @@
 -- Author: Hannes Saffrich
 -- Modified: Marius Weidner
+{-# OPTIONS --rewriting #-}
 module Generics where
 
 open import Data.List using (List; []; _∷_; _++_) public
@@ -54,7 +55,7 @@ module GenericsWithSort (Sort : Mode → Set) where
  
       _⋯′_ : ∀ ⦃ K : Kit _∋/⊢_ ⦄ → ⟦ d′ ⟧ (Tm d) S₁ s → S₁ →ₖ S₂ → ⟦ d′ ⟧ (Tm d) S₂ s
       _⋯′_ {d′ = `σ A d′}     (a , D′) ϕ = a , D′ ⋯′ ϕ
-      _⋯′_ {d′ = `X S′ M′ d′} (e , e′) ϕ = e ⋯ (ϕ ↑* S′) , e′ ⋯′ ϕ
+      _⋯′_ {d′ = `X S′ M′ d′} (e , e′) ϕ = e ⋯ (ϕ ↑ₖ* S′) , e′ ⋯′ ϕ
       _⋯′_ {d′ = `■ M′}       e        ϕ = e
    
     opaque 
@@ -73,7 +74,7 @@ module GenericsWithSort (Sort : Mode → Set) where
         ⋯-id′ : ∀ ⦃ K : Kit _∋/⊢_ ⦄ {s : Sort m} → (t : ⟦ d′ ⟧ (Tm d) S s) →
                 (t ⋯′ id) ≡ t
         ⋯-id′ {d′ = `σ A d′}     (a , D′)      = cong (a ,_) (⋯-id′ D′)
-        ⋯-id′ {d′ = `X S′ M′ d′} (e , e′)      = cong₂ _,_ (trans (cong (e ⋯_) (~-ext (id↑*~id S′))) (⋯-id e)) (⋯-id′ e′)
+        ⋯-id′ {d′ = `X S′ M′ d′} (e , e′)      = cong₂ _,_ (trans (cong (e ⋯_) (~-ext (id↑ₖ*~id S′))) (⋯-id e)) (⋯-id′ e′)
         ⋯-id′ {d′ = `■ M′}       (refl , refl) = refl
        
     traversal : Traversal
@@ -100,8 +101,8 @@ module GenericsWithSort (Sort : Mode → Set) where
                      (t : ⟦ d′ ⟧ (Tm d) S₁ s) (ϕ₁ : S₁ →ₖ S₂) (ϕ₂ : S₂ →ₖ S₃) → 
                      (t ⋯′ ϕ₁) ⋯′ ϕ₂ ≡ t ⋯′ (ϕ₁ ⨟ ϕ₂)
         ⋯-fusion′ {d′ = `σ A d′}     (a , D′)      ϕ₁ ϕ₂ = cong (a ,_) (⋯-fusion′ D′ ϕ₁ ϕ₂)
-        ⋯-fusion′ {d′ = `X S′ M′ d′} (e₁ , e₂)     ϕ₁ ϕ₂ = cong₂ _,_ (trans (⋯-fusion e₁ (ϕ₁ ↑* S′) (ϕ₂ ↑* S′))
-          (cong (e₁ ⋯_) (sym (~-ext (dist-↑*-⨟ S′ ϕ₁ ϕ₂)))))
+        ⋯-fusion′ {d′ = `X S′ M′ d′} (e₁ , e₂)     ϕ₁ ϕ₂ = cong₂ _,_ (trans (⋯-fusion e₁ (ϕ₁ ↑ₖ* S′) (ϕ₂ ↑ₖ* S′))
+          (cong (e₁ ⋯_) (sym (~-ext (dist-↑ₖ*-⨟ S′ ϕ₁ ϕ₂)))))
           (⋯-fusion′ e₂ ϕ₁ ϕ₂)
         ⋯-fusion′ {d′ = `■ M′}       (refl , refl) ϕ₁ ϕ₂ = refl
 

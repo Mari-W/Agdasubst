@@ -46,49 +46,8 @@ record Rules : Set₁ where
     ∷-def₂ : ⦃ K : Kit _∋/⊢_ ⦄ (x/t : S₂ ∋/⊢ s) (x' : S₁ ∋ s′) (ϕ : S₁ –[ K ]→ S₂) → suc x′ & (x/t ∙ ϕ) ≡ x′ & ϕ
     ∷-def₂ _ _ _ = refl
 
-    ↑ᵣ-def : (ρ : S₁ →ᵣ S₂) → ρ ↑ s ≡ zero ∙ (ρ ⨟ wkᵣ)
-    ↑ᵣ-def _ = refl
-
-    ↑ₛ-def : (σ : S₁ →ₛ S₂) → σ ↑ s ≡ (` zero) ∙ (σ ⨟ wkᵣ)
-    ↑ₛ-def _ = refl
-
-    -- Renaming Definitions
-    -- &ᵣ-def₁ : (ρ : S₁ →ᵣ S₂) → zero &ᵣ (x ∷ᵣ ρ)  ≡ x
-    -- &ᵣ-def₁ _ = refl
-
-    -- &ᵣ-def₂ : (ρ : S₁ →ᵣ S₂) → (suc x′) &ᵣ (x ∷ᵣ ρ) ≡ x′ &ᵣ ρ 
-    -- &ᵣ-def₂ _ = refl
-
-    -- idᵣ-def : (x : S ∋ s) → x &ᵣ idᵣ ≡ x
-    -- idᵣ-def _ = refl
-
     wkᵣ-def : (x : S ∋ s) → x & (wkᵣ {s = s′}) ≡ suc x
     wkᵣ-def _ = refl 
-
-    -- ∷ᵣ-def₁ : (x : S₂ ∋ s) (ρ : S₁ →ᵣ S₂) → zero &ᵣ (x ∷ᵣ ρ)  ≡ x
-    -- ∷ᵣ-def₁ _ _ = refl
-
-    -- ∷ᵣ-def₂ : (x : S₂ ∋ s) (x' : S₁ ∋ s′) (ρ : S₁ →ᵣ S₂) → suc x′ &ᵣ (x ∷ᵣ ρ) ≡ x′ &ᵣ ρ
-    -- ∷ᵣ-def₂ _ _ _ = refl
-
-    -- ↑ᵣ-def : (ρ : S₁ →ᵣ S₂) → ρ ↑ᵣ s ≡ zero ∷ᵣ (ρ ⨟ᵣᵣ wkᵣ s)
-    -- ↑ᵣ-def _ = refl
-
-    -- Substitution Primitives
-    -- &ₛ-def₁ : (σ : S₁ →ₛ S₂) → zero &ₛ (T ∷ₛ σ) ≡ T
-    -- &ₛ-def₁ _ = refl
-
-    -- &ₛ-def₂ : (σ : S₁ →ₛ S₂) → suc x &ₛ (T ∷ₛ σ)  ≡ x &ₛ σ 
-    -- &ₛ-def₂ _ = refl
-
-    -- idₛ-def : (x : S ∋ s) → x &ₛ idₛ ≡ ` x
-    -- idₛ-def _ = refl
-
-    -- ∷ₛ-def₁ : (T : S₂ ⊢ s) (σ : S₁ →ₛ S₂) → zero &ₛ (T ∷ₛ σ) ≡ T
-    -- ∷ₛ-def₁ _ _ = refl
-
-    -- ∷ₛ-def₂ : (T : S₂ ⊢ s) (x : S₁ ∋ s′) (σ : S₁ →ₛ S₂) → suc x &ₛ (T ∷ₛ σ) ≡ x &ₛ σ 
-    -- ∷ₛ-def₂ _ _ _ = refl
 
     -- Forward Composition Primitves
     ⨟ᵣᵣ-def : (ρ₁ : S₁ →ᵣ S₂) (ρ₂ : S₂ →ᵣ S₃) (x : S₁ ∋ s) → x & (ρ₁ ⨟ ρ₂) ≡ (x & ρ₁) & ρ₂
@@ -104,28 +63,16 @@ record Rules : Set₁ where
     ⨟ₛₛ-def _ _ _ = refl
     
     -- Interaction Laws
-    interactᵣ : (x : S₂ ∋ s) (ρ : S₁ →ᵣ S₂) → wkᵣ ⨟ (x ∙ ρ) ≡ ρ 
-    interactᵣ _ _ = refl
-    
-    interactₛ : (T : S₂ ⊢ s) (σ : S₁ →ₛ S₂) → wkᵣ ⨟ (T ∙ σ) ≡ σ
-    interactₛ _ _ = refl
-
+    interact : ⦃ K : Kit _∋/⊢_ ⦄ (x/t : S₂ ∋/⊢ s) (ϕ : S₁ –[ K ]→ S₂) → wkᵣ ⨟ (x/t ∙ ϕ) ≡ ϕ 
+    interact _ _ = refl
 
     -- Sequence Eta Laws
-    η-idᵣ : _∙_ {s = s} {S₁ = S} zero wkᵣ ≡ id 
-    η-idᵣ = ~-ext λ { _ zero → refl
+    η-id : ⦃ K : Kit _∋/⊢_ ⦄ → _∙_ {s = s} {S₁ = S} (id/` zero) wkᵣ ≡ id 
+    η-id = ~-ext λ { _ zero → refl
                     ; _ (suc x) → refl } 
-
-    η-idₛ : _∙_ {s = s} {S₁ = S} (` zero) (wkᵣ ⨟ id) ≡ id
-    η-idₛ = ~-ext λ { _ zero → refl
-                    ; _ (suc x) → refl } 
-                    
-    η-lawᵣ : (ρ : (s ∷ S₁) →ᵣ S₂) → (zero & ρ) ∙ (wkᵣ ⨟ ρ) ≡ ρ
-    η-lawᵣ _ = ~-ext λ { _ zero → refl
-                       ; _ (suc x) → refl } 
-
-    η-lawₛ : (σ : (s ∷ S₁) →ₛ S₂) → (zero & σ) ∙ (wkᵣ ⨟ σ) ≡ σ
-    η-lawₛ _ = ~-ext λ { _ zero → refl
+                
+    η-law : ⦃ K : Kit _∋/⊢_ ⦄ (ϕ : (s ∷ S₁) –[ K ]→ S₂) → (zero & ϕ) ∙ (wkᵣ ⨟ ϕ) ≡ ϕ
+    η-law _ = ~-ext λ { _ zero → refl
                        ; _ (suc x) → refl } 
 
     -- Distributivity Laws
@@ -143,14 +90,7 @@ record Rules : Set₁ where
                                      ; _ (suc x) → refl }    
 
     -- Identity Application Laws
-    -- ⋯id : ⦃ K : Kit _∋/⊢_ ⦄ (T : S ⊢ s) → T ⋯ id ⦃ K ⦄ ≡ T 
-    -- ⋯id _ = ⋯-id _  
-
-    -- ⋯idᵣ : (T : S ⊢ s) → T ⋯ᵣ idᵣ ≡ T 
-    -- ⋯idᵣ _ = ⋯-id _ 
-
-    -- ⋯idₛ : (T : S ⊢ s) → T ⋯ₛ idₛ ≡ T 
-    -- ⋯idₛ _ = ⋯-id _
+    -- needs to be derived for syntax 
 
     -- Identity Composition Laws  
     left-idᵣᵣ : (ρ : S₁ →ᵣ S₂) → idᵣ ⨟ ρ ≡ ρ 
@@ -175,17 +115,7 @@ record Rules : Set₁ where
     right-idₛₛ _ = ~-ext λ _ _ → ⋯-id _
 
     -- Compositionality Laws
-    -- compositionalityᵣᵣ : (ρ₁ : S₁ →ᵣ S₂) (ρ₂ : S₂ →ᵣ S₃) (T : S₁ ⊢ s) → (T ⋯ᵣ ρ₁) ⋯ᵣ ρ₂ ≡ T ⋯ᵣ (ρ₁ ⨟ᵣᵣ ρ₂)
-    -- compositionalityᵣᵣ _ _ _ = ⋯-fusion _ _ _
-
-    -- compositionalityᵣₛ : (ρ₁ : S₁ →ᵣ S₂) (σ₂ : S₂ →ₛ S₃) (T : S₁ ⊢ s) → (T ⋯ᵣ ρ₁) ⋯ₛ σ₂ ≡ T ⋯ₛ (ρ₁ ⨟ᵣₛ σ₂)
-    -- compositionalityᵣₛ _ _ _ = ⋯-fusion _ _ _
-
-    -- compositionalityₛᵣ : (σ₁ : S₁ →ₛ S₂) (ρ₂ : S₂ →ᵣ S₃) (T : S₁ ⊢ s) → (T ⋯ₛ σ₁) ⋯ᵣ ρ₂ ≡ T ⋯ₛ (σ₁ ⨟ₛᵣ ρ₂)
-    -- compositionalityₛᵣ _ _ _ = ⋯-fusion _ _ _
-
-    -- compositionalityₛₛ : (σ₁ : S₁ →ₛ S₂) (σ₂ : S₂ →ₛ S₃) (T : S₁ ⊢ s) → (T ⋯ₛ σ₁) ⋯ₛ σ₂ ≡ T ⋯ₛ (σ₁ ⨟ₛₛ σ₂)
-    -- compositionalityₛₛ _ _ _ = ⋯-fusion _ _ _
+    -- needs to be derived for syntax 
  
     -- Associativity Laws 
     associativityᵣᵣᵣ : (ρ₁ : S₁ →ᵣ S₂) (ρ₂ : S₂ →ᵣ S₃) (ρ₃ : S₃ →ᵣ S₄) → (ρ₁ ⨟ ρ₂) ⨟ ρ₃ ≡ ρ₁ ⨟ (ρ₂ ⨟ ρ₃)

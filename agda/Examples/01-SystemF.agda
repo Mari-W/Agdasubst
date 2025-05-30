@@ -77,14 +77,14 @@ opaque
   _⨟ᵣᵣ_ : S₁ →ᵣ S₂ → S₂ →ᵣ S₃ → S₁ →ᵣ S₃
   (ρ₁ ⨟ᵣᵣ ρ₂) _ x = ρ₂ _ (ρ₁ _ x)
 
-_↑ᵣ_ : S₁ →ᵣ S₂ → (s : Sort Var) → (s ∷ S₁) →ᵣ (s ∷ S₂)
-ρ ↑ᵣ _ = here refl ∷ᵣ (ρ ⨟ᵣᵣ wkᵣ)
+_↑ₖᵣ_ : S₁ →ᵣ S₂ → (s : Sort Var) → (s ∷ S₁) →ᵣ (s ∷ S₂)
+ρ ↑ₖᵣ _ = here refl ∷ᵣ (ρ ⨟ᵣᵣ wkᵣ)
   
 _⋯ᵣ_ : S₁ ⊢ s → S₁ →ᵣ S₂ → S₂ ⊢ s
 (` x)         ⋯ᵣ ρ = ` (ρ ⍟ᵣ x)
-(λx e)        ⋯ᵣ ρ = λx (e ⋯ᵣ (ρ ↑ᵣ _))
-(Λα e)        ⋯ᵣ ρ = Λα (e ⋯ᵣ (ρ ↑ᵣ _))
-(∀[α∶ k ] t)  ⋯ᵣ ρ = ∀[α∶ k ⋯ᵣ ρ ] (t ⋯ᵣ (ρ ↑ᵣ _))
+(λx e)        ⋯ᵣ ρ = λx (e ⋯ᵣ (ρ ↑ₖᵣ _))
+(Λα e)        ⋯ᵣ ρ = Λα (e ⋯ᵣ (ρ ↑ₖᵣ _))
+(∀[α∶ k ] t)  ⋯ᵣ ρ = ∀[α∶ k ⋯ᵣ ρ ] (t ⋯ᵣ (ρ ↑ₖᵣ _))
 (e₁ · e₂)     ⋯ᵣ ρ = (e₁ ⋯ᵣ ρ) · (e₂ ⋯ᵣ ρ)
 (e ∙ t)       ⋯ᵣ ρ = (e ⋯ᵣ ρ) ∙ (t ⋯ᵣ ρ)
 (t₁ ⇒ t₂)     ⋯ᵣ ρ = (t₁ ⋯ᵣ ρ) ⇒ (t₂ ⋯ᵣ ρ)
@@ -115,14 +115,14 @@ opaque
   _⨟ₛᵣ_ : S₁ →ₛ S₂ → S₂ →ᵣ S₃ → S₁ →ₛ S₃
   (σ₁ ⨟ₛᵣ ρ₂) _ x = (σ₁ _ x) ⋯ᵣ ρ₂
 
-_↑ₛ_ : S₁ →ₛ S₂ → (s : Sort Var) → (s ∷ S₁) →ₛ (s ∷ S₂)
-(σ ↑ₛ _) = (` (here refl)) ∷ₛ (σ ⨟ₛᵣ wkᵣ)
+_↑ₖₛ_ : S₁ →ₛ S₂ → (s : Sort Var) → (s ∷ S₁) →ₛ (s ∷ S₂)
+(σ ↑ₖₛ _) = (` (here refl)) ∷ₛ (σ ⨟ₛᵣ wkᵣ)
 
 _⋯ₛ_ : S₁ ⊢ s → S₁ →ₛ S₂ → S₂ ⊢ s
 (` x)         ⋯ₛ σ = (σ ⍟ₛ x)
-(λx e)        ⋯ₛ σ = λx (e ⋯ₛ (σ ↑ₛ _))
-(Λα e)        ⋯ₛ σ = Λα (e ⋯ₛ (σ ↑ₛ _))
-(∀[α∶ k ] t)  ⋯ₛ σ = ∀[α∶ k ⋯ₛ σ ] (t ⋯ₛ (σ ↑ₛ _))
+(λx e)        ⋯ₛ σ = λx (e ⋯ₛ (σ ↑ₖₛ _))
+(Λα e)        ⋯ₛ σ = Λα (e ⋯ₛ (σ ↑ₖₛ _))
+(∀[α∶ k ] t)  ⋯ₛ σ = ∀[α∶ k ⋯ₛ σ ] (t ⋯ₛ (σ ↑ₖₛ _))
 (e₁ · e₂)     ⋯ₛ σ = (e₁ ⋯ₛ σ) · (e₂ ⋯ₛ σ)
 (e ∙ t)       ⋯ₛ σ = (e ⋯ₛ σ) ∙ (t ⋯ₛ σ)
 (t₁ ⇒ t₂)     ⋯ₛ σ = (t₁ ⋯ₛ σ) ⇒ (t₂ ⋯ₛ σ)
@@ -272,9 +272,9 @@ opaque
   -- Compositionality Laws
   compositionalityᵣᵣ : (ρ₁ : S₁ →ᵣ S₂) (ρ₂ : S₂ →ᵣ S₃) (T : S₁ ⊢ s) → (T ⋯ᵣ ρ₁) ⋯ᵣ ρ₂ ≡ T ⋯ᵣ (ρ₁ ⨟ᵣᵣ ρ₂)
   compositionalityᵣᵣ ρ₁ ρ₂ (` x)        = refl
-  compositionalityᵣᵣ ρ₁ ρ₂ (λx e)       = cong λx_ (trans (compositionalityᵣᵣ (ρ₁ ↑ᵣ _) (ρ₂ ↑ᵣ _) e) (cong (e ⋯ᵣ_) (distributivityᵣᵣ _ _ (ρ₂ ↑ᵣ _))))
-  compositionalityᵣᵣ ρ₁ ρ₂ (Λα e)       = cong Λα_ (trans (compositionalityᵣᵣ (ρ₁ ↑ᵣ _) (ρ₂ ↑ᵣ _) e) (cong (e ⋯ᵣ_) (distributivityᵣᵣ _ _ (ρ₂ ↑ᵣ _))))
-  compositionalityᵣᵣ ρ₁ ρ₂ (∀[α∶ k ] t) = cong₂ ∀[α∶_]_ (compositionalityᵣᵣ _ _ k) (trans (compositionalityᵣᵣ (ρ₁ ↑ᵣ _) (ρ₂ ↑ᵣ _) t) (cong (t ⋯ᵣ_) (distributivityᵣᵣ _ _ (ρ₂ ↑ᵣ _))))
+  compositionalityᵣᵣ ρ₁ ρ₂ (λx e)       = cong λx_ (trans (compositionalityᵣᵣ (ρ₁ ↑ₖᵣ _) (ρ₂ ↑ₖᵣ _) e) (cong (e ⋯ᵣ_) (distributivityᵣᵣ _ _ (ρ₂ ↑ₖᵣ _))))
+  compositionalityᵣᵣ ρ₁ ρ₂ (Λα e)       = cong Λα_ (trans (compositionalityᵣᵣ (ρ₁ ↑ₖᵣ _) (ρ₂ ↑ₖᵣ _) e) (cong (e ⋯ᵣ_) (distributivityᵣᵣ _ _ (ρ₂ ↑ₖᵣ _))))
+  compositionalityᵣᵣ ρ₁ ρ₂ (∀[α∶ k ] t) = cong₂ ∀[α∶_]_ (compositionalityᵣᵣ _ _ k) (trans (compositionalityᵣᵣ (ρ₁ ↑ₖᵣ _) (ρ₂ ↑ₖᵣ _) t) (cong (t ⋯ᵣ_) (distributivityᵣᵣ _ _ (ρ₂ ↑ₖᵣ _))))
   compositionalityᵣᵣ ρ₁ ρ₂ (e₁ · e₂)    = cong₂ _·_ (compositionalityᵣᵣ _ _ e₁)  (compositionalityᵣᵣ _ _ e₂)
   compositionalityᵣᵣ ρ₁ ρ₂ (e ∙ t)      = cong₂ _∙_ (compositionalityᵣᵣ _ _ e)  (compositionalityᵣᵣ _ _ t)
   compositionalityᵣᵣ ρ₁ ρ₂ (t₁ ⇒ t₂)    = cong₂ _⇒_ (compositionalityᵣᵣ _ _ t₁)  (compositionalityᵣᵣ _ _ t₂)
@@ -282,9 +282,9 @@ opaque
   
   compositionalityᵣₛ : (ρ₁ : S₁ →ᵣ S₂) (σ₂ : S₂ →ₛ S₃) (T : S₁ ⊢ s) → (T ⋯ᵣ ρ₁) ⋯ₛ σ₂ ≡ T ⋯ₛ (ρ₁ ⨟ᵣₛ σ₂)
   compositionalityᵣₛ ρ₁ σ₂ (` x)        = refl
-  compositionalityᵣₛ ρ₁ σ₂ (λx e)       = cong λx_ (trans (compositionalityᵣₛ (ρ₁ ↑ᵣ _) (σ₂ ↑ₛ _) e) (cong (e ⋯ₛ_) (distributivityᵣₛ _ _ (σ₂ ↑ₛ _))))
-  compositionalityᵣₛ ρ₁ σ₂ (Λα e)       = cong Λα_ (trans (compositionalityᵣₛ (ρ₁ ↑ᵣ _) (σ₂ ↑ₛ _) e) (cong (e ⋯ₛ_) (distributivityᵣₛ _ _ (σ₂ ↑ₛ _))))
-  compositionalityᵣₛ ρ₁ σ₂ (∀[α∶ k ] t) = cong₂ ∀[α∶_]_ (compositionalityᵣₛ _ _ k) (trans (compositionalityᵣₛ (ρ₁ ↑ᵣ _) (σ₂ ↑ₛ _) t) (cong (t ⋯ₛ_) (distributivityᵣₛ _ _ (σ₂ ↑ₛ _))))
+  compositionalityᵣₛ ρ₁ σ₂ (λx e)       = cong λx_ (trans (compositionalityᵣₛ (ρ₁ ↑ₖᵣ _) (σ₂ ↑ₖₛ _) e) (cong (e ⋯ₛ_) (distributivityᵣₛ _ _ (σ₂ ↑ₖₛ _))))
+  compositionalityᵣₛ ρ₁ σ₂ (Λα e)       = cong Λα_ (trans (compositionalityᵣₛ (ρ₁ ↑ₖᵣ _) (σ₂ ↑ₖₛ _) e) (cong (e ⋯ₛ_) (distributivityᵣₛ _ _ (σ₂ ↑ₖₛ _))))
+  compositionalityᵣₛ ρ₁ σ₂ (∀[α∶ k ] t) = cong₂ ∀[α∶_]_ (compositionalityᵣₛ _ _ k) (trans (compositionalityᵣₛ (ρ₁ ↑ₖᵣ _) (σ₂ ↑ₖₛ _) t) (cong (t ⋯ₛ_) (distributivityᵣₛ _ _ (σ₂ ↑ₖₛ _))))
   compositionalityᵣₛ ρ₁ σ₂ (e₁ · e₂)    = cong₂ _·_ (compositionalityᵣₛ _ _ e₁)  (compositionalityᵣₛ _ _ e₂)
   compositionalityᵣₛ ρ₁ σ₂ (e ∙ t)      = cong₂ _∙_ (compositionalityᵣₛ _ _ e)  (compositionalityᵣₛ _ _ t)
   compositionalityᵣₛ ρ₁ σ₂ (t₁ ⇒ t₂)    = cong₂ _⇒_ (compositionalityᵣₛ _ _ t₁)  (compositionalityᵣₛ _ _ t₂)
@@ -292,9 +292,9 @@ opaque
   
   compositionalityₛᵣ : (σ₁ : S₁ →ₛ S₂) (ρ₂ : S₂ →ᵣ S₃) (T : S₁ ⊢ s) → (T ⋯ₛ σ₁) ⋯ᵣ ρ₂ ≡ T ⋯ₛ (σ₁ ⨟ₛᵣ ρ₂)
   compositionalityₛᵣ σ₁ ρ₂ (` x)        = refl
-  compositionalityₛᵣ σ₁ ρ₂ (λx e)       = cong λx_ (trans (compositionalityₛᵣ (σ₁ ↑ₛ _) (ρ₂ ↑ᵣ _) e) (cong (e ⋯ₛ_) (fun-ext λ _ → fun-ext λ { (here refl) → refl; (there x) → trans (compositionalityᵣᵣ _ _ _) (sym (compositionalityᵣᵣ _ _ _)) })))
-  compositionalityₛᵣ σ₁ ρ₂ (Λα e)       = cong Λα_ (trans (compositionalityₛᵣ (σ₁ ↑ₛ _) (ρ₂ ↑ᵣ _) e) (cong (e ⋯ₛ_) (fun-ext λ _ → fun-ext λ { (here refl) → refl; (there x) → trans (compositionalityᵣᵣ _ _ _) (sym (compositionalityᵣᵣ _ _ _)) })))
-  compositionalityₛᵣ σ₁ ρ₂ (∀[α∶ k ] t) = cong₂ ∀[α∶_]_ (compositionalityₛᵣ _ _ k) (trans (compositionalityₛᵣ (σ₁ ↑ₛ _) (ρ₂ ↑ᵣ _) t) (cong (t ⋯ₛ_) (fun-ext λ _ → fun-ext λ { (here refl) → refl; (there x) → trans (compositionalityᵣᵣ _ _ _) (sym (compositionalityᵣᵣ _ _ _)) })))
+  compositionalityₛᵣ σ₁ ρ₂ (λx e)       = cong λx_ (trans (compositionalityₛᵣ (σ₁ ↑ₖₛ _) (ρ₂ ↑ₖᵣ _) e) (cong (e ⋯ₛ_) (fun-ext λ _ → fun-ext λ { (here refl) → refl; (there x) → trans (compositionalityᵣᵣ _ _ _) (sym (compositionalityᵣᵣ _ _ _)) })))
+  compositionalityₛᵣ σ₁ ρ₂ (Λα e)       = cong Λα_ (trans (compositionalityₛᵣ (σ₁ ↑ₖₛ _) (ρ₂ ↑ₖᵣ _) e) (cong (e ⋯ₛ_) (fun-ext λ _ → fun-ext λ { (here refl) → refl; (there x) → trans (compositionalityᵣᵣ _ _ _) (sym (compositionalityᵣᵣ _ _ _)) })))
+  compositionalityₛᵣ σ₁ ρ₂ (∀[α∶ k ] t) = cong₂ ∀[α∶_]_ (compositionalityₛᵣ _ _ k) (trans (compositionalityₛᵣ (σ₁ ↑ₖₛ _) (ρ₂ ↑ₖᵣ _) t) (cong (t ⋯ₛ_) (fun-ext λ _ → fun-ext λ { (here refl) → refl; (there x) → trans (compositionalityᵣᵣ _ _ _) (sym (compositionalityᵣᵣ _ _ _)) })))
   compositionalityₛᵣ σ₁ ρ₂ (e₁ · e₂)    = cong₂ _·_ (compositionalityₛᵣ _ _ e₁)  (compositionalityₛᵣ _ _ e₂)
   compositionalityₛᵣ σ₁ ρ₂ (e ∙ t)      = cong₂ _∙_ (compositionalityₛᵣ _ _ e)  (compositionalityₛᵣ _ _ t)
   compositionalityₛᵣ σ₁ ρ₂ (t₁ ⇒ t₂)    = cong₂ _⇒_ (compositionalityₛᵣ _ _ t₁)  (compositionalityₛᵣ _ _ t₂)
@@ -302,9 +302,9 @@ opaque
   
   compositionalityₛₛ : (σ₁ : S₁ →ₛ S₂) (σ₂ : S₂ →ₛ S₃) (T : S₁ ⊢ s) → (T ⋯ₛ σ₁) ⋯ₛ σ₂ ≡ T ⋯ₛ (σ₁ ⨟ₛₛ σ₂)
   compositionalityₛₛ σ₁ σ₂ (` x)        = refl
-  compositionalityₛₛ σ₁ σ₂ (λx e)       = cong λx_ (trans (compositionalityₛₛ (σ₁ ↑ₛ _) (σ₂ ↑ₛ _) e) (cong (e ⋯ₛ_) (fun-ext λ _ → fun-ext λ { (here refl) → refl; (there x) → trans (compositionalityᵣₛ _ _ (σ₁ _ x)) (sym (compositionalityₛᵣ _ _ (σ₁ _ x))) })))
-  compositionalityₛₛ σ₁ σ₂ (Λα e)       = cong Λα_ (trans (compositionalityₛₛ (σ₁ ↑ₛ _) (σ₂ ↑ₛ _) e) (cong (e ⋯ₛ_) (fun-ext λ _ → fun-ext λ { (here refl) → refl; (there x) → trans (compositionalityᵣₛ _ _ (σ₁ _ x)) (sym (compositionalityₛᵣ _ _ (σ₁ _ x))) })))
-  compositionalityₛₛ σ₁ σ₂ (∀[α∶ k ] t) = cong₂ ∀[α∶_]_ (compositionalityₛₛ _ _ k) (trans (compositionalityₛₛ (σ₁ ↑ₛ _) (σ₂ ↑ₛ _) t) (cong (t ⋯ₛ_) (fun-ext λ _ → fun-ext λ { (here refl) → refl; (there x) → trans (compositionalityᵣₛ _ _ (σ₁ _ x)) (sym (compositionalityₛᵣ _ _ (σ₁ _ x))) })))
+  compositionalityₛₛ σ₁ σ₂ (λx e)       = cong λx_ (trans (compositionalityₛₛ (σ₁ ↑ₖₛ _) (σ₂ ↑ₖₛ _) e) (cong (e ⋯ₛ_) (fun-ext λ _ → fun-ext λ { (here refl) → refl; (there x) → trans (compositionalityᵣₛ _ _ (σ₁ _ x)) (sym (compositionalityₛᵣ _ _ (σ₁ _ x))) })))
+  compositionalityₛₛ σ₁ σ₂ (Λα e)       = cong Λα_ (trans (compositionalityₛₛ (σ₁ ↑ₖₛ _) (σ₂ ↑ₖₛ _) e) (cong (e ⋯ₛ_) (fun-ext λ _ → fun-ext λ { (here refl) → refl; (there x) → trans (compositionalityᵣₛ _ _ (σ₁ _ x)) (sym (compositionalityₛᵣ _ _ (σ₁ _ x))) })))
+  compositionalityₛₛ σ₁ σ₂ (∀[α∶ k ] t) = cong₂ ∀[α∶_]_ (compositionalityₛₛ _ _ k) (trans (compositionalityₛₛ (σ₁ ↑ₖₛ _) (σ₂ ↑ₖₛ _) t) (cong (t ⋯ₛ_) (fun-ext λ _ → fun-ext λ { (here refl) → refl; (there x) → trans (compositionalityᵣₛ _ _ (σ₁ _ x)) (sym (compositionalityₛᵣ _ _ (σ₁ _ x))) })))
   compositionalityₛₛ σ₁ σ₂ (e₁ · e₂)    = cong₂ _·_ (compositionalityₛₛ _ _ e₁)  (compositionalityₛₛ _ _ e₂)
   compositionalityₛₛ σ₁ σ₂ (e ∙ t)      = cong₂ _∙_ (compositionalityₛₛ _ _ e)  (compositionalityₛₛ _ _ t)
   compositionalityₛₛ σ₁ σ₂ (t₁ ⇒ t₂)    = cong₂ _⇒_ (compositionalityₛₛ _ _ t₁)  (compositionalityₛₛ _ _ t₂)
@@ -462,37 +462,37 @@ data _↪_ : S ⊢ expr → S ⊢ expr → Set where
 ⊢wkᵣ : ∀ {s' : Sort st} {s : Sort Var} (Γ : Ctx S) (x : s ∈ S) T (T' : S ∶⊢ s') → x ∶ T ∈ Γ → (there x) ∶ (wk T) ∈ (Γ ، T')
 ⊢wkᵣ _ _ _ _ refl = refl
 
-⊢↑ᵣ : ρ ∶ Γ₁ →ᵣ Γ₂ → (T : S₁ ∶⊢ s) → (ρ ↑ᵣ s) ∶ Γ₁ ، T →ᵣ (Γ₂ ، (T ⋯ᵣ ρ))
-⊢↑ᵣ ⊢ρ T _ (here refl) _ refl = refl
-⊢↑ᵣ {ρ = ρ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} ⊢ρ T _ (there x) _ refl =  ⊢wkᵣ Γ₂ (ρ ⍟ᵣ x) (wk-drop-∈ x (Γ₁ _ x) ⋯ᵣ ρ) (T ⋯ᵣ ρ) (⊢ρ _ x _ refl)
+⊢↑ₖᵣ : ρ ∶ Γ₁ →ᵣ Γ₂ → (T : S₁ ∶⊢ s) → (ρ ↑ₖᵣ s) ∶ Γ₁ ، T →ᵣ (Γ₂ ، (T ⋯ᵣ ρ))
+⊢↑ₖᵣ ⊢ρ T _ (here refl) _ refl = refl
+⊢↑ₖᵣ {ρ = ρ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} ⊢ρ T _ (there x) _ refl =  ⊢wkᵣ Γ₂ (ρ ⍟ᵣ x) (wk-drop-∈ x (Γ₁ _ x) ⋯ᵣ ρ) (T ⋯ᵣ ρ) (⊢ρ _ x _ refl)
 
 ⊢ρ-preserves : ∀ {t : S₁ ⊢ s} {T : S₁ ∶⊢ s} →
   ρ ∶ Γ₁ →ᵣ Γ₂ →
   Γ₁ ⊢ t ∶ T →
   Γ₂ ⊢ (t ⋯ᵣ ρ) ∶ (T ⋯ᵣ ρ)
 ⊢ρ-preserves ⊢ρ (⊢` ⊢x)        = ⊢` (⊢ρ _ _ _ ⊢x) 
-⊢ρ-preserves ⊢ρ (⊢λ ⊢e)        = ⊢λ (⊢ρ-preserves (⊢↑ᵣ ⊢ρ _) ⊢e)
-⊢ρ-preserves ⊢ρ (⊢Λ ⊢e)        = ⊢Λ ((⊢ρ-preserves (⊢↑ᵣ ⊢ρ _) ⊢e))
+⊢ρ-preserves ⊢ρ (⊢λ ⊢e)        = ⊢λ (⊢ρ-preserves (⊢↑ₖᵣ ⊢ρ _) ⊢e)
+⊢ρ-preserves ⊢ρ (⊢Λ ⊢e)        = ⊢Λ ((⊢ρ-preserves (⊢↑ₖᵣ ⊢ρ _) ⊢e))
 ⊢ρ-preserves ⊢ρ (⊢· ⊢e₁ ⊢e₂)   = ⊢· (⊢ρ-preserves ⊢ρ ⊢e₁) (⊢ρ-preserves ⊢ρ ⊢e₂)
-⊢ρ-preserves ⊢ρ (⊢∙ ⊢e ⊢t ⊢t') = ⊢∙ (⊢ρ-preserves ⊢ρ ⊢e) (⊢ρ-preserves ⊢ρ ⊢t) ((⊢ρ-preserves (⊢↑ᵣ ⊢ρ _) ⊢t'))
+⊢ρ-preserves ⊢ρ (⊢∙ ⊢e ⊢t ⊢t') = ⊢∙ (⊢ρ-preserves ⊢ρ ⊢e) (⊢ρ-preserves ⊢ρ ⊢t) ((⊢ρ-preserves (⊢↑ₖᵣ ⊢ρ _) ⊢t'))
 ⊢ρ-preserves ⊢ρ ⊢★             = ⊢★
 
 ⊢wkₛ : ∀ (Γ : Ctx S) (t : S ⊢ s) (T : S ∶⊢ s) (T' : S ∶⊢ s') → Γ ⊢ t ∶ T → (Γ ، T') ⊢ wk t ∶ wk T 
 ⊢wkₛ Γ _ _ T' ⊢T = ⊢ρ-preserves (λ s x T ⊢x → ⊢wkᵣ Γ x T T' ⊢x) ⊢T
 
-⊢↑ₛ : σ ∶ Γ₁ →ₛ Γ₂ → (T : S ∶⊢ s) → (σ ↑ₛ s) ∶ Γ₁ ، T →ₛ (Γ₂ ، (T ⋯ₛ σ))
-⊢↑ₛ ⊢σ T _ (here refl) _ refl = ⊢` refl
-⊢↑ₛ {σ = σ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} ⊢σ T _ (there x) _ refl = ⊢wkₛ Γ₂ (σ ⍟ₛ x) (wk-drop-∈ x (Γ₁ _ x) ⋯ₛ σ) (T ⋯ₛ σ) (⊢σ _ x _ refl)
+⊢↑ₖₛ : σ ∶ Γ₁ →ₛ Γ₂ → (T : S ∶⊢ s) → (σ ↑ₖₛ s) ∶ Γ₁ ، T →ₛ (Γ₂ ، (T ⋯ₛ σ))
+⊢↑ₖₛ ⊢σ T _ (here refl) _ refl = ⊢` refl
+⊢↑ₖₛ {σ = σ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} ⊢σ T _ (there x) _ refl = ⊢wkₛ Γ₂ (σ ⍟ₛ x) (wk-drop-∈ x (Γ₁ _ x) ⋯ₛ σ) (T ⋯ₛ σ) (⊢σ _ x _ refl)
 
 ⊢σ-preserves : ∀ {σ : S₁ →ₛ S₂} {t : S₁ ⊢ s} {T : S₁ ∶⊢ s} →
   σ ∶ Γ₁ →ₛ Γ₂ →
   Γ₁ ⊢ t ∶ T →
   Γ₂ ⊢ (t ⋯ₛ σ) ∶ (T ⋯ₛ σ)
 ⊢σ-preserves ⊢σ (⊢` ⊢x)        = ⊢σ _ _ _ ⊢x
-⊢σ-preserves {σ = σ} ⊢σ (⊢λ ⊢e)        = ⊢λ (⊢σ-preserves {σ = σ ↑ₛ _} (⊢↑ₛ {σ = σ} ⊢σ _) ⊢e)
-⊢σ-preserves {σ = σ}  ⊢σ (⊢Λ ⊢e)       = ⊢Λ (⊢σ-preserves {σ = σ ↑ₛ _} (⊢↑ₛ {σ = σ} ⊢σ _) ⊢e)
+⊢σ-preserves {σ = σ} ⊢σ (⊢λ ⊢e)        = ⊢λ (⊢σ-preserves {σ = σ ↑ₖₛ _} (⊢↑ₖₛ {σ = σ} ⊢σ _) ⊢e)
+⊢σ-preserves {σ = σ}  ⊢σ (⊢Λ ⊢e)       = ⊢Λ (⊢σ-preserves {σ = σ ↑ₖₛ _} (⊢↑ₖₛ {σ = σ} ⊢σ _) ⊢e)
 ⊢σ-preserves {σ = σ} ⊢σ (⊢· ⊢e₁ ⊢e₂)   = ⊢· (⊢σ-preserves {σ = σ} ⊢σ ⊢e₁) (⊢σ-preserves {σ = σ} ⊢σ ⊢e₂)
-⊢σ-preserves {σ = σ} ⊢σ (⊢∙ ⊢e ⊢t ⊢t') = ⊢∙ (⊢σ-preserves {σ = σ} ⊢σ ⊢e) (⊢σ-preserves {σ = σ} ⊢σ ⊢t) (⊢σ-preserves {σ = σ ↑ₛ _} (⊢↑ₛ {σ = σ} ⊢σ _) ⊢t')
+⊢σ-preserves {σ = σ} ⊢σ (⊢∙ ⊢e ⊢t ⊢t') = ⊢∙ (⊢σ-preserves {σ = σ} ⊢σ ⊢e) (⊢σ-preserves {σ = σ} ⊢σ ⊢t) (⊢σ-preserves {σ = σ ↑ₖₛ _} (⊢↑ₖₛ {σ = σ} ⊢σ _) ⊢t')
 ⊢σ-preserves ⊢σ ⊢★             = ⊢★
 
 ⊢[] : ∀ {Γ : Ctx S} {t : S ⊢ s} {T : S ∶⊢ s} → Γ ⊢ t ∶ T → (t ∷ₛ idₛ) ∶ (Γ ، T) →ₛ Γ

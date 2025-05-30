@@ -1,5 +1,5 @@
 -- Author: Marius Weidner
-{-# OPTIONS --allow-unsolved-metas -v tc.unquote.decl:10 -v tc.unquote.def:10 #-}
+{-# OPTIONS --allow-unsolved-metas --rewriting -v tc.unquote.decl:10 -v tc.unquote.def:10 #-}
 module Derive where
 
 open import DeBruijn

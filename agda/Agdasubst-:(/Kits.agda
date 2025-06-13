@@ -114,14 +114,35 @@ module KitsWithSort (Sort : SORT) where
             (id ↑ₖ s) sx x        ≡⟨ id↑ₖ~id sx x ⟩
             id sx x              ∎
 
-
       _∋/⊢[_]_ : Scope → Kit _∋/⊢_ → BindSort → Set
       _∋/⊢[_]_ {_∋/⊢_} S K s = S ∋/⊢ s
  
       _–[_]→_ : Scope → Kit _∋/⊢_ → Scope → Set
       S₁ –[ K ]→ S₂ = Kit._→ₖ_ K S₁ S₂
+      
+      open Kit ⦃ ... ⦄ public 
+      
+      opaque
+        unfolding all_kit_definitions
+        
+        -- REWRITE   
+        &-def₁ : ⦃ K : Kit _∋/⊢_ ⦄ (x/t : S₂ ∋/⊢ s) (ϕ : S₁ –[ K ]→ S₂) → zero & (x/t ∙ ϕ) ≡ x/t
+        &-def₁ _ _ = refl
 
-      open Kit ⦃ … ⦄ public 
+        &-def₂ : ⦃ K : Kit _∋/⊢_ ⦄ (x/t : S₂ ∋/⊢ s) (ϕ : S₁ –[ K ]→ S₂) → (suc x′) & (x/t ∙ ϕ) ≡ x′ & ϕ  
+        &-def₂ _ _  = refl
+
+        id-def : ⦃ K : Kit _∋/⊢_ ⦄ (x : S ∋ s) → x & (id ⦃ K ⦄) ≡ id/` x
+        id-def _ = refl
+
+        ∷-def₁ : ⦃ K : Kit _∋/⊢_ ⦄ (x/t : S₂ ∋/⊢ s) (ϕ : S₁ –[ K ]→ S₂) → zero & (x/t ∙ ϕ) ≡ x/t
+        ∷-def₁ _ _ = refl
+
+        ∷-def₂ : ⦃ K : Kit _∋/⊢_ ⦄ (x/t : S₂ ∋/⊢ s) (x' : S₁ ∋ s′) (ϕ : S₁ –[ K ]→ S₂) → suc x′ & (x/t ∙ ϕ) ≡ x′ & ϕ
+        ∷-def₂ _ _ _ = refl
+
+        wk-def : ⦃ K : Kit _∋/⊢_ ⦄ (x : S ∋ s) → x & (wk {s = s′}) ≡ id/` (suc x)
+        wk-def = wk-id/` _
 
       record Traversal : Set₁ where
         infixl   5  _⋯_
@@ -190,84 +211,94 @@ module KitsWithSort (Sort : SORT) where
 
         _[_] : (s′ ∷ S) ⊢ s → S ⊢ s′ → S ⊢ s
         T [ T′ ] = T ⋯ (T′ ∙ id) 
-
-        _⊔′_ : (K₁ : Kit _∋/⊢₁_) (K₂ : Kit _∋/⊢₂_) → SCOPED_BINDABLE
-        mkKit Ren refl _ _ _ _ _ _ _ ⊔′ mkKit Ren refl _ _ _ _ _ _ _ = _∋_
-        mkKit Ren refl _ _ _ _ _ _ _ ⊔′ mkKit Sub refl _ _ _ _ _ _ _ = _⊢_
-        mkKit Sub refl _ _ _ _ _ _ _ ⊔′ mkKit Ren refl _ _ _ _ _ _ _ = _⊢_
-        mkKit Sub refl _ _ _ _ _ _ _ ⊔′ mkKit Sub refl _ _ _ _ _ _ _ = _⊢_
-
-        ⊔′-law₀ : ⦃ K : Kit _∋/⊢_ ⦄ → K ⊔′ K ≡ _∋/⊢_ 
-        ⊔′-law₀ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl
-        ⊔′-law₀ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl
-
-        ⊔′-law₁ : ⦃ K : Kit _∋/⊢_ ⦄ → K ⊔′ Kᵣ ≡ _∋/⊢_ 
-        ⊔′-law₁ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl 
-        ⊔′-law₁ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl 
-
-        ⊔′-law₂ : ⦃ K : Kit _∋/⊢_ ⦄ → Kᵣ ⊔′ K ≡ _∋/⊢_
-        ⊔′-law₂ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl 
-        ⊔′-law₂ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl 
-
-        ⊔′-law₃ : ⦃ K : Kit _∋/⊢_ ⦄ → K ⊔′ Kₛ ≡ _⊢_
-        ⊔′-law₃ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl 
-        ⊔′-law₃ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl 
-
-        ⊔′-law₄ : ⦃ K : Kit _∋/⊢_ ⦄ → Kₛ ⊔′ K ≡ _⊢_
-        ⊔′-law₄ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl 
-        ⊔′-law₄ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl 
         
-        {-# REWRITE ⊔′-law₀ ⊔′-law₁ ⊔′-law₂ ⊔′-law₃ ⊔′-law₄ #-}
+        opaque
+          _⊔′_ : (K₁ : Kit _∋/⊢₁_) (K₂ : Kit _∋/⊢₂_) → SCOPED_BINDABLE
+          mkKit Ren refl _ _ _ _ _ _ _ ⊔′ mkKit Ren refl _ _ _ _ _ _ _ = _∋_
+          mkKit Ren refl _ _ _ _ _ _ _ ⊔′ mkKit Sub refl _ _ _ _ _ _ _ = _⊢_
+          mkKit Sub refl _ _ _ _ _ _ _ ⊔′ mkKit Ren refl _ _ _ _ _ _ _ = _⊢_
+          mkKit Sub refl _ _ _ _ _ _ _ ⊔′ mkKit Sub refl _ _ _ _ _ _ _ = _⊢_
 
-        _⊔_ : (K₁ : Kit _∋/⊢₁_) (K₂ : Kit _∋/⊢₂_) → Kit (K₁ ⊔′ K₂)
-        mkKit Ren refl _ _ _ _ _ _ _ ⊔ mkKit Ren refl _ _ _ _ _ _ _ = Kᵣ
-        mkKit Ren refl _ _ _ _ _ _ _ ⊔ mkKit Sub refl _ _ _ _ _ _ _ = Kₛ
-        mkKit Sub refl _ _ _ _ _ _ _ ⊔ mkKit Ren refl _ _ _ _ _ _ _ = Kₛ
-        mkKit Sub refl _ _ _ _ _ _ _ ⊔ mkKit Sub refl _ _ _ _ _ _ _ = Kₛ
+          ⊔′-law₀ : ⦃ K : Kit _∋/⊢_ ⦄ → K ⊔′ K ≡ _∋/⊢_ 
+          ⊔′-law₀ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl
+          ⊔′-law₀ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl 
 
-        ⊔-law₀ : ⦃ K : Kit _∋/⊢_ ⦄ → (K ⊔ K) ≡ K
-        ⊔-law₀ K@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ rewrite unique-Kᵣ-instance K = refl
-        ⊔-law₀ K@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ rewrite unique-Kₛ-instance K = refl 
+          ⊔′-law₁ : ⦃ K : Kit _∋/⊢_ ⦄ → K ⊔′ Kᵣ ≡ _∋/⊢_ 
+          ⊔′-law₁ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl 
+          ⊔′-law₁ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl 
 
-        ⊔-law₁ : ⦃ K : Kit _∋/⊢_ ⦄ → K ⊔ Kᵣ ≡ K 
-        ⊔-law₁ K@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ rewrite unique-Kᵣ-instance K = refl 
-        ⊔-law₁ K@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ rewrite unique-Kₛ-instance K = refl 
+          ⊔′-law₂ : ⦃ K : Kit _∋/⊢_ ⦄ → Kᵣ ⊔′ K ≡ _∋/⊢_
+          ⊔′-law₂ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl 
+          ⊔′-law₂ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl 
 
-        ⊔-law₂ : ⦃ K : Kit _∋/⊢_ ⦄ → Kᵣ ⊔ K ≡ K 
-        ⊔-law₂ K@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ rewrite unique-Kᵣ-instance K = refl 
-        ⊔-law₂ K@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ rewrite unique-Kₛ-instance K = refl 
+          ⊔′-law₃ : ⦃ K : Kit _∋/⊢_ ⦄ → K ⊔′ Kₛ ≡ _⊢_
+          ⊔′-law₃ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl 
+          ⊔′-law₃ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl 
 
-        ⊔-law₃ : ⦃ K : Kit _∋/⊢_ ⦄ → K ⊔ Kₛ ≡ Kₛ
-        ⊔-law₃ K@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ rewrite unique-Kᵣ-instance K = refl 
-        ⊔-law₃ K@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ rewrite unique-Kₛ-instance K = refl 
+          ⊔′-law₄ : ⦃ K : Kit _∋/⊢_ ⦄ → Kₛ ⊔′ K ≡ _⊢_
+          ⊔′-law₄ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl 
+          ⊔′-law₄ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl 
+        
+        {-# REWRITE ⊔′-law₁ ⊔′-law₂ ⊔′-law₃ ⊔′-law₄ #-}
+        {-# REWRITE ⊔′-law₀ #-}
 
-        ⊔-law₄ : ⦃ K : Kit _∋/⊢_ ⦄ → Kₛ ⊔ K ≡ Kₛ
-        ⊔-law₄ K@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ rewrite unique-Kᵣ-instance K = refl 
-        ⊔-law₄ K@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ rewrite unique-Kₛ-instance K = refl 
+        opaque
+          unfolding _⊔′_
+          infixl 20 _⊔_
+          _⊔_ : (K₁ : Kit _∋/⊢₁_) (K₂ : Kit _∋/⊢₂_) → Kit (K₁ ⊔′ K₂)
+          (mkKit Ren refl _ _ _ _ _ _ _) ⊔ (mkKit Ren refl _ _ _ _ _ _ _) = Kᵣ
+          (mkKit Ren refl _ _ _ _ _ _ _) ⊔ (mkKit Sub refl _ _ _ _ _ _ _) = Kₛ
+          (mkKit Sub refl _ _ _ _ _ _ _) ⊔ (mkKit Ren refl _ _ _ _ _ _ _) = Kₛ
+          (mkKit Sub refl _ _ _ _ _ _ _) ⊔ (mkKit Sub refl _ _ _ _ _ _ _) = Kₛ 
 
-        ⊔′-law₅ : ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ K₃ : Kit _∋/⊢₃_ ⦄ → 
-          (K₁ ⊔ K₂) ⊔′ K₃ ≡ K₁ ⊔′ (K₂ ⊔ K₃)
-        ⊔′-law₅ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl
-        ⊔′-law₅ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl
-        ⊔′-law₅ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl
-        ⊔′-law₅ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl
-        ⊔′-law₅ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl
-        ⊔′-law₅ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl
-        ⊔′-law₅ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl
-        ⊔′-law₅ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl
+          ⊔-law₀ : ⦃ K : Kit _∋/⊢_ ⦄ → (K ⊔ K) ≡ K
+          ⊔-law₀ K@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ rewrite unique-Kᵣ-instance K = refl
+          ⊔-law₀ K@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ rewrite unique-Kₛ-instance K = refl 
 
-        {-# REWRITE ⊔-law₀ ⊔-law₁ ⊔-law₂ ⊔-law₃ ⊔-law₄ ⊔′-law₅ #-}
+          ⊔-law₁ : ⦃ K : Kit _∋/⊢_ ⦄ → K ⊔ Kᵣ ≡ K 
+          ⊔-law₁ K@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ rewrite unique-Kᵣ-instance K = refl 
+          ⊔-law₁ K@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ rewrite unique-Kₛ-instance K = refl 
 
-        ⊔-law₅ : ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ K₃ : Kit _∋/⊢₃_ ⦄ → 
-          (K₁ ⊔ K₂) ⊔ K₃ ≡ K₁ ⊔ (K₂ ⊔ K₃)
-        ⊔-law₅ K₁@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ K₂@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ K₃@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl
-        ⊔-law₅ K₁@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ K₂@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ K₃@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl 
-        ⊔-law₅ K₁@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ K₂@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ K₃@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl
-        ⊔-law₅ K₁@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ K₂@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ K₃@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl
-        ⊔-law₅ K₁@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ K₂@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ K₃@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl
-        ⊔-law₅ K₁@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ K₂@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ K₃@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl
-        ⊔-law₅ K₁@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ K₂@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ K₃@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl 
-        ⊔-law₅ K₁@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ K₂@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ K₃@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl
+          ⊔-law₂ : ⦃ K : Kit _∋/⊢_ ⦄ → Kᵣ ⊔ K ≡ K 
+          ⊔-law₂ K@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ rewrite unique-Kᵣ-instance K = refl 
+          ⊔-law₂ K@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ rewrite unique-Kₛ-instance K = refl 
+
+          ⊔-law₃ : ⦃ K : Kit _∋/⊢_ ⦄ → K ⊔ Kₛ ≡ Kₛ
+          ⊔-law₃ K@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ rewrite unique-Kᵣ-instance K = refl 
+          ⊔-law₃ K@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ rewrite unique-Kₛ-instance K = refl 
+
+          ⊔-law₄ : ⦃ K : Kit _∋/⊢_ ⦄ → Kₛ ⊔ K ≡ Kₛ
+          ⊔-law₄ K@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ rewrite unique-Kᵣ-instance K = refl 
+          ⊔-law₄ K@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ rewrite unique-Kₛ-instance K = refl 
+
+          ⊔′-law₅ : ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ K₃ : Kit _∋/⊢₃_ ⦄ → 
+            (K₁ ⊔ K₂) ⊔′ K₃ ≡ K₁ ⊔′ (K₂ ⊔ K₃)
+          ⊔′-law₅ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl
+          ⊔′-law₅ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl
+          ⊔′-law₅ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl
+          ⊔′-law₅ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl
+          ⊔′-law₅ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl
+          ⊔′-law₅ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl
+          ⊔′-law₅ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl
+          ⊔′-law₅ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl
+
+        {-# REWRITE ⊔-law₁ ⊔-law₂ ⊔-law₃ ⊔-law₄ #-}
+        {-# REWRITE ⊔-law₀ #-}
+        {-# REWRITE ⊔′-law₅ #-}
+
+        opaque
+          unfolding _⊔′_ _⊔_
+
+          ⊔-law₅ : ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ K₃ : Kit _∋/⊢₃_ ⦄ → 
+            (K₁ ⊔ K₂) ⊔ K₃ ≡ K₁ ⊔ (K₂ ⊔ K₃)
+          ⊔-law₅ K₁@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ K₂@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ K₃@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl
+          ⊔-law₅ K₁@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ K₂@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ K₃@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl 
+          ⊔-law₅ K₁@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ K₂@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ K₃@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl
+          ⊔-law₅ K₁@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ K₂@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ K₃@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl
+          ⊔-law₅ K₁@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ K₂@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ K₃@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl
+          ⊔-law₅ K₁@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ K₂@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ K₃@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl
+          ⊔-law₅ K₁@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ K₂@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ K₃@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ = refl 
+          ⊔-law₅ K₁@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ K₂@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ K₃@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl
 
         {-# REWRITE ⊔-law₅ #-}
 
@@ -317,7 +348,7 @@ module KitsWithSort (Sort : SORT) where
             import Data.Unit using (⊤; tt)
             all_kit_and_compose_definitions : Data.Unit.⊤
             all_kit_and_compose_definitions = Data.Unit.tt
-
+            
             _⨟_ : S₁ –[ K₁ ]→ S₂ → S₂ –[ K₂ ]→ S₃ → S₁ –[ K₁ ⊔ K₂ ]→ S₃
             (ϕ₁ ⨟ ϕ₂) _ x = (x & ϕ₁) &/⋯ ϕ₂ 
 
@@ -397,7 +428,7 @@ module KitsWithSort (Sort : SORT) where
                       t ⋯ ϕ ⋯ wkᵣ ≡ t ⋯ wkᵣ ⋯ (ϕ ↑ₖ s′)
             ⋯-↑ₖ-wk t ϕ s =
               t ⋯ ϕ ⋯ wkᵣ          ≡⟨ ⋯-fusion t ϕ (wkᵣ) ⟩
-              t ⋯ (ϕ ⨟ wkᵣ)        ≡⟨ cong (t ⋯_) (~-ext (↑ₖ-wk ϕ s)) ⟩
+              t ⋯ (ϕ ⨟ wkᵣ)         ≡⟨ cong (t ⋯_) (~-ext (↑ₖ-wk ϕ s)) ⟩
               t ⋯ (wkᵣ ⨟ (ϕ ↑ₖ s))  ≡⟨ sym (⋯-fusion t (wkᵣ) (ϕ ↑ₖ s)) ⟩ 
               t ⋯ wkᵣ ⋯ (ϕ ↑ₖ s)     ∎
 
@@ -417,26 +448,6 @@ module KitsWithSort (Sort : SORT) where
                     { _&/⋯_      = _⋯_
                     ; &/⋯-⋯      = λ t ϕ → refl
                     ; &/⋯-wk-↑ₖ  = λ t ϕ → ⋯-↑ₖ-wk t ϕ _ }
-
-            {- huh : ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ K₃ : Kit _∋/⊢₃_ ⦄ 
-                ⦃ C : ComposeKit K₁ K₂ ⦄ → ComposeKit (K₁ ⊔ K₂) K₃
-            {-# OVERLAPPING huh #-}  
-            huh ⦃ K₁ = mkKit Ren refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ K₃@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ ⦃ C = C ⦄ 
-              rewrite unique-Kᵣ-instance K₃ = Cᵣ
-            huh ⦃ K₁ = mkKit Ren refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Ren refl _ _  _ _ _ _ _ ⦄ K₃@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ ⦃ C = C ⦄ 
-              rewrite unique-Kₛ-instance K₃ = Cᵣ
-            huh ⦃ K₁ = mkKit Ren refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ K₃@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ ⦃ C = C ⦄ 
-              rewrite unique-Kᵣ-instance K₃ = Cₛ
-            huh ⦃ K₁ = mkKit Ren refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ K₃@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ ⦃ C = C ⦄ 
-              rewrite unique-Kₛ-instance K₃ = Cₛ
-            huh ⦃ K₁ = mkKit Sub refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ K₃@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ ⦃ C = C ⦄ 
-              rewrite unique-Kᵣ-instance K₃ = Cₛ
-            huh ⦃ K₁ = mkKit Sub refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ K₃@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ ⦃ C = C ⦄ 
-              rewrite unique-Kₛ-instance K₃ = Cₛ
-            huh ⦃ K₁ = mkKit Sub refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ K₃@⦃ mkKit Ren refl _ _ _ _ _ _ _ ⦄ ⦃ C = C ⦄ 
-              rewrite unique-Kᵣ-instance K₃ = Cₛ
-            huh ⦃ K₁ = mkKit Sub refl _ _ _ _ _ _ _ ⦄ ⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ K₃@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ ⦃ C = C ⦄ 
-              rewrite unique-Kₛ-instance K₃ = Cₛ -}
                
           Cᵣᵣ : ComposeKit Kᵣ Kᵣ 
           Cᵣᵣ = Cᵣ
@@ -448,6 +459,7 @@ module KitsWithSort (Sort : SORT) where
           Cₛₛ = Cₛ 
 
           opaque
+            unfolding _⊔′_ _⊔_
             _⨟ₖ_ : (K₁ : Kit _∋/⊢₁_) (K₂ : Kit _∋/⊢₂_) → ComposeKit K₁ K₂
             K₁@(mkKit Ren refl _ _ _ _ _ _ _) ⨟ₖ K₂@(mkKit Ren refl _ _ _ _ _ _ _) = 
               subst₂ (λ K₁ K₂ → ComposeKit K₁ K₂) (sym (unique-Kᵣ-instance K₁)) (sym (unique-Kᵣ-instance K₂)) Cᵣ
@@ -467,7 +479,7 @@ module KitsWithSort (Sort : SORT) where
             ⨟ₖ-def₄ : Kₛ ⨟ₖ Kₛ ≡ Cₛ
             ⨟ₖ-def₄ rewrite unique-Kₛ-instance Kₛ = refl
 
-          {-# REWRITE ⨟ₖ-def₁ ⨟ₖ-def₂ ⨟ₖ-def₃ ⨟ₖ-def₄  #-}
+          {-# REWRITE ⨟ₖ-def₁ ⨟ₖ-def₂ ⨟ₖ-def₃ ⨟ₖ-def₄ #-}
 
           _↑_ : ⦃ K : Kit _∋/⊢_ ⦄ ⦃ C : ComposeKit K Kᵣ ⦄ → S₁ –[ K ]→ S₂ → ∀ s → (s ∷ S₁) –[ K ]→ (s ∷ S₂)
           ϕ ↑ s = id/` zero ∙ (ϕ ⨟ wkᵣ) 
@@ -488,55 +500,42 @@ module KitsWithSort (Sort : SORT) where
           _↑ₛ⋆_ : S₁ →ₛ S₂ → ∀ S → (S ++ S₁) →ₛ (S ++ S₂)
           _↑ₛ⋆_ = _↑⋆_
 
-{-        opaque
+          opaque 
             unfolding all_kit_and_compose_definitions
+            
+            interact : ⦃ K : Kit _∋/⊢_ ⦄ (x/t : S₂ ∋/⊢ s) (ϕ : S₁ –[ K ]→ S₂) → wkᵣ ⨟ (x/t ∙ ϕ) ≡ ϕ 
+            interact _ _ = refl
+            
+            η-id : ⦃ K : Kit _∋/⊢_ ⦄ → _∙_ {s = s} {S₁ = S} (id/` zero) wkᵣ ≡ id 
+            η-id = ~-ext λ { _ zero → refl; _ (suc x) → refl } 
+
+            η-law : ⦃ K : Kit _∋/⊢_ ⦄ (ϕ : (s ∷ S₁) –[ K ]→ S₂) → (zero & ϕ) ∙ (wkᵣ ⨟ ϕ) ≡ ϕ
+            η-law _ = ~-ext λ { _ zero → refl; _ (suc x) → refl } 
+
+            distributivity : ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ C : ComposeKit K₁ K₂ ⦄ 
+                             (x/t : S₂ ∋/⊢₁ s)  (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) → 
+                             ComposeKit._⨟_ C (x/t ∙ ϕ₁) ϕ₂ ≡ _∙_ ⦃ K₁ ⊔ K₂ ⦄ (x/t &/⋯ ϕ₂) (ϕ₁ ⨟[ C ] ϕ₂)
+            distributivity ⦃ K₁ = K₁ ⦄ ⦃ K₂ = K₂ ⦄ _ _ _ = ~-ext ⦃ K₁ ⊔ K₂ ⦄ λ { _ zero → refl ; _ (suc x) → refl } 
+
+            postulate
+              left-id : ⦃ K : Kit _∋/⊢_ ⦄ ⦃ C : ComposeKit K K ⦄ (ϕ : S₁ –[ K ]→ S₂) → id ⦃ K ⦄ ⨟ ϕ ≡ ϕ 
+            -- left-id ⦃ K = K ⦄ ⦃ C = C ⦄ ϕ = ~-ext λ s x → 
+              -- begin 
+              --   id/` ⦃ K ⦄ x &/⋯ ϕ
+              -- ≡⟨ {!    !} ⟩
+              --   {!   !}
+              -- ≡⟨ {!   !} ⟩
+              --   ϕ s x
+              -- ∎
+
+              right-id : ⦃ K : Kit _∋/⊢_ ⦄ ⦃ C : ComposeKit K K ⦄ (ϕ : S₁ –[ K ]→ S₂) → ϕ ⨟ id ⦃ K ⦄ ≡ ϕ 
+            -- right-id ϕ = {!   !} 
+
+
+              associativity : ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ K₃ : Kit _∋/⊢₃_ ⦄ 
+                              ⦃ C₁ : ComposeKit K₁ K₂ ⦄ ⦃ C₂ : ComposeKit (K₁ ⊔ K₂) K₃ ⦄ → 
+                              (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) (ϕ₃ : S₃ –[ K₃ ]→ S₄) →   
+                              (ϕ₁ ⨟ ϕ₂) ⨟ ϕ₃ ≡ ϕ₁ ⨟[ K₁ ⨟ₖ (K₂ ⊔ K₃) ] (ϕ₂ ⨟[ K₂ ⨟ₖ K₃ ] ϕ₃)  
+            -- associativity ⦃ K₁ = K₁ ⦄ ⦃ K₂ = K₂ ⦄ ⦃ K₃ = K₃ ⦄ ϕ₁ ϕ₂ ϕ₃ = ~-ext ⦃ K₁ ⊔ K₂ ⊔ K₃ ⦄ 
+            --   λ s x → {!   !} 
           
-            wk-cancels-⦅⦆  : ∀ ⦃ K : Kit _∋/⊢_ ⦄ (x/t : S ∋/⊢[ K ] s) →
-                            (wkᵣ ⨟[ Cᵣ ] ⦅ x/t ⦆) ~ id
-            wk-cancels-⦅⦆ ⦃ K ⦄ x/t sx x = `/id-injective (
-              `/id ⦃ K ⦄ (x & (wkᵣ ⨟[ Cᵣ ] ⦅ x/t ⦆))  ≡⟨⟩
-              `/id ⦃ K ⦄ (id/` (suc x) &/⋯ ⦅ x/t ⦆)         ≡⟨ &/⋯-& ⦃ Cᵣ ⦃ K ⦄ ⦄ (suc x) ⦅ x/t ⦆ ⟩
-              `/id ⦃ K ⦄ (id/` x)                           ≡⟨⟩
-              `/id ⦃ K ⦄ (x & id)                           ∎)
-            
-            wk-cancels-⦅⦆-⋯  : ∀ ⦃ K : Kit _∋/⊢_ ⦄ (t : S ⊢ s′) (x/t : S ∋/⊢[ K ] s) →
-                              t ⋯ wkᵣ ⋯ ⦅ x/t ⦆ ≡ t
-            wk-cancels-⦅⦆-⋯ t x/t =
-              t ⋯ wkᵣ ⋯ ⦅ x/t ⦆     ≡⟨ ⋯-fusion t (wkᵣ) ⦅ x/t ⦆ ⟩
-              t ⋯ (wkᵣ ⨟ ⦅ x/t ⦆)  ≡⟨ cong (t ⋯_) (~-ext (wk-cancels-⦅⦆ x/t)) ⟩
-              t ⋯ id                      ≡⟨ ⋯-id t ⟩
-              t                           ∎
-            
-            dist-↑ₖ-⦅⦆ :
-              ∀  ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ K : Kit _∋/⊢_ ⦄
-                 ⦃ W₂ : WkKit K₂ ⦄
-                 ⦃ C₁ : ComposeKit K₁ K₂ K ⦄ ⦃ C₂ : ComposeKit K₂ K K ⦄
-                 (x/t : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
-                 (⦅ x/t ⦆ ⨟[ C₁ ] ϕ) ~ ((ϕ ↑ₖ s) ⨟[ C₂ ] ⦅ (x/t &/⋯ ϕ) ⦆)
-            dist-↑ₖ-⦅⦆ {s = s} ⦃ K₁ ⦄ ⦃ K₂ ⦄ ⦃ K ⦄ ⦃ W₂ ⦄ ⦃ C₁ ⦄ ⦃ C₂ ⦄ x/t ϕ sx x@zero = `/id-injective (
-              `/id ⦃ K ⦄ (x & (⦅ x/t ⦆ ⨟[ C₁ ] ϕ))                ≡⟨⟩
-              `/id ⦃ K ⦄ (x/t &/⋯ ϕ)                              ≡⟨⟩
-              `/id ⦃ K ⦄ (zero & ⦅ (x/t &/⋯ ϕ) ⦆)                 ≡⟨ sym (&/⋯-& ⦃ C₂ ⦄ zero ⦅ (x/t &/⋯ ϕ) ⦆) ⟩
-              `/id ⦃ K ⦄ (id/` ⦃ K₂ ⦄ zero &/⋯ ⦅ (x/t &/⋯ ϕ) ⦆)   ≡⟨⟩
-              `/id ⦃ K ⦄ (x & ((ϕ ↑ₖ s) ⨟[ C₂ ] ⦅ (x/t &/⋯ ϕ) ⦆))  ∎)
-            dist-↑ₖ-⦅⦆ {s = s} ⦃ K₁ ⦄ ⦃ K₂ ⦄ ⦃ K ⦄ ⦃ W₂ ⦄ ⦃ C₁ ⦄ ⦃ C₂ ⦄ x/t ϕ sx x@(suc y) = `/id-injective (
-              `/id (x & (⦅ x/t ⦆ ⨟[ C₁ ] ϕ))                ≡⟨⟩
-              `/id (id/` ⦃ K₁ ⦄ y &/⋯ ϕ)                    ≡⟨ &/⋯-& ⦃ C₁ ⦄ y ϕ ⟩
-              `/id (y & ϕ)                                  ≡⟨ sym (wk-cancels-⦅⦆-⋯ (`/id (y & ϕ)) (x/t &/⋯ ϕ)) ⟩
-              `/id (y & ϕ) ⋯ wkᵣ ⋯ ⦅ (x/t &/⋯ ϕ) ⦆    ≡⟨ cong (_⋯ ⦅ x/t &/⋯ ϕ ⦆) (wk-`/id s (y & ϕ)) ⟩
-              `/id (wk′ s (y & ϕ)) ⋯ ⦅ (x/t &/⋯ ϕ) ⦆         ≡⟨ sym (&/⋯-⋯ (wk′ s (y & ϕ)) ⦅ (x/t &/⋯ ϕ) ⦆) ⟩
-              `/id (wk′ s (y & ϕ) &/⋯ ⦅ (x/t &/⋯ ϕ) ⦆)       ≡⟨⟩
-              `/id (x & ((ϕ ↑ₖ s) ⨟[ C₂ ] ⦅ (x/t &/⋯ ϕ) ⦆))  ∎)
-            
-            dist-↑ₖ-⦅⦆-⋯ :
-              ∀ ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ K : Kit _∋/⊢_ ⦄
-                ⦃ W₁ : WkKit K₁ ⦄ ⦃ W₂ : WkKit K₂ ⦄
-                ⦃ C₁ : ComposeKit K₁ K₂ K ⦄ ⦃ C₂ : ComposeKit K₂ K K ⦄
-                (t : (s ∷ S₁) ⊢ s′) (x/t : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
-                t ⋯ ⦅ x/t ⦆ ⋯ ϕ ≡ t ⋯ (ϕ ↑ₖ s) ⋯ ⦅ (x/t &/⋯ ϕ) ⦆
-            dist-↑ₖ-⦅⦆-⋯ t x/t ϕ =
-              t ⋯ ⦅ x/t ⦆ ⋯ ϕ                   ≡⟨ ⋯-fusion t ⦅ x/t ⦆ ϕ ⟩
-              t ⋯ (⦅ x/t ⦆ ⨟ ϕ)                ≡⟨ cong (t ⋯_) (~-ext (dist-↑ₖ-⦅⦆ x/t ϕ)) ⟩
-              t ⋯ ((ϕ ↑ₖ _) ⨟ ⦅ (x/t &/⋯ ϕ) ⦆)  ≡⟨ sym (⋯-fusion t (ϕ ↑ₖ _) ⦅ x/t &/⋯ ϕ ⦆ ) ⟩
-              t ⋯ (ϕ ↑ₖ _) ⋯ ⦅ (x/t &/⋯ ϕ) ⦆     ∎
- -}

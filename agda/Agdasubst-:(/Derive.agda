@@ -107,7 +107,7 @@ module _ (Sort : SORT) where
             deriveClause : Name → TC Clause
             deriveClause nm = do 
               isVarCstr ← isVarConstructor nm
-              if isVarCstr then returnTC (clause {!   !} {!   !} {!   !})
+              if isVarCstr then returnTC (clause {!  !} {!   !} {!   !})
                 else do 
                   {!  !}
 

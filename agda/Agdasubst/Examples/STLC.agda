@@ -106,4 +106,5 @@ module RewriteSystem where
 
 module _ where 
   open RewriteSystem
+  
   {-# REWRITE &-def₁ &-def₂ id-def ∷-def₁ ∷-def₂ wkᵣ-def ⨟ᵣᵣ-def ⨟ᵣₛ-def ⨟ₛᵣ-def ⨟ₛₛ-def left-idᵣᵣ right-idᵣᵣ left-idᵣₛ left-idₛᵣ right-idₛᵣ left-idₛₛ right-idₛₛ interact associativityᵣᵣᵣ associativityᵣᵣₛ associativityᵣₛᵣ associativityᵣₛₛ associativityₛᵣᵣ associativityₛᵣₛ  associativityₛₛᵣ associativityₛₛₛ η-id η-law distributivityᵣᵣ distributivityᵣₛ distributivityₛᵣ distributivityₛₛ ⋯id ⋯-fusionᵣᵣ ⋯-fusionᵣₛ ⋯-fusionₛᵣ ⋯-fusionₛₛ #-}

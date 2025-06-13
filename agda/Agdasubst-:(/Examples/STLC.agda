@@ -1,4 +1,4 @@
-{-# OPTIONS --rewriting --backtracking-instance-search #-}
+{-# OPTIONS --rewriting --backtracking-instance-search --experimental-lazy-instances #-}
 module Examples.STLC where
 
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; subst; module ≡-Reasoning)
@@ -37,7 +37,7 @@ opaque
   ⋯-id : ∀ ⦃ K : Kit _∋/⊢_ ⦄ (t : S ⊢ s) → t ⋯ id ⦃ K ⦄ ≡ t
   ⋯-id ⦃ K ⦄ (` x)     = `/`-is-` ⦃ K ⦄ x
   ⋯-id (λx t)          = cong λx_ (
-    t ⋯ (id ↑ₖ expr)    ≡⟨ cong (t ⋯_) (~-ext id↑ₖ~id) ⟩
+    t ⋯ (id ↑ₖ expr)   ≡⟨ cong (t ⋯_) (~-ext id↑ₖ~id) ⟩
     t ⋯ id             ≡⟨ ⋯-id t ⟩
     t                  ∎)
   ⋯-id (t₁ · t₂)       = cong₂ _·_ (⋯-id t₁) (⋯-id t₂)
@@ -79,33 +79,19 @@ open ComposeTraversal compose hiding (⋯-fusion)
     (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ _⋯_ ⦃ K₁ ⊔ K₂ ⦄ t (ϕ₁ ⨟[ K₁ ⨟ₖ K₂ ] ϕ₂)
 ⋯-fusion ⦃ K₁ ⦄ ⦃ K₂ ⦄ = ⋯-fusion′ ⦃ C = K₁ ⨟ₖ K₂ ⦄
 
-open import SigmaCalculus 
-
 ⋯id : ⦃ K : Kit _∋/⊢_ ⦄ (T : S ⊢ s) → T ⋯ id ⦃ K ⦄ ≡ T 
 ⋯id _ = ⋯-id _ 
 
-rules : Rules 
-rules = record 
-  { Sort = Sort 
-  ; syn = syn 
-  ; traversal = traversal 
-  ; compose = compose
-  }
-open Rules rules
-
 {-# REWRITE 
-  &-def₁ &-def₂ id-def ∷-def₁ ∷-def₂
-  wkᵣ-def
+  &-def₁ &-def₂ id-def ∷-def₁ ∷-def₂ wk-def
 
   interact
   left-id right-id
   η-id η-law
+
   distributivity
+  associativity
   
   ⋯id 
   ⋯-fusion 
-  associativity
 #-}
-
-associativityᵣᵣᵣ  : (ρ₁ : S₁ →ᵣ S₂) (ρ₂ : S₂ →ᵣ S₃) (ρ₃ : S₃ →ᵣ S₄) → (ρ₁ ⨟ ρ₂) ⨟ ρ₃ ≡ ρ₁ ⨟ (ρ₂ ⨟ ρ₃)
-associativityᵣᵣᵣ a b c = {!    !}

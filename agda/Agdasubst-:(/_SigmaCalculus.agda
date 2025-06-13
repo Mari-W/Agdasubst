@@ -209,14 +209,15 @@ record Rules : Set₁ where
 
     -- compositionalityₛₛ : (σ₁ : S₁ →ₛ S₂) (σ₂ : S₂ →ₛ S₃) (T : S₁ ⊢ s) → (T ⋯ₛ σ₁) ⋯ₛ σ₂ ≡ T ⋯ₛ (σ₁ ⨟ₛₛ σ₂)
     -- compositionalityₛₛ _ _ _ = ⋯-fusion _ _ _
- 
+
     -- Associativity Laws 
     postulate
       associativity : ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ K₃ : Kit _∋/⊢₃_ ⦄
                       ⦃ C₁ : ComposeKit K₁ K₂ ⦄ ⦃ C₂ : ComposeKit (K₁ ⊔ K₂) K₃ ⦄ → 
           (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) (ϕ₃ : S₃ –[ K₃ ]→ S₄) →   
           ComposeKit._⨟_ C₂ (ComposeKit._⨟_ C₁ ϕ₁ ϕ₂) ϕ₃ ≡  
-          (ComposeKit._⨟_ (K₁ ⨟ₖ (K₂ ⊔ K₃)) ϕ₁ (ComposeKit._⨟_ (K₂ ⨟ₖ K₃) ϕ₂ ϕ₃))    
+          (ComposeKit._⨟_ (K₁ ⨟ₖ (K₂ ⊔ K₃)) ϕ₁ (ComposeKit._⨟_ (K₂ ⨟ₖ K₃) ϕ₂ ϕ₃))  
+    -- associativity = {!   !} 
     -- associativity ⦃ K₁ = K₁@(KitsWithSort.Syntax.mkKit Ren refl _ _ _ _ _ _ _) ⦄ ⦃ K₂ ⦄ ⦃ K₃ ⦄ ϕ₁ _ _ 
     --   rewrite unique-Kᵣ-instance K₁ = {!   !}
     -- associativity ⦃ K₁ = K₁@(KitsWithSort.Syntax.mkKit Sub refl _ _ _ _ _ _ _) ⦄ ⦃ K₂ ⦄ ⦃ K₃ ⦄ ϕ₁ _ _ 

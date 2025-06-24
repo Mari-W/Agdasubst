@@ -1,6 +1,6 @@
 -- Author: Hannes Saffrich
 -- Modified: Marius Weidner
-{-# OPTIONS --rewriting --backtracking-instance-search #-}
+{-# OPTIONS --rewriting --allow-unsolved-metas #-}
 module Kits where
 
 open import Agda.Builtin.Equality.Rewrite
@@ -66,16 +66,12 @@ module KitsWithSort (Sort : SORT) where
           _&_ : S₁ ∋ s → S₁ →ₖ S₂ → S₂ ∋/⊢ s
           x & ϕ = ϕ _ x 
 
-          private
-            wkmₖ : ∀ s → S₁ →ₖ S₂ → S₁ →ₖ (s ∷ S₂)
-            wkmₖ s ϕ _ x = wk′ s (ϕ _ x)
+          wkmₖ : ∀ s → S₁ →ₖ S₂ → S₁ →ₖ (s ∷ S₂)
+          wkmₖ s ϕ _ x = wk′ s (ϕ _ x)
 
           _∙_ : S₂ ∋/⊢ s → S₁ →ₖ S₂ → (s ∷ S₁) →ₖ S₂
           (x/t ∙ ϕ) _ zero     = x/t
           (x/t ∙ ϕ) _ (suc x)  = ϕ _ x
-
-          _↑ₖ_ : S₁ →ₖ S₂ → ∀ s → (s ∷ S₁) →ₖ (s ∷ S₂)
-          ϕ ↑ₖ s = id/` zero ∙ wkmₖ s ϕ
 
           id : S →ₖ S
           id s x = id/` x 
@@ -85,6 +81,9 @@ module KitsWithSort (Sort : SORT) where
         
         ⦅_⦆ : S ∋/⊢ s → (s ∷ S) →ₖ S
         ⦅ x/t ⦆ = x/t ∙ id
+
+        _↑ₖ_ : S₁ →ₖ S₂ → ∀ s → (s ∷ S₁) →ₖ (s ∷ S₂)
+        ϕ ↑ₖ s = id/` zero ∙ wkmₖ s ϕ
 
         _↑ₖ⋆_ : S₁ →ₖ S₂ → ∀ S → (S ++ S₁) →ₖ (S ++ S₂)
         ϕ ↑ₖ⋆ []       = ϕ
@@ -328,7 +327,7 @@ module KitsWithSort (Sort : SORT) where
         wkKit K@(mkKit Ren refl _ _ _ _ _ _ _) rewrite unique-Kᵣ-instance K = Wᵣ 
         wkKit K@(mkKit Sub refl _ _ _ _ _ _ _) rewrite unique-Kₛ-instance K = Wₛ
 
-        record ComposeKit (K₁ : Kit _∋/⊢₁_) (K₂ : Kit _∋/⊢₂_) : Set where
+        record ComposeKit (K₁ : Kit _∋/⊢₁_) (K₂ : Kit _∋/⊢₂_) : Set₁ where
 
           private instance _ = K₁; _ = K₂
 
@@ -338,7 +337,7 @@ module KitsWithSort (Sort : SORT) where
             
             &/⋯-⋯     : (x/t : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
                          `/id ⦃ K₁ ⊔ K₂ ⦄ (x/t &/⋯ ϕ) ≡ `/id x/t ⋯ ϕ
-            &/⋯-wk-↑ₖ  : (x/t : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
+            &/⋯-wk-↑ₖ : (x/t : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
                          Kit.wk′ (K₁ ⊔ K₂) s′ (x/t &/⋯ ϕ) ≡ wk′ s′ x/t &/⋯ (ϕ ↑ₖ s′)
       
           opaque
@@ -474,36 +473,31 @@ module KitsWithSort (Sort : SORT) where
               ；ₖ-defₛ : ⦃ K : Kit _∋/⊢_ ⦄ → Kₛ ；ₖ K ≡ Cₛ ⦃ C = K ；ₖ Kᵣ ⦄
         
           {-# REWRITE ；ₖ-defᵣ ；ₖ-defₛ #-}
-
-          _↑_ : ⦃ K : Kit _∋/⊢_ ⦄ → S₁ –[ K ]→ S₂ → ∀ s → (s ∷ S₁) –[ K ]→ (s ∷ S₂)
-          _↑_ ⦃ K = K ⦄ ϕ s = let instance _ = K ；ₖ Kᵣ in id/` zero ∙ (ϕ ； wkᵣ) 
-
+          
           _↑ₛ_ : S₁ →ₛ S₂ → ∀ s → (s ∷ S₁) →ₛ (s ∷ S₂)
-          _↑ₛ_ = _↑_
+          _↑ₛ_ = _↑ₖ_
 
           _↑ᵣ_ : S₁ →ᵣ S₂ → ∀ s → (s ∷ S₁) →ᵣ (s ∷ S₂) 
-          _↑ᵣ_ = _↑_ 
+          _↑ᵣ_ = _↑ₖ_ 
 
-          _↑⋆_ : ⦃ K : Kit _∋/⊢_ ⦄ → S₁ –[ K ]→ S₂ → ∀ S → (S ++ S₁) –[ K ]→ (S ++ S₂)
-          ϕ ↑⋆ []       = ϕ
-          ϕ ↑⋆ (s ∷ S)  = (ϕ ↑⋆ S) ↑ s 
+          -- _↑⋆_ : ⦃ K : Kit _∋/⊢_ ⦄ → S₁ –[ K ]→ S₂ → ∀ S → (S ++ S₁) –[ K ]→ (S ++ S₂)
+          -- ϕ ↑⋆ []       = ϕ
+          -- ϕ ↑⋆ (s ∷ S)  = (ϕ ↑⋆ S) ↑ₖ s 
 
           _↑ᵣ⋆_ : S₁ →ᵣ S₂ → ∀ S → (S ++ S₁) →ᵣ (S ++ S₂)
-          _↑ᵣ⋆_ = _↑⋆_
+          _↑ᵣ⋆_ = _↑ₖ⋆_
 
           _↑ₛ⋆_ : S₁ →ₛ S₂ → ∀ S → (S ++ S₁) →ₛ (S ++ S₂)
-          _↑ₛ⋆_ = _↑⋆_
+          _↑ₛ⋆_ = _↑ₖ⋆_
 
           opaque 
             unfolding all_kit_and_compose_definitions
 
             postulate
-              ↑-def : ∀ ⦃ K : Kit _∋/⊢_ ⦄ (ϕ : S₁ –[ K ]→ S₂) s → ϕ ↑ₖ s ≡ ϕ ↑ s
-              ↑⋆-def : ∀ ⦃ K : Kit _∋/⊢_ ⦄ (ϕ : S₁ –[ K ]→ S₂) s → ϕ ↑ₖ⋆ s ≡ ϕ ↑⋆ s   
-            -- ↑-def ϕ s = ~-ext (proof ϕ s)
-            --   where proof :  ∀ ⦃ K : Kit _∋/⊢_ ⦄ (ϕ : S₁ –[ K ]→ S₂) s s′ → (x : (s ∷ S₁) ∋ s′) → x & (ϕ ↑ₖ s) ≡ x & (ϕ ↑ s)
-            --         proof ⦃ K = K ⦄ ϕ s s′ x = {!   !}
-  
+              wkm-def : ∀ ⦃ K : Kit _∋/⊢_ ⦄ (ϕ : S₁ –[ K ]→ S₂) s → wkmₖ s ϕ ≡ ϕ ；[ K ；ₖ Kᵣ ] wkᵣ 
+            -- wkmₖ-def ϕ s = {!   !}
+
+
             interact : ⦃ K : Kit _∋/⊢_ ⦄ (x/t : S₂ ∋/⊢ s) (ϕ : S₁ –[ K ]→ S₂) → wkᵣ ； (x/t ∙ ϕ) ≡ ϕ 
             interact _ _ = refl
             
@@ -671,16 +665,16 @@ module KitsWithSort (Sort : SORT) where
                     {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} {ϕ : S₁ –[ K ]→ S₂} →
                     Γ₂             ∋*/⊢* ϕ       ∶ Γ₁ →
                     (t : S₁ ∶⊢ s) →
-                    ((t ⋯ ϕ) ∷ₜ Γ₂) ∋*/⊢* (ϕ ↑ₖ s) ∶ (t ∷ₜ Γ₁)
+                    ((t ⋯ ϕ) ∷ₜ Γ₂) ∋*/⊢* (ϕ ↑ₖ s) ∶ (t ∷ₜ Γ₁) 
                   _∋↑/⊢↑_ {S₁} {S₂} {s} {Γ₁} {Γ₂} {ϕ} ⊢ϕ t {sx} x@zero _ refl =
                     subst (  ((t ⋯ ϕ) ∷ₜ Γ₂) ∋/⊢ (zero & (ϕ ↑ₖ s)) ∶_ )
-                          (  t ⋯ ϕ ⋯ wkᵣ {s = s}                      ≡⟨ ⋯-↑ₖ-wk {{ C₁ = K ；ₖ Kᵣ }} {{ C₂ = Cᵣ }}  t ϕ s ⟩
+                          (  t ⋯ ϕ ⋯ wkᵣ {s = s}                       ≡⟨ ⋯-↑ₖ-wk {{ C₁ = K ；ₖ Kᵣ }} {{ C₂ = Cᵣ }}  t ϕ s ⟩
                              t ⋯ wkᵣ {s = s} ⋯ (ϕ ↑ₖ s)                ≡⟨⟩
                              wk-telescope (t ∷ₜ Γ₁) zero ⋯ (ϕ ↑ₖ s)    ∎)
                           (  id/⊢` {x = zero} {Γ = (t ⋯ ϕ) ∷ₜ Γ₂} refl )
                   _∋↑/⊢↑_ {S₁} {S₂} {s} {Γ₁} {Γ₂} {ϕ} ⊢ϕ t {sx} x@(suc y) _ refl =
                     subst (((t ⋯ ϕ) ∷ₜ Γ₂) ∋/⊢ (suc y & (ϕ ↑ₖ s)) ∶_)
-                          (wk-telescope Γ₁ y ⋯ ϕ ⋯ wkᵣ {s = s}         ≡⟨ ⋯-↑ₖ-wk {{ C₁ = K ；ₖ Kᵣ }} {{ C₂ = Cᵣ }} _ ϕ s ⟩
+                          (wk-telescope Γ₁ y ⋯ ϕ ⋯ wkᵣ {s = s}          ≡⟨ ⋯-↑ₖ-wk {{ C₁ = K ；ₖ Kᵣ }} {{ C₂ = Cᵣ }} _ ϕ s ⟩
                            wk-telescope Γ₁ y ⋯ wkᵣ {s = s} ⋯ (ϕ ↑ₖ s)   ≡⟨⟩
                            wk-telescope (t ∷ₜ Γ₁) (suc y) ⋯ (ϕ ↑ₖ s)    ∎)
                           (∋wk/⊢wk _ _ _ _ (⊢ϕ y _ refl))
@@ -690,7 +684,7 @@ module KitsWithSort (Sort : SORT) where
                     → Γ ∋*/⊢* ⦅ t ⦆ ∶ (T ∷ₜ Γ)
                   ⊢⦅_⦆ {s} {S} {Γ} {t} {T} ⊢x/t x@zero _ refl =
                     subst (Γ ∋/⊢ t ∶_)
-                          (T                                   ≡⟨ sym (wk-cancels-⦅⦆-⋯ T t) ⟩
+                          (T                            ≡⟨ sym (wk-cancels-⦅⦆-⋯ T t) ⟩
                            T ⋯ wkᵣ ⋯ ⦅ t ⦆               ≡⟨⟩
                            wk-telescope (T ∷ₜ Γ) zero ⋯ ⦅ t ⦆  ∎)
                           ⊢x/t

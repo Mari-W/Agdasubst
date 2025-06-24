@@ -39,9 +39,8 @@ variable
   t t₁ t₂ t₃ t₄ t′ t₁′ t₂′ t₃′ t₄′ : S ⊢ type
   k k₁ k₂ k₃ k₄ k′ k₁′ k₂′ k₃′ k₄′ : S ⊢ kind 
 
-open import Derive
-
-unquoteDecl syn = deriveSyntax Sort _⊢_ `_ syn
+syn : Syntax
+syn = record { _⊢_ = _⊢_ ; `_ = `_ ; `-injective = λ { refl → refl } }
   
 open Syntax syn hiding (_⊢_; `_)
 
@@ -128,7 +127,7 @@ open ComposeTraversal compose hiding (⋯-fusion)
 ⋯id _ = ⋯-id _ 
 
 {-# REWRITE 
-  &-def₁ &-def₂ id-def ∷-def₁ ∷-def₂ wk-def ↑-def ↑⋆-def
+  &-def₁ &-def₂ id-def ∷-def₁ ∷-def₂ wk-def wkm-def
 
   interact
   left-id right-id
@@ -185,8 +184,10 @@ typing = record { _⊢_∶_ = _⊢_∶_ ; ⊢` = ⊢` }
 
 open Typing typing hiding (_⊢_∶_; ⊢`) 
 
+
 _⊢⋯_ :
   ∀ ⦃ K : Kit _∋/⊢_ ⦄ ⦃ TK : TypingKit K ⦄
+    ⦃ C₁ : ComposeKit K Kₛ ⦄ ⦃ C₂ : ComposeKit K Kᵣ ⦄ ⦃ C₃ : ComposeKit K K ⦄
     {S₁ S₂ m} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} {s : Sort m}
     {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} {ϕ : S₁ –[ K ]→ S₂} →
   Γ₁ ⊢ e ∶ t →
@@ -196,15 +197,15 @@ _⊢⋯_ :
 ⊢λ ⊢e ⊢⋯ ⊢ϕ = ⊢λ (⊢e ⊢⋯ (⊢ϕ ∋↑/⊢↑ _))
 ⊢Λ ⊢e ⊢⋯ ⊢ϕ = ⊢Λ (⊢e ⊢⋯ (⊢ϕ ∋↑/⊢↑ _))
 ⊢· ⊢e₁ ⊢e₂ ⊢⋯ ⊢ϕ = ⊢· (⊢e₁ ⊢⋯ ⊢ϕ) (⊢e₂ ⊢⋯ ⊢ϕ)
-_⊢⋯_ ⦃ K ⦄ {Γ₂ = Γ₂} {ϕ = ϕ} (⊢• {e = e} {t′ = t′} {t = t}  ⊢e ⊢t ⊢t′) ⊢ϕ = subst (Γ₂ ⊢ (e ⋯ ϕ) • (t ⋯ ϕ) ∶_) (cong (t′ ⋯_) 
-    (((id/` ⦃ K ⦄ zero ∙ (ϕ ；[ _ ；ₖ Kᵣ ] wkᵣ)) ；[ _ ；ₖ Kₛ ] ((t ⋯ ϕ) ∙ id)) 
-  ≡⟨ distributivity ⦃ C = K ；ₖ Kₛ ⦄ (id/` ⦃ K ⦄ zero) ((ϕ ；[ _ ；ₖ Kᵣ ] wkᵣ)) ((t ⋯ ϕ) ∙ id) ⟩
-    {! (_&/⋯_ ⦃ (K ；ₖ Kₛ) ⦄ id/` ⦃ K ⦄ zero) ((t ⋯ ϕ) ∙ₛ idₛ) ∙ ((ϕ ；[ K ；ₖ Kᵣ ] wkᵣ) ；[ K ；ₖ Kₛ ] ((t ⋯ ϕ) ∙ₛ idₛ)) !}   
-  ≡⟨ {!   !} ⟩  
-    ((t ∙ id) ；[ Kₛ ；ₖ _  ] ϕ) ∎)) (⊢• (⊢e ⊢⋯ ⊢ϕ) (⊢t ⊢⋯ ⊢ϕ) (⊢t′ ⊢⋯ (⊢ϕ ∋↑/⊢↑ _)))  
--- (id/` K zero ∙ (ϕ ；[ K ；ₖ Kᵣ  ] wkᵣ)) ；[ K ；ₖ S ] (t ⋯ ϕ ∙ idS)
--- ≡ 
--- ((t ∙ idS) ；[ S ；ₖ K  ] ϕ)  
+_⊢⋯_ ⦃ K = K ⦄ ⦃ C₂ = C₂ ⦄ {Γ₂ = Γ₂} {ϕ = ϕ} (⊢• {e = e} {t′ = t′} {t = t}  ⊢e ⊢t ⊢t′) ⊢ϕ = subst (Γ₂ ⊢ (e ⋯ ϕ) • (t ⋯ ϕ) ∶_) 
+  (cong (t′ ⋯_) (
+    ((id/` zero ∙ (ϕ ； wkᵣ)) ； ((t ⋯ ϕ) ∙ id))   
+  ≡⟨ {!   !} ⟩     
+    (((t ∙ id) ；[ Kₛ ；ₖ K ] ϕ)) ∎)) 
+  (⊢• (⊢e ⊢⋯ ⊢ϕ) (⊢t ⊢⋯ ⊢ϕ) (⊢t′ ⊢⋯ (⊢ϕ ∋↑/⊢↑ _)))  
+  -- (id/` K zero ∙ (ϕ ；[ K ；ₖ Kᵣ  ] wkᵣ)) ；[ K ；ₖ S ] (t ⋯ ϕ ∙ idS)
+  -- ≡ 
+  -- ((t ∙ idS) ；[ S ；ₖ K  ] ϕ)  
 
 ⊢★ ⊢⋯ ⊢ϕ = ⊢★ 
 

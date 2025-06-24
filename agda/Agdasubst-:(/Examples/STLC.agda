@@ -1,4 +1,4 @@
-{-# OPTIONS --rewriting --backtracking-instance-search --experimental-lazy-instances #-}
+{-# OPTIONS --rewriting #-}
 module Examples.STLC where
 
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; subst; module ≡-Reasoning)
@@ -83,7 +83,7 @@ open ComposeTraversal compose hiding (⋯-fusion)
 ⋯id _ = ⋯-id _ 
 
 {-# REWRITE 
-  &-def₁ &-def₂ id-def ∷-def₁ ∷-def₂ wk-def ↑-def ↑⋆-def
+  &-def₁ &-def₂ id-def ∷-def₁ ∷-def₂ wk-def wkm-def
 
   interact
   left-id right-id

@@ -91,17 +91,17 @@ module GenericsWithSort (Sort : Mode → Set) where
         ⋯-fusion  : ∀ {s : Sort m} ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ K : Kit _∋/⊢_ ⦄
                     ⦃ W₁ : WkKit K₁ ⦄ ⦃ C : ComposeKit K₁ K₂ K ⦄
                     (t : Tm d S₁ s) (ϕ₁ : S₁ →ₖ S₂) (ϕ₂ : S₂ →ₖ S₃) → 
-                    (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ t ⋯ (ϕ₁ ⨟ ϕ₂)
+                    (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ t ⋯ (ϕ₁ ； ϕ₂)
         ⋯-fusion (`var x)  ϕ₁ ϕ₂ = sym (&/⋯-⋯ (ϕ₁ _ x) ϕ₂)
         ⋯-fusion (`con e′) ϕ₁ ϕ₂ = cong `con (⋯-fusion′ e′ ϕ₁ ϕ₂)
 
         ⋯-fusion′  : ∀ {s : Sort m} ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ K : Kit _∋/⊢_ ⦄
                      ⦃ W₁ : WkKit K₁ ⦄ ⦃ C : ComposeKit K₁ K₂ K ⦄
                      (t : ⟦ d′ ⟧ (Tm d) S₁ s) (ϕ₁ : S₁ →ₖ S₂) (ϕ₂ : S₂ →ₖ S₃) → 
-                     (t ⋯′ ϕ₁) ⋯′ ϕ₂ ≡ t ⋯′ (ϕ₁ ⨟ ϕ₂)
+                     (t ⋯′ ϕ₁) ⋯′ ϕ₂ ≡ t ⋯′ (ϕ₁ ； ϕ₂)
         ⋯-fusion′ {d′ = `σ A d′}     (a , D′)      ϕ₁ ϕ₂ = cong (a ,_) (⋯-fusion′ D′ ϕ₁ ϕ₂)
         ⋯-fusion′ {d′ = `X S′ M′ d′} (e₁ , e₂)     ϕ₁ ϕ₂ = cong₂ _,_ (trans (⋯-fusion e₁ (ϕ₁ ↑ₖ* S′) (ϕ₂ ↑ₖ* S′))
-          (cong (e₁ ⋯_) (sym (~-ext (dist-↑ₖ*-⨟ S′ ϕ₁ ϕ₂)))))
+          (cong (e₁ ⋯_) (sym (~-ext (dist-↑ₖ*-； S′ ϕ₁ ϕ₂)))))
           (⋯-fusion′ e₂ ϕ₁ ϕ₂)
         ⋯-fusion′ {d′ = `■ M′}       (refl , refl) ϕ₁ ϕ₂ = refl
 

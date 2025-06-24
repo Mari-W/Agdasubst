@@ -74,11 +74,11 @@ opaque
   (x ∷ᵣ _) _ (here refl) = x
   (_ ∷ᵣ ρ) _ (there x) = ρ _ x
 
-  _⨟ᵣᵣ_ : S₁ →ᵣ S₂ → S₂ →ᵣ S₃ → S₁ →ᵣ S₃
-  (ρ₁ ⨟ᵣᵣ ρ₂) _ x = ρ₂ _ (ρ₁ _ x)
+  _；ᵣᵣ_ : S₁ →ᵣ S₂ → S₂ →ᵣ S₃ → S₁ →ᵣ S₃
+  (ρ₁ ；ᵣᵣ ρ₂) _ x = ρ₂ _ (ρ₁ _ x)
 
 _↑ₖᵣ_ : S₁ →ᵣ S₂ → (s : Sort Var) → (s ∷ S₁) →ᵣ (s ∷ S₂)
-ρ ↑ₖᵣ _ = here refl ∷ᵣ (ρ ⨟ᵣᵣ wkᵣ)
+ρ ↑ₖᵣ _ = here refl ∷ᵣ (ρ ；ᵣᵣ wkᵣ)
   
 _⋯ᵣ_ : S₁ ⊢ s → S₁ →ᵣ S₂ → S₂ ⊢ s
 (` x)         ⋯ᵣ ρ = ` (ρ ⍟ᵣ x)
@@ -94,7 +94,7 @@ wk : S ⊢ s → (s' ∷ S) ⊢ s
 wk T = T ⋯ᵣ wkᵣ
 
 opaque
-  unfolding _→ᵣ_ _⍟ᵣ_ idᵣ wkᵣ _∷ᵣ_ _⨟ᵣᵣ_
+  unfolding _→ᵣ_ _⍟ᵣ_ idᵣ wkᵣ _∷ᵣ_ _；ᵣᵣ_
 
   _→ₛ_ : List (Sort Var) → List (Sort Var) → Set
   S₁ →ₛ S₂ = ∀ s → s ∈ S₁ → S₂ ⊢ s
@@ -109,14 +109,14 @@ opaque
   (t ∷ₛ _) _ (here refl) = t
   (_ ∷ₛ σ) _ (there x) = σ _ x
   
-  _⨟ᵣₛ_ : S₁ →ᵣ S₂ → S₂ →ₛ S₃ → S₁ →ₛ S₃
-  (ρ₁ ⨟ᵣₛ σ₂) _ x = σ₂ _ (ρ₁ _ x)
+  _；ᵣₛ_ : S₁ →ᵣ S₂ → S₂ →ₛ S₃ → S₁ →ₛ S₃
+  (ρ₁ ；ᵣₛ σ₂) _ x = σ₂ _ (ρ₁ _ x)
 
-  _⨟ₛᵣ_ : S₁ →ₛ S₂ → S₂ →ᵣ S₃ → S₁ →ₛ S₃
-  (σ₁ ⨟ₛᵣ ρ₂) _ x = (σ₁ _ x) ⋯ᵣ ρ₂
+  _；ₛᵣ_ : S₁ →ₛ S₂ → S₂ →ᵣ S₃ → S₁ →ₛ S₃
+  (σ₁ ；ₛᵣ ρ₂) _ x = (σ₁ _ x) ⋯ᵣ ρ₂
 
 _↑ₖₛ_ : S₁ →ₛ S₂ → (s : Sort Var) → (s ∷ S₁) →ₛ (s ∷ S₂)
-(σ ↑ₖₛ _) = (` (here refl)) ∷ₛ (σ ⨟ₛᵣ wkᵣ)
+(σ ↑ₖₛ _) = (` (here refl)) ∷ₛ (σ ；ₛᵣ wkᵣ)
 
 _⋯ₛ_ : S₁ ⊢ s → S₁ →ₛ S₂ → S₂ ⊢ s
 (` x)         ⋯ₛ σ = (σ ⍟ₛ x)
@@ -133,13 +133,13 @@ T [ T' ] = T ⋯ₛ (T' ∷ₛ idₛ)
 
 
 opaque
-  unfolding _→ᵣ_ _⍟ᵣ_ idᵣ wkᵣ _∷ᵣ_ _⨟ᵣᵣ_ _→ₛ_ _⍟ₛ_ idₛ _∷ₛ_ _⨟ᵣₛ_ _⨟ₛᵣ_
+  unfolding _→ᵣ_ _⍟ᵣ_ idᵣ wkᵣ _∷ᵣ_ _；ᵣᵣ_ _→ₛ_ _⍟ₛ_ idₛ _∷ₛ_ _；ᵣₛ_ _；ₛᵣ_
 
-  _⨟ₛₛ_ :  S₁ →ₛ S₂ → S₂ →ₛ S₃ → S₁ →ₛ S₃
-  (σ₁ ⨟ₛₛ σ₂) _ x = (σ₁ _ x) ⋯ₛ σ₂
+  _；ₛₛ_ :  S₁ →ₛ S₂ → S₂ →ₛ S₃ → S₁ →ₛ S₃
+  (σ₁ ；ₛₛ σ₂) _ x = (σ₁ _ x) ⋯ₛ σ₂
 
 opaque
-  unfolding _→ᵣ_ _⍟ᵣ_ idᵣ wkᵣ _∷ᵣ_ _⨟ᵣᵣ_ _→ₛ_ _⍟ₛ_ idₛ _∷ₛ_ _⨟ᵣₛ_ _⨟ₛᵣ_ _⨟ₛₛ_
+  unfolding _→ᵣ_ _⍟ᵣ_ idᵣ wkᵣ _∷ᵣ_ _；ᵣᵣ_ _→ₛ_ _⍟ₛ_ idₛ _∷ₛ_ _；ᵣₛ_ _；ₛᵣ_ _；ₛₛ_
   
   -- Renaming Primitives
   ⍟ᵣ-def₁ : (ρ : S₁ →ᵣ S₂) → (x ∷ᵣ ρ) ⍟ᵣ (here refl) ≡ x
@@ -177,22 +177,22 @@ opaque
   ∷ₛ-def₂ _ _ _ = refl
 
   -- Forward Composition Primitves
-  ⨟ᵣᵣ-def : (ρ₁ : S₁ →ᵣ S₂) (ρ₂ : S₂ →ᵣ S₃) (x : s ∈ S₁) → (ρ₁ ⨟ᵣᵣ ρ₂) ⍟ᵣ x ≡ ρ₂ ⍟ᵣ (ρ₁ ⍟ᵣ x)
-  ⨟ᵣᵣ-def _ _ _ = refl
+  ；ᵣᵣ-def : (ρ₁ : S₁ →ᵣ S₂) (ρ₂ : S₂ →ᵣ S₃) (x : s ∈ S₁) → (ρ₁ ；ᵣᵣ ρ₂) ⍟ᵣ x ≡ ρ₂ ⍟ᵣ (ρ₁ ⍟ᵣ x)
+  ；ᵣᵣ-def _ _ _ = refl
 
-  ⨟ᵣₛ-def : (ρ₁ : S₁ →ᵣ S₂) (σ₂ : S₂ →ₛ S₃) (x : s ∈ S₁) → (ρ₁ ⨟ᵣₛ σ₂) ⍟ₛ x ≡ σ₂ ⍟ₛ (ρ₁ ⍟ᵣ x)
-  ⨟ᵣₛ-def _ _ _ = refl
+  ；ᵣₛ-def : (ρ₁ : S₁ →ᵣ S₂) (σ₂ : S₂ →ₛ S₃) (x : s ∈ S₁) → (ρ₁ ；ᵣₛ σ₂) ⍟ₛ x ≡ σ₂ ⍟ₛ (ρ₁ ⍟ᵣ x)
+  ；ᵣₛ-def _ _ _ = refl
 
-  ⨟ₛᵣ-def : (σ₁ : S₁ →ₛ S₂) (ρ₂ : S₂ →ᵣ S₃) (x : s ∈ S₁) → (σ₁ ⨟ₛᵣ ρ₂) ⍟ₛ x ≡ (σ₁ ⍟ₛ x) ⋯ᵣ ρ₂
-  ⨟ₛᵣ-def _ _ _ = refl
+  ；ₛᵣ-def : (σ₁ : S₁ →ₛ S₂) (ρ₂ : S₂ →ᵣ S₃) (x : s ∈ S₁) → (σ₁ ；ₛᵣ ρ₂) ⍟ₛ x ≡ (σ₁ ⍟ₛ x) ⋯ᵣ ρ₂
+  ；ₛᵣ-def _ _ _ = refl
 
-  ⨟ₛₛ-def : (σ₁ : S₁ →ₛ S₂) (σ₂ : S₂ →ₛ S₃) (x : s ∈ S₁) → (σ₁ ⨟ₛₛ σ₂) ⍟ₛ x ≡ (σ₁ ⍟ₛ x) ⋯ₛ σ₂
-  ⨟ₛₛ-def _ _ _ = refl
+  ；ₛₛ-def : (σ₁ : S₁ →ₛ S₂) (σ₂ : S₂ →ₛ S₃) (x : s ∈ S₁) → (σ₁ ；ₛₛ σ₂) ⍟ₛ x ≡ (σ₁ ⍟ₛ x) ⋯ₛ σ₂
+  ；ₛₛ-def _ _ _ = refl
 
     -- Interaction Laws
-  interactᵣ : (x : s ∈ S₂) (ρ : S₁ →ᵣ S₂) → wkᵣ ⨟ᵣᵣ (x ∷ᵣ ρ) ≡ ρ 
+  interactᵣ : (x : s ∈ S₂) (ρ : S₁ →ᵣ S₂) → wkᵣ ；ᵣᵣ (x ∷ᵣ ρ) ≡ ρ 
   interactᵣ _ _ = refl
-  interactₛ : (T : S₂ ⊢ s) (σ : S₁ →ₛ S₂) → wkᵣ ⨟ᵣₛ (T ∷ₛ σ) ≡ σ
+  interactₛ : (T : S₂ ⊢ s) (σ : S₁ →ₛ S₂) → wkᵣ ；ᵣₛ (T ∷ₛ σ) ≡ σ
   interactₛ _ _ = refl
 
   -- Eta Laws
@@ -200,29 +200,29 @@ opaque
   η-idᵣ = fun-ext (λ _ → fun-ext (λ { (here refl) → refl
                                     ; (there x) → refl }))
                                     
-  η-idₛ : _∷ₛ_ {s = s} {S₁ = S} (` here refl) (wkᵣ ⨟ᵣₛ idₛ) ≡ idₛ
+  η-idₛ : _∷ₛ_ {s = s} {S₁ = S} (` here refl) (wkᵣ ；ᵣₛ idₛ) ≡ idₛ
   η-idₛ = fun-ext (λ _ → fun-ext (λ { (here refl) → refl
                                     ; (there x) → refl }))
 
-  η-lawᵣ : (ρ : (s ∷ S₁) →ᵣ S₂) → (ρ ⍟ᵣ (here refl)) ∷ᵣ (wkᵣ ⨟ᵣᵣ ρ) ≡ ρ
+  η-lawᵣ : (ρ : (s ∷ S₁) →ᵣ S₂) → (ρ ⍟ᵣ (here refl)) ∷ᵣ (wkᵣ ；ᵣᵣ ρ) ≡ ρ
   η-lawᵣ _ = fun-ext (λ _ → fun-ext (λ { (here refl) → refl
                                        ; (there x) → refl }))
 
-  η-lawₛ : (σ : (s ∷ S₁) →ₛ S₂) → (σ ⍟ₛ (here refl)) ∷ₛ (wkᵣ ⨟ᵣₛ σ) ≡ σ
+  η-lawₛ : (σ : (s ∷ S₁) →ₛ S₂) → (σ ⍟ₛ (here refl)) ∷ₛ (wkᵣ ；ᵣₛ σ) ≡ σ
   η-lawₛ _ = fun-ext (λ _ → fun-ext (λ { (here refl) → refl
                                        ; (there x) → refl }))
 
   -- Distributivity Laws
-  distributivityᵣᵣ : (x : s ∈ S₂) (ρ₁ : S₁ →ᵣ S₂) (ρ₂ : S₂ →ᵣ S₃) → (x ∷ᵣ ρ₁) ⨟ᵣᵣ ρ₂ ≡ (ρ₂ ⍟ᵣ x) ∷ᵣ (ρ₁ ⨟ᵣᵣ ρ₂)
+  distributivityᵣᵣ : (x : s ∈ S₂) (ρ₁ : S₁ →ᵣ S₂) (ρ₂ : S₂ →ᵣ S₃) → (x ∷ᵣ ρ₁) ；ᵣᵣ ρ₂ ≡ (ρ₂ ⍟ᵣ x) ∷ᵣ (ρ₁ ；ᵣᵣ ρ₂)
   distributivityᵣᵣ _ _ _ = fun-ext λ _ → fun-ext λ { (here refl) → refl
                                                    ; (there x) → refl }
-  distributivityᵣₛ : (x : s ∈ S₂) (ρ₁ : S₁ →ᵣ S₂) (σ₂ : S₂ →ₛ S₃) → (x ∷ᵣ ρ₁) ⨟ᵣₛ σ₂ ≡ (σ₂ ⍟ₛ x) ∷ₛ (ρ₁ ⨟ᵣₛ σ₂)
+  distributivityᵣₛ : (x : s ∈ S₂) (ρ₁ : S₁ →ᵣ S₂) (σ₂ : S₂ →ₛ S₃) → (x ∷ᵣ ρ₁) ；ᵣₛ σ₂ ≡ (σ₂ ⍟ₛ x) ∷ₛ (ρ₁ ；ᵣₛ σ₂)
   distributivityᵣₛ _ _ _ = fun-ext λ _ → fun-ext λ { (here refl) → refl
                                                    ; (there x) → refl }
-  distributivityₛᵣ : (T : S₂ ⊢ s) (σ₁ : S₁ →ₛ S₂) (ρ₂ : S₂ →ᵣ S₃) → (T ∷ₛ σ₁) ⨟ₛᵣ ρ₂ ≡ (T ⋯ᵣ ρ₂) ∷ₛ (σ₁ ⨟ₛᵣ ρ₂)
+  distributivityₛᵣ : (T : S₂ ⊢ s) (σ₁ : S₁ →ₛ S₂) (ρ₂ : S₂ →ᵣ S₃) → (T ∷ₛ σ₁) ；ₛᵣ ρ₂ ≡ (T ⋯ᵣ ρ₂) ∷ₛ (σ₁ ；ₛᵣ ρ₂)
   distributivityₛᵣ _ _ _ = fun-ext λ _ → fun-ext λ { (here refl) → refl
                                                    ; (there x) → refl }
-  distributivityₛₛ : (T : S₂ ⊢ s) (σ₁ : S₁ →ₛ S₂) (σ₂ : S₂ →ₛ S₃) → (T ∷ₛ σ₁) ⨟ₛₛ σ₂ ≡ (T ⋯ₛ σ₂) ∷ₛ (σ₁ ⨟ₛₛ σ₂)
+  distributivityₛₛ : (T : S₂ ⊢ s) (σ₁ : S₁ →ₛ S₂) (σ₂ : S₂ →ₛ S₃) → (T ∷ₛ σ₁) ；ₛₛ σ₂ ≡ (T ⋯ₛ σ₂) ∷ₛ (σ₁ ；ₛₛ σ₂)
   distributivityₛₛ _ _ _ = fun-ext λ _ → fun-ext λ { (here refl) → refl
                                                    ; (there x) → refl }                        
 
@@ -248,29 +248,29 @@ opaque
   ⋯idₛ ★            = refl
 
    -- Identity Composition Laws  
-  left-idᵣᵣ : (ρ : S₁ →ᵣ S₂) → idᵣ ⨟ᵣᵣ ρ ≡ ρ 
+  left-idᵣᵣ : (ρ : S₁ →ᵣ S₂) → idᵣ ；ᵣᵣ ρ ≡ ρ 
   left-idᵣᵣ _ = refl
 
-  right-idᵣᵣ : (ρ : S₁ →ᵣ S₂) → ρ ⨟ᵣᵣ idᵣ ≡ ρ
+  right-idᵣᵣ : (ρ : S₁ →ᵣ S₂) → ρ ；ᵣᵣ idᵣ ≡ ρ
   right-idᵣᵣ _ = refl
 
-  left-idᵣₛ : (σ : S₁ →ₛ S₂) → idᵣ ⨟ᵣₛ σ ≡ σ
+  left-idᵣₛ : (σ : S₁ →ₛ S₂) → idᵣ ；ᵣₛ σ ≡ σ
   left-idᵣₛ _ = refl
 
-  left-idₛᵣ : (ρ : S₁ →ᵣ S₂) → idₛ ⨟ₛᵣ ρ ≡ ρ ⨟ᵣₛ idₛ
+  left-idₛᵣ : (ρ : S₁ →ᵣ S₂) → idₛ ；ₛᵣ ρ ≡ ρ ；ᵣₛ idₛ
   left-idₛᵣ _ = refl 
 
-  left-idₛₛ : (σ : S₁ →ₛ S₂) → idₛ ⨟ₛₛ σ ≡ σ   
+  left-idₛₛ : (σ : S₁ →ₛ S₂) → idₛ ；ₛₛ σ ≡ σ   
   left-idₛₛ _ = refl
 
-  right-idₛᵣ : (σ : S₁ →ₛ S₂) → σ ⨟ₛᵣ idᵣ ≡ σ
+  right-idₛᵣ : (σ : S₁ →ₛ S₂) → σ ；ₛᵣ idᵣ ≡ σ
   right-idₛᵣ _ = fun-ext λ _ → fun-ext λ x → ⋯idᵣ _
 
-  right-idₛₛ : (σ : S₁ →ₛ S₂) → σ ⨟ₛₛ idₛ ≡ σ 
+  right-idₛₛ : (σ : S₁ →ₛ S₂) → σ ；ₛₛ idₛ ≡ σ 
   right-idₛₛ _ = fun-ext λ _ → fun-ext λ x → ⋯idₛ _
 
   -- Compositionality Laws
-  compositionalityᵣᵣ : (ρ₁ : S₁ →ᵣ S₂) (ρ₂ : S₂ →ᵣ S₃) (T : S₁ ⊢ s) → (T ⋯ᵣ ρ₁) ⋯ᵣ ρ₂ ≡ T ⋯ᵣ (ρ₁ ⨟ᵣᵣ ρ₂)
+  compositionalityᵣᵣ : (ρ₁ : S₁ →ᵣ S₂) (ρ₂ : S₂ →ᵣ S₃) (T : S₁ ⊢ s) → (T ⋯ᵣ ρ₁) ⋯ᵣ ρ₂ ≡ T ⋯ᵣ (ρ₁ ；ᵣᵣ ρ₂)
   compositionalityᵣᵣ ρ₁ ρ₂ (` x)        = refl
   compositionalityᵣᵣ ρ₁ ρ₂ (λx e)       = cong λx_ (trans (compositionalityᵣᵣ (ρ₁ ↑ₖᵣ _) (ρ₂ ↑ₖᵣ _) e) (cong (e ⋯ᵣ_) (distributivityᵣᵣ _ _ (ρ₂ ↑ₖᵣ _))))
   compositionalityᵣᵣ ρ₁ ρ₂ (Λα e)       = cong Λα_ (trans (compositionalityᵣᵣ (ρ₁ ↑ₖᵣ _) (ρ₂ ↑ₖᵣ _) e) (cong (e ⋯ᵣ_) (distributivityᵣᵣ _ _ (ρ₂ ↑ₖᵣ _))))
@@ -280,7 +280,7 @@ opaque
   compositionalityᵣᵣ ρ₁ ρ₂ (t₁ ⇒ t₂)    = cong₂ _⇒_ (compositionalityᵣᵣ _ _ t₁)  (compositionalityᵣᵣ _ _ t₂)
   compositionalityᵣᵣ ρ₁ ρ₂ ★            = refl
   
-  compositionalityᵣₛ : (ρ₁ : S₁ →ᵣ S₂) (σ₂ : S₂ →ₛ S₃) (T : S₁ ⊢ s) → (T ⋯ᵣ ρ₁) ⋯ₛ σ₂ ≡ T ⋯ₛ (ρ₁ ⨟ᵣₛ σ₂)
+  compositionalityᵣₛ : (ρ₁ : S₁ →ᵣ S₂) (σ₂ : S₂ →ₛ S₃) (T : S₁ ⊢ s) → (T ⋯ᵣ ρ₁) ⋯ₛ σ₂ ≡ T ⋯ₛ (ρ₁ ；ᵣₛ σ₂)
   compositionalityᵣₛ ρ₁ σ₂ (` x)        = refl
   compositionalityᵣₛ ρ₁ σ₂ (λx e)       = cong λx_ (trans (compositionalityᵣₛ (ρ₁ ↑ₖᵣ _) (σ₂ ↑ₖₛ _) e) (cong (e ⋯ₛ_) (distributivityᵣₛ _ _ (σ₂ ↑ₖₛ _))))
   compositionalityᵣₛ ρ₁ σ₂ (Λα e)       = cong Λα_ (trans (compositionalityᵣₛ (ρ₁ ↑ₖᵣ _) (σ₂ ↑ₖₛ _) e) (cong (e ⋯ₛ_) (distributivityᵣₛ _ _ (σ₂ ↑ₖₛ _))))
@@ -290,7 +290,7 @@ opaque
   compositionalityᵣₛ ρ₁ σ₂ (t₁ ⇒ t₂)    = cong₂ _⇒_ (compositionalityᵣₛ _ _ t₁)  (compositionalityᵣₛ _ _ t₂)
   compositionalityᵣₛ ρ₁ σ₂ ★            = refl
   
-  compositionalityₛᵣ : (σ₁ : S₁ →ₛ S₂) (ρ₂ : S₂ →ᵣ S₃) (T : S₁ ⊢ s) → (T ⋯ₛ σ₁) ⋯ᵣ ρ₂ ≡ T ⋯ₛ (σ₁ ⨟ₛᵣ ρ₂)
+  compositionalityₛᵣ : (σ₁ : S₁ →ₛ S₂) (ρ₂ : S₂ →ᵣ S₃) (T : S₁ ⊢ s) → (T ⋯ₛ σ₁) ⋯ᵣ ρ₂ ≡ T ⋯ₛ (σ₁ ；ₛᵣ ρ₂)
   compositionalityₛᵣ σ₁ ρ₂ (` x)        = refl
   compositionalityₛᵣ σ₁ ρ₂ (λx e)       = cong λx_ (trans (compositionalityₛᵣ (σ₁ ↑ₖₛ _) (ρ₂ ↑ₖᵣ _) e) (cong (e ⋯ₛ_) (fun-ext λ _ → fun-ext λ { (here refl) → refl; (there x) → trans (compositionalityᵣᵣ _ _ _) (sym (compositionalityᵣᵣ _ _ _)) })))
   compositionalityₛᵣ σ₁ ρ₂ (Λα e)       = cong Λα_ (trans (compositionalityₛᵣ (σ₁ ↑ₖₛ _) (ρ₂ ↑ₖᵣ _) e) (cong (e ⋯ₛ_) (fun-ext λ _ → fun-ext λ { (here refl) → refl; (there x) → trans (compositionalityᵣᵣ _ _ _) (sym (compositionalityᵣᵣ _ _ _)) })))
@@ -300,7 +300,7 @@ opaque
   compositionalityₛᵣ σ₁ ρ₂ (t₁ ⇒ t₂)    = cong₂ _⇒_ (compositionalityₛᵣ _ _ t₁)  (compositionalityₛᵣ _ _ t₂)
   compositionalityₛᵣ σ₁ ρ₂ ★            = refl
   
-  compositionalityₛₛ : (σ₁ : S₁ →ₛ S₂) (σ₂ : S₂ →ₛ S₃) (T : S₁ ⊢ s) → (T ⋯ₛ σ₁) ⋯ₛ σ₂ ≡ T ⋯ₛ (σ₁ ⨟ₛₛ σ₂)
+  compositionalityₛₛ : (σ₁ : S₁ →ₛ S₂) (σ₂ : S₂ →ₛ S₃) (T : S₁ ⊢ s) → (T ⋯ₛ σ₁) ⋯ₛ σ₂ ≡ T ⋯ₛ (σ₁ ；ₛₛ σ₂)
   compositionalityₛₛ σ₁ σ₂ (` x)        = refl
   compositionalityₛₛ σ₁ σ₂ (λx e)       = cong λx_ (trans (compositionalityₛₛ (σ₁ ↑ₖₛ _) (σ₂ ↑ₖₛ _) e) (cong (e ⋯ₛ_) (fun-ext λ _ → fun-ext λ { (here refl) → refl; (there x) → trans (compositionalityᵣₛ _ _ (σ₁ _ x)) (sym (compositionalityₛᵣ _ _ (σ₁ _ x))) })))
   compositionalityₛₛ σ₁ σ₂ (Λα e)       = cong Λα_ (trans (compositionalityₛₛ (σ₁ ↑ₖₛ _) (σ₂ ↑ₖₛ _) e) (cong (e ⋯ₛ_) (fun-ext λ _ → fun-ext λ { (here refl) → refl; (there x) → trans (compositionalityᵣₛ _ _ (σ₁ _ x)) (sym (compositionalityₛᵣ _ _ (σ₁ _ x))) })))
@@ -311,34 +311,34 @@ opaque
   compositionalityₛₛ σ₁ σ₂ ★            = refl
   
   -- Associativity Laws 
-  associativityᵣᵣᵣ : (ρ₁ : S₁ →ᵣ S₂) (ρ₂ : S₂ →ᵣ S₃) (ρ₃ : S₃ →ᵣ S₄) → (ρ₁ ⨟ᵣᵣ ρ₂) ⨟ᵣᵣ ρ₃ ≡ ρ₁ ⨟ᵣᵣ (ρ₂ ⨟ᵣᵣ ρ₃)
+  associativityᵣᵣᵣ : (ρ₁ : S₁ →ᵣ S₂) (ρ₂ : S₂ →ᵣ S₃) (ρ₃ : S₃ →ᵣ S₄) → (ρ₁ ；ᵣᵣ ρ₂) ；ᵣᵣ ρ₃ ≡ ρ₁ ；ᵣᵣ (ρ₂ ；ᵣᵣ ρ₃)
   associativityᵣᵣᵣ _ _ _ = refl
 
-  associativityᵣᵣₛ : (ρ₁ : S₁ →ᵣ S₂) (ρ₂ : S₂ →ᵣ S₃) (σ₃ : S₃ →ₛ S₄) → (ρ₁ ⨟ᵣᵣ ρ₂) ⨟ᵣₛ σ₃ ≡ ρ₁ ⨟ᵣₛ (ρ₂ ⨟ᵣₛ σ₃)
+  associativityᵣᵣₛ : (ρ₁ : S₁ →ᵣ S₂) (ρ₂ : S₂ →ᵣ S₃) (σ₃ : S₃ →ₛ S₄) → (ρ₁ ；ᵣᵣ ρ₂) ；ᵣₛ σ₃ ≡ ρ₁ ；ᵣₛ (ρ₂ ；ᵣₛ σ₃)
   associativityᵣᵣₛ _ _ _ = refl
 
-  associativityᵣₛᵣ : (ρ₁ : S₁ →ᵣ S₂) (σ₂ : S₂ →ₛ S₃) (ρ₃ : S₃ →ᵣ S₄) → (ρ₁ ⨟ᵣₛ σ₂) ⨟ₛᵣ ρ₃ ≡ ρ₁ ⨟ᵣₛ (σ₂ ⨟ₛᵣ ρ₃)
+  associativityᵣₛᵣ : (ρ₁ : S₁ →ᵣ S₂) (σ₂ : S₂ →ₛ S₃) (ρ₃ : S₃ →ᵣ S₄) → (ρ₁ ；ᵣₛ σ₂) ；ₛᵣ ρ₃ ≡ ρ₁ ；ᵣₛ (σ₂ ；ₛᵣ ρ₃)
   associativityᵣₛᵣ _ _ _ = refl
 
-  associativityᵣₛₛ : (ρ₁ : S₁ →ᵣ S₂) (σ₂ : S₂ →ₛ S₃) (σ₃ : S₃ →ₛ S₄) → (ρ₁ ⨟ᵣₛ σ₂) ⨟ₛₛ σ₃ ≡ ρ₁ ⨟ᵣₛ (σ₂ ⨟ₛₛ σ₃)
+  associativityᵣₛₛ : (ρ₁ : S₁ →ᵣ S₂) (σ₂ : S₂ →ₛ S₃) (σ₃ : S₃ →ₛ S₄) → (ρ₁ ；ᵣₛ σ₂) ；ₛₛ σ₃ ≡ ρ₁ ；ᵣₛ (σ₂ ；ₛₛ σ₃)
   associativityᵣₛₛ _ _ _ = refl 
   
-  associativityₛᵣᵣ : (σ₁ : S₁ →ₛ S₂) (ρ₂ : S₂ →ᵣ S₃) (ρ₃ : S₃ →ᵣ S₄) → (σ₁ ⨟ₛᵣ ρ₂) ⨟ₛᵣ ρ₃ ≡ σ₁ ⨟ₛᵣ (ρ₂ ⨟ᵣᵣ ρ₃)
+  associativityₛᵣᵣ : (σ₁ : S₁ →ₛ S₂) (ρ₂ : S₂ →ᵣ S₃) (ρ₃ : S₃ →ᵣ S₄) → (σ₁ ；ₛᵣ ρ₂) ；ₛᵣ ρ₃ ≡ σ₁ ；ₛᵣ (ρ₂ ；ᵣᵣ ρ₃)
   associativityₛᵣᵣ _ _ _ = fun-ext λ _ → fun-ext λ _ → compositionalityᵣᵣ _ _ _
 
-  associativityₛᵣₛ : (σ₁ : S₁ →ₛ S₂) (ρ₂ : S₂ →ᵣ S₃) (σ₃ : S₃ →ₛ S₄) → (σ₁ ⨟ₛᵣ ρ₂) ⨟ₛₛ σ₃ ≡ σ₁ ⨟ₛₛ (ρ₂ ⨟ᵣₛ σ₃)
+  associativityₛᵣₛ : (σ₁ : S₁ →ₛ S₂) (ρ₂ : S₂ →ᵣ S₃) (σ₃ : S₃ →ₛ S₄) → (σ₁ ；ₛᵣ ρ₂) ；ₛₛ σ₃ ≡ σ₁ ；ₛₛ (ρ₂ ；ᵣₛ σ₃)
   associativityₛᵣₛ σ₁ _ _ = fun-ext λ _ → fun-ext λ x → compositionalityᵣₛ _ _ (σ₁ _ x)
 
-  associativityₛₛᵣ : (σ₁ : S₁ →ₛ S₂) (σ₂ : S₂ →ₛ S₃) (ρ₃ : S₃ →ᵣ S₄) → (σ₁ ⨟ₛₛ σ₂) ⨟ₛᵣ ρ₃ ≡ σ₁ ⨟ₛₛ (σ₂ ⨟ₛᵣ ρ₃)
+  associativityₛₛᵣ : (σ₁ : S₁ →ₛ S₂) (σ₂ : S₂ →ₛ S₃) (ρ₃ : S₃ →ᵣ S₄) → (σ₁ ；ₛₛ σ₂) ；ₛᵣ ρ₃ ≡ σ₁ ；ₛₛ (σ₂ ；ₛᵣ ρ₃)
   associativityₛₛᵣ σ₁ _ _ = fun-ext λ _ → fun-ext λ x → compositionalityₛᵣ _ _ (σ₁ _ x)
 
-  associativityₛₛₛ : (σ₁ : S₁ →ₛ S₂) (σ₂ : S₂ →ₛ S₃) (σ₃ : S₃ →ₛ S₄) → (σ₁ ⨟ₛₛ σ₂) ⨟ₛₛ σ₃ ≡ σ₁ ⨟ₛₛ (σ₂ ⨟ₛₛ σ₃)
+  associativityₛₛₛ : (σ₁ : S₁ →ₛ S₂) (σ₂ : S₂ →ₛ S₃) (σ₃ : S₃ →ₛ S₄) → (σ₁ ；ₛₛ σ₂) ；ₛₛ σ₃ ≡ σ₁ ；ₛₛ (σ₂ ；ₛₛ σ₃)
   associativityₛₛₛ σ₁ _ _ = fun-ext λ _ → fun-ext λ x → compositionalityₛₛ _ _ (σ₁ _ x)
 
 {-# REWRITE 
   ⍟ᵣ-def₁ ⍟ᵣ-def₂ idᵣ-def wkᵣ-def ∷ᵣ-def₁ ∷ᵣ-def₂ 
   ⍟ₛ-def₁ ⍟ₛ-def₂ idₛ-def ∷ₛ-def₁ ∷ₛ-def₂
-  ⨟ᵣᵣ-def ⨟ᵣₛ-def ⨟ₛᵣ-def ⨟ₛₛ-def
+  ；ᵣᵣ-def ；ᵣₛ-def ；ₛᵣ-def ；ₛₛ-def
 
   left-idᵣᵣ right-idᵣᵣ left-idᵣₛ left-idₛᵣ right-idₛᵣ left-idₛₛ right-idₛₛ
   interactᵣ interactₛ

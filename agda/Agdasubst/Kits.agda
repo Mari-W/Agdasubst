@@ -215,8 +215,8 @@ module KitsWithSort (Sort : SORT) where
             all_kit_and_compose_definitions : Data.Unit.⊤
             all_kit_and_compose_definitions = Data.Unit.tt
 
-            _⨟_ : S₁ –[ K₁ ]→ S₂ → S₂ –[ K₂ ]→ S₃ → S₁ –[ K₁⊔K₂ ]→ S₃
-            (ϕ₁ ⨟ ϕ₂) _ x = (x & ϕ₁) &/⋯ ϕ₂ 
+            _；_ : S₁ –[ K₁ ]→ S₂ → S₂ –[ K₂ ]→ S₃ → S₁ –[ K₁⊔K₂ ]→ S₃
+            (ϕ₁ ； ϕ₂) _ x = (x & ϕ₁) &/⋯ ϕ₂ 
 
           opaque
             unfolding all_kit_and_compose_definitions
@@ -229,41 +229,41 @@ module KitsWithSort (Sort : SORT) where
               ` x ⋯ ϕ                   ≡⟨ ⋯-var ⦃ K₂ ⦄ x ϕ ⟩
               `/id ⦃ K₂ ⦄  (x & ϕ)      ∎
 
-            dist-↑ₖ-⨟  : ∀ s (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) →
-                       ((ϕ₁ ⨟ ϕ₂) ↑ₖ s) ~ ((ϕ₁ ↑ₖ s) ⨟ (ϕ₂ ↑ₖ s))
-            dist-↑ₖ-⨟ s ϕ₁ ϕ₂ s₁ x@zero = `/id-injective (   
-              `/id ⦃ K₁⊔K₂ ⦄ (x & ((ϕ₁ ⨟ ϕ₂) ↑ₖ s))         ≡⟨⟩
+            dist-↑ₖ-；  : ∀ s (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) →
+                       ((ϕ₁ ； ϕ₂) ↑ₖ s) ~ ((ϕ₁ ↑ₖ s) ； (ϕ₂ ↑ₖ s))
+            dist-↑ₖ-； s ϕ₁ ϕ₂ s₁ x@zero = `/id-injective (   
+              `/id ⦃ K₁⊔K₂ ⦄ (x & ((ϕ₁ ； ϕ₂) ↑ₖ s))         ≡⟨⟩
               `/id ⦃ K₁⊔K₂ ⦄ (id/` zero)                      ≡⟨ `/`-is-` ⦃ K₁⊔K₂ ⦄ zero ⟩
               ` zero                                           ≡⟨ sym (`/`-is-` ⦃ K₂ ⦄ zero) ⟩
               `/id ⦃ K₂ ⦄ (id/` zero)                         ≡⟨⟩
               `/id ⦃ K₂ ⦄ (zero & (ϕ₂ ↑ₖ s))                 ≡⟨ sym (&/⋯-& (id/` zero) (ϕ₂ ↑ₖ s)) ⟩
               `/id ⦃ K₁⊔K₂ ⦄ (id/` zero &/⋯ (ϕ₂ ↑ₖ s))        ≡⟨⟩
               `/id ⦃ K₁⊔K₂ ⦄ (x & (ϕ₁ ↑ₖ s) &/⋯ (ϕ₂ ↑ₖ s))   ≡⟨⟩
-              `/id ⦃ K₁⊔K₂ ⦄ (x & ((ϕ₁ ↑ₖ s) ⨟ (ϕ₂ ↑ₖ s)))  ∎
+              `/id ⦃ K₁⊔K₂ ⦄ (x & ((ϕ₁ ↑ₖ s) ； (ϕ₂ ↑ₖ s)))  ∎
               )
-            dist-↑ₖ-⨟ s ϕ₁ ϕ₂ s₁ x@(suc y) = `/id-injective (
-              `/id ⦃ K₁⊔K₂ ⦄ (x & ((ϕ₁ ⨟ ϕ₂) ↑ₖ s))         ≡⟨⟩
-              `/id ⦃ K₁⊔K₂ ⦄ (wk′ _ (y & (ϕ₁ ⨟ ϕ₂)))        ≡⟨⟩
+            dist-↑ₖ-； s ϕ₁ ϕ₂ s₁ x@(suc y) = `/id-injective (
+              `/id ⦃ K₁⊔K₂ ⦄ (x & ((ϕ₁ ； ϕ₂) ↑ₖ s))         ≡⟨⟩
+              `/id ⦃ K₁⊔K₂ ⦄ (wk′ _ (y & (ϕ₁ ； ϕ₂)))        ≡⟨⟩
               `/id ⦃ K₁⊔K₂ ⦄ (wk′ _ (y & ϕ₁ &/⋯ ϕ₂))          ≡⟨ cong `/id (&/⋯-wk-↑ₖ (y & ϕ₁) ϕ₂) ⟩
               `/id ⦃ K₁⊔K₂ ⦄ (wk′ _ (y & ϕ₁) &/⋯ (ϕ₂ ↑ₖ s))   ≡⟨⟩
               `/id ⦃ K₁⊔K₂ ⦄ (x & (ϕ₁ ↑ₖ s) &/⋯ (ϕ₂ ↑ₖ s))   ≡⟨⟩
-              `/id ⦃ K₁⊔K₂ ⦄ (x & ((ϕ₁ ↑ₖ s) ⨟ (ϕ₂ ↑ₖ s)))  ∎
+              `/id ⦃ K₁⊔K₂ ⦄ (x & ((ϕ₁ ↑ₖ s) ； (ϕ₂ ↑ₖ s)))  ∎
               )
 
-            dist-↑ₖ*-⨟  : ∀ S (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) →
-                         ((ϕ₁ ⨟ ϕ₂) ↑ₖ* S) ~ ((ϕ₁ ↑ₖ* S) ⨟ (ϕ₂ ↑ₖ* S))
-            dist-↑ₖ*-⨟ []      ϕ₁ ϕ₂ sx x = refl
-            dist-↑ₖ*-⨟ (s ∷ S) ϕ₁ ϕ₂ sx x =
-              ((ϕ₁ ⨟ ϕ₂) ↑ₖ* (s ∷ S)) sx x                 ≡⟨⟩
-              (((ϕ₁ ⨟ ϕ₂) ↑ₖ* S) ↑ₖ s) sx x                ≡⟨ cong (λ ■ → (■ ↑ₖ s) sx x) (~-ext (dist-↑ₖ*-⨟ S ϕ₁ ϕ₂)) ⟩
-              (((ϕ₁ ↑ₖ* S) ⨟ (ϕ₂ ↑ₖ* S)) ↑ₖ s) sx x        ≡⟨ dist-↑ₖ-⨟ s (ϕ₁ ↑ₖ* S) (ϕ₂ ↑ₖ* S) sx x ⟩
-              (((ϕ₁ ↑ₖ* S) ↑ₖ s) ⨟ ((ϕ₂ ↑ₖ* S) ↑ₖ s)) sx x ≡⟨⟩
-              ((ϕ₁ ↑ₖ* (s ∷ S)) ⨟ (ϕ₂ ↑ₖ* (s ∷ S))) sx x ∎
+            dist-↑ₖ*-；  : ∀ S (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) →
+                         ((ϕ₁ ； ϕ₂) ↑ₖ* S) ~ ((ϕ₁ ↑ₖ* S) ； (ϕ₂ ↑ₖ* S))
+            dist-↑ₖ*-； []      ϕ₁ ϕ₂ sx x = refl
+            dist-↑ₖ*-； (s ∷ S) ϕ₁ ϕ₂ sx x =
+              ((ϕ₁ ； ϕ₂) ↑ₖ* (s ∷ S)) sx x                 ≡⟨⟩
+              (((ϕ₁ ； ϕ₂) ↑ₖ* S) ↑ₖ s) sx x                ≡⟨ cong (λ ■ → (■ ↑ₖ s) sx x) (~-ext (dist-↑ₖ*-； S ϕ₁ ϕ₂)) ⟩
+              (((ϕ₁ ↑ₖ* S) ； (ϕ₂ ↑ₖ* S)) ↑ₖ s) sx x        ≡⟨ dist-↑ₖ-； s (ϕ₁ ↑ₖ* S) (ϕ₂ ↑ₖ* S) sx x ⟩
+              (((ϕ₁ ↑ₖ* S) ↑ₖ s) ； ((ϕ₂ ↑ₖ* S) ↑ₖ s)) sx x ≡⟨⟩
+              ((ϕ₁ ↑ₖ* (s ∷ S)) ； (ϕ₂ ↑ₖ* (s ∷ S))) sx x ∎
         
-        _⨟[_]_  : ∀ {K₁ : Kit _∋/⊢₁_} {K₂ : Kit _∋/⊢₂_} {K₁⊔K₂ : Kit _∋/⊢_} →
+        _；[_]_  : ∀ {K₁ : Kit _∋/⊢₁_} {K₂ : Kit _∋/⊢₂_} {K₁⊔K₂ : Kit _∋/⊢_} →
                   S₁ –[ K₁ ]→ S₂ → ComposeKit K₁ K₂ K₁⊔K₂ →
                   S₂ –[ K₂ ]→ S₃ → S₁ –[ K₁⊔K₂ ]→ S₃
-        ϕ₁ ⨟[ C ] ϕ₂ = ϕ₁ ⨟ ϕ₂ where open ComposeKit C
+        ϕ₁ ；[ C ] ϕ₂ = ϕ₁ ； ϕ₂ where open ComposeKit C
 
         open ComposeKit ⦃ … ⦄ public
 
@@ -272,7 +272,7 @@ module KitsWithSort (Sort : SORT) where
             ⋯-fusion : ∀ ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ K : Kit _∋/⊢_ ⦄
                        ⦃ W₁ : WkKit K₁ ⦄ ⦃ C : ComposeKit K₁ K₂ K ⦄
                        (t : S₁ ⊢ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) → 
-                       (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ t ⋯ (ϕ₁ ⨟ ϕ₂)
+                       (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ t ⋯ (ϕ₁ ； ϕ₂)
           
           opaque
             unfolding all_kit_and_compose_definitions
@@ -280,15 +280,15 @@ module KitsWithSort (Sort : SORT) where
             ↑ₖ-wk  : ∀ ⦃ K : Kit _∋/⊢_ ⦄ ⦃ W : WkKit K ⦄
                     ⦃ C₁ : ComposeKit K Kᵣ K ⦄ ⦃ C₂ : ComposeKit Kᵣ K K ⦄ 
                     (ϕ : S₁ –[ K ]→ S₂) s → 
-                    (ϕ ⨟ wkᵣ) ~ (wkᵣ ⨟ (ϕ ↑ₖ s))
+                    (ϕ ； wkᵣ) ~ (wkᵣ ； (ϕ ↑ₖ s))
             ↑ₖ-wk {S₁} {S₂} ϕ s sx x = `/id-injective (
-              `/id ((ϕ ⨟ wkᵣ) sx x)         ≡⟨⟩
+              `/id ((ϕ ； wkᵣ) sx x)         ≡⟨⟩
               `/id (x & ϕ &/⋯ wkᵣ)           ≡⟨ &/⋯-⋯ (x & ϕ) (wkᵣ) ⟩
               `/id (`/id (x & ϕ) ⋯ wkᵣ)      ≡⟨ wk-`/id s (x & ϕ) ⟩
               `/id (suc x & (ϕ ↑ₖ s))          ≡⟨ sym (&/⋯-& (suc x) (ϕ ↑ₖ s)) ⟩
               `/id (suc x &/⋯ (ϕ ↑ₖ s))         ≡⟨⟩
               `/id (x & wkᵣ &/⋯ (ϕ ↑ₖ s))    ≡⟨⟩
-              `/id ((wkᵣ ⨟ (ϕ ↑ₖ s)) sx x)  ∎)
+              `/id ((wkᵣ ； (ϕ ↑ₖ s)) sx x)  ∎)
             
             ⋯-↑ₖ-wk  : ∀ ⦃ K : Kit _∋/⊢_ ⦄ ⦃ W : WkKit K ⦄
                       ⦃ C₁ : ComposeKit K Kᵣ K ⦄ ⦃ C₂ : ComposeKit Kᵣ K K ⦄ 
@@ -296,8 +296,8 @@ module KitsWithSort (Sort : SORT) where
                       t ⋯ ϕ ⋯ wkᵣ ≡ t ⋯ wkᵣ  ⋯ (ϕ ↑ₖ s′)
             ⋯-↑ₖ-wk t ϕ s =
               t ⋯ ϕ ⋯ wkᵣ           ≡⟨ ⋯-fusion t ϕ (wkᵣ) ⟩
-              t ⋯ (ϕ ⨟ wkᵣ)        ≡⟨ cong (t ⋯_) (~-ext (↑ₖ-wk ϕ s)) ⟩
-              t ⋯ (wkᵣ ⨟ (ϕ ↑ₖ s))  ≡⟨ sym (⋯-fusion t (wkᵣ) (ϕ ↑ₖ s)) ⟩
+              t ⋯ (ϕ ； wkᵣ)        ≡⟨ cong (t ⋯_) (~-ext (↑ₖ-wk ϕ s)) ⟩
+              t ⋯ (wkᵣ ； (ϕ ↑ₖ s))  ≡⟨ sym (⋯-fusion t (wkᵣ) (ϕ ↑ₖ s)) ⟩
               t ⋯ wkᵣ ⋯ (ϕ ↑ₖ s)     ∎
 
             Cᵣ-&/⋯-wk-↑ₖ  : ⦃ K₂ : Kit _∋/⊢_ ⦄ (x/t : S₁ ∋/⊢[ Kᵣ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
@@ -328,7 +328,7 @@ module KitsWithSort (Sort : SORT) where
           Cₛₛ = Cₛ
 
           _↑_ : ⦃ K : Kit _∋/⊢_ ⦄ ⦃ C : ComposeKit K Kᵣ K ⦄ → S₁ –[ K ]→ S₂ → ∀ s → (s ∷ S₁) –[ K ]→ (s ∷ S₂)
-          ϕ ↑ s = id/` zero ∙ (ϕ ⨟ wkᵣ) 
+          ϕ ↑ s = id/` zero ∙ (ϕ ； wkᵣ) 
 
           _↑ₛ_ : S₁ →ₛ S₂ → ∀ s → (s ∷ S₁) →ₛ (s ∷ S₂)
           _↑ₛ_ = _↑_

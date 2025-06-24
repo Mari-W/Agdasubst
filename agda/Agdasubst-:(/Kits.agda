@@ -1,6 +1,6 @@
 -- Author: Hannes Saffrich
 -- Modified: Marius Weidner
-{-# OPTIONS --rewriting #-}
+{-# OPTIONS --rewriting --backtracking-instance-search #-}
 module Kits where
 
 open import Agda.Builtin.Equality.Rewrite
@@ -124,8 +124,7 @@ module KitsWithSort (Sort : SORT) where
       
       opaque
         unfolding all_kit_definitions
-        
-        -- REWRITE   
+          
         &-def₁ : ⦃ K : Kit _∋/⊢_ ⦄ (x/t : S₂ ∋/⊢ s) (ϕ : S₁ –[ K ]→ S₂) → zero & (x/t ∙ ϕ) ≡ x/t
         &-def₁ _ _ = refl
 
@@ -138,7 +137,7 @@ module KitsWithSort (Sort : SORT) where
         ∷-def₁ : ⦃ K : Kit _∋/⊢_ ⦄ (x/t : S₂ ∋/⊢ s) (ϕ : S₁ –[ K ]→ S₂) → zero & (x/t ∙ ϕ) ≡ x/t
         ∷-def₁ _ _ = refl
 
-        ∷-def₂ : ⦃ K : Kit _∋/⊢_ ⦄ (x/t : S₂ ∋/⊢ s) (x' : S₁ ∋ s′) (ϕ : S₁ –[ K ]→ S₂) → suc x′ & (x/t ∙ ϕ) ≡ x′ & ϕ
+        ∷-def₂ : ⦃ K : Kit _∋/⊢_ ⦄ (x/t : S₂ ∋/⊢ s) (x′ : S₁ ∋ s′) (ϕ : S₁ –[ K ]→ S₂) → suc x′ & (x/t ∙ ϕ) ≡ x′ & ϕ
         ∷-def₂ _ _ _ = refl
 
         wk-def : ⦃ K : Kit _∋/⊢_ ⦄ (x : S ∋ s) → x & (wk {s = s′}) ≡ id/` (suc x)
@@ -177,7 +176,7 @@ module KitsWithSort (Sort : SORT) where
         t ⋯ᵣ ρ = t ⋯ ρ
 
         weaken : S ⊢ s → (s′ ∷ S) ⊢ s
-        weaken T = _⋯_ ⦃ Kᵣ ⦄ T wkᵣ
+        weaken T = T ⋯ wkᵣ
 
         opaque
           unfolding all_kit_definitions
@@ -286,7 +285,7 @@ module KitsWithSort (Sort : SORT) where
         {-# REWRITE ⊔-law₀ #-}
         {-# REWRITE ⊔′-law₅ #-}
 
-        opaque
+        opaque 
           unfolding _⊔′_ _⊔_
 
           ⊔-law₅ : ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ K₃ : Kit _∋/⊢₃_ ⦄ → 
@@ -301,7 +300,7 @@ module KitsWithSort (Sort : SORT) where
           ⊔-law₅ K₁@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ K₂@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ K₃@⦃ mkKit Sub refl _ _ _ _ _ _ _ ⦄ = refl
 
         {-# REWRITE ⊔-law₅ #-}
-
+ 
         module KitsMeta where
           variable 
             T T₁ T₂ T₃ T₄ T′ T₁′ T₂′ T₃′ T₄′ : S ⊢ s
@@ -349,8 +348,8 @@ module KitsWithSort (Sort : SORT) where
             all_kit_and_compose_definitions : Data.Unit.⊤
             all_kit_and_compose_definitions = Data.Unit.tt
             
-            _⨟_ : S₁ –[ K₁ ]→ S₂ → S₂ –[ K₂ ]→ S₃ → S₁ –[ K₁ ⊔ K₂ ]→ S₃
-            (ϕ₁ ⨟ ϕ₂) _ x = (x & ϕ₁) &/⋯ ϕ₂ 
+            _；_ : S₁ –[ K₁ ]→ S₂ → S₂ –[ K₂ ]→ S₃ → S₁ –[ K₁ ⊔ K₂ ]→ S₃
+            (ϕ₁ ； ϕ₂) _ x = (x & ϕ₁) &/⋯ ϕ₂ 
 
           opaque
             unfolding all_kit_and_compose_definitions
@@ -363,41 +362,41 @@ module KitsWithSort (Sort : SORT) where
               ` x ⋯ ϕ                   ≡⟨ ⋯-var ⦃ K₂ ⦄ x ϕ ⟩
               `/id ⦃ K₂ ⦄  (x & ϕ)      ∎
 
-            dist-↑ₖ-⨟  : ∀ s (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) →
-                       _~_ ⦃ K₁ ⊔ K₂ ⦄ (Kit._↑ₖ_ (K₁ ⊔ K₂) (ϕ₁ ⨟ ϕ₂) s) ((ϕ₁ ↑ₖ s) ⨟ (ϕ₂ ↑ₖ s))
-            dist-↑ₖ-⨟ s ϕ₁ ϕ₂ s₁ x@zero = `/id-injective ⦃ K₁ ⊔ K₂ ⦄ (   
-              `/id ⦃ K₁ ⊔ K₂ ⦄ (Kit._&_ (K₁ ⊔ K₂) x (Kit._↑ₖ_ (K₁ ⊔ K₂) (ϕ₁ ⨟ ϕ₂) s)) ≡⟨⟩
+            dist-↑ₖ-；  : ∀ s (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) →
+                       _~_ ⦃ K₁ ⊔ K₂ ⦄ (Kit._↑ₖ_ (K₁ ⊔ K₂) (ϕ₁ ； ϕ₂) s) ((ϕ₁ ↑ₖ s) ； (ϕ₂ ↑ₖ s))
+            dist-↑ₖ-； s ϕ₁ ϕ₂ s₁ x@zero = `/id-injective ⦃ K₁ ⊔ K₂ ⦄ (   
+              `/id ⦃ K₁ ⊔ K₂ ⦄ (Kit._&_ (K₁ ⊔ K₂) x (Kit._↑ₖ_ (K₁ ⊔ K₂) (ϕ₁ ； ϕ₂) s)) ≡⟨⟩
               `/id ⦃ K₁ ⊔ K₂ ⦄ (id/` ⦃ K₁ ⊔ K₂ ⦄ zero)     ≡⟨ `/`-is-` ⦃ K₁ ⊔ K₂ ⦄ zero ⟩
               ` zero                                        ≡⟨ sym (`/`-is-` ⦃ K₂ ⦄ zero) ⟩
               `/id ⦃ K₂ ⦄ (id/` zero)                       ≡⟨⟩
               `/id ⦃ K₂ ⦄ (zero & (ϕ₂ ↑ₖ s))                 ≡⟨ sym (&/⋯-& (id/` zero) (ϕ₂ ↑ₖ s)) ⟩
               `/id ⦃ K₁ ⊔ K₂ ⦄ (id/` zero &/⋯ (ϕ₂ ↑ₖ s))     ≡⟨⟩
               `/id ⦃ K₁ ⊔ K₂ ⦄ (x & (ϕ₁ ↑ₖ s) &/⋯ (ϕ₂ ↑ₖ s))  ≡⟨⟩
-              `/id ⦃ K₁ ⊔ K₂ ⦄ (Kit._&_ (K₁ ⊔ K₂) x ((ϕ₁ ↑ₖ s) ⨟ (ϕ₂ ↑ₖ s)))  ∎
+              `/id ⦃ K₁ ⊔ K₂ ⦄ (Kit._&_ (K₁ ⊔ K₂) x ((ϕ₁ ↑ₖ s) ； (ϕ₂ ↑ₖ s)))  ∎
               )
-            dist-↑ₖ-⨟ s ϕ₁ ϕ₂ s₁ x@(suc y) = `/id-injective ⦃ K₁ ⊔ K₂ ⦄ (
-              `/id ⦃ K₁ ⊔ K₂ ⦄ (Kit._&_ (K₁ ⊔ K₂) x (Kit._↑ₖ_ (K₁ ⊔ K₂) (ϕ₁ ⨟ ϕ₂) s)) ≡⟨⟩
-              `/id ⦃ K₁ ⊔ K₂ ⦄ (Kit.wk′ (K₁ ⊔ K₂) _ (Kit._&_ (K₁ ⊔ K₂) y (ϕ₁ ⨟ ϕ₂))) ≡⟨⟩
+            dist-↑ₖ-； s ϕ₁ ϕ₂ s₁ x@(suc y) = `/id-injective ⦃ K₁ ⊔ K₂ ⦄ (
+              `/id ⦃ K₁ ⊔ K₂ ⦄ (Kit._&_ (K₁ ⊔ K₂) x (Kit._↑ₖ_ (K₁ ⊔ K₂) (ϕ₁ ； ϕ₂) s)) ≡⟨⟩
+              `/id ⦃ K₁ ⊔ K₂ ⦄ (Kit.wk′ (K₁ ⊔ K₂) _ (Kit._&_ (K₁ ⊔ K₂) y (ϕ₁ ； ϕ₂))) ≡⟨⟩
               `/id ⦃ K₁ ⊔ K₂ ⦄ (Kit.wk′ (K₁ ⊔ K₂) _ (y & ϕ₁ &/⋯ ϕ₂)) ≡⟨ cong (`/id ⦃ K₁ ⊔ K₂ ⦄) (&/⋯-wk-↑ₖ (y & ϕ₁) ϕ₂) ⟩
               `/id ⦃ K₁ ⊔ K₂ ⦄ (wk′ _ (y & ϕ₁) &/⋯ (ϕ₂ ↑ₖ s)) ≡⟨⟩
               `/id ⦃ K₁ ⊔ K₂ ⦄ (x & (ϕ₁ ↑ₖ s) &/⋯ (ϕ₂ ↑ₖ s))   ≡⟨⟩
-              `/id ⦃ K₁ ⊔ K₂ ⦄ (Kit._&_ (K₁ ⊔ K₂) x ((ϕ₁ ↑ₖ s) ⨟ (ϕ₂ ↑ₖ s)))  ∎
+              `/id ⦃ K₁ ⊔ K₂ ⦄ (Kit._&_ (K₁ ⊔ K₂) x ((ϕ₁ ↑ₖ s) ； (ϕ₂ ↑ₖ s)))  ∎
               )
 
-            dist-↑ₖ⋆-⨟  : ∀ S (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) →
-                         _~_ ⦃ K₁ ⊔ K₂ ⦄ (Kit._↑ₖ⋆_ (K₁ ⊔ K₂) (ϕ₁ ⨟ ϕ₂) S) ((ϕ₁ ↑ₖ⋆ S) ⨟ (ϕ₂ ↑ₖ⋆ S))
-            dist-↑ₖ⋆-⨟ []      ϕ₁ ϕ₂ sx x = refl
-            dist-↑ₖ⋆-⨟ (s ∷ S) ϕ₁ ϕ₂ sx x =
-              (Kit._↑ₖ⋆_ (K₁ ⊔ K₂) (ϕ₁ ⨟ ϕ₂) (s ∷ S)) sx x ≡⟨⟩
-              (Kit._↑ₖ_ (K₁ ⊔ K₂) (Kit._↑ₖ⋆_ (K₁ ⊔ K₂) (ϕ₁ ⨟ ϕ₂) S) s) sx x ≡⟨ cong (λ ■ → (Kit._↑ₖ_ (K₁ ⊔ K₂) ■  s) sx x) (~-ext ⦃ K₁ ⊔ K₂ ⦄ (dist-↑ₖ⋆-⨟ S ϕ₁ ϕ₂)) ⟩
-              (Kit._↑ₖ_ (K₁ ⊔ K₂) ((ϕ₁ ↑ₖ⋆ S) ⨟ (ϕ₂ ↑ₖ⋆ S)) s) sx x ≡⟨ dist-↑ₖ-⨟ s (ϕ₁ ↑ₖ⋆ S) (ϕ₂ ↑ₖ⋆ S) sx x ⟩
-              (((ϕ₁ ↑ₖ⋆ S) ↑ₖ s) ⨟ ((ϕ₂ ↑ₖ⋆ S) ↑ₖ s)) sx x ≡⟨⟩
-              ((ϕ₁ ↑ₖ⋆ (s ∷ S)) ⨟ (ϕ₂ ↑ₖ⋆ (s ∷ S))) sx x ∎
+            dist-↑ₖ⋆-；  : ∀ S (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) →
+                         _~_ ⦃ K₁ ⊔ K₂ ⦄ (Kit._↑ₖ⋆_ (K₁ ⊔ K₂) (ϕ₁ ； ϕ₂) S) ((ϕ₁ ↑ₖ⋆ S) ； (ϕ₂ ↑ₖ⋆ S))
+            dist-↑ₖ⋆-； []      ϕ₁ ϕ₂ sx x = refl
+            dist-↑ₖ⋆-； (s ∷ S) ϕ₁ ϕ₂ sx x =
+              (Kit._↑ₖ⋆_ (K₁ ⊔ K₂) (ϕ₁ ； ϕ₂) (s ∷ S)) sx x ≡⟨⟩
+              (Kit._↑ₖ_ (K₁ ⊔ K₂) (Kit._↑ₖ⋆_ (K₁ ⊔ K₂) (ϕ₁ ； ϕ₂) S) s) sx x ≡⟨ cong (λ ■ → (Kit._↑ₖ_ (K₁ ⊔ K₂) ■  s) sx x) (~-ext ⦃ K₁ ⊔ K₂ ⦄ (dist-↑ₖ⋆-； S ϕ₁ ϕ₂)) ⟩
+              (Kit._↑ₖ_ (K₁ ⊔ K₂) ((ϕ₁ ↑ₖ⋆ S) ； (ϕ₂ ↑ₖ⋆ S)) s) sx x ≡⟨ dist-↑ₖ-； s (ϕ₁ ↑ₖ⋆ S) (ϕ₂ ↑ₖ⋆ S) sx x ⟩
+              (((ϕ₁ ↑ₖ⋆ S) ↑ₖ s) ； ((ϕ₂ ↑ₖ⋆ S) ↑ₖ s)) sx x ≡⟨⟩
+              ((ϕ₁ ↑ₖ⋆ (s ∷ S)) ； (ϕ₂ ↑ₖ⋆ (s ∷ S))) sx x ∎
         
-        _⨟[_]_  : ∀ {K₁ : Kit _∋/⊢₁_} {K₂ : Kit _∋/⊢₂_} →
+        _；[_]_  : ∀ {K₁ : Kit _∋/⊢₁_} {K₂ : Kit _∋/⊢₂_} →
                   S₁ –[ K₁ ]→ S₂ → ComposeKit K₁ K₂ →
                   S₂ –[ K₂ ]→ S₃ → S₁ –[ K₁ ⊔ K₂ ]→ S₃
-        ϕ₁ ⨟[ C ] ϕ₂ = ϕ₁ ⨟ ϕ₂ where open ComposeKit C
+        ϕ₁ ；[ C ] ϕ₂ = ϕ₁ ； ϕ₂ where open ComposeKit C
 
         open ComposeKit ⦃ … ⦄ public
 
@@ -405,7 +404,7 @@ module KitsWithSort (Sort : SORT) where
           field
             ⋯-fusion : ∀ ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ C : ComposeKit K₁ K₂ ⦄
                        (t : S₁ ⊢ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) → 
-                       (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ _⋯_ ⦃ K = K₁ ⊔ K₂ ⦄ t (ϕ₁ ⨟ ϕ₂)
+                       (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ _⋯_ ⦃ K = K₁ ⊔ K₂ ⦄ t (ϕ₁ ； ϕ₂)
           
           opaque
             unfolding all_kit_and_compose_definitions
@@ -413,23 +412,23 @@ module KitsWithSort (Sort : SORT) where
             ↑ₖ-wk  : ∀ ⦃ K : Kit _∋/⊢_ ⦄
                     ⦃ C₁ : ComposeKit K Kᵣ ⦄ ⦃ C₂ : ComposeKit Kᵣ K ⦄ 
                     (ϕ : S₁ –[ K ]→ S₂) s → 
-                    _~_ ⦃ K ⊔ Kᵣ ⦄ (ϕ ⨟ wkᵣ) (wkᵣ ⨟ (ϕ ↑ₖ s))
+                    _~_ ⦃ K ⊔ Kᵣ ⦄ (ϕ ； wkᵣ) (wkᵣ ； (ϕ ↑ₖ s))
             ↑ₖ-wk {S₁} {S₂} ⦃ K ⦄ ϕ s sx x =  `/id-injective ⦃ K ⊔ Kᵣ ⦄ (
-              `/id ⦃ K ⊔ Kᵣ ⦄ ((ϕ ⨟ wkᵣ) sx x)         ≡⟨⟩
+              `/id ⦃ K ⊔ Kᵣ ⦄ ((ϕ ； wkᵣ) sx x)         ≡⟨⟩
               `/id ⦃ K ⊔ Kᵣ ⦄ (x & ϕ &/⋯ wkᵣ)          ≡⟨ &/⋯-⋯ (x & ϕ) (wkᵣ) ⟩
               `/id (`/id (x & ϕ) ⋯ wkᵣ)                  ≡⟨ WkKit.wk-`/id (wkKit K) s (x & ϕ) ⟩
               `/id (suc x & (ϕ ↑ₖ s))                     ≡⟨ sym (&/⋯-& (suc x) (ϕ ↑ₖ s)) ⟩
               `/id ⦃ K ⊔ Kᵣ ⦄ (suc x &/⋯ (ϕ ↑ₖ s))      ≡⟨⟩
               `/id ⦃ K ⊔ Kᵣ ⦄ (x & wkᵣ &/⋯ (ϕ ↑ₖ s))    ≡⟨⟩
-              `/id ⦃ K ⊔ Kᵣ ⦄ ((wkᵣ ⨟ (ϕ ↑ₖ s)) sx x)  ∎) 
+              `/id ⦃ K ⊔ Kᵣ ⦄ ((wkᵣ ； (ϕ ↑ₖ s)) sx x)  ∎) 
             
             ⋯-↑ₖ-wk  : ∀ ⦃ K : Kit _∋/⊢_ ⦄ ⦃ C₁ : ComposeKit K Kᵣ ⦄ ⦃ C₂ : ComposeKit Kᵣ K ⦄ 
                       (t : S₁ ⊢ s) (ϕ : S₁ –[ K ]→ S₂) s′ → 
                       t ⋯ ϕ ⋯ wkᵣ ≡ t ⋯ wkᵣ ⋯ (ϕ ↑ₖ s′)
             ⋯-↑ₖ-wk t ϕ s =
               t ⋯ ϕ ⋯ wkᵣ          ≡⟨ ⋯-fusion t ϕ (wkᵣ) ⟩
-              t ⋯ (ϕ ⨟ wkᵣ)         ≡⟨ cong (t ⋯_) (~-ext (↑ₖ-wk ϕ s)) ⟩
-              t ⋯ (wkᵣ ⨟ (ϕ ↑ₖ s))  ≡⟨ sym (⋯-fusion t (wkᵣ) (ϕ ↑ₖ s)) ⟩ 
+              t ⋯ (ϕ ； wkᵣ)         ≡⟨ cong (t ⋯_) (~-ext (↑ₖ-wk ϕ s)) ⟩
+              t ⋯ (wkᵣ ； (ϕ ↑ₖ s))  ≡⟨ sym (⋯-fusion t (wkᵣ) (ϕ ↑ₖ s)) ⟩ 
               t ⋯ wkᵣ ⋯ (ϕ ↑ₖ s)     ∎
 
             Cᵣ-&/⋯-wk-↑ₖ  : ⦃ K₂ : Kit _∋/⊢_ ⦄ (x/t : S₁ ∋/⊢[ Kᵣ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
@@ -460,37 +459,32 @@ module KitsWithSort (Sort : SORT) where
 
           opaque
             unfolding _⊔′_ _⊔_
-            _⨟ₖ_ : (K₁ : Kit _∋/⊢₁_) (K₂ : Kit _∋/⊢₂_) → ComposeKit K₁ K₂
-            K₁@(mkKit Ren refl _ _ _ _ _ _ _) ⨟ₖ K₂@(mkKit Ren refl _ _ _ _ _ _ _) = 
+            _；ₖ_ : (K₁ : Kit _∋/⊢₁_) (K₂ : Kit _∋/⊢₂_) → ComposeKit K₁ K₂
+            K₁@(mkKit Ren refl _ _ _ _ _ _ _) ；ₖ K₂@(mkKit Ren refl _ _ _ _ _ _ _) = 
               subst₂ (λ K₁ K₂ → ComposeKit K₁ K₂) (sym (unique-Kᵣ-instance K₁)) (sym (unique-Kᵣ-instance K₂)) Cᵣ
-            K₁@(mkKit Ren refl _ _ _ _ _ _ _) ⨟ₖ K₂@(mkKit Sub refl _ _ _ _ _ _ _) =
+            K₁@(mkKit Ren refl _ _ _ _ _ _ _) ；ₖ K₂@(mkKit Sub refl _ _ _ _ _ _ _) =
               subst₂ (λ K₁ K₂ → ComposeKit K₁ K₂) (sym (unique-Kᵣ-instance K₁)) (sym (unique-Kₛ-instance K₂)) Cᵣ
-            K₁@(mkKit Sub refl _ _ _ _ _ _ _) ⨟ₖ K₂@(mkKit Ren refl _ _ _ _ _ _ _) =
+            K₁@(mkKit Sub refl _ _ _ _ _ _ _) ；ₖ K₂@(mkKit Ren refl _ _ _ _ _ _ _) =
               subst₂ (λ K₁ K₂ → ComposeKit K₁ K₂) (sym (unique-Kₛ-instance K₁)) (sym (unique-Kᵣ-instance K₂)) Cₛ
-            K₁@(mkKit Sub refl _ _ _ _ _ _ _) ⨟ₖ K₂@(mkKit Sub refl _ _ _ _ _ _ _) =
+            K₁@(mkKit Sub refl _ _ _ _ _ _ _) ；ₖ K₂@(mkKit Sub refl _ _ _ _ _ _ _) =
               subst₂ (λ K₁ K₂ → ComposeKit K₁ K₂) (sym (unique-Kₛ-instance K₁)) (sym (unique-Kₛ-instance K₂)) Cₛ
-            
-            ⨟ₖ-def₁ : Kᵣ ⨟ₖ Kᵣ ≡ Cᵣ
-            ⨟ₖ-def₁ rewrite unique-Kᵣ-instance Kᵣ = refl
-            ⨟ₖ-def₂ : Kᵣ ⨟ₖ Kₛ ≡ Cᵣ
-            ⨟ₖ-def₂ rewrite unique-Kᵣ-instance Kᵣ | unique-Kₛ-instance Kₛ = refl
-            ⨟ₖ-def₃ : Kₛ ⨟ₖ Kᵣ ≡ Cₛ
-            ⨟ₖ-def₃ rewrite unique-Kᵣ-instance Kᵣ | unique-Kₛ-instance Kₛ = refl
-            ⨟ₖ-def₄ : Kₛ ⨟ₖ Kₛ ≡ Cₛ
-            ⨟ₖ-def₄ rewrite unique-Kₛ-instance Kₛ = refl
 
-          {-# REWRITE ⨟ₖ-def₁ ⨟ₖ-def₂ ⨟ₖ-def₃ ⨟ₖ-def₄ #-}
+            postulate
+              ；ₖ-defᵣ : ⦃ K : Kit _∋/⊢_ ⦄ → Kᵣ ；ₖ K ≡ Cᵣ
+              ；ₖ-defₛ : ⦃ K : Kit _∋/⊢_ ⦄ → Kₛ ；ₖ K ≡ Cₛ ⦃ C = K ；ₖ Kᵣ ⦄
+        
+          {-# REWRITE ；ₖ-defᵣ ；ₖ-defₛ #-}
 
-          _↑_ : ⦃ K : Kit _∋/⊢_ ⦄ ⦃ C : ComposeKit K Kᵣ ⦄ → S₁ –[ K ]→ S₂ → ∀ s → (s ∷ S₁) –[ K ]→ (s ∷ S₂)
-          ϕ ↑ s = id/` zero ∙ (ϕ ⨟ wkᵣ) 
+          _↑_ : ⦃ K : Kit _∋/⊢_ ⦄ → S₁ –[ K ]→ S₂ → ∀ s → (s ∷ S₁) –[ K ]→ (s ∷ S₂)
+          _↑_ ⦃ K = K ⦄ ϕ s = let instance _ = K ；ₖ Kᵣ in id/` zero ∙ (ϕ ； wkᵣ) 
 
           _↑ₛ_ : S₁ →ₛ S₂ → ∀ s → (s ∷ S₁) →ₛ (s ∷ S₂)
           _↑ₛ_ = _↑_
 
-          _↑ᵣ_ : S₁ →ᵣ S₂ → ∀ s → (s ∷ S₁) →ᵣ (s ∷ S₂)
+          _↑ᵣ_ : S₁ →ᵣ S₂ → ∀ s → (s ∷ S₁) →ᵣ (s ∷ S₂) 
           _↑ᵣ_ = _↑_ 
 
-          _↑⋆_ : ⦃ K : Kit _∋/⊢_ ⦄ ⦃ C : ComposeKit K Kᵣ ⦄ → S₁ –[ K ]→ S₂ → ∀ S → (S ++ S₁) –[ K ]→ (S ++ S₂)
+          _↑⋆_ : ⦃ K : Kit _∋/⊢_ ⦄ → S₁ –[ K ]→ S₂ → ∀ S → (S ++ S₁) –[ K ]→ (S ++ S₂)
           ϕ ↑⋆ []       = ϕ
           ϕ ↑⋆ (s ∷ S)  = (ϕ ↑⋆ S) ↑ s 
 
@@ -502,23 +496,30 @@ module KitsWithSort (Sort : SORT) where
 
           opaque 
             unfolding all_kit_and_compose_definitions
-            
-            interact : ⦃ K : Kit _∋/⊢_ ⦄ (x/t : S₂ ∋/⊢ s) (ϕ : S₁ –[ K ]→ S₂) → wkᵣ ⨟ (x/t ∙ ϕ) ≡ ϕ 
+
+            postulate
+              ↑-def : ∀ ⦃ K : Kit _∋/⊢_ ⦄ (ϕ : S₁ –[ K ]→ S₂) s → ϕ ↑ₖ s ≡ ϕ ↑ s
+              ↑⋆-def : ∀ ⦃ K : Kit _∋/⊢_ ⦄ (ϕ : S₁ –[ K ]→ S₂) s → ϕ ↑ₖ⋆ s ≡ ϕ ↑⋆ s   
+            -- ↑-def ϕ s = ~-ext (proof ϕ s)
+            --   where proof :  ∀ ⦃ K : Kit _∋/⊢_ ⦄ (ϕ : S₁ –[ K ]→ S₂) s s′ → (x : (s ∷ S₁) ∋ s′) → x & (ϕ ↑ₖ s) ≡ x & (ϕ ↑ s)
+            --         proof ⦃ K = K ⦄ ϕ s s′ x = {!   !}
+  
+            interact : ⦃ K : Kit _∋/⊢_ ⦄ (x/t : S₂ ∋/⊢ s) (ϕ : S₁ –[ K ]→ S₂) → wkᵣ ； (x/t ∙ ϕ) ≡ ϕ 
             interact _ _ = refl
             
             η-id : ⦃ K : Kit _∋/⊢_ ⦄ → _∙_ {s = s} {S₁ = S} (id/` zero) wkᵣ ≡ id 
             η-id = ~-ext λ { _ zero → refl; _ (suc x) → refl } 
 
-            η-law : ⦃ K : Kit _∋/⊢_ ⦄ (ϕ : (s ∷ S₁) –[ K ]→ S₂) → (zero & ϕ) ∙ (wkᵣ ⨟ ϕ) ≡ ϕ
+            η-law : ⦃ K : Kit _∋/⊢_ ⦄ (ϕ : (s ∷ S₁) –[ K ]→ S₂) → (zero & ϕ) ∙ (wkᵣ ； ϕ) ≡ ϕ
             η-law _ = ~-ext λ { _ zero → refl; _ (suc x) → refl } 
 
             distributivity : ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ C : ComposeKit K₁ K₂ ⦄ 
                              (x/t : S₂ ∋/⊢₁ s)  (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) → 
-                             ComposeKit._⨟_ C (x/t ∙ ϕ₁) ϕ₂ ≡ _∙_ ⦃ K₁ ⊔ K₂ ⦄ (x/t &/⋯ ϕ₂) (ϕ₁ ⨟[ C ] ϕ₂)
-            distributivity ⦃ K₁ = K₁ ⦄ ⦃ K₂ = K₂ ⦄ _ _ _ = ~-ext ⦃ K₁ ⊔ K₂ ⦄ λ { _ zero → refl ; _ (suc x) → refl } 
+                             (x/t ∙ ϕ₁) ； ϕ₂ ≡ _∙_ ⦃ K₁ ⊔ K₂ ⦄ (x/t &/⋯ ϕ₂) (ϕ₁ ；[ C ] ϕ₂)
+            distributivity ⦃ K₁ = K₁ ⦄ ⦃ K₂ = K₂ ⦄ _ _ _ = ~-ext ⦃ K₁ ⊔ K₂ ⦄ λ { _ zero → refl ; _ (suc x) → refl }  
 
             postulate
-              left-id : ⦃ K : Kit _∋/⊢_ ⦄ ⦃ C : ComposeKit K K ⦄ (ϕ : S₁ –[ K ]→ S₂) → id ⦃ K ⦄ ⨟ ϕ ≡ ϕ 
+              left-id : ⦃ K : Kit _∋/⊢_ ⦄ ⦃ C : ComposeKit K K ⦄ (ϕ : S₁ –[ K ]→ S₂) → id ⦃ K ⦄ ； ϕ ≡ ϕ 
             -- left-id ⦃ K = K ⦄ ⦃ C = C ⦄ ϕ = ~-ext λ s x → 
               -- begin 
               --   id/` ⦃ K ⦄ x &/⋯ ϕ
@@ -528,14 +529,243 @@ module KitsWithSort (Sort : SORT) where
               --   ϕ s x
               -- ∎
 
-              right-id : ⦃ K : Kit _∋/⊢_ ⦄ ⦃ C : ComposeKit K K ⦄ (ϕ : S₁ –[ K ]→ S₂) → ϕ ⨟ id ⦃ K ⦄ ≡ ϕ 
+              right-id : ⦃ K : Kit _∋/⊢_ ⦄ ⦃ C : ComposeKit K K ⦄ (ϕ : S₁ –[ K ]→ S₂) → ϕ ； id ⦃ K ⦄ ≡ ϕ 
             -- right-id ϕ = {!   !} 
 
 
-              associativity : ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ K₃ : Kit _∋/⊢₃_ ⦄ 
+              associativity : ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ K₃ : Kit _∋/⊢₃_ ⦄  
                               ⦃ C₁ : ComposeKit K₁ K₂ ⦄ ⦃ C₂ : ComposeKit (K₁ ⊔ K₂) K₃ ⦄ → 
                               (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) (ϕ₃ : S₃ –[ K₃ ]→ S₄) →   
-                              (ϕ₁ ⨟ ϕ₂) ⨟ ϕ₃ ≡ ϕ₁ ⨟[ K₁ ⨟ₖ (K₂ ⊔ K₃) ] (ϕ₂ ⨟[ K₂ ⨟ₖ K₃ ] ϕ₃)  
+                              (ϕ₁ ； ϕ₂) ； ϕ₃ ≡ ϕ₁ ；[ K₁ ；ₖ (K₂ ⊔ K₃) ] (ϕ₂ ；[ K₂ ；ₖ K₃ ] ϕ₃)  
+              associativity′ : ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ K₃ : Kit _∋/⊢₃_ ⦄  
+                              ⦃ C₁ : ComposeKit K₁ K₂ ⦄ ⦃ C₂ : ComposeKit (K₁ ⊔ K₂) K₃ ⦄ → 
+                              (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) (ϕ₃ : S₃ –[ K₃ ]→ S₄) →   
+                              (ϕ₁ ； ϕ₂) ； ϕ₃ ≡ ϕ₁ ；[ K₁ ；ₖ (K₂ ⊔ K₃) ] (ϕ₂ ；[ K₂ ；ₖ K₃ ] ϕ₃)  
+
             -- associativity ⦃ K₁ = K₁ ⦄ ⦃ K₂ = K₂ ⦄ ⦃ K₃ = K₃ ⦄ ϕ₁ ϕ₂ ϕ₃ = ~-ext ⦃ K₁ ⊔ K₂ ⊔ K₃ ⦄ 
-            --   λ s x → {!   !} 
+            --   λ s x → {!   !}       record Types : Set₁ where 
+          opaque 
+            unfolding all_kit_and_compose_definitions
+            wk-cancels-⦅⦆ :
+              ∀ ⦃ K : Kit _∋/⊢_ ⦄ (x/t : S ∋/⊢[ K ] s) →
+              (wkᵣ {s = s} ；[ Cᵣ ] ⦅ x/t ⦆) ~ id
+            wk-cancels-⦅⦆ {s = s} ⦃ K ⦄ x/t sx x = `/id-injective (
+                `/id ⦃ K ⦄ (x & (wkᵣ  ；[ Cᵣ ] ⦅ x/t ⦆))  ≡⟨⟩ 
+                `/id ⦃ K ⦄ (id/` (suc x) &/⋯ ⦅ x/t ⦆)    ≡⟨ &/⋯-& ⦃ Cᵣ ⦃ K ⦄ ⦄ (suc x) ⦅ x/t ⦆ ⟩ 
+                `/id ⦃ K ⦄ (id/` ⦃ K ⦄ x)               ≡⟨⟩ 
+                `/id ⦃ K ⦄ (x & id)                     ∎)  
+
+            wk-cancels-⦅⦆-⋯ :
+              ∀ ⦃ K : Kit _∋/⊢_ ⦄ (t : S ⊢ s′) (x/t : S ∋/⊢[ K ] s) →
+              t ⋯ wkᵣ {s = s} ⋯ ⦅ x/t ⦆ ≡ t
+            wk-cancels-⦅⦆-⋯ t x/t =
+              t ⋯ wkᵣ ⋯ ⦅ x/t ⦆            ≡⟨ ⋯-fusion t wkᵣ ⦅ x/t ⦆ ⟩
+              t ⋯ (wkᵣ ； ⦅ x/t ⦆)         ≡⟨ cong (t ⋯_) (~-ext (wk-cancels-⦅⦆ x/t)) ⟩
+              t ⋯ id                      ≡⟨ ⋯-id t ⟩
+              t                           ∎
           
+            -- dist-↑-⦅⦆ :
+            --   ∀  ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ K : Kit _∋/⊢_ ⦄
+            --      ⦃ C₁ : ComposeKit K₁ K₂ ⦄ ⦃ C₂ : ComposeKit K₂ K ⦄
+            --      (x/t : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
+            --   _~_ ⦃  {!   !} ⦄ (⦅ x/t ⦆ ；[ C₁ ] ϕ) {! ((ϕ ↑ s) ；[ C₁ ] ⦅ (_&/⋯_ ⦃ ? ⦄ x/t ϕ) ⦆)  !}
+            -- dist-↑-⦅⦆ {s = s} ⦃ K₁ ⦄ ⦃ K₂ ⦄ ⦃ K ⦄ ⦃ C₁ ⦄ ⦃ C₂ ⦄ x/t ϕ sx x@zero = `/id-injective (
+            --     `/id ⦃ K ⦄ (x & (⦅ x/t ⦆ ；[ C₁ ] ϕ))                ≡⟨⟩
+            --     `/id ⦃ K ⦄ (x/t &/⋯ ϕ)                              ≡⟨⟩
+            --     `/id ⦃ K ⦄ (zero & ⦅ (x/t &/⋯ ϕ) ⦆)                 ≡⟨ sym (&/⋯-& ⦃ C₂ ⦄ zero ⦅ (x/t &/⋯ ϕ) ⦆) ⟩
+            --     `/id ⦃ K ⦄ (id/` ⦃ K₂ ⦄ zero &/⋯ ⦅ (x/t &/⋯ ϕ) ⦆)   ≡⟨⟩
+            --     `/id ⦃ K ⦄ (x & ((ϕ ↑ s) ；[ C₂ ] ⦅ (x/t &/⋯ ϕ) ⦆))  ∎)
+            -- dist-↑-⦅⦆ {s = s} ⦃ K₁ ⦄ ⦃ K₂ ⦄ ⦃ K ⦄ ⦃ C₁ ⦄ ⦃ C₂ ⦄ x/t ϕ sx x@(suc y) = `/id-injective (
+            --     `/id (x & (⦅ x/t ⦆ ；[ C₁ ] ϕ))                ≡⟨⟩
+            --     `/id (id/` ⦃ K₁ ⦄ y &/⋯ ϕ)                    ≡⟨ &/⋯-& ⦃ C₁ ⦄ y ϕ ⟩
+            --     `/id (y & ϕ)                                  ≡⟨ sym (wk-cancels-⦅⦆-⋯ (`/id (y & ϕ)) (x/t &/⋯ ϕ)) ⟩
+            --     `/id (y & ϕ) ⋯ wkᵣ ⋯ ⦅ (x/t &/⋯ ϕ) ⦆          ≡⟨ cong (_⋯ ⦅ x/t &/⋯ ϕ ⦆) (WkKit.wk-`/id (wkKit ?) s (y & ϕ)) ⟩
+            --     `/id (wk s (y & ϕ)) ⋯ ⦅ (x/t &/⋯ ϕ) ⦆         ≡⟨ sym (&/⋯-⋯ (wk s (y & ϕ)) ⦅ (x/t &/⋯ ϕ) ⦆) ⟩
+            --     `/id (wk s (y & ϕ) &/⋯ ⦅ (x/t &/⋯ ϕ) ⦆)       ≡⟨⟩
+            --     `/id (x & ((ϕ ↑ s) ；[ C₂ ] ⦅ (x/t &/⋯ ϕ) ⦆))  ∎)
+            --
+            -- dist-↑-⦅⦆-⋯ :
+            --   ∀  ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ K : Kit _∋/⊢_ ⦄
+            --      ⦃ W₁ : WkKit K₁ ⦄ ⦃ W₂ : WkKit K₂ ⦄
+            --      ⦃ C₁ : ComposeKit K₁ K₂ K ⦄ ⦃ C₂ : ComposeKit K₂ K K ⦄
+            --      (t : (s ∷ S₁) ⊢ s′) (x/t : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
+            --   t ⋯ ⦅ x/t ⦆ ⋯ ϕ ≡ t ⋯ (ϕ ↑ s) ⋯ ⦅ (x/t &/⋯ ϕ) ⦆
+            -- dist-↑-⦅⦆-⋯ t x/t ϕ =
+            --   t ⋯ ⦅ x/t ⦆ ⋯ ϕ                   ≡⟨ ⋯-fusion t ⦅ x/t ⦆ ϕ ⟩
+            --   t ⋯ (⦅ x/t ⦆ ·ₖ ϕ)                ≡⟨ cong (t ⋯_) (~-ext (dist-↑-⦅⦆ x/t ϕ)) ⟩
+            --   t ⋯ ((ϕ ↑ _) ·ₖ ⦅ (x/t &/⋯ ϕ) ⦆)  ≡⟨ sym (⋯-fusion t (ϕ ↑ _) ⦅ x/t &/⋯ ϕ ⦆ ) ⟩
+            --   t ⋯ (ϕ ↑ _) ⋯ ⦅ (x/t &/⋯ ϕ) ⦆     ∎
+
+          record Types : Set₁ where
+            field
+              ↑ᵗ : ∀ {st} → Sort st → ∃[ st′ ] Sort st′
+
+            _∶⊢_ : ∀ {t} → List (Sort Bind) → Sort t → Set
+            S ∶⊢ s = S ⊢ proj₂ (↑ᵗ s)
+
+            open import Data.Nat using (ℕ; zero; suc)
+            depth : ∀ {ℓ} {A : Set ℓ} {x : A} {xs : List A} → xs ∋ x → ℕ
+            depth zero     = zero
+            depth (suc x)  = suc (depth x)
+
+            -- We need to drop one extra using `suc`, because otherwise the types in a
+            -- context are allowed to use themselves.
+            open import Data.List using (drop)
+            drop-∈ :  ∀ {ℓ} {A : Set ℓ} {x : A} {xs : List A} →
+                      xs ∋ x → List A → List A
+            drop-∈ e xs = drop (suc (depth e)) xs
+
+            Ctx : List (Sort Bind) → Set
+            Ctx S = ∀ s → (x : S ∋ s) → drop-∈ x S ∶⊢ s
+
+            []ₜ : Ctx []
+            []ₜ _ ()
+
+            _∷ₜ_ : S ∶⊢ s → Ctx S → Ctx (s ∷ S)
+            (t ∷ₜ Γ) _ zero     = t
+            (t ∷ₜ Γ) _ (suc x)  = Γ _ x
+
+            wk-drop-∈ : (x : S ∋ s) → drop-∈ x S ⊢ s′ → S ⊢ s′
+            wk-drop-∈ zero     t = t ⋯ wkᵣ
+            wk-drop-∈ (suc x)  t = wk-drop-∈ x t ⋯ wkᵣ
+
+            wk-telescope : Ctx S → S ∋ s → S ∶⊢ s
+            wk-telescope Γ x = wk-drop-∈ x (Γ _ x)
+
+            infix   4  _∋_∶_
+            _∋_∶_ : Ctx S → S ∋ s → S ∶⊢ s → Set
+            Γ ∋ x ∶ t = wk-telescope Γ x ≡ t
+
+            record Typing : Set₁ where
+              infix   4  _⊢_∶_
+              field
+                _⊢_∶_ : ∀ {s : Sort m} → Ctx S → S ⊢ s → S ∶⊢ s → Set
+
+                ⊢` : ∀ {Γ : Ctx S} {x : S ∋ s} {t} →
+                    Γ ∋ x ∶ t → Γ ⊢ ` x ∶ t
+
+              record TypingKit (K : Kit _∋/⊢_) : Set₁ where
+                private instance _ = K
+                infix   4  _∋/⊢_∶_  _∋*/⊢*_∶_
+                infixl  6  _∋↑/⊢↑_
+                field
+                  _∋/⊢_∶_      : Ctx S → S ∋/⊢ s → S ∶⊢ s → Set
+                  id/⊢`        : ∀ {t : S ∶⊢ s} {Γ : Ctx S} →
+                                 Γ ∋ x ∶ t → Γ ∋/⊢ id/` x ∶ t
+                  ⊢`/id        : ∀ {e : S ∋/⊢ s} {t : S ∶⊢ s} {Γ : Ctx S} →
+                                 Γ ∋/⊢ e ∶ t → Γ ⊢ `/id e ∶ t
+                  ∋wk/⊢wk      : ∀ (Γ : Ctx S) (t′ : S ∶⊢ s) (e : S ∋/⊢ s′)
+                                   (t : S ∶⊢ s′) →
+                                 Γ ∋/⊢ e ∶ t →
+                                 (t′ ∷ₜ Γ) ∋/⊢ wk′ _ e ∶ (t ⋯ wkᵣ) 
+
+                _∋*/⊢*_∶_ : Ctx S₂ → S₁ –[ K ]→ S₂ → Ctx S₁ → Set
+                _∋*/⊢*_∶_ {S₂} {S₁} Γ₂ ϕ Γ₁ =
+                  ∀ {s₁} (x : S₁ ∋ s₁) (t : S₁ ∶⊢ s₁) →
+                  Γ₁ ∋ x ∶ t →
+                  Γ₂ ∋/⊢ (x & ϕ) ∶ (t ⋯ ϕ)
+                
+                opaque 
+                  unfolding all_kit_and_compose_definitions
+                  _∋↑/⊢↑_ :
+                    {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} {ϕ : S₁ –[ K ]→ S₂} →
+                    Γ₂             ∋*/⊢* ϕ       ∶ Γ₁ →
+                    (t : S₁ ∶⊢ s) →
+                    ((t ⋯ ϕ) ∷ₜ Γ₂) ∋*/⊢* (ϕ ↑ₖ s) ∶ (t ∷ₜ Γ₁)
+                  _∋↑/⊢↑_ {S₁} {S₂} {s} {Γ₁} {Γ₂} {ϕ} ⊢ϕ t {sx} x@zero _ refl =
+                    subst (  ((t ⋯ ϕ) ∷ₜ Γ₂) ∋/⊢ (zero & (ϕ ↑ₖ s)) ∶_ )
+                          (  t ⋯ ϕ ⋯ wkᵣ {s = s}                      ≡⟨ ⋯-↑ₖ-wk {{ C₁ = K ；ₖ Kᵣ }} {{ C₂ = Cᵣ }}  t ϕ s ⟩
+                             t ⋯ wkᵣ {s = s} ⋯ (ϕ ↑ₖ s)                ≡⟨⟩
+                             wk-telescope (t ∷ₜ Γ₁) zero ⋯ (ϕ ↑ₖ s)    ∎)
+                          (  id/⊢` {x = zero} {Γ = (t ⋯ ϕ) ∷ₜ Γ₂} refl )
+                  _∋↑/⊢↑_ {S₁} {S₂} {s} {Γ₁} {Γ₂} {ϕ} ⊢ϕ t {sx} x@(suc y) _ refl =
+                    subst (((t ⋯ ϕ) ∷ₜ Γ₂) ∋/⊢ (suc y & (ϕ ↑ₖ s)) ∶_)
+                          (wk-telescope Γ₁ y ⋯ ϕ ⋯ wkᵣ {s = s}         ≡⟨ ⋯-↑ₖ-wk {{ C₁ = K ；ₖ Kᵣ }} {{ C₂ = Cᵣ }} _ ϕ s ⟩
+                           wk-telescope Γ₁ y ⋯ wkᵣ {s = s} ⋯ (ϕ ↑ₖ s)   ≡⟨⟩
+                           wk-telescope (t ∷ₜ Γ₁) (suc y) ⋯ (ϕ ↑ₖ s)    ∎)
+                          (∋wk/⊢wk _ _ _ _ (⊢ϕ y _ refl))
+
+                  ⊢⦅_⦆ : ∀ {s S} {Γ : Ctx S} {t : S ∋/⊢ s} {T : S ∶⊢ s}
+                    → Γ ∋/⊢ t ∶ T 
+                    → Γ ∋*/⊢* ⦅ t ⦆ ∶ (T ∷ₜ Γ)
+                  ⊢⦅_⦆ {s} {S} {Γ} {t} {T} ⊢x/t x@zero _ refl =
+                    subst (Γ ∋/⊢ t ∶_)
+                          (T                                   ≡⟨ sym (wk-cancels-⦅⦆-⋯ T t) ⟩
+                           T ⋯ wkᵣ ⋯ ⦅ t ⦆               ≡⟨⟩
+                           wk-telescope (T ∷ₜ Γ) zero ⋯ ⦅ t ⦆  ∎)
+                          ⊢x/t
+                  ⊢⦅_⦆ {s} {S} {Γ} {t} {T} ⊢x/t x@(suc y) _ refl =
+                    subst (Γ ∋/⊢ id/` y ∶_)
+                          (wk-telescope Γ y                       ≡⟨ sym (wk-cancels-⦅⦆-⋯ _ t) ⟩
+                           wk-telescope Γ y ⋯ wkᵣ ⋯ ⦅ t ⦆   ≡⟨⟩
+                           wk-telescope (T ∷ₜ Γ) (suc y) ⋯ ⦅ t ⦆  ∎)
+                          (id/⊢` refl)
+  
+              open TypingKit ⦃ … ⦄ public
+
+              infixl  5  _∋*/⊢*[_]_∶_
+              _∋*/⊢*[_]_∶_ :
+                ∀ {K : Kit _∋/⊢_} {S₁ S₂}
+                → Ctx S₂ → TypingKit K → S₁ –[ K ]→ S₂ → Ctx S₁ → Set
+              Γ₂ ∋*/⊢*[ TK ] ϕ ∶ Γ₁ = Γ₂ ∋*/⊢* ϕ ∶ Γ₁ where instance _ = TK
+
+              record TypingTraversal : Set₁ where
+                field
+                  _⊢⋯_ :
+                    ∀  ⦃ K : Kit _∋/⊢_ ⦄ ⦃ TK : TypingKit K ⦄
+                       ⦃ C₁ : ComposeKit K Kᵣ ⦄
+                       ⦃ C₂ : ComposeKit K K  ⦄
+                       ⦃ C₃ : ComposeKit K Kₛ ⦄
+                       {S₁ S₂ m} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} {s : Sort m}
+                       {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} {ϕ : S₁ –[ K ]→ S₂} →
+                    Γ₁ ⊢ e ∶ t →
+                    Γ₂ ∋*/⊢*[ TK ] ϕ ∶ Γ₁ →
+                    Γ₂ ⊢ e ⋯ ϕ ∶ t ⋯ ϕ 
+                infixl  5  _⊢⋯_  _⊢⋯ᵣ_  _⊢⋯ₛ_
+
+
+            
+                
+                instance
+                  TKᵣ : TypingKit Kᵣ
+                  TKᵣ = record
+                    { _∋/⊢_∶_     = _∋_∶_
+                    ; id/⊢`       = λ ⊢x → ⊢x
+                    ; ⊢`/id       = ⊢`
+                    ; ∋wk/⊢wk     = λ { Γ t′ x t refl → refl } }
+
+                opaque
+                  unfolding all_kit_and_compose_definitions
+                  TKₛ-∋wk/⊢wk : {S : Scope} {s s′ : Sort Bind} (Γ : Ctx S) (t′ : S ∶⊢ s)  (e : S ⊢ s′) (t : S ∶⊢ s′) →  Γ ⊢ e ∶ t → (t′ ∷ₜ Γ) ⊢ Kit.wk′ Kₛ s e ∶ t ⋯ wkᵣ
+                  TKₛ-∋wk/⊢wk = λ Γ t′ e t ⊢e → ⊢e ⊢⋯ ∋wk/⊢wk Γ t′
+
+                instance 
+                  TKₛ : TypingKit Kₛ
+                  TKₛ = record
+                    { _∋/⊢_∶_     = _⊢_∶_
+                    ; id/⊢`       = ⊢`
+                    ; ⊢`/id       = λ ⊢x → ⊢x
+                    ; ∋wk/⊢wk     = TKₛ-∋wk/⊢wk }
+
+                open TypingKit TKᵣ public using () renaming
+                  (∋wk/⊢wk to ⊢wk; _∋*/⊢*_∶_ to _∋*_∶_; ⊢⦅_⦆ to ⊢⦅_⦆ᵣ)
+                open TypingKit TKₛ public using () renaming
+                  (∋wk/⊢wk to ∋wk; _∋*/⊢*_∶_ to _⊢*_∶_; ⊢⦅_⦆ to ⊢⦅_⦆ₛ)
+
+                -- Renaming preserves typing
+
+                _⊢⋯ᵣ_ : ∀ {S₁ S₂ st} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} {s : Sort st}
+                          {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} {ρ : S₁ →ᵣ S₂} →
+                        Γ₁ ⊢ e ∶ t →
+                        Γ₂ ∋* ρ ∶ Γ₁ →
+                        Γ₂ ⊢ e ⋯ ρ ∶ t ⋯ ρ
+                _⊢⋯ᵣ_ = _⊢⋯_
+
+                -- Substitution preserves typing
+
+                _⊢⋯ₛ_ : ∀ {S₁ S₂ st} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} {s : Sort st}
+                          {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} {σ : S₁ →ₛ S₂} →
+                        Γ₁ ⊢ e ∶ t →
+                        Γ₂ ⊢* σ ∶ Γ₁ →
+                        Γ₂ ⊢ e ⋯ σ ∶ t ⋯ σ
+                _⊢⋯ₛ_ = _⊢⋯_ 

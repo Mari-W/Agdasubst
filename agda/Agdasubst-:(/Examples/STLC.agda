@@ -58,13 +58,13 @@ opaque
   ⋯-fusion′ :
     ∀ ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄ ⦃ C : ComposeKit K₁ K₂ ⦄ 
       (t : S₁ ⊢ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) → 
-      (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ _⋯_ ⦃ K = K₁ ⊔ K₂ ⦄ t (ϕ₁ ⨟[ C ] ϕ₂)
+      (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ _⋯_ ⦃ K = K₁ ⊔ K₂ ⦄ t (ϕ₁ ；[ C ] ϕ₂)
   ⋯-fusion′ (` x)          ϕ₁ ϕ₂ = sym (&/⋯-⋯ (ϕ₁ _ x) ϕ₂)
   ⋯-fusion′ ⦃ K₁ = K₁ ⦄ ⦃ K₂ = K₂ ⦄ ⦃ C = C ⦄ (λx t)         ϕ₁ ϕ₂ = cong λx_ (
     (_⋯_ ⦃ K = K₁ ⦄ t (ϕ₁ ↑ₖ expr)) ⋯ (ϕ₂ ↑ₖ expr)       ≡⟨ ⋯-fusion′ t (ϕ₁ ↑ₖ expr) (ϕ₂ ↑ₖ expr) ⟩
-    _⋯_ ⦃ K = K₁ ⊔ K₂ ⦄ t ((ϕ₁ ↑ₖ expr) ⨟ (ϕ₂ ↑ₖ expr))   
-      ≡⟨ cong (_⋯_ ⦃ K = K₁ ⊔ K₂ ⦄ t) (sym (Kit.~-ext (K₁ ⊔ K₂) (dist-↑ₖ-⨟ expr ϕ₁ ϕ₂))) ⟩
-     _⋯_ ⦃ K = K₁ ⊔ K₂ ⦄ t ((Kit._↑ₖ_ (K₁ ⊔ K₂) (ϕ₁ ⨟ ϕ₂) expr))           ∎) 
+    _⋯_ ⦃ K = K₁ ⊔ K₂ ⦄ t ((ϕ₁ ↑ₖ expr) ； (ϕ₂ ↑ₖ expr))   
+      ≡⟨ cong (_⋯_ ⦃ K = K₁ ⊔ K₂ ⦄ t) (sym (Kit.~-ext (K₁ ⊔ K₂) (dist-↑ₖ-； expr ϕ₁ ϕ₂))) ⟩
+     _⋯_ ⦃ K = K₁ ⊔ K₂ ⦄ t ((Kit._↑ₖ_ (K₁ ⊔ K₂) (ϕ₁ ； ϕ₂) expr))           ∎) 
   ⋯-fusion′ (t₁ · t₂)      ϕ₁ ϕ₂ = cong₂ _·_  (⋯-fusion′ t₁ ϕ₁ ϕ₂) (⋯-fusion′ t₂ ϕ₁ ϕ₂)
   ⋯-fusion′ (t₁ ⇒ t₂)      ϕ₁ ϕ₂ = cong₂ _⇒_ (⋯-fusion′ t₁ ϕ₁ ϕ₂) (⋯-fusion′ t₂ ϕ₁ ϕ₂)  
 
@@ -73,17 +73,17 @@ compose = record { ⋯-fusion = ⋯-fusion′ }
 
 open ComposeTraversal compose hiding (⋯-fusion)
 
-⋯-fusion : 
+⋯-fusion :  
   ∀ ⦃ K₁ : Kit _∋/⊢₁_ ⦄ ⦃ K₂ : Kit _∋/⊢₂_ ⦄
     (t : S₁ ⊢ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) → 
-    (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ _⋯_ ⦃ K₁ ⊔ K₂ ⦄ t (ϕ₁ ⨟[ K₁ ⨟ₖ K₂ ] ϕ₂)
-⋯-fusion ⦃ K₁ ⦄ ⦃ K₂ ⦄ = ⋯-fusion′ ⦃ C = K₁ ⨟ₖ K₂ ⦄
+    (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ _⋯_ ⦃ K₁ ⊔ K₂ ⦄ t (ϕ₁ ；[ K₁ ；ₖ K₂ ] ϕ₂)
+⋯-fusion ⦃ K₁ ⦄ ⦃ K₂ ⦄ = ⋯-fusion′ ⦃ C = K₁ ；ₖ K₂ ⦄
 
 ⋯id : ⦃ K : Kit _∋/⊢_ ⦄ (T : S ⊢ s) → T ⋯ id ⦃ K ⦄ ≡ T 
 ⋯id _ = ⋯-id _ 
 
 {-# REWRITE 
-  &-def₁ &-def₂ id-def ∷-def₁ ∷-def₂ wk-def
+  &-def₁ &-def₂ id-def ∷-def₁ ∷-def₂ wk-def ↑-def ↑⋆-def
 
   interact
   left-id right-id
@@ -95,3 +95,7 @@ open ComposeTraversal compose hiding (⋯-fusion)
   ⋯id 
   ⋯-fusion 
 #-}
+ 
+
+associativityₛₛₛ : (σ₁ : S₁ →ₛ S₂) (σ₂ : S₂ →ₛ S₃) (σ₃ : S₃ →ₛ S₄) → (σ₁ ； σ₂) ； σ₃ ≡ σ₁ ； (σ₂ ； σ₃)
+associativityₛₛₛ σ₁ σ₂ σ₃ = associativity σ₁ σ₂ σ₃ 

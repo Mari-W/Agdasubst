@@ -16,7 +16,6 @@ module SortsWithSort (Sort : SORT) where
   
   SCOPED = ∀{m} → Scope → Sort m → Set
   SCOPED_BINDABLE = Scope → BindSort → Set
-  SCOPED_NOT_BINDABLE = Scope → NoBindSort → Set
 
   module SortsMeta where
     variable

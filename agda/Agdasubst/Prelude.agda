@@ -2,7 +2,7 @@
 {-# OPTIONS --rewriting #-}
 module Prelude where
 
-open import Common 
+open import Common public
 open import Lib 
 
 module WithSort (Sort : SORT) where

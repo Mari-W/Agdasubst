@@ -6,7 +6,7 @@
     - instriniscally scoped syntax is sweet spot between unscoped and intrinsically typed
 2.  preliminaries
     - the sigma calculus
-    - agda and rewriting
+    - agda and rewriting and reflection
     - kits by mc bride
 3.  related Work
     - autosubst 2

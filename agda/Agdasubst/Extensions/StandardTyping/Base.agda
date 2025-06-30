@@ -1,4 +1,4 @@
-
+-- Author(s): Hannes Saffrich (2024) and Marius Weidner (2025)
 {-# OPTIONS --rewriting #-}
 module Extensions.StandardTyping.Base where
 

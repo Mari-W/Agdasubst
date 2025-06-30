@@ -1,3 +1,4 @@
+-- Author(s): Marius Weidner (2025)
 {-# OPTIONS --rewriting #-}
 module Extensions.StandardTyping.Derive where
 

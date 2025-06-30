@@ -2,7 +2,6 @@
 {-# OPTIONS --rewriting --experimental-lazy-instances #-}
 module Lib where
 
-
 open import Data.List using (List; []; _∷_; _++_)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; subst; subst₂; module ≡-Reasoning)
 open ≡-Reasoning

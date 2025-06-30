@@ -14,7 +14,7 @@
 \email{weidner@cs.uni-freiburg.de}
 \affiliation{%
   \institution{University of Freiburg}
-  \country{Germany}}
+  \country{Germany}} 
 \orcid{0009-0008-1152-165X} % chktex 8
 \authornote{
   I hereby declare that I am the sole author and composer of my thesis and that
@@ -33,7 +33,6 @@
 }
 
 \begin{abstract}
-
   Working with substitutions for syntax with binders is a recurring aspect of
   programming language formalization. However, defining and reasoning about
   substitutions, renamings, and their associated laws is often repetitive and
@@ -44,13 +43,11 @@
   a single syntax definition, our library derives renaming and substitution
   operations along with corresponding equational laws.
 
-  Our approach is inspired by Autosubst 2 for Coq, which also derives equational
-  laws based on the confluent and terminating \(\sigma\)-calculus rewriting
-  system for terms with substitutions. We differ in three ways: we treat renaming
-  and substitution uniformly via a generic traversal based on McBride’s Kit
-  abstraction, derive equational laws using reflection instead of external code
-  generation, and use Agda’s \texttt{REWRITE} mechanism to embed suitable proven
-  equations as custom computation rules instead of relying on tactics.
+  The derived equational laws are based on the confluent and terminating
+  \(\sigma\)-calculus rewriting system for terms with substitutions. Our library
+  treats renamings and substitutions uniformly via a generic traversal based on
+  McBride’s Kit abstraction, derives equational laws using reflection, and use Agda’s \texttt{REWRITE} mechanism to embed
+  suitable proven equations as custom computation rules.
 \end{abstract}
 
 \maketitle
@@ -80,36 +77,39 @@ type, our library derives operations and lemmas for parallel renamings /
 substitutions, allowing multiple variables to be substituted simultaneously in
 a single traversal.
 
-Our approach is inspired by Autosubst 2, a library that solves the problem for
-de Bruijn representations in Coq. Like Autosubst, we derive equations inspired
-by the \(\sigma\)-calculus, a confluent and terminating rewriting system for
-terms with substitutions. However, unlike Autosubst, we make use of Agda’s
-\texttt{REWRITE} mechanism to embed selected equational lemmas as custom
-computation rules instead of proving a tactic based solver. This allows
-equational laws to be applied automatically during reduction.
+We derive equations inspired by the \(\sigma\)-calculus, a confluent and
+terminating rewriting system for terms with substitutions. We make use of
+Agda’s \texttt{REWRITE} mechanism to embed selected equational lemmas as custom
+computation rules. This allows equational laws to be applied automatically
+during reduction.
 
-Another difference is that our system treats renaming and substitution
-uniformly using the Kit abstraction, originating from work by McBride. In this
-approach, renaming and substitution are instances of a single generic traversal
-function that pushes a mapping (from variables to variables or terms) through a
-term. This traversal is structurally recursive and guaranteed to preserve
-scope.
+Our system treats renaming and substitution uniformly using the Kit
+abstraction, originating from work by McBride. In this approach, renaming and
+substitution are instances of a single generic traversal function that pushes a
+mapping (from variables to variables or terms) through a term. This traversal
+is structurally recursive and guaranteed to preserve scope.
 
 \subsection*{Contributions}
 
 \begin{itemize}
-  \item \cref{sec:multi} shows how to embed a suitable variant of the
+  \item \cref{sec:multi} shows how to embed suitable variants of the
         sigma calculus into Agda using rewrite rules, explained through the example of System F.
 
+  \item \cref{sec:kits} extends \cref{sec:multi} to reasoning about Kits instead of
+        renamings and substitution
+
   \item \cref{sec:agdasubst} provides an overview of \texttt{Agdasubst} along with examples,
-        explaining how to automatically derive all relevant equations for intrinsically scoped,
-        multi-sorted syntax using reflection~\cite{saffrich:LIPIcs.ITP.2024.32}
-        or generic syntax~\cite{allais2021typescopesafeuniverse}.
+        explaining how to automatically derive relevant equations using
+        reflection~\cite{saffrich:LIPIcs.ITP.2024.32} or enocde programs using generic 
+        syntax~\cite{allais2021typescopesafeuniverse}.
+        We conduct three case studies:
+        System F with and without subtyping and a dependently typed lambda calculus.
 
   \item In \cref{sec:intrinsic}, we investigate the intrinsically \emph{typed} setting.
         We observe that reasoning about substitutions at deeper levels of the indexing
         hierarchy substantially simplifies, but also requires an intuitive extension of
-        the rule set.
+        the rule set. We also discuss why a reflection based library for the intrinsic
+        setting would be hard to build.
 \end{itemize}
 
 \textbf{The supplement contains the complete Agda code underlying this paper.}
@@ -118,16 +118,16 @@ scope.
 
 \begin{itemize}
   \item Agda and its rewrite mechanism, which enables the embedding of custom
-        $\beta$-reduction rules.
+        $\beta$-reduction rules;
   \item Explicit substitutions, in particular the $\sigma_{SP}$-calculus, a terminating
-        and confluent rewrite system for terms with substitutions.
-  \item We present multi-sorted syntaxes and substitutions, along with abstractions
-        over both, including generic scoped
-        syntaxes~\cite{allais2021typescopesafeuniverse} and Kit abstractions that unify
-        substitutions and renamings~\cite{stronglytyped,ren-sub}.
+        and confluent rewrite system for terms with substitutions;
+  \item Multi-sorted syntaxes and substitutions, along with abstractions over both,
+        including generic scoped syntaxes~\cite{allais2021typescopesafeuniverse} and
+        Kit abstractions that unify substitutions and
+        renamings~\cite{stronglytyped,ren-sub}.
 \end{itemize}
 
-\subsection{Agda and Its Ability to \AgdaPragma{REWRITE}}
+\subsection{Agda and Its Ability to \AgdaPragma{REWRITE}} 
 
 \subsection{Explicit Substitutions and the $\sigma_{SP}$-Calculus}
 
@@ -141,7 +141,7 @@ scope.
 
 \subsection{Discussion}\label{sec:discussion-1}
 
-\section{Agdasubst: Reasoning and Abstraction over Mutli-Sorted Substitutions}\label{sec:agdasubst}
+\section{Agdasubst: Reasoning, Automation and Abstraction over Mutli-Sorted Substitutions}\label{sec:agdasubst}
 
 \subsection{Case Studies}
 

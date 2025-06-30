@@ -1,12 +1,10 @@
--- Author: Marius Weidner
+-- Author(s): Marius Weidner (2025)
+{-# OPTIONS --rewriting #-}
 module Prelude where
 
-open import DeBruijn public
-open import Sorts public
+open import Common 
+open import Lib 
 
 module WithSort (Sort : SORT) where
-  open SortsWithSort Sort public
-
-  open import Kits
+  open CommonWithSort Sort public
   open KitsWithSort Sort public
-  

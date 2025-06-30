@@ -1,10 +1,9 @@
--- Author: Marius Weidner
-{-# OPTIONS --allow-unsolved-metas -v tc.unquote.decl:10 -v tc.unquote.def:10 #-}
+-- Author(s): Marius Weidner (2025)
+{-# OPTIONS --allow-unsolved-metas --rewriting -v tc.unquote.decl:10 -v tc.unquote.def:10 #-}
 module Derive where
 
-open import DeBruijn
-open import Sorts
-open import Kits
+open import Common
+open import Lib
 
 open import Level
 open import Agda.Builtin.Reflection
@@ -12,17 +11,21 @@ open import Reflection hiding (_≟_)
 open import Reflection.AST.Name using (_≟_) 
 open import Data.Unit using (⊤; tt)
 open import Data.Bool using (Bool; true; false; if_then_else_)
-open import Data.List using (List; [])
+open import Data.Nat using (ℕ; _+_)
+open import Agda.Builtin.Nat using (_-_)  
+open import Data.List using (List; []; _++_; length)
 open import Data.String using (String)
 open import Relation.Nullary.Decidable using (isYes)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
+open import Data.Product using (Σ; Σ-syntax; ∃-syntax; _,_)
 
-pattern [_] z = z ∷ []
-pattern [_,_] y z = y ∷ z ∷ []
-pattern [_,_,_] x y z = x ∷ y ∷ z ∷ []
-pattern [_,_,_,_] w x y z = w ∷ x ∷ y ∷ z ∷ []
-pattern [_,_,_,_,_] v w x y z = v ∷ w ∷ x ∷ y ∷ z ∷ []
-pattern [_,_,_,_,_,_] u v w x y z = u ∷ v ∷ w ∷ x ∷ y ∷ z ∷ []
+private  
+  pattern [_] z = z ∷ []
+  pattern [_;_] y z = y ∷ z ∷ [] 
+  pattern [_;_;_] x y z = x ∷ y ∷ z ∷ []
+  pattern [_;_;_;_] w x y z = w ∷ x ∷ y ∷ z ∷ []
+  pattern [_;_;_;_;_] v w x y z = v ∷ w ∷ x ∷ y ∷ z ∷ []
+  pattern [_;_;_;_;_;_] u v w x y z = u ∷ v ∷ w ∷ x ∷ y ∷ z ∷ [] 
 
 private
   variable
@@ -34,13 +37,22 @@ defineA s A by = do
   by nm
   unquoteTC {A = A} (def nm []) 
 
-visA : ∀ {ℓ} {A : Set ℓ} → A → Arg A
-visA {ℓ = ℓ} = arg {a = ℓ} (arg-info visible (modality relevant quantity-ω))
+v : ∀ {ℓ} {A : Set ℓ} → A → Arg A
+v {ℓ = ℓ} = arg {a = ℓ} (arg-info visible (modality relevant quantity-ω))
+
+h : ∀ {ℓ} {A : Set ℓ} → A → Arg A
+h {ℓ = ℓ} = arg {a = ℓ} (arg-info hidden (modality relevant quantity-ω))
+
+i : ∀ {ℓ} {A : Set ℓ} → A → Arg A
+i {ℓ = ℓ} = arg {a = ℓ} (arg-info instance′ (modality relevant quantity-ω))
+
+V : ℕ → Arg Term
+V n = v (var n [])
 
 declareTy : Name → (A : Set ℓ) → TC ⊤
 declareTy nm A = do
   ty ← quoteTC {A = _} A
-  declareDef (visA nm) ty 
+  declareDef (v nm) ty 
 
 getConstructors : Name → TC (List Name)
 getConstructors nm = do
@@ -73,8 +85,11 @@ conRefl = con (quote refl) []
 patRefl : Pattern 
 patRefl = con (quote refl) []
 
-module _ (Sort : SORT) where
-  open SortsWithSort Sort
+defq : Name → Term
+defq nm = def nm [] 
+
+module _ (Sort : SORT) where 
+  open CommonWithSort Sort
   open SortsMeta
   open KitsWithSort Sort
   
@@ -100,16 +115,34 @@ module _ (Sort : SORT) where
 
         deriveTraversal : Name → TC ⊤
         deriveTraversal nm = do 
-          declareTy nm (∀ {m} {S₁ S₂} {s : Sort m} {_∋/⊢_} ⦃ K : Kit _∋/⊢_ ⦄ → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s)
+          declareTy nm (∀ {m} {S₁ S₂} {s : Sort m} {k} {{K : Kit k }} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s)
           clauses ← traverseSyntax deriveClause
           defineFun nm clauses
           where 
             deriveClause : Name → TC Clause
             deriveClause nm = do 
-              isVarCstr ← isVarConstructor nm
-              if isVarCstr then returnTC (clause {!   !} {!   !} {!   !})
-                else do 
-                  {!  !}
+              Sort′ ← quoteNameTC Sort 
+              `_′ ← quoteNameTC {A = VAR} `_ 
+              let Scope′ = quote Scope
+              let Mode′ = quote Mode 
+              let Tag′ = quote Tag 
+              let Kit′ = quote Kit 
+              let –[]→ = quote _–[_]→_
+
+              let tel ctel = [ "S₁" {- 3 -} , h (defq Scope′)  ; "S₂" {- 2 -} , h (defq Scope′) ; "k" {- 1 -} , h (defq Tag′) ; "K" {- 0 -} , i (def Kit′ [ V 0 ]) ] ++ ctel ++ [ "ϕ" , v (def –[]→ [ V (length ctel + 5) ; V (length ctel) ; V (length ctel + 4) ]) ] 
+
+              let pat tel cpat = [ h {A = Pattern} (var (length tel - 1)) ; h (var (length tel - 2)) ; h (var (length tel - 3)) ; i (var (length tel - 4)) ] ++ cpat ∷ [ v (var 0) ]
+  
+              isVarCstr ← isVarConstructor nm 
+              if isVarCstr then (do  
+                let vtel = tel [ "x" , v (def (quote _∋_) [ V 3 ; v unknown ]) ]
+                let vpat = pat vtel (v (con `_′ [ v (var 1) ])) 
+                returnTC (clause 
+                  vtel 
+                  vpat 
+                  (def (quote `/id) [ V 2 ; v (def (quote _&_) [ V 2 ; V 1 ; V 0 ]) ]))
+                ) else do 
+                returnTC {!   !} 
 
       deriveSyntax : Name → TC ⊤
       deriveSyntax nm = do
@@ -119,9 +152,13 @@ module _ (Sort : SORT) where
         defineFun nm [ clause [] [] rec ]
         where 
           deriveInjectionProof : Term
-          deriveInjectionProof = pat-lam  [ clause [] [ visA patRefl ] conRefl ] [] 
+          deriveInjectionProof = pat-lam  [ clause [] [ v patRefl ] conRefl ] [] 
+
+      module A where 
+        y = 4
 
       derive : TC ⊤ 
       derive = do
         syn ← defineA "syn" Syntax deriveSyntax
-        returnTC tt
+        
+        returnTC tt 

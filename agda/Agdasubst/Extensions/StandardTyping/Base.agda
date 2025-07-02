@@ -20,18 +20,18 @@ module _ {{lib : WithLib}} where
       (wkᵣ {s = s} ; ⦅ x/t ⦆) ~ id
     wk-cancels-⦅⦆ {{K }} x/t sx x = `/id-injective (
         `/id {{K }} (x & (wkᵣ ; ⦅ x/t ⦆))  ≡⟨⟩
-        `/id {{K }} (id/` (suc x) &/⋯ ⦅ x/t ⦆)          ≡⟨ &/⋯-& {{Cᵣ {{K }} }} (suc x) ⦅ x/t ⦆ ⟩
-        `/id {{K }} (id/` x)                           ≡⟨⟩
-        `/id {{K }} (x & id)                           ∎)
+        `/id {{K }} (id/` (suc x) &/⋯ ⦅ x/t ⦆) ≡⟨ &/⋯-& {{Cᵣ {{K }} }} (suc x) ⦅ x/t ⦆ ⟩
+        `/id {{K }} (id/` x)                  ≡⟨⟩
+        `/id {{K }} (x & id)                  ∎)
  
     wk-cancels-⦅⦆-⋯ :
       ∀ {{K : Kit k }} (t : S ⊢ s′) (x/t : S ∋/⊢[ K ] s) →
       t ⋯ wkᵣ {s = s} ⋯ ⦅ x/t ⦆ ≡ t
     wk-cancels-⦅⦆-⋯ t x/t =
-      t ⋯ wkᵣ ⋯ ⦅ x/t ⦆     ≡⟨ ⋯-fusion t wkᵣ ⦅ x/t ⦆ ⟩
-      t ⋯ (wkᵣ ; ⦅ x/t ⦆)  ≡⟨ cong (t ⋯_) (~-ext (wk-cancels-⦅⦆ x/t)) ⟩
-      t ⋯ id                      ≡⟨ ⋯-id t ⟩
-      t                           ∎
+      t ⋯ wkᵣ ⋯ ⦅ x/t ⦆   ≡⟨ ⋯-fusion t wkᵣ ⦅ x/t ⦆ ⟩
+      t ⋯ (wkᵣ ; ⦅ x/t ⦆) ≡⟨ cong (t ⋯_) (~-ext (wk-cancels-⦅⦆ x/t)) ⟩
+      t ⋯ id             ≡⟨ ⋯-id t ⟩
+      t                  ∎
 
     dist-↑-⦅⦆ :
       ∀  {{K₁ : Kit k₁ }} {{K₂ : Kit k₂}} {{K : Kit k}}
@@ -40,18 +40,18 @@ module _ {{lib : WithLib}} where
       (⦅ x/t ⦆ ; ϕ) ~ ((ϕ ↑ₖ s) ; ⦅ (x/t &/⋯ ϕ) ⦆)
     dist-↑-⦅⦆ {s = s} {{K₁ }} {{K₂ }} {{K }} {{C₁ }} {{C₂ }} x/t ϕ sx x@zero = `/id-injective (
         `/id {{K }} (x & (⦅ x/t ⦆ ; ϕ))                     ≡⟨⟩
-        `/id {{K }} (x/t &/⋯ ϕ)                             ≡⟨⟩
-        `/id {{K }} (zero & ⦅ (x/t &/⋯ ϕ) ⦆)                 ≡⟨ sym (&/⋯-& {{C₂ }} zero ⦅ (x/t &/⋯ ϕ) ⦆) ⟩
-        `/id {{K }} (id/` {{K₂ }} zero &/⋯ ⦅ (x/t &/⋯ ϕ) ⦆)   ≡⟨⟩
-        `/id {{K }} (x & ((ϕ ↑ₖ s) ; ⦅ (x/t &/⋯ ϕ) ⦆))  ∎)
+        `/id {{K }} (x/t &/⋯ ϕ)                            ≡⟨⟩
+        `/id {{K }} (zero & ⦅ (x/t &/⋯ ϕ) ⦆)                ≡⟨ sym (&/⋯-& {{C₂ }} zero ⦅ (x/t &/⋯ ϕ) ⦆) ⟩
+        `/id {{K }} (id/` {{K₂ }} zero &/⋯ ⦅ (x/t &/⋯ ϕ) ⦆) ≡⟨⟩
+        `/id {{K }} (x & ((ϕ ↑ₖ s) ; ⦅ (x/t &/⋯ ϕ) ⦆))      ∎)
     dist-↑-⦅⦆ {s = s} {{K₁ }} {{K₂ }} {{K }} {{C₁ }} {{C₂ }} x/t ϕ sx x@(suc y) = `/id-injective ( 
-        `/id (x & (⦅ x/t ⦆ ; ϕ))                      ≡⟨⟩
-        `/id (id/` {{K₁ }} y &/⋯ ϕ)                    ≡⟨ &/⋯-& {{C₁ }} y ϕ ⟩
-        `/id (y & ϕ)                                  ≡⟨ sym (wk-cancels-⦅⦆-⋯ (`/id (y & ϕ)) (x/t &/⋯ ϕ)) ⟩
-        `/id (y & ϕ) ⋯ wkᵣ {s = s} ⋯ ⦅ (x/t &/⋯ ϕ) ⦆   ≡⟨ cong (_⋯ ⦅ x/t &/⋯ ϕ ⦆) (wk-`/id s (y & ϕ)) ⟩
-        `/id (wk′ s (y & ϕ)) ⋯ ⦅ (x/t &/⋯ ϕ) ⦆         ≡⟨ sym (&/⋯-⋯ (wk′ s (y & ϕ)) ⦅ (x/t &/⋯ ϕ) ⦆) ⟩
-        `/id (wk′ s (y & ϕ) &/⋯ ⦅ (x/t &/⋯ ϕ) ⦆)       ≡⟨⟩
-        `/id (x & ((ϕ ↑ₖ s) ; ⦅ (x/t &/⋯ ϕ) ⦆))  ∎)
+        `/id (x & (⦅ x/t ⦆ ; ϕ))                     ≡⟨⟩
+        `/id (id/` {{K₁ }} y &/⋯ ϕ)                 ≡⟨ &/⋯-& {{C₁ }} y ϕ ⟩
+        `/id (y & ϕ)                                ≡⟨ sym (wk-cancels-⦅⦆-⋯ (`/id (y & ϕ)) (x/t &/⋯ ϕ)) ⟩
+        `/id (y & ϕ) ⋯ wkᵣ {s = s} ⋯ ⦅ (x/t &/⋯ ϕ) ⦆ ≡⟨ cong (_⋯ ⦅ x/t &/⋯ ϕ ⦆) (wk-`/id s (y & ϕ)) ⟩
+        `/id (wk′ s (y & ϕ)) ⋯ ⦅ (x/t &/⋯ ϕ) ⦆       ≡⟨ sym (&/⋯-⋯ (wk′ s (y & ϕ)) ⦅ (x/t &/⋯ ϕ) ⦆) ⟩
+        `/id (wk′ s (y & ϕ) &/⋯ ⦅ (x/t &/⋯ ϕ) ⦆)     ≡⟨⟩
+        `/id (x & ((ϕ ↑ₖ s) ; ⦅ (x/t &/⋯ ϕ) ⦆))      ∎)
 
     dist-↑-⦅⦆-⋯ :
       ∀  {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K : Kit k}} 
@@ -59,10 +59,10 @@ module _ {{lib : WithLib}} where
          (t : (s ∷ S₁) ⊢ s′) (x/t : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
       t ⋯ ⦅ x/t ⦆ ⋯ ϕ ≡ t ⋯ (ϕ ↑ₖ s) ⋯ ⦅ (x/t &/⋯ ϕ) ⦆
     dist-↑-⦅⦆-⋯ t x/t ϕ =
-      t ⋯ ⦅ x/t ⦆ ⋯ ϕ                   ≡⟨ ⋯-fusion t ⦅ x/t ⦆ ϕ ⟩
+      t ⋯ ⦅ x/t ⦆ ⋯ ϕ                  ≡⟨ ⋯-fusion t ⦅ x/t ⦆ ϕ ⟩
       t ⋯ (⦅ x/t ⦆ ; ϕ)                ≡⟨ cong (t ⋯_) (~-ext (dist-↑-⦅⦆ x/t ϕ)) ⟩
       t ⋯ ((ϕ ↑ₖ _) ; ⦅ (x/t &/⋯ ϕ) ⦆) ≡⟨ sym (⋯-fusion t (ϕ ↑ₖ _) ⦅ x/t &/⋯ ϕ ⦆ ) ⟩
-      t ⋯ (ϕ ↑ₖ _) ⋯ ⦅ (x/t &/⋯ ϕ) ⦆     ∎
+      t ⋯ (ϕ ↑ₖ _) ⋯ ⦅ (x/t &/⋯ ϕ) ⦆   ∎
 
   record Types : Set₁ where
     field

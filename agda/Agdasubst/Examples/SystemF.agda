@@ -39,8 +39,9 @@ variable
   t t₁ t₂ t₃ t₄ t′ t₁′ t₂′ t₃′ t₄′ : S ⊢ type
   ★ₖ ★ₖ′                           : S ⊢ kind
 
-syn : Syntax
-syn = record { _⊢_ = _⊢_ ; `_ = `_ ; `-injective = λ { refl → refl } }
+open import Derive
+
+unquoteDecl syn = deriveSyntax Sort _⊢_ `_ syn
   
 open Syntax syn hiding (_⊢_; `_)
 
@@ -111,7 +112,6 @@ opaque
   ⋯-fusion′ (e • t)         ϕ₁ ϕ₂ = cong₂ _•_ (⋯-fusion′ e ϕ₁ ϕ₂) (⋯-fusion′ t ϕ₁ ϕ₂)
   ⋯-fusion′ ★               ϕ₁ ϕ₂ = refl
   
-
 compose : Compose 
 compose = record { ⋯-fusion = ⋯-fusion′ }
 
@@ -129,31 +129,20 @@ instance
   lib = record { Sort = Sort; syn = syn; traversal = traversal; compose = compose } 
 
 {-# REWRITE 
-  id-def ∙-def₁ ∙-def₂ wk-def wkm-def ;-def 
-
-  interact 
-  η-id η-law
-  
-  left-id right-id
-  norm-id 
-
-  distributivity
-  
-  ⋯-id 
-  ⋯-fusion
-
-  def-&/⋯Cₛ def-&/⋯Cᵣ
+  id-def ∙-def₁ ∙-def₂ wk-def wkm-def ;-def def-&/⋯Cₛ def-&/⋯Cᵣ
   &/⋯-law₁ 
-
-  associativityₖᵣₖ
-  associativityₖᵣₛ
-  
-  associativityᵣₖₖ
-  associativityₖₛₖ
-  associativityₛₖₖ
-  associativity
-  associativity′
-#-} 
+  interact η-id η-law left-id right-id norm-id distributivity
+  ⋯-id ⋯-fusion
+  associativityᵣᵣᵣ associativityᵣᵣₛ associativityᵣᵣₖ
+  associativityᵣₛᵣ associativityᵣₛₛ associativityᵣₛₖ
+  associativityᵣₖᵣ associativityᵣₖₛ associativityᵣₖₖ
+  associativityₛᵣᵣ associativityₛᵣₛ associativityₛᵣₖ
+  associativityₛₛᵣ associativityₛₛₛ associativityₛₛₖ 
+  associativityₛₖᵣ associativityₛₖₛ associativityₛₖₖ
+  associativityₖᵣᵣ associativityₖᵣₛ associativityₖᵣₖ
+  associativityₖₛᵣ associativityₖₛₛ associativityₖₛₖ
+  associativityₖₖᵣ                  associativityₖₖₖ 
+#-} --             associativityₖₖₛ
 
 --Typing ----------------------------------------------------------------------
 

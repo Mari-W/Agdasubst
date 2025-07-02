@@ -1,5 +1,5 @@
 -- Author(s): Hannes Saffrich (2024) and Marius Weidner (2025)
-{-# OPTIONS --rewriting --experimental-lazy-instances #-}
+{-# OPTIONS --rewriting --experimental-lazy-instances --allow-unsolved-metas #-}
 module Lib where
 
 open import Data.List using (List; []; _∷_; _++_)
@@ -8,6 +8,8 @@ open ≡-Reasoning
 
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (_×_; _,_; Σ; Σ-syntax; ∃-syntax; proj₁; proj₂)
+open import Relation.Nullary using (¬_)
+open import Data.Empty using (⊥-elim)
 
 open import Common
 
@@ -17,7 +19,7 @@ module KitsWithSort (Sort : SORT) where
   
     record Syntax : Set₁ where
       constructor mkSyntax
-      field
+      field 
         _⊢_  : SCOPED
         `_   : S ∋ s → S ⊢ s
 
@@ -27,9 +29,13 @@ module KitsWithSort (Sort : SORT) where
       unwrap Ren = _∋_
       unwrap Sub = _⊢_ 
 
+      -- prevents users from outside the library to construct more Kit and ComposeKit instances
+      -- thus: the unique–Kᵣ, unique–Kₛ, unique–Cᵣ and unique–Cₛ postulates 
+      -- cannot do any harm outside this file 
+      private data Lock : Set where
+        unlock : Lock 
+
       record Kit (k : Tag) : Set₁ where
-        constructor mkKit
-        pattern
         _∋/⊢_ = unwrap k
         field
           id/`            : ∀ {S} {s} → S ∋ s → S ∋/⊢ s
@@ -42,6 +48,7 @@ module KitsWithSort (Sort : SORT) where
                               `/id x/t₁ ≡ `/id x/t₂ → x/t₁ ≡ x/t₂
           wk-id/`         : ∀ s′ (x : S ∋ s) →
                               wk′ s′ (id/` x) ≡ id/` (suc x)  
+          lock            : Lock
 
         opaque 
           import Data.Unit using (⊤; tt)
@@ -108,7 +115,7 @@ module KitsWithSort (Sort : SORT) where
       _–[_]→_ : Scope → Kit k → Scope → Set
       S₁ –[ K ]→ S₂ = Kit._→ₖ_ K S₁ S₂
       
-      open Kit {{...}} public 
+      open Kit {{...}} public  
       
       opaque
         unfolding all_kit_definitions
@@ -144,10 +151,11 @@ module KitsWithSort (Sort : SORT) where
             ; id/`-injective  = λ eq → eq 
             ; `/id-injective  = `-injective  
             ; wk-id/`         = λ s′ x → refl 
+            ; lock            = unlock
             } 
         
         postulate
-          unique-Kᵣ-instance : (K : Kit Ren) → Kᵣ ≡ K
+          unique–Kᵣ : (K : Kit Ren) → Kᵣ ≡ K
       
         open Kit Kᵣ public using () renaming 
           (_→ₖ_ to _→ᵣ_; _&_ to _&ᵣ_; _∙_ to _∙ᵣ_; id to idᵣ; wk to wkᵣ; _↑ₖ_ to _↑ᵣ_; _↑ₖ⋆_ to _↑ᵣ⋆_)
@@ -175,98 +183,104 @@ module KitsWithSort (Sort : SORT) where
             ; id/`-injective  = `-injective
             ; `/id-injective  = λ eq → eq 
             ; wk-id/`         = Kₛ-wk-id/`
+            ; lock            = unlock
             }
 
         postulate
-          unique-Kₛ-instance : (K : Kit Sub) → Kₛ ≡ K
+          unique–Kₛ : (K : Kit Sub) → Kₛ ≡ K
+
+        f : (k : Tag) → Kit k   
+        f Ren = Kᵣ
+        f Sub = Kₛ
+
+        unique : (K : Kit k) → K ≡ f k 
+        unique {Ren} K = sym (unique–Kᵣ K)
+        unique {Sub} K = sym (unique–Kₛ K)
 
         open Kit Kₛ public using () renaming 
           (_→ₖ_ to _→ₛ_; _&_ to _&ₛ_; _∙_ to _∙ₛ_; id to idₛ; _↑ₖ_ to _↑ₛ_; _↑ₖ⋆_ to _↑ₛ⋆_)
 
         _⋯ₛ_ : S₁ ⊢ s → S₁ →ₛ S₂ → S₂ ⊢ s
-        t ⋯ₛ σ = t ⋯ σ
+        t ⋯ₛ σ = t ⋯ σ 
 
         _[_] : (s′ ∷ S) ⊢ s → S ⊢ s′ → S ⊢ s
         T [ T′ ] = T ⋯ (T′ ∙ id) 
 
-        opaque
-          _⊔′_ : Tag → Tag → Tag
-          Ren ⊔′ Ren = Ren
-          Ren ⊔′ Sub = Sub
-          Sub ⊔′ Ren = Sub
-          Sub ⊔′ Sub = Sub
+        
+        _⊔′_ : Tag → Tag → Tag
+        Ren ⊔′ Ren = Ren
+        Ren ⊔′ Sub = Sub
+        Sub ⊔′ Ren = Sub
+        Sub ⊔′ Sub = Sub
 
-          ⊔′-law₀ : ∀ k → k ⊔′ k ≡ k 
-          ⊔′-law₀ Ren = refl
-          ⊔′-law₀ Sub = refl 
+        ⊔′-law₀ : ∀ k → k ⊔′ k ≡ k 
+        ⊔′-law₀ Ren = refl
+        ⊔′-law₀ Sub = refl 
 
-          ⊔′-law₁ : ∀ k → k ⊔′ Ren ≡ k 
-          ⊔′-law₁ Ren = refl 
-          ⊔′-law₁ Sub = refl 
+        ⊔′-law₁ : ∀ k → k ⊔′ Ren ≡ k 
+        ⊔′-law₁ Ren = refl 
+        ⊔′-law₁ Sub = refl 
 
-          ⊔′-law₂ : ∀ k → Ren ⊔′ k ≡ k
-          ⊔′-law₂ Ren = refl 
-          ⊔′-law₂ Sub = refl 
+        ⊔′-law₂ : ∀ k → Ren ⊔′ k ≡ k
+        ⊔′-law₂ Ren = refl 
+        ⊔′-law₂ Sub = refl 
 
-          ⊔′-law₃ : ∀ k → k ⊔′ Sub ≡ Sub
-          ⊔′-law₃ Ren = refl 
-          ⊔′-law₃ Sub = refl  
+        ⊔′-law₃ : ∀ k → k ⊔′ Sub ≡ Sub
+        ⊔′-law₃ Ren = refl 
+        ⊔′-law₃ Sub = refl  
 
-          ⊔′-law₄ : ∀ k → Sub ⊔′ k ≡ Sub
-          ⊔′-law₄ Ren = refl 
-          ⊔′-law₄ Sub = refl  
+        ⊔′-law₄ : ∀ k → Sub ⊔′ k ≡ Sub
+        ⊔′-law₄ Ren = refl 
+        ⊔′-law₄ Sub = refl  
 
-          ⊔′-law₅ : ∀ k₁ k₂ k₃ →  (k₁ ⊔′ k₂) ⊔′ k₃ ≡ k₁ ⊔′ (k₂ ⊔′ k₃)
-          ⊔′-law₅ Ren Ren Ren = refl
-          ⊔′-law₅ Ren Ren Sub = refl
-          ⊔′-law₅ Ren Sub Ren = refl
-          ⊔′-law₅ Ren Sub Sub = refl
-          ⊔′-law₅ Sub Ren Ren = refl
-          ⊔′-law₅ Sub Ren Sub = refl
-          ⊔′-law₅ Sub Sub Ren = refl
-          ⊔′-law₅ Sub Sub Sub = refl
+        ⊔′-law₅ : ∀ k₁ k₂ k₃ →  (k₁ ⊔′ k₂) ⊔′ k₃ ≡ k₁ ⊔′ (k₂ ⊔′ k₃)
+        ⊔′-law₅ Ren Ren Ren = refl
+        ⊔′-law₅ Ren Ren Sub = refl
+        ⊔′-law₅ Ren Sub Ren = refl
+        ⊔′-law₅ Ren Sub Sub = refl
+        ⊔′-law₅ Sub Ren Ren = refl
+        ⊔′-law₅ Sub Ren Sub = refl
+        ⊔′-law₅ Sub Sub Ren = refl
+        ⊔′-law₅ Sub Sub Sub = refl
         
         {-# REWRITE ⊔′-law₀ ⊔′-law₁ ⊔′-law₂ ⊔′-law₃ ⊔′-law₄ ⊔′-law₅ #-}
 
-        opaque
-          unfolding _⊔′_
-          infixl 20 _⊔_
-          _⊔_ : (K₁ : Kit k₁) (K₂ : Kit k₂) → Kit (k₁ ⊔′ k₂)
-          _⊔_ {Ren} {Ren} K₁ K₂ = Kᵣ
-          _⊔_ {Ren} {Sub} K₁ K₂ = Kₛ
-          _⊔_ {Sub} {Ren} K₁ K₂ = Kₛ
-          _⊔_ {Sub} {Sub} K₁ K₂ = Kₛ
+        _⊔_ : (K₁ : Kit k₁) (K₂ : Kit k₂) → Kit (k₁ ⊔′ k₂)
+        _⊔_ {Ren} {Ren} K₁ K₂ = Kᵣ
+        _⊔_ {Ren} {Sub} K₁ K₂ = Kₛ
+        _⊔_ {Sub} {Ren} K₁ K₂ = Kₛ
+        _⊔_ {Sub} {Sub} K₁ K₂ = Kₛ
 
-          ⊔-law₀ : {{K : Kit k}} → (K ⊔ K) ≡ K
-          ⊔-law₀ {Ren} {{K}} = unique-Kᵣ-instance K
-          ⊔-law₀ {Sub} {{K}} = unique-Kₛ-instance K
+        ⊔-law₀ : {{K : Kit k}} → (K ⊔ K) ≡ K
+        ⊔-law₀ {Ren} {{K}} = unique–Kᵣ K
+        ⊔-law₀ {Sub} {{K}} = unique–Kₛ K
            
-          ⊔-law₁ : {{K : Kit k}} {{Kᵣ : Kit Ren}} → K ⊔ Kᵣ ≡ K 
-          ⊔-law₁ {Ren} {{K}} = unique-Kᵣ-instance K 
-          ⊔-law₁ {Sub} {{K}} = unique-Kₛ-instance K 
+        ⊔-law₁ : {{K : Kit k}} → K ⊔ Kᵣ ≡ K 
+        ⊔-law₁ {Ren} {{K}} = unique–Kᵣ K 
+        ⊔-law₁ {Sub} {{K}} = unique–Kₛ K 
 
-          ⊔-law₂ : {{K : Kit k}} {{Kᵣ : Kit Ren}} → Kᵣ ⊔ K ≡ K  
-          ⊔-law₂ {Ren} {{K}} = unique-Kᵣ-instance K
-          ⊔-law₂ {Sub} {{K}} = unique-Kₛ-instance K
+        ⊔-law₂ : {{K : Kit k}} → Kᵣ ⊔ K ≡ K  
+        ⊔-law₂ {Ren} {{K}} = unique–Kᵣ K
+        ⊔-law₂ {Sub} {{K}} = unique–Kₛ K
 
-          ⊔-law₃ : {{K : Kit k}} {{Kₛ : Kit Sub}} → K ⊔ Kₛ ≡ Kₛ
-          ⊔-law₃ {Ren} {{Kₛ = Kₛ}} = unique-Kₛ-instance Kₛ
-          ⊔-law₃ {Sub} {{Kₛ = Kₛ}} = unique-Kₛ-instance Kₛ
+        ⊔-law₃ : {{K : Kit k}} → K ⊔ Kₛ ≡ Kₛ
+        ⊔-law₃ {Ren} = refl
+        ⊔-law₃ {Sub} = refl
 
-          ⊔-law₄ : {{K : Kit k}} {{Kₛ : Kit Sub}} → Kₛ ⊔ K ≡ Kₛ
-          ⊔-law₄ {Ren} {{Kₛ = Kₛ}} = unique-Kₛ-instance Kₛ
-          ⊔-law₄ {Sub} {{Kₛ = Kₛ}} = unique-Kₛ-instance Kₛ
+        ⊔-law₄ : {{K : Kit k}} → Kₛ ⊔ K ≡ Kₛ
+        ⊔-law₄ {Ren} = refl
+        ⊔-law₄ {Sub} = refl
 
-          ⊔-law₅ : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} → 
-            (K₁ ⊔ K₂) ⊔ K₃ ≡ K₁ ⊔ (K₂ ⊔ K₃)
-          ⊔-law₅ {Ren} {Ren} {Ren} = refl
-          ⊔-law₅ {Ren} {Ren} {Sub} = refl 
-          ⊔-law₅ {Ren} {Sub} {Ren} = refl
-          ⊔-law₅ {Ren} {Sub} {Sub} = refl
-          ⊔-law₅ {Sub} {Ren} {Ren} = refl
-          ⊔-law₅ {Sub} {Ren} {Sub} = refl
-          ⊔-law₅ {Sub} {Sub} {Ren} = refl 
-          ⊔-law₅ {Sub} {Sub} {Sub} = refl
+        ⊔-law₅ : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} → 
+          (K₁ ⊔ K₂) ⊔ K₃ ≡ K₁ ⊔ (K₂ ⊔ K₃)
+        ⊔-law₅ {Ren} {Ren} {Ren} = refl
+        ⊔-law₅ {Ren} {Ren} {Sub} = refl 
+        ⊔-law₅ {Ren} {Sub} {Ren} = refl
+        ⊔-law₅ {Ren} {Sub} {Sub} = refl
+        ⊔-law₅ {Sub} {Ren} {Ren} = refl
+        ⊔-law₅ {Sub} {Ren} {Sub} = refl
+        ⊔-law₅ {Sub} {Sub} {Ren} = refl 
+        ⊔-law₅ {Sub} {Sub} {Sub} = refl
  
         {-# REWRITE ⊔-law₀ ⊔-law₁ ⊔-law₂ ⊔-law₃ ⊔-law₄ ⊔-law₅ #-}
 
@@ -296,8 +310,8 @@ module KitsWithSort (Sort : SORT) where
         
         instance
           wkKit : {{K : Kit k}} → WkKit K
-          wkKit {Ren} {{K}} = subst WkKit (unique-Kᵣ-instance K) Wᵣ 
-          wkKit {Sub} {{K}} = subst WkKit (unique-Kₛ-instance K) Wₛ 
+          wkKit {Ren} {{K}} = subst WkKit (unique–Kᵣ K) Wᵣ 
+          wkKit {Sub} {{K}} = subst WkKit (unique–Kₛ K) Wₛ 
 
         record ComposeKit (K₁ : Kit k₁) (K₂ : Kit k₂) (K₃ : Kit k₃) : Set₁ where
 
@@ -305,12 +319,13 @@ module KitsWithSort (Sort : SORT) where
 
           infixl 8 _&/⋯′_
           field
-            _&/⋯′_     : S₁ ∋/⊢[ K₁ ] s → S₁ –[ K₂ ]→ S₂ → S₂ ∋/⊢[ K₃ ] s 
-             
+            _&/⋯′_    : S₁ ∋/⊢[ K₁ ] s → S₁ –[ K₂ ]→ S₂ → S₂ ∋/⊢[ K₃ ] s 
+           
             &/⋯-⋯     : (x/t : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
-                         `/id (x/t &/⋯′ ϕ) ≡ `/id x/t ⋯ ϕ
+                        `/id (x/t &/⋯′ ϕ) ≡ `/id x/t ⋯ ϕ
             &/⋯-wk-↑ₖ : (x/t : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
-                         wk′ s′ (x/t &/⋯′ ϕ) ≡ wk′ s′ x/t &/⋯′ (ϕ ↑ₖ s′) 
+                       wk′ s′ (x/t &/⋯′ ϕ) ≡ wk′ s′ x/t &/⋯′ (ϕ ↑ₖ s′) 
+            lock      : Lock
 
           opaque
             unfolding all_kit_definitions
@@ -406,121 +421,315 @@ module KitsWithSort (Sort : SORT) where
               t ⋯ (wkᵣ ; (ϕ ↑ₖ s))  ≡⟨ sym (⋯-fusion t (wkᵣ) (ϕ ↑ₖ s)) ⟩  
               t ⋯ wkᵣ ⋯ (ϕ ↑ₖ s)     ∎
 
-            Cᵣ-&/⋯-wk-↑ₖ  : {{K₂ : Kit k}} (x/t : S₁ ∋/⊢[ Kᵣ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
-                           Kit.wk′ K₂ s′ ((K₂ Kit.& x/t) ϕ) ≡ (K₂ Kit.& suc x/t) (ϕ ↑ₖ s′)
+            Cᵣ-&/⋯-wk-↑ₖ  : {{K₂ : Kit k}} (x : S₁ ∋ s) (ϕ : S₁ –[ K₂ ]→ S₂) →
+                           Kit.wk′ K₂ s′ ((K₂ Kit.& x) ϕ) ≡ (K₂ Kit.& suc x) (ϕ ↑ₖ s′)
             Cᵣ-&/⋯-wk-↑ₖ _ _ = refl
 
-          subst₃ : ∀ {ℓ₁ ℓ₂ ℓ₃ ℓ} {A : Set ℓ₁} {B : Set ℓ₂} {C : Set ℓ₃} (P : A → B → C → Set ℓ)
-                     {a₁ a₂ : A} {b₁ b₂ : B} {c₁ c₂ : C}
-                     → a₁ ≡ a₂ → b₁ ≡ b₂ → c₁ ≡ c₂
-                     → P a₁ b₁ c₁ → P a₂ b₂ c₂
-          subst₃ P refl refl refl x = x
- 
-          
+          -- allows ComposeKit Kᵣ K  K
+          ---and    ComposeKit Kᵣ Kᵣ Kᵣ
+          -- and    ComposeKit Kᵣ Kₛ Kₛ
           Cᵣ : {{K : Kit k}} → ComposeKit Kᵣ K K
           Cᵣ = record
-                  { _&/⋯′_      = _&_
-                  ; &/⋯-⋯      = λ x ϕ → sym (⋯-var x ϕ)
-                  ; &/⋯-wk-↑ₖ  = Cᵣ-&/⋯-wk-↑ₖ }
+                  { _&/⋯′_    = _&_
+                  ; &/⋯-⋯     = λ x ϕ → sym (⋯-var x ϕ)
+                  ; &/⋯-wk-↑ₖ = Cᵣ-&/⋯-wk-↑ₖ 
+                  ; lock      = unlock }
 
+          postulate
+            unique–Cᵣ : {{ K : Kit k }} (C : ComposeKit Kᵣ K K) → C ≡ Cᵣ
+
+          -- allows ComposeKit Kₛ K  Kₛ
+          -- and    ComposeKit Kₛ Kᵣ Kₛ 
+          -- and    ComposeKit Kₛ Kₛ Kₛ
           Cₛ : {{K : Kit k}} {{C : ComposeKit K Kᵣ K}} → ComposeKit Kₛ K Kₛ
           Cₛ  = record
-                  { _&/⋯′_      = _⋯_
-                  ; &/⋯-⋯      = λ t ϕ → refl
-                  ; &/⋯-wk-↑ₖ  = λ t ϕ → let instance _ = Cᵣ in ⋯-↑ₖ-wk t ϕ _ } 
+                  { _&/⋯′_    = _⋯_
+                  ; &/⋯-⋯     = λ t ϕ → refl
+                  ; &/⋯-wk-↑ₖ = λ t ϕ → let instance _ = Cᵣ in ⋯-↑ₖ-wk t ϕ _ 
+                  ; lock      = unlock } 
+
+          postulate
+            unique–Cₛ : {{K : Kit k}} {{_ : ComposeKit K Kᵣ K}} → (C : ComposeKit Kₛ K Kₛ) → C ≡ Cₛ 
 
           instance 
-            C–⊔ : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} → ComposeKit K₁ K₂ (K₁ ⊔ K₂) 
-            {-# INCOHERENT C–⊔ #-} 
-            C–⊔ {Ren} {Ren} {{K₁}} {{K₂}} = subst₃ ComposeKit (unique-Kᵣ-instance K₁) (unique-Kᵣ-instance K₂) (unique-Kᵣ-instance K₂) (Cᵣ {{K = Kᵣ}})
-            C–⊔ {Ren} {Sub} {{K₁}} {{K₂}} = subst₃ ComposeKit (unique-Kᵣ-instance K₁) (unique-Kₛ-instance K₂) (unique-Kₛ-instance K₂) (Cᵣ {{K = Kₛ}})
-            C–⊔ {Sub} {Ren} {{K₁}} {{K₂}} = subst₃ ComposeKit (unique-Kₛ-instance K₁) (unique-Kᵣ-instance K₂) (unique-Kₛ-instance K₁) (Cₛ {{K = Kᵣ}} {{C = Cᵣ {{K = Kᵣ}}}})
-            C–⊔ {Sub} {Sub} {{K₁}} {{K₂}} = subst₃ ComposeKit (unique-Kₛ-instance K₁) (unique-Kₛ-instance K₂) (unique-Kₛ-instance K₁) (Cₛ {{K = Kₛ}} {{C = Cₛ {{K = Kᵣ}} {{C = Cᵣ}}}}) 
-          postulate
-            C–⊔-law₀ : {{K : Kit k}} → C–⊔ {{Kᵣ}} {{K}} ≡ Cᵣ
-            C–⊔-law₁ : {{K : Kit k}} → C–⊔ {{Kₛ}} {{K}} ≡ Cₛ {{C = C–⊔ {{K}} {{Kᵣ}}}}
-          {-# REWRITE C–⊔-law₀ C–⊔-law₁ #-}   
+            opaque 
+              -- additionally allows ComposeKit K K K 
+              C–⊔ : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} → ComposeKit K₁ K₂ (K₁ ⊔ K₂) 
+              {-# INCOHERENT C–⊔ #-} 
+              C–⊔ {Ren} {Ren} {{K₁}} {{K₂}} = subst₂ (λ K₁′ K₂′ → ComposeKit K₁′ K₂′ Kᵣ) (unique–Kᵣ K₁) (unique–Kᵣ K₂) (Cᵣ {{K = Kᵣ}})
+              C–⊔ {Ren} {Sub} {{K₁}} {{K₂}} = subst₂ (λ K₁′ K₂′ → ComposeKit K₁′ K₂′ Kₛ) (unique–Kᵣ K₁) (unique–Kₛ K₂) (Cᵣ {{K = Kₛ}})
+              C–⊔ {Sub} {Ren} {{K₁}} {{K₂}} = subst₂ (λ K₁′ K₂′ → ComposeKit K₁′ K₂′ Kₛ) (unique–Kₛ K₁) (unique–Kᵣ K₂) (Cₛ {{K = Kᵣ}} {{C = Cᵣ {{K = Kᵣ}}}})
+              C–⊔ {Sub} {Sub} {{K₁}} {{K₂}} = subst₂ (λ K₁′ K₂′ → ComposeKit K₁′ K₂′ Kₛ) (unique–Kₛ K₁) (unique–Kₛ K₂) (Cₛ {{K = Kₛ}} {{C = Cₛ {{K = Kᵣ}} {{C = Cᵣ}}}}) 
 
           postulate
+            -- disallows Kₛ K  Kᵣ
+            -- and       K  Kₛ Kᵣ
+            -- and       Kₛ Kᵣ Kᵣ
+            -- and       Kₛ Kₛ Kᵣ
+            -- and       Kᵣ Kₛ Kᵣ
+            -- and       Kₛ Kₛ Kᵣ
+            -- and       Kᵣ Kᵣ Kₛ
+            impossible–Cᵣ  : {{K : Kit k}} → ¬ ComposeKit Kₛ K Kᵣ
+            impossible–Cᵣ′ : {{K : Kit k}} → ¬ ComposeKit K Kₛ Kᵣ
+            impossible–Cₛ  : ¬ ComposeKit Kᵣ Kᵣ Kₛ  
+
+          C–⊔-law₀ : {{K : Kit k}} → C–⊔ {{Kᵣ}} {{K}} ≡ Cᵣ
+          C–⊔-law₀ = unique–Cᵣ _
+
+          C–⊔-law₁ : {{K : Kit k}} → C–⊔ {{Kₛ}} {{K}} ≡ Cₛ {{C = C–⊔ {{K}} {{Kᵣ}}}}
+          C–⊔-law₁ = unique–Cₛ _
+          
+          {-# REWRITE C–⊔-law₀ C–⊔-law₁ #-}   
+
+          opaque
+            unfolding all_kit_and_compose_definitions
             def-&/⋯Cₛ : {{K : Kit k}} {{C : ComposeKit K Kᵣ K}} 
               (t : S₁ ⊢ s) (ϕ : S₁ –[ K ]→ S₂) → _&/⋯_ {{Cₛ}} t ϕ ≡ t ⋯ ϕ
+            def-&/⋯Cₛ _ _ = refl
 
             def-&/⋯Cᵣ : {{K : Kit k}} 
               (x : S₁ ∋ s) (ϕ : S₁ –[ K ]→ S₂) → _&/⋯_ {{Cᵣ}} x ϕ ≡ x & ϕ 
+            def-&/⋯Cᵣ _ _ = refl
             
             &/⋯-law₁ :  ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₂}} 
                 (x/t : Kit._∋/⊢_ K₂ S₂ s) (ϕ : S₁ –[ K₂ ]→ S₂) → 
                 (id/` {{K₁}} zero) &/⋯ (x/t ∙ ϕ) ≡ x/t 
+            &/⋯-law₁ {Ren} {{K₁}} {{K₂}} {{C}} x/t ϕ 
+              rewrite unique K₁ | unique–Cᵣ C = refl
+            &/⋯-law₁ {Sub} {Ren} ⦃ K₁ = K₁ ⦄ ⦃ K₂ ⦄ ⦃ C ⦄ x/t ϕ 
+              rewrite unique K₁ | unique K₂ = ⊥-elim (impossible–Cᵣ C) 
+            &/⋯-law₁ {Sub} {Sub} ⦃ K₁ = K₁ ⦄ ⦃ K₂ ⦄ ⦃ C ⦄ x/t ϕ 
+              rewrite unique K₁ | unique K₂ | unique–Cₛ C = ⋯-var _ _
 
-            &/⋯-law₂ :  ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₂}} 
-                (x/t : Kit._∋/⊢_ K₂ S₂ s) (ϕ : S₁ –[ K₂ ]→ S₂) (x : S₁ ∋ s) → 
-                (id/` {{K₁}} (suc x)) &/⋯ (x/t ∙ ϕ) ≡ (id/` {{K₁}} x) &/⋯ ϕ 
-               
-          Cᵣᵣ : ComposeKit Kᵣ Kᵣ Kᵣ   
-          Cᵣᵣ = Cᵣ
-          Cᵣₛ : ComposeKit Kᵣ Kₛ Kₛ
-          Cᵣₛ = Cᵣ
-          Cₛᵣ : ComposeKit Kₛ Kᵣ Kₛ
-          Cₛᵣ = Cₛ
-          Cₛₛ : ComposeKit Kₛ Kₛ Kₛ
-          Cₛₛ = Cₛ  
-          
+            -- TODO: fix this to be rewritable, currently not a valid rewrite pattern on the lhs
+            -- note: i.e. probably it suffices to make suc a defined function symbol instead of pattern
+            -- &/⋯-law₂ :  ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₂}} 
+            --     (x/t : Kit._∋/⊢_ K₂ S₂ s) (ϕ : S₁ –[ K₂ ]→ S₂) (x : S₁ ∋ s) → 
+            --     (id/` {{K₁}} (suc x)) &/⋯ (x/t ∙ ϕ) ≡ (id/` {{K₁}} x) &/⋯ ϕ 
+
           opaque
             unfolding all_kit_and_compose_definitions
 
-            postulate
-              wkm-def : ∀ {{K : Kit k}} (ϕ : S₁ –[ K ]→ S₂) s → wkmₖ s ϕ ≡ ϕ ; wkᵣ
-              ;-def : ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{C : ComposeKit K₁ K₂ K₃}} s → 
-                  (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) (x : S₁ ∋ s) → 
-                  x & (ϕ₁ ; ϕ₂) ≡ (x & ϕ₁) &/⋯ ϕ₂   
             
-              interact : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₂}} (x/t : Kit._∋/⊢_ K₂ S₂ s) (ϕ : S₁ –[ K₂ ]→ S₂) → wk ; (x/t ∙ ϕ) ≡ ϕ 
-            
+            wkm-def : ∀ {{K : Kit k}} (ϕ : S₁ –[ K ]→ S₂) s → wkmₖ s ϕ ≡ ϕ ; wkᵣ
+            wkm-def {Ren} {{K}} ϕ s rewrite unique K = refl 
+            wkm-def {Sub} {{K}} ϕ s rewrite unique K = refl  
 
-              η-id : {{K : Kit k}} → _∙_ {s = s} {S₁ = S} (id/` {{K}} zero) wk ≡ id 
+            ;-def : ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{C : ComposeKit K₁ K₂ K₃}} s 
+                    (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) (x : S₁ ∋ s) → 
+                x & (ϕ₁ ; ϕ₂) ≡ (x & ϕ₁) &/⋯ ϕ₂   
+            ;-def _ _ _ _ = refl
+            
+            interact : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₂}} 
+                       (x/t : Kit._∋/⊢_ K₂ S₂ s) (ϕ : S₁ –[ K₂ ]→ S₂) → wk ; (x/t ∙ ϕ) ≡ ϕ 
+            interact {Ren} {k₂} {{K₁}} {{K₂}} {{C}} x/t ϕ 
+              rewrite unique K₁ | unique–Cᵣ C = refl
+            interact {Sub} {Ren} {{K₁}} {{K₂}} {{C}} x/t ϕ 
+              rewrite unique K₁ | unique K₂ = ⊥-elim (impossible–Cᵣ C)
+            interact {Sub} {Sub} {{K₁}} {{K₂}} {{C}} x/t ϕ 
+              rewrite unique K₁ | unique K₂ | unique–Cₛ C = ~-ext {{Kₛ}} λ s x → 
+                _ ≡⟨ ⋯-fusion _ _ _ ⟩ _ ≡⟨ ⋯-var _ _ ⟩ _ ∎
+ 
+            η-id : {{K : Kit k}} → _∙_ {s = s} {S₁ = S} (id/` {{K}} zero) wk ≡ id 
+            η-id {Ren} {{K}} rewrite unique K = ~-ext {{K}} λ { _ zero → refl ; _ (suc x) → refl }
+            η-id {Sub} {{K}} rewrite unique K = ~-ext {{K}} λ { _ zero → refl ; _ (suc x) → ⋯-var _ _ } 
           
-
-              η-law : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₂}} (ϕ : (s ∷ S₁) –[ K₂ ]→ S₂) → (zero & ϕ) ∙ (wk ; ϕ) ≡ ϕ
-
+            η-law : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₂}} 
+                    (ϕ : (s ∷ S₁) –[ K₂ ]→ S₂) → (zero & ϕ) ∙ (wk ; ϕ) ≡ ϕ
+            η-law {Ren} {k₂} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique K₁ | unique–Cᵣ C 
+              = ~-ext λ { _ zero → refl  ; _ (suc x) → refl }
+            η-law {Sub} {Ren} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique K₁ | unique K₂ = ⊥-elim (impossible–Cᵣ C)
+            η-law {Sub} {Sub} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique K₁ | unique K₂ | unique–Cₛ C 
+              = ~-ext {{Kₛ}} λ { _ zero → refl  ; _ (suc x) → _ ≡⟨ ⋯-fusion _ _ _ ⟩ _ ≡⟨ ⋯-var _ _ ⟩ _ ∎ } 
+ 
             distributivity : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{C : ComposeKit K₁ K₂ K₃}} 
                              (x/t : Kit._∋/⊢_ K₁ S₂ s)  (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) → 
                              (x/t ∙ ϕ₁) ; ϕ₂ ≡ let instance _ = (K₁ ⊔ K₂) in (x/t &/⋯ ϕ₂) ∙ (ϕ₁ ; ϕ₂)
             distributivity _ _ _ = ~-ext λ { _ zero → refl ; _ (suc x) → refl } 
+
+            left-id : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₂}} 
+                      (ϕ : S₁ –[ K₂ ]→ S₂) → id {{K₁}} ; ϕ ≡ ϕ 
+            left-id {Ren} {k₂} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique K₁ | unique–Cᵣ C 
+              = refl
+            left-id {Sub} {Ren} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique K₁ | unique K₂ = ⊥-elim (impossible–Cᵣ C)
+            left-id {Sub} {Sub} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique K₁ | unique K₂ | unique–Cₛ C 
+              = ~-ext {{Kₛ}} λ _ x → ⋯-var _ _  
+
+            right-id : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₁}} (ϕ : S₁ –[ K₁ ]→ S₂) → ϕ ; id {{K₂}} ≡ ϕ
+            right-id {Ren} {Ren} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique K₁ | unique K₂ | unique–Cᵣ C 
+              = refl
+            right-id {Ren} {Sub} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique K₁ | unique K₂ = ⊥-elim (impossible–Cᵣ′ C)
+            right-id {Sub} {Ren} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique K₁ | unique K₂ | unique–Cₛ C 
+              = ~-ext {{Kₛ}} λ _ x → ⋯-id _
+            right-id {Sub} {Sub} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique K₁ | unique K₂ | unique–Cₛ C 
+              = ~-ext {{Kₛ}} λ _ x → ⋯-id _
+
+
+            -- the idiomatic way to transform a sub/ren into a sub is to compose id on the right. 
+            -- if its applied on the left, we transform it.   
+            norm-id : {{K : Kit k}} (ϕ : S₁ –[ K ]→ S₂) → id {{Kₛ}} ; ϕ ≡ (ϕ ; id {{Kₛ}}) 
+            norm-id {Ren} {{K}} ϕ rewrite unique K = ~-ext {{Kₛ}} λ _ x → ⋯-var _ _
+            norm-id {Sub} {{K}} ϕ rewrite unique K = ~-ext {{Kₛ}} λ _ x → 
+              _ ≡⟨ ⋯-var _ _ ⟩ _ ≡⟨ sym (⋯-id _) ⟩ _ ∎
+
+            associativityᵣᵣᵣ : (ϕ₁ : S₁ –[ Kᵣ ]→ S₂) (ϕ₂ : S₂ –[ Kᵣ ]→ S₃) (ϕ₃ : S₃ –[ Kᵣ ]→ S₄) →   
+                        (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityᵣᵣᵣ _ _ _ = refl     
+
+            associativityᵣᵣₛ : (ϕ₁ : S₁ –[ Kᵣ ]→ S₂) (ϕ₂ : S₂ –[ Kᵣ ]→ S₃) (ϕ₃ : S₃ –[ Kₛ ]→ S₄) →   
+                        (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityᵣᵣₛ _ _ _ = refl
+
+            associativityᵣᵣₖ : {{K₃ : Kit k₃}} 
+                        (ϕ₁ : S₁ –[ Kᵣ ]→ S₂) (ϕ₂ : S₂ –[ Kᵣ ]→ S₃) (ϕ₃ : S₃ –[ K₃ ]→ S₄) →   
+                        (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityᵣᵣₖ _ _ _ = refl
+                        
+            associativityᵣₛᵣ : (ϕ₁ : S₁ –[ Kᵣ ]→ S₂) (ϕ₂ : S₂ –[ Kₛ ]→ S₃) (ϕ₃ : S₃ –[ Kᵣ ]→ S₄) →   
+                      (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityᵣₛᵣ _ _ _ = refl
+
+            associativityᵣₛₛ : (ϕ₁ : S₁ –[ Kᵣ ]→ S₂) (ϕ₂ : S₂ –[ Kₛ ]→ S₃) (ϕ₃ : S₃ –[ Kₛ ]→ S₄) →   
+                      (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityᵣₛₛ _ _ _ = refl
             
-            postulate
-              left-id  : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₂}} (ϕ : S₁ –[ K₂ ]→ S₂) → id {{K₁}} ; ϕ ≡ ϕ 
-              right-id : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₁}} (ϕ : S₁ –[ K₁ ]→ S₂) → ϕ ; id {{K₂}} ≡ ϕ
-              
-              norm-id : {{K : Kit k}} (ϕ : S₁ –[ K ]→ S₂) → id {{Kₛ}} ; ϕ ≡ (ϕ ; id {{Kₛ}}) 
-              -- the idiomatic way to transform a sub/ren into a sub is to compose id on the right. 
-              -- if its applied on the left, we transform it.   
-              
-              associativityₖᵣₖ  : {{K₁ : Kit k₁}} {{K₃ : Kit k₃}}
-                              (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ Kᵣ ]→ S₃) (ϕ₃ : S₃ –[ K₃ ]→ S₄) →   
-                              (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃) 
-              associativityₖᵣₛ  : {{K₁ : Kit k₁}} 
-                              (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ Kᵣ ]→ S₃) (ϕ₃ : S₃ –[ Kₛ ]→ S₄) →   
-                              (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)   
-              associativityₖᵣᵣ : {{K₁ : Kit k₁}} 
-                              (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ Kᵣ ]→ S₃) (ϕ₃ : S₃ –[ Kᵣ ]→ S₄) →   
-                              (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)  
+            associativityᵣₛₖ : {{K₃ : Kit k₃}}
+                      (ϕ₁ : S₁ –[ Kᵣ ]→ S₂) (ϕ₂ : S₂ –[ Kₛ ]→ S₃) (ϕ₃ : S₃ –[ K₃ ]→ S₄) →   
+                      (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityᵣₛₖ _ _ _ = refl
 
+            associativityᵣₖᵣ : {{K₂ : Kit k₂}}
+                      (ϕ₁ : S₁ –[ Kᵣ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) (ϕ₃ : S₃ –[ Kᵣ ]→ S₄) →   
+                      (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityᵣₖᵣ _ _ _ = refl
 
-              associativityᵣₖₖ : {{K₂ : Kit k₁}}  {{K₃ : Kit k₂}}
-                              (ϕ₁ : S₁ –[ Kᵣ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) (ϕ₃ : S₃ –[ K₃ ]→ S₄) →   
-                              (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ let instance _ = K₂ ⊔ K₃ in ϕ₁ ; (ϕ₂ ; ϕ₃) 
-              associativityₖₛₖ : {{K₁ : Kit k₁}} {{K₃ : Kit k₃}}
-                              (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ Kₛ ]→ S₃) (ϕ₃ : S₃ –[ K₃ ]→ S₄) →   
-                              (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)    
-              associativityₛₖₖ : {{K₂ : Kit k₁}}  {{K₃ : Kit k₂}}
-                              (ϕ₁ : S₁ –[ Kₛ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) (ϕ₃ : S₃ –[ K₃ ]→ S₄) →   
-                              (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ let instance _ = K₂ ⊔ K₃ in ϕ₁ ; (ϕ₂ ; ϕ₃) 
+            associativityᵣₖₛ : {{K₂ : Kit k₂}}
+                      (ϕ₁ : S₁ –[ Kᵣ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) (ϕ₃ : S₃ –[ Kₛ ]→ S₄) →   
+                      (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityᵣₖₛ _ _ _ = refl
 
-              associativity : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{K : Kit k}} 
-                              {{C₁ : ComposeKit K₁ K₂ K}} {{C₂ : ComposeKit K K₃ (K₁ ⊔ (K₂ ⊔ K₃))}} → 
-                              (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) (ϕ₃ : S₃ –[ K₃ ]→ S₄) →   
-                              (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ let instance _ = (K₂ ⊔ K₃) in ϕ₁ ; (ϕ₂ ; ϕ₃) 
-              associativity′ : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} 
-                              (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) (ϕ₃ : S₃ –[ K₃ ]→ S₄) →   
-                              ComposeKit._;_ (C–⊔ {{K₁ ⊔ K₂}}) (ϕ₁ ; ϕ₂) ϕ₃ ≡ let instance _ = (K₂ ⊔ K₃) in ϕ₁ ; (ϕ₂ ; ϕ₃) 
-              
+            associativityᵣₖₖ : {{K₂ : Kit k₂}} {{K₃ : Kit k₃}}
+                      (ϕ₁ : S₁ –[ Kᵣ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) (ϕ₃ : S₃ –[ K₃ ]→ S₄) →   
+                      (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ let instance _ = K₂ ⊔ K₃ in ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityᵣₖₖ _ _ _ = refl
+
+            associativityₛᵣᵣ : (ϕ₁ : S₁ –[ Kₛ ]→ S₂) (ϕ₂ : S₂ –[ Kᵣ ]→ S₃) (ϕ₃ : S₃ –[ Kᵣ ]→ S₄) →   
+                        (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityₛᵣᵣ _ _ _ = ~-ext λ _ x → ⋯-fusion _ _ _
+
+            associativityₛᵣₛ : (ϕ₁ : S₁ –[ Kₛ ]→ S₂) (ϕ₂ : S₂ –[ Kᵣ ]→ S₃) (ϕ₃ : S₃ –[ Kₛ ]→ S₄) →   
+                        (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityₛᵣₛ _ _ _ = ~-ext λ _ x → ⋯-fusion _ _ _
+
+            associativityₛᵣₖ : {{K₃ : Kit k₃}}
+                      (ϕ₁ : S₁ –[ Kₛ ]→ S₂) (ϕ₂ : S₂ –[ Kᵣ ]→ S₃) (ϕ₃ : S₃ –[ K₃ ]→ S₄) →   
+                      (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityₛᵣₖ _ _ _ = ~-ext λ _ x → ⋯-fusion _ _ _
+
+            associativityₛₛᵣ : (ϕ₁ : S₁ –[ Kₛ ]→ S₂) (ϕ₂ : S₂ –[ Kₛ ]→ S₃) (ϕ₃ : S₃ –[ Kᵣ ]→ S₄) →   
+                      (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityₛₛᵣ _ _ _ = ~-ext λ _ x → ⋯-fusion _ _ _
+
+            associativityₛₛₛ : (ϕ₁ : S₁ –[ Kₛ ]→ S₂) (ϕ₂ : S₂ –[ Kₛ ]→ S₃) (ϕ₃ : S₃ –[ Kₛ ]→ S₄) →   
+                      (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityₛₛₛ _ _ _ = ~-ext λ _ x → ⋯-fusion _ _ _
+
+            associativityₛₛₖ : {{K₃ : Kit k₃}}
+                       (ϕ₁ : S₁ –[ Kₛ ]→ S₂) (ϕ₂ : S₂ –[ Kₛ ]→ S₃) (ϕ₃ : S₃ –[ K₃ ]→ S₄) →   
+                       (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityₛₛₖ _ _ _ = ~-ext λ _ x → ⋯-fusion _ _ _
+
+            associativityₛₖᵣ : {{K₂ : Kit k₂}}
+                      (ϕ₁ : S₁ –[ Kₛ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) (ϕ₃ : S₃ –[ Kᵣ ]→ S₄) →   
+                      (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityₛₖᵣ _ _ _ = ~-ext λ _ x → ⋯-fusion _ _ _
+
+            associativityₛₖₛ : {{K₂ : Kit k₂}}
+                      (ϕ₁ : S₁ –[ Kₛ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) (ϕ₃ : S₃ –[ Kₛ ]→ S₄) →   
+                      (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityₛₖₛ _ _ _ = ~-ext λ _ x → ⋯-fusion _ _ _
+
+            associativityₛₖₖ : {{K₂ : Kit k₂}} {{K₃ : Kit k₃}}
+                      (ϕ₁ : S₁ –[ Kₛ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) (ϕ₃ : S₃ –[ K₃ ]→ S₄) →   
+                      (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ let instance _ = K₂ ⊔ K₃ in ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityₛₖₖ {{K₂}} {{K₃}} _ _ _ = ~-ext λ _ x → let instance _ = K₂ ⊔ K₃ in ⋯-fusion _ _ _
+
+               
+            associativityₖᵣᵣ : {{K₁ : Kit k₁}}
+                      (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ Kᵣ ]→ S₃) (ϕ₃ : S₃ –[ Kᵣ ]→ S₄) →   
+                      (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityₖᵣᵣ {Ren} {{K₁}} _ _ _ rewrite unique K₁ = refl
+            associativityₖᵣᵣ {Sub} {{K₁}} _ _ _ rewrite unique K₁ = ~-ext {{Kₛ}} λ _ x → ⋯-fusion _ _ _
+
+            associativityₖᵣₛ : {{K₁ : Kit k₁}}
+                      (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ Kᵣ ]→ S₃) (ϕ₃ : S₃ –[ Kₛ ]→ S₄) →   
+                      (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityₖᵣₛ {Ren} {{K₁}} _ _ _ rewrite unique K₁ = refl
+            associativityₖᵣₛ {Sub} {{K₁}} _ _ _ rewrite unique K₁ = ~-ext {{Kₛ}} λ _ x → ⋯-fusion _ _ _
+            
+            associativityₖᵣₖ : {{K₁ : Kit k₁}} {{K₃ : Kit k₃}}
+                      (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ Kᵣ ]→ S₃) (ϕ₃ : S₃ –[ K₃ ]→ S₄) →   
+                      (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityₖᵣₖ {Ren} {Ren} {{K₁}} {{K₃}} _ _ _ rewrite unique K₁ | unique K₃ = refl
+            associativityₖᵣₖ {Ren} {Sub} {{K₁}} {{K₃}} _ _ _ rewrite unique K₁ | unique K₃ = refl
+            associativityₖᵣₖ {Sub} {Ren} {{K₁}} {{K₃}} _ _ _ rewrite unique K₁ | unique K₃ = ~-ext {{Kₛ}} λ _ x → ⋯-fusion _ _ _
+            associativityₖᵣₖ {Sub} {Sub} {{K₁}} {{K₃}} _ _ _ rewrite unique K₁ | unique K₃ = ~-ext {{Kₛ}} λ _ x → ⋯-fusion _ _ _
+
+            
+            associativityₖₛᵣ : {{K₁ : Kit k₁}}
+                      (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ Kₛ ]→ S₃) (ϕ₃ : S₃ –[ Kᵣ ]→ S₄) →   
+                      (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityₖₛᵣ {Ren} {{K₁}} _ _ _ rewrite unique K₁ = refl
+            associativityₖₛᵣ {Sub} {{K₁}} _ _ _ rewrite unique K₁ = ~-ext {{Kₛ}} λ _ x → ⋯-fusion _ _ _
+            
+            associativityₖₛₛ : {{K₁ : Kit k₁}}
+                      (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ Kₛ ]→ S₃) (ϕ₃ : S₃ –[ Kₛ ]→ S₄) →   
+                      (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityₖₛₛ {Ren} {{K₁}} _ _ _ rewrite unique K₁ = refl
+            associativityₖₛₛ {Sub} {{K₁}} _ _ _ rewrite unique K₁ = ~-ext {{Kₛ}} λ _ x → ⋯-fusion _ _ _
+            
+            associativityₖₛₖ : {{K₁ : Kit k₁}} {{K₃ : Kit k₃}}
+                      (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ Kₛ ]→ S₃) (ϕ₃ : S₃ –[ K₃ ]→ S₄) →   
+                      (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityₖₛₖ {Ren} {Ren} {{K₁}} {{K₃}} _ _ _ rewrite unique K₁ | unique K₃ = refl
+            associativityₖₛₖ {Ren} {Sub} {{K₁}} {{K₃}} _ _ _ rewrite unique K₁ | unique K₃ = refl
+            associativityₖₛₖ {Sub} {Ren} {{K₁}} {{K₃}} _ _ _ rewrite unique K₁ | unique K₃ = ~-ext {{Kₛ}} λ _ x → ⋯-fusion _ _ _
+            associativityₖₛₖ {Sub} {Sub} {{K₁}} {{K₃}} _ _ _ rewrite unique K₁ | unique K₃ = ~-ext {{Kₛ}} λ _ x → ⋯-fusion _ _ _
+            
+            associativityₖₖᵣ : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C₁ : ComposeKit K₁ K₂ Kᵣ}}
+                      (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) (ϕ₃ : S₃ –[ Kᵣ ]→ S₄) →   
+                      (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ let instance _ = K₁ ⊔ K₂ in ϕ₁ ; (ϕ₂ ; ϕ₃)
+            associativityₖₖᵣ {Ren} {Ren} {{K₁}} {{K₂}} {{C₁}} _ _ _ rewrite unique K₁ | unique K₂ | unique–Cᵣ C₁ = refl
+            associativityₖₖᵣ {Ren} {Sub} {{K₁}} {{K₂}} {{C₁}} _ _ _ rewrite unique K₁ | unique K₂ = ⊥-elim (impossible–Cᵣ′ C₁)
+            associativityₖₖᵣ {Sub} {Ren} {{K₁}} {{K₂}} {{C₁}} _ _ _ rewrite unique K₁ | unique K₂ = ⊥-elim (impossible–Cᵣ C₁)
+            associativityₖₖᵣ {Sub} {Sub} {{K₁}} {{K₂}} {{C₁}} _ _ _ rewrite unique K₁ | unique K₂ = ⊥-elim (impossible–Cᵣ C₁) 
+            
+
+              -- TODO: we currently cannot construct an ComposeKit K₂ Kₛ K₂ with the 
+              --       arguments given, but it is required inside the hole
+              -- note: K₂ can only be Kₛ for this lemma to work out.
+              --       thus, it might be this is an impossible lemma.
+              --       but why?
+              -- associativityₖₖₛ : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C₁ : ComposeKit K₁ K₂ Kₛ}} 
+              --           (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) (ϕ₃ : S₃ –[ Kₛ ]→ S₄) →   
+              --           (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ let instance _ = K₁ ⊔ K₂ in ϕ₁ ; (ϕ₂ ;[ ? ] ϕ₃)
+
+            associativityₖₖₖ : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} 
+                            (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) (ϕ₃ : S₃ –[ K₃ ]→ S₄) →   
+                            ComposeKit._;_ (C–⊔ {{K₁ ⊔ K₂}}) (ϕ₁ ; ϕ₂) ϕ₃ ≡ let instance _ = (K₂ ⊔ K₃) in ϕ₁ ; (ϕ₂ ; ϕ₃) 
+            associativityₖₖₖ {Ren} {Ren} {Ren} {{K₁}} {{K₂}} {{K₃}} _ _ _ rewrite unique K₁ | unique K₂ | unique K₃ 
+              = refl
+            associativityₖₖₖ {Ren} {Ren} {Sub} {{K₁}} {{K₂}} {{K₃}} _ _ _ rewrite unique K₁ | unique K₂ | unique K₃ 
+              = refl
+            associativityₖₖₖ {Ren} {Sub} {Ren} {{K₁}} {{K₂}} {{K₃}} _ _ _ rewrite unique K₁ | unique K₂ | unique K₃ 
+              = refl
+            associativityₖₖₖ {Ren} {Sub} {Sub} {{K₁}} {{K₂}} {{K₃}} _ _ _ rewrite unique K₁ | unique K₂ | unique K₃ 
+              = refl
+            associativityₖₖₖ {Sub} {Ren} {Ren} {{K₁}} {{K₂}} {{K₃}} _ _ _ rewrite unique K₁ | unique K₂ | unique K₃ 
+              = ~-ext {{Kₛ}} λ _ x → ⋯-fusion _ _ _
+            associativityₖₖₖ {Sub} {Ren} {Sub} {{K₁}} {{K₂}} {{K₃}} _ _ _ rewrite unique K₁ | unique K₂ | unique K₃ 
+              = ~-ext {{Kₛ}} λ _ x → ⋯-fusion _ _ _
+            associativityₖₖₖ {Sub} {Sub} {Ren} {{K₁}} {{K₂}} {{K₃}} _ _ _ rewrite unique K₁ | unique K₂ | unique K₃ 
+              = ~-ext {{Kₛ}} λ _ x → ⋯-fusion _ _ _
+            associativityₖₖₖ {Sub} {Sub} {Sub} {{K₁}} {{K₂}} {{K₃}} _ _ _ rewrite unique K₁ | unique K₂ | unique K₃ 
+              = ~-ext {{Kₛ}} λ _ x → ⋯-fusion _ _ _

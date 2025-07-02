@@ -1,4 +1,4 @@
--- Author(s): Hannes Saffrich (2024) and Marius Weidner (2025)
+-- Author(s): Guillaume Allais et al. (2020), Hannes Saffrich (2024) and Marius Weidner (2025)
 {-# OPTIONS --rewriting #-}
 module Generics where 
 
@@ -109,4 +109,20 @@ module GenericsWithSort (Sort : Mode → Set) where
     ⋯-fusion : ∀ {{K₁ : Kit k₁ }} {{K₂ : Kit k₂}}
                  (t : Tm d S₁ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃)  → 
                  (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ let instance _ = K₁ ⊔ K₂; _ = C–⊔ in t ⋯ (ϕ₁ ; ϕ₂)
-    ⋯-fusion {{K₁ }} {{K₂ }} = let instance _ = K₁ ⊔ K₂; _ = C–⊔ in ⋯-fusion′
+    ⋯-fusion {{K₁ }} {{K₂ }} = let instance _ = K₁ ⊔ K₂; _ = C–⊔ in ⋯-fusion′ 
+
+    {-# REWRITE 
+      id-def ∙-def₁ ∙-def₂ wk-def wkm-def ;-def def-&/⋯Cₛ def-&/⋯Cᵣ
+      &/⋯-law₁ 
+      interact η-id η-law left-id right-id norm-id distributivity
+      ⋯-id ⋯-fusion
+      associativityᵣᵣᵣ associativityᵣᵣₛ associativityᵣᵣₖ
+      associativityᵣₛᵣ associativityᵣₛₛ associativityᵣₛₖ
+      associativityᵣₖᵣ associativityᵣₖₛ associativityᵣₖₖ
+      associativityₛᵣᵣ associativityₛᵣₛ associativityₛᵣₖ
+      associativityₛₛᵣ associativityₛₛₛ associativityₛₛₖ
+      associativityₛₖᵣ associativityₛₖₛ associativityₛₖₖ
+      associativityₖᵣᵣ associativityₖᵣₛ associativityₖᵣₖ
+      associativityₖₛᵣ associativityₖₛₛ associativityₖₛₖ
+      associativityₖₖᵣ associativityₖₖₛ associativityₖₖₖ 
+    #-}

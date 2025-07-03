@@ -1,12 +1,11 @@
--- Author(s): Marius Weidner (2025)
-module Examples.SystemF where
+-- Author(s): Hannes Saffrich (2024) and Marius Weidner (2025)
+module Examples.SystemFSubtyping.Definitions where
 
 -- Imports ---------------------------------------------------------------------
 
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; cong₂; subst; trans; sym; module ≡-Reasoning)
-open ≡-Reasoning
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; cong₂)
 
-open import Prelude
+open import Prelude public
 
 -- Syntax definition
 
@@ -14,9 +13,11 @@ data Sort : SORT where
   expr : Sort Bind
   type : Sort Bind
   kind : Sort NoBind
+  cstr : Sort Bind
+  
 
-open WithSort Sort
-open SortsMeta
+open WithSort Sort public
+open SortsMeta public
 
 data _⊢_ : SCOPED where
   `_        : S ∋ s → S ⊢ s     
@@ -35,7 +36,9 @@ variable
 
 syn : Syntax 
 syn = record { _⊢_  = _⊢_ ; `_ = `_ ; `-injective = λ { refl → refl } }
-open Syntax syn hiding (_⊢_; `_) 
+open Syntax syn hiding (_⊢_; `_) public
+
+-- Traversal definition
 
 _⋯_ : ∀ {{K : Kit k}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
 (` x)           ⋯ ϕ = `/id (x & ϕ)
@@ -60,7 +63,9 @@ _⋯_ : ∀ {{K : Kit k}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ 
 
 traversal : Traversal
 traversal = record { _⋯_ = _⋯_  ; ⋯-id = ⋯-id  ; ⋯-var = λ x ϕ → refl }
-open Traversal traversal hiding (_⋯_; ⋯-id; ⋯-var)
+open Traversal traversal hiding (_⋯_; ⋯-id; ⋯-var) public
+
+-- Compositionality definition
 
 {-# REWRITE dist–↑–; dist–↑⋆–; #-} 
 ⋯-fusion′ :
@@ -78,13 +83,16 @@ open Traversal traversal hiding (_⋯_; ⋯-id; ⋯-var)
    
 compose : Compose 
 compose = record { ⋯-fusion′ = ⋯-fusion′ }
-open Compose compose hiding (⋯-fusion′)
+open Compose compose hiding (⋯-fusion′) public
 
-⋯-fusion : 
+
+⋯-fusion : -- rewritable variant of  ⋯-fusion′
   ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} →
     (t : S₁ ⊢ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) → 
     (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ let instance _ = K₁ ⊔ K₂ in t ⋯ (ϕ₁ ; ϕ₂)
 ⋯-fusion {{K₁}} {{K₂}} = let instance _ = K₁ ⊔ K₂ in ⋯-fusion′ 
+
+-- Rewrite System 
 
 {-# REWRITE 
   id-def ∙-def₁ ∙-def₂ wk-def wkm-def ;-def def-&/⋯Cₛ def-&/⋯Cᵣ
@@ -101,105 +109,3 @@ open Compose compose hiding (⋯-fusion′)
   associativityₖₛᵣ associativityₖₛₛ associativityₖₛₖ
   associativityₖₖᵣ                  associativityₖₖₖ 
 #-} --             associativityₖₖₛ 
-
---Typing ----------------------------------------------------------------------
-
-instance _ = record { Sort = Sort; syn = syn; traversal = traversal; compose = compose } 
-
-open import Extensions.StandardTyping
-
-types : Types
-types = record
-  { ↑ᵗ = λ { expr → _ , type ; type → _ , kind ; kind → _ , kind } } 
-
-open Types types
-
-variable 
-  Γ Γ₁ Γ₂ Γ₃ Γ′ Γ₁′ Γ₂′ Γ₃′ : Ctx S
-
-data _⊢_∶_ : {s : Sort m} → Ctx S → S ⊢ s → S ∶⊢ s → Set where
-  ⊢` : ∀ {s : Sort Bind} {x : S ∋ s} {t} → 
-    Γ ∋ x ∶ t →
-    -------------
-    Γ ⊢ (` x) ∶ t
-  ⊢λ : 
-    (t ∷ₜ Γ) ⊢ e ∶ (weaken t′) → 
-    ------------------------
-    Γ ⊢ (λx e) ∶ (t ⇒ t′)
-  ⊢Λ :
-    (★ₖ ∷ₜ Γ) ⊢ e ∶ t →  
-    -------------------------
-    Γ ⊢ (Λα e) ∶ (∀[α∶ ★ₖ ] t)
-  ⊢· : 
-    Γ ⊢ e₁ ∶ (t₁ ⇒ t₂) →
-    Γ ⊢ e₂ ∶ t₁ →
-    --------------------
-    Γ ⊢ (e₁ · e₂) ∶ t₂
-  ⊢• : 
-    Γ ⊢ e ∶ (∀[α∶ ★ₖ ] t′) →
-    Γ ⊢ t ∶ ★ₖ →
-    (★ₖ ∷ₜ Γ) ⊢ t′ ∶ ★ₖ′ →
-    ------------------------
-    Γ ⊢ (e • t) ∶ (t′ [ t ])
-  ⊢★ : 
-    ---------
-    Γ ⊢ t ∶ ★
- 
-typing : Typing
-typing = record { _⊢_∶_ = _⊢_∶_ ; ⊢` = ⊢` }
-
-open Typing typing hiding (_⊢_∶_; ⊢`) 
-
-_⊢⋯_ :
-  ∀ {{K : Kit k}} {{TK : TypingKit K}}
-    {S₁ S₂ m} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} {s : Sort m}
-    {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} {ϕ : S₁ –[ K ]→ S₂} →
-  Γ₁ ⊢ e ∶ t →
-  Γ₂ ∋*/⊢*[ TK ] ϕ ∶ Γ₁ →
-  Γ₂ ⊢ (e ⋯ ϕ) ∶ (t ⋯ ϕ)
-⊢` ⊢x        ⊢⋯ ⊢ϕ = ⊢`/id (⊢ϕ _ _ ⊢x)
-⊢λ ⊢e        ⊢⋯ ⊢ϕ = ⊢λ (⊢e ⊢⋯ (⊢ϕ ∋↑/⊢↑ _))
-⊢Λ ⊢e        ⊢⋯ ⊢ϕ = ⊢Λ (⊢e ⊢⋯ (⊢ϕ ∋↑/⊢↑ _))
-⊢· ⊢e₁ ⊢e₂   ⊢⋯ ⊢ϕ = ⊢· (⊢e₁ ⊢⋯ ⊢ϕ) (⊢e₂ ⊢⋯ ⊢ϕ)
-⊢• ⊢e ⊢t ⊢t′ ⊢⋯ ⊢ϕ = ⊢• (⊢e ⊢⋯ ⊢ϕ) (⊢t ⊢⋯ ⊢ϕ) (⊢t′ ⊢⋯ (⊢ϕ ∋↑/⊢↑ _))
-⊢★           ⊢⋯ ⊢ϕ = ⊢★ 
-
-open TypingTraversal record { _⊢⋯_ = _⊢⋯_ } hiding (_⊢⋯_)
-
--- Semantics -------------------------------------------------------------------
-
-data Val : S ⊢ expr → Set where
-  vλ : Val (λx e)
-  vΛ : Val (Λα e)
-
-data _↪_ : S ⊢ expr → S ⊢ expr → Set where
-  β-λ :
-    Val e₂ →
-    ----------------------------
-    ((λx e₁) · e₂) ↪ (e₁ [ e₂ ])
-  β-Λ :
-    ------------------------
-    ((Λα e) • t) ↪ (e [ t ])
-  ξ-·₁ :
-    e₁ ↪ e →
-    --------------------
-    (e₁ · e₂) ↪ (e · e₂)
-  ξ-·₂ :
-    e₂ ↪ e →
-    Val e₁ →
-    --------------------
-    (e₁ · e₂) ↪ (e₁ · e)
-  ξ-• :
-    e ↪ e′ →
-    ------------------
-    (e • t) ↪ (e′ • t) 
-
-subject-reduction :
-  Γ ⊢ e ∶ t →
-  e ↪ e′ →
-  Γ ⊢ e′ ∶ t
-subject-reduction (⊢· (⊢λ ⊢e₁) ⊢e₂)     (β-λ _)         = ⊢e₁ ⊢⋯ₛ ⊢⦅ ⊢e₂ ⦆ₛ
-subject-reduction (⊢• (⊢Λ ⊢e) ⊢t ⊢t′) β-Λ               = ⊢e ⊢⋯ₛ ⊢⦅ ⊢t ⦆ₛ
-subject-reduction (⊢· ⊢e₁ ⊢e₂)          (ξ-·₁ e₁↪e₁′)   = ⊢· (subject-reduction ⊢e₁ e₁↪e₁′) ⊢e₂
-subject-reduction (⊢· ⊢e₁ ⊢e₂)          (ξ-·₂ e₂↪e₂′ _) = ⊢· ⊢e₁ (subject-reduction ⊢e₂ e₂↪e₂′)
-subject-reduction (⊢• ⊢e ⊢t ⊢t′)        (ξ-• e₁↪e₁′)    = ⊢• (subject-reduction ⊢e e₁↪e₁′) ⊢t ⊢t′ 

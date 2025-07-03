@@ -1,5 +1,5 @@
 -- Author(s): Marius Weidner (2025)
-module Examples.STLC where
+module Examples.SimplyTyped.Definitions where
 
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; cong₂)
 
@@ -19,7 +19,7 @@ data _⊢_ : SCOPED where
   _⇒_       : S ⊢ type → S ⊢ type → S ⊢ type 
 
 syn : Syntax 
-syn = record { _⊢_  = _⊢_ ; `-injective = λ { refl → refl } }
+syn = record { _⊢_  = _⊢_ ; `_ = `_ ; `-injective = λ { refl → refl } }
 open Syntax syn hiding (_⊢_; `_) 
 
 _⋯_ : ∀ {{K : Kit k}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
@@ -36,7 +36,7 @@ _⋯_ : ∀ {{K : Kit k}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ 
 ⋯-id (t₁ ⇒ t₂) = cong₂ _⇒_ (⋯-id t₁) (⋯-id t₂)
 
 traversal : Traversal
-traversal = record { _⋯_ = _⋯_   ; ⋯-id = ⋯-id   ⋯-var = λ _ _ → refl }
+traversal = record { _⋯_ = _⋯_   ; ⋯-id = ⋯-id ; ⋯-var = λ _ _ → refl }
 open Traversal traversal hiding (_⋯_; ⋯-id; ⋯-var)
 
 {-# REWRITE dist–↑–; dist–↑⋆–; #-} 

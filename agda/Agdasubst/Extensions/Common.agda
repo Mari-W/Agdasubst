@@ -1,11 +1,10 @@
 -- Author(s): Marius Weidner (2025)
-{-# OPTIONS --rewriting #-}
 module Extensions.Common where
 
 open import Common public
 open import Lib public
 
-record WithLib : Set₁ where
+record Library : Set₁ where
   constructor mkLib
   pattern 
   field
@@ -29,4 +28,4 @@ record WithLib : Set₁ where
     compose : Compose 
   open Compose compose public 
 
-open WithLib {{ ... }} 
+open Library {{ ... }}  

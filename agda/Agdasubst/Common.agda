@@ -1,5 +1,4 @@
 -- Author(s): Marius Weidner (2025)
-{-# OPTIONS --rewriting #-}
 module Common where 
 
 open import Agda.Builtin.Equality.Rewrite public

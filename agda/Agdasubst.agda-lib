@@ -1,0 +1,7 @@
+name: Agdasubst
+depend:
+  standard-library
+include:
+  Agdasubst
+flags: 
+  --rewriting

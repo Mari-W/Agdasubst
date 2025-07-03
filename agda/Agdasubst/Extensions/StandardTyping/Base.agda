@@ -1,10 +1,9 @@
 -- Author(s): Hannes Saffrich (2024) and Marius Weidner (2025)
-{-# OPTIONS --rewriting #-}
 module Extensions.StandardTyping.Base where
 
 open import Extensions.Common
-module _ {{lib : WithLib}} where 
-  open WithLib lib
+module _ {{lib : Library}} where 
+  open Library lib
 
   open import Data.Nat using (ℕ; zero; suc)
   open import Data.List using (drop)
@@ -28,7 +27,7 @@ module _ {{lib : WithLib}} where
       ∀ {{K : Kit k }} (t : S ⊢ s′) (x/t : S ∋/⊢[ K ] s) →
       t ⋯ wkᵣ {s = s} ⋯ ⦅ x/t ⦆ ≡ t
     wk-cancels-⦅⦆-⋯ t x/t =
-      t ⋯ wkᵣ ⋯ ⦅ x/t ⦆   ≡⟨ ⋯-fusion t wkᵣ ⦅ x/t ⦆ ⟩
+      t ⋯ wkᵣ ⋯ ⦅ x/t ⦆   ≡⟨ ⋯-fusion′ t wkᵣ ⦅ x/t ⦆ ⟩
       t ⋯ (wkᵣ ; ⦅ x/t ⦆) ≡⟨ cong (t ⋯_) (~-ext (wk-cancels-⦅⦆ x/t)) ⟩
       t ⋯ id             ≡⟨ ⋯-id t ⟩
       t                  ∎
@@ -49,7 +48,7 @@ module _ {{lib : WithLib}} where
         `/id (id/` {{K₁ }} y &/⋯ ϕ)                 ≡⟨ &/⋯-& {{C₁ }} y ϕ ⟩
         `/id (y & ϕ)                                ≡⟨ sym (wk-cancels-⦅⦆-⋯ (`/id (y & ϕ)) (x/t &/⋯ ϕ)) ⟩
         `/id (y & ϕ) ⋯ wkᵣ {s = s} ⋯ ⦅ (x/t &/⋯ ϕ) ⦆ ≡⟨ cong (_⋯ ⦅ x/t &/⋯ ϕ ⦆) (wk-`/id s (y & ϕ)) ⟩
-        `/id (wk′ s (y & ϕ)) ⋯ ⦅ (x/t &/⋯ ϕ) ⦆       ≡⟨ sym (&/⋯-⋯ (wk′ s (y & ϕ)) ⦅ (x/t &/⋯ ϕ) ⦆) ⟩
+        `/id (wk′ s (y & ϕ)) ⋯ ⦅ (x/t &/⋯ ϕ) ⦆       ≡⟨ &/⋯-⋯ (wk′ s (y & ϕ)) ⦅ (x/t &/⋯ ϕ) ⦆ ⟩
         `/id (wk′ s (y & ϕ) &/⋯ ⦅ (x/t &/⋯ ϕ) ⦆)     ≡⟨⟩
         `/id (x & ((ϕ ↑ₖ s) ; ⦅ (x/t &/⋯ ϕ) ⦆))      ∎)
 
@@ -59,9 +58,9 @@ module _ {{lib : WithLib}} where
          (t : (s ∷ S₁) ⊢ s′) (x/t : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
       t ⋯ ⦅ x/t ⦆ ⋯ ϕ ≡ t ⋯ (ϕ ↑ₖ s) ⋯ ⦅ (x/t &/⋯ ϕ) ⦆
     dist-↑-⦅⦆-⋯ t x/t ϕ =
-      t ⋯ ⦅ x/t ⦆ ⋯ ϕ                  ≡⟨ ⋯-fusion t ⦅ x/t ⦆ ϕ ⟩
+      t ⋯ ⦅ x/t ⦆ ⋯ ϕ                  ≡⟨ ⋯-fusion′ t ⦅ x/t ⦆ ϕ ⟩
       t ⋯ (⦅ x/t ⦆ ; ϕ)                ≡⟨ cong (t ⋯_) (~-ext (dist-↑-⦅⦆ x/t ϕ)) ⟩
-      t ⋯ ((ϕ ↑ₖ _) ; ⦅ (x/t &/⋯ ϕ) ⦆) ≡⟨ sym (⋯-fusion t (ϕ ↑ₖ _) ⦅ x/t &/⋯ ϕ ⦆ ) ⟩
+      t ⋯ ((ϕ ↑ₖ _) ; ⦅ (x/t &/⋯ ϕ) ⦆) ≡⟨ sym (⋯-fusion′ t (ϕ ↑ₖ _) ⦅ x/t &/⋯ ϕ ⦆ ) ⟩
       t ⋯ (ϕ ↑ₖ _) ⋯ ⦅ (x/t &/⋯ ϕ) ⦆   ∎
 
   record Types : Set₁ where

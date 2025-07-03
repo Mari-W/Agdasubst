@@ -1,20 +1,14 @@
 -- Author(s): Marius Weidner (2025)
-{-# OPTIONS --rewriting  #-}
 module Examples.SystemF where
 
 -- Imports ---------------------------------------------------------------------
 
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; cong₂; subst; trans; sym; module ≡-Reasoning)
 open ≡-Reasoning
-open import Data.Unit using (⊤; tt)
-open import Data.Nat using (ℕ; zero; suc)
-open import Data.Sum.Base using (_⊎_; inj₁; inj₂)
-open import Data.Product using (_,_; ∃-syntax; proj₂)
-open import Data.List using (drop)
-
-open import Agda.Builtin.Equality.Rewrite
 
 open import Prelude
+
+-- Syntax definition
 
 data Sort : SORT where
   expr : Sort Bind
@@ -39,13 +33,11 @@ variable
   t t₁ t₂ t₃ t₄ t′ t₁′ t₂′ t₃′ t₄′ : S ⊢ type
   ★ₖ ★ₖ′                           : S ⊢ kind
 
-open import Derive
+syn : Syntax 
+syn = record { _⊢_  = _⊢_ ; `_ = `_ ; `-injective = λ { refl → refl } }
+open Syntax syn hiding (_⊢_; `_) 
 
-unquoteDecl syn = deriveSyntax Sort _⊢_ `_ syn
-  
-open Syntax syn hiding (_⊢_; `_)
-
-_⋯_ : ∀ {{K : Kit k }} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
+_⋯_ : ∀ {{K : Kit k}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
 (` x)           ⋯ ϕ = `/id (x & ϕ)
 (λx e)          ⋯ ϕ = λx (e ⋯ (ϕ ↑ₖ⋆ _))
 (e₁ · e₂)       ⋯ ϕ = (e₁ ⋯ ϕ) · (e₂ ⋯ ϕ)
@@ -54,79 +46,45 @@ _⋯_ : ∀ {{K : Kit k }} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢
 (∀[α∶ k ] t)    ⋯ ϕ = ∀[α∶ (k ⋯ ϕ) ] (t ⋯ (ϕ ↑ₖ⋆ _))
 (e • t)         ⋯ ϕ = (e ⋯ ϕ) • (t ⋯ ϕ)
 ★               ⋯ ϕ = ★
-  
-opaque
-  unfolding all_kit_definitions
-    
-  ⋯-id : ∀ {{K : Kit k }} (t : S ⊢ s) → t ⋯ id {{K }} ≡ t
-  ⋯-id {{K }} (` x)     = `/`-is-` {{K }} x
-  ⋯-id (λx t)          = cong λx_ (
-    t ⋯ (id ↑ₖ expr)   ≡⟨ cong (t ⋯_) (~-ext id↑ₖ~id) ⟩
-    t ⋯ id             ≡⟨ ⋯-id t ⟩
-    t                  ∎)
-  ⋯-id (t₁ · t₂)       = cong₂ _·_ (⋯-id t₁) (⋯-id t₂)
-  ⋯-id (t₁ ⇒ t₂)       = cong₂ _⇒_ (⋯-id t₁) (⋯-id t₂)
-  ⋯-id (Λα t)          = cong Λα_ (
-    t ⋯ (id ↑ₖ type)   ≡⟨ cong (t ⋯_) (~-ext id↑ₖ~id) ⟩
-    t ⋯ id             ≡⟨ ⋯-id t ⟩
-    t                  ∎)
-  ⋯-id (∀[α∶ k ] t)    = cong₂ ∀[α∶_]_ (⋯-id k) (
-    t ⋯ (id ↑ₖ type)   ≡⟨ cong (t ⋯_) (~-ext id↑ₖ~id) ⟩
-    t ⋯ id             ≡⟨ ⋯-id t ⟩
-    t                  ∎)
-  ⋯-id (e • t)         = cong₂ _•_ (⋯-id e) (⋯-id t)
-  ⋯-id ★               = refl
+
+{-# REWRITE id↑≡id id↑⋆≡id #-}
+⋯-id : ∀ {{K : Kit k}} (t : S ⊢ s) → t ⋯ id ≡ t
+⋯-id {{K}} (` x)     = ⋯-id-`
+⋯-id (λx e)          = cong λx_ (⋯-id e)
+⋯-id (e₁ · e₂)       = cong₂ _·_ (⋯-id e₁) (⋯-id e₂)
+⋯-id (t₁ ⇒ t₂)       = cong₂ _⇒_ (⋯-id t₁) (⋯-id t₂)
+⋯-id (Λα t)          = cong Λα_ (⋯-id t)
+⋯-id (∀[α∶ k ] t)    = cong₂ ∀[α∶_]_ (⋯-id k) (⋯-id t)
+⋯-id (e • t)         = cong₂ _•_ (⋯-id e) (⋯-id t)
+⋯-id ★               = refl
 
 traversal : Traversal
-traversal = record
-  { _⋯_ = _⋯_ 
-  ; ⋯-id = ⋯-id 
-  ; ⋯-var = λ x ϕ → refl 
-  }
-
+traversal = record { _⋯_ = _⋯_  ; ⋯-id = ⋯-id  ; ⋯-var = λ x ϕ → refl }
 open Traversal traversal hiding (_⋯_; ⋯-id; ⋯-var)
 
-opaque
-  unfolding all_kit_and_compose_definitions
-
-  ⋯-fusion′ :
-    ∀ {{K₁ : Kit k₁ }} {{K₂ : Kit k₂ }} {{K₃ : Kit k₃ }} {{C : ComposeKit K₁ K₂ K₃ }} →
-      (t : S₁ ⊢ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) →
-      (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ t ⋯ (ϕ₁ ;[ C ] ϕ₂)
-  ⋯-fusion′ (` x)          ϕ₁ ϕ₂ = sym (&/⋯-⋯ (ϕ₁ _ x) ϕ₂)
-  ⋯-fusion′ {{K₁ = K₁ }} {{K₂ = K₂ }} (λx t)  ϕ₁ ϕ₂ = cong λx_ (
-    (t ⋯ (ϕ₁ ↑ₖ expr)) ⋯ (ϕ₂ ↑ₖ expr)        ≡⟨ ⋯-fusion′ t (ϕ₁ ↑ₖ expr) (ϕ₂ ↑ₖ expr) ⟩
-    t ⋯ ((ϕ₁ ↑ₖ expr) ; (ϕ₂ ↑ₖ expr))       ≡⟨ cong (t ⋯_) (sym (~-ext (dist-↑ₖ-; expr ϕ₁ ϕ₂))) ⟩
-    t ⋯ ((ϕ₁ ; ϕ₂) ↑ₖ expr)                 ∎) 
-  ⋯-fusion′ (t₁ · t₂)      ϕ₁ ϕ₂ = cong₂ _·_  (⋯-fusion′ t₁ ϕ₁ ϕ₂) (⋯-fusion′ t₂ ϕ₁ ϕ₂)
-  ⋯-fusion′ (t₁ ⇒ t₂)      ϕ₁ ϕ₂ = cong₂ _⇒_ (⋯-fusion′ t₁ ϕ₁ ϕ₂) (⋯-fusion′ t₂ ϕ₁ ϕ₂)  
-  ⋯-fusion′ {{K₁ = K₁ }} {{K₂ = K₂ }} (Λα t)  ϕ₁ ϕ₂ = cong Λα_ (
-    (t ⋯ (ϕ₁ ↑ₖ type)) ⋯ (ϕ₂ ↑ₖ type)        ≡⟨ ⋯-fusion′ t (ϕ₁ ↑ₖ type) (ϕ₂ ↑ₖ type) ⟩
-    t ⋯ ((ϕ₁ ↑ₖ type) ; (ϕ₂ ↑ₖ type))       ≡⟨ cong (t ⋯_) (sym (~-ext (dist-↑ₖ-; type ϕ₁ ϕ₂))) ⟩
-    t ⋯ ((ϕ₁ ; ϕ₂) ↑ₖ type)                 ∎)
-  ⋯-fusion′ {{K₁ = K₁ }} {{K₂ = K₂ }} (∀[α∶ k ] t) ϕ₁ ϕ₂ = cong₂ ∀[α∶_]_ 
-    (⋯-fusion′ k ϕ₁ ϕ₂) 
-    ((t ⋯ (ϕ₁ ↑ₖ type)) ⋯ (ϕ₂ ↑ₖ type)        ≡⟨ ⋯-fusion′ t (ϕ₁ ↑ₖ type) (ϕ₂ ↑ₖ type) ⟩
-     t ⋯ ((ϕ₁ ↑ₖ type) ; (ϕ₂ ↑ₖ type))       ≡⟨ cong (t ⋯_) (sym (~-ext (dist-↑ₖ-; type ϕ₁ ϕ₂))) ⟩
-     t ⋯ ((ϕ₁ ; ϕ₂) ↑ₖ type)                 ∎)
-  ⋯-fusion′ (e • t)         ϕ₁ ϕ₂ = cong₂ _•_ (⋯-fusion′ e ϕ₁ ϕ₂) (⋯-fusion′ t ϕ₁ ϕ₂)
-  ⋯-fusion′ ★               ϕ₁ ϕ₂ = refl
-  
+{-# REWRITE dist–↑–; dist–↑⋆–; #-} 
+⋯-fusion′ :
+  ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{C : ComposeKit K₁ K₂ K₃}} →
+    (t : S₁ ⊢ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) →
+    (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ t ⋯ (ϕ₁ ;[ C ] ϕ₂)
+⋯-fusion′ (` x)        ϕ₁ ϕ₂ =  ⋯-fusion-`
+⋯-fusion′ (λx e)       ϕ₁ ϕ₂ = cong λx_ (⋯-fusion′ e (ϕ₁ ↑ₖ⋆ _) (ϕ₂ ↑ₖ⋆ _)) 
+⋯-fusion′ (e₁ · e₂)    ϕ₁ ϕ₂ = cong₂ _·_  (⋯-fusion′ e₁ ϕ₁ ϕ₂) (⋯-fusion′ e₂ ϕ₁ ϕ₂)
+⋯-fusion′ (t₁ ⇒ t₂)    ϕ₁ ϕ₂ = cong₂ _⇒_ (⋯-fusion′ t₁ ϕ₁ ϕ₂) (⋯-fusion′ t₂ ϕ₁ ϕ₂)  
+⋯-fusion′ (Λα t)       ϕ₁ ϕ₂ = cong Λα_ (⋯-fusion′ t (ϕ₁ ↑ₖ type) (ϕ₂ ↑ₖ type))
+⋯-fusion′ (∀[α∶ k ] t) ϕ₁ ϕ₂ = cong₂ ∀[α∶_]_ (⋯-fusion′ k ϕ₁ ϕ₂) (⋯-fusion′ t (ϕ₁ ↑ₖ type) (ϕ₂ ↑ₖ type))
+⋯-fusion′ (e • t)      ϕ₁ ϕ₂ = cong₂ _•_ (⋯-fusion′ e ϕ₁ ϕ₂) (⋯-fusion′ t ϕ₁ ϕ₂)
+⋯-fusion′ ★            ϕ₁ ϕ₂ = refl
+   
 compose : Compose 
-compose = record { ⋯-fusion = ⋯-fusion′ }
-
-open Compose compose hiding (⋯-fusion)
+compose = record { ⋯-fusion′ = ⋯-fusion′ }
+open Compose compose hiding (⋯-fusion′)
 
 ⋯-fusion : 
-  ∀ {{K₁ : Kit k₁ }} {{K₂ : Kit k₂ }} →
+  ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} →
     (t : S₁ ⊢ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) → 
-    (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ let instance _ = K₁ ⊔ K₂; _ = C–⊔ in t ⋯ (ϕ₁ ; ϕ₂)
-⋯-fusion {{K₁ }} {{K₂ }} = let instance _ = K₁ ⊔ K₂; _ = C–⊔ in ⋯-fusion′ 
-
-instance 
-  open import Extensions.Common using (WithLib)
-  lib : WithLib 
-  lib = record { Sort = Sort; syn = syn; traversal = traversal; compose = compose } 
+    (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ let instance _ = K₁ ⊔ K₂ in t ⋯ (ϕ₁ ; ϕ₂)
+⋯-fusion {{K₁}} {{K₂}} = let instance _ = K₁ ⊔ K₂ in ⋯-fusion′ 
 
 {-# REWRITE 
   id-def ∙-def₁ ∙-def₂ wk-def wkm-def ;-def def-&/⋯Cₛ def-&/⋯Cᵣ
@@ -142,9 +100,11 @@ instance
   associativityₖᵣᵣ associativityₖᵣₛ associativityₖᵣₖ
   associativityₖₛᵣ associativityₖₛₛ associativityₖₛₖ
   associativityₖₖᵣ                  associativityₖₖₖ 
-#-} --             associativityₖₖₛ
+#-} --             associativityₖₖₛ 
 
 --Typing ----------------------------------------------------------------------
+
+instance _ = record { Sort = Sort; syn = syn; traversal = traversal; compose = compose } 
 
 open import Extensions.StandardTyping
 
@@ -191,7 +151,7 @@ typing = record { _⊢_∶_ = _⊢_∶_ ; ⊢` = ⊢` }
 open Typing typing hiding (_⊢_∶_; ⊢`) 
 
 _⊢⋯_ :
-  ∀ {{K : Kit k }} {{TK : TypingKit K}}
+  ∀ {{K : Kit k}} {{TK : TypingKit K}}
     {S₁ S₂ m} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} {s : Sort m}
     {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} {ϕ : S₁ –[ K ]→ S₂} →
   Γ₁ ⊢ e ∶ t →
@@ -242,4 +202,4 @@ subject-reduction (⊢· (⊢λ ⊢e₁) ⊢e₂)     (β-λ _)         = ⊢e�
 subject-reduction (⊢• (⊢Λ ⊢e) ⊢t ⊢t′) β-Λ               = ⊢e ⊢⋯ₛ ⊢⦅ ⊢t ⦆ₛ
 subject-reduction (⊢· ⊢e₁ ⊢e₂)          (ξ-·₁ e₁↪e₁′)   = ⊢· (subject-reduction ⊢e₁ e₁↪e₁′) ⊢e₂
 subject-reduction (⊢· ⊢e₁ ⊢e₂)          (ξ-·₂ e₂↪e₂′ _) = ⊢· ⊢e₁ (subject-reduction ⊢e₂ e₂↪e₂′)
-subject-reduction (⊢• ⊢e ⊢t ⊢t′)        (ξ-• e₁↪e₁′)    = ⊢• (subject-reduction ⊢e e₁↪e₁′) ⊢t ⊢t′
+subject-reduction (⊢• ⊢e ⊢t ⊢t′)        (ξ-• e₁↪e₁′)    = ⊢• (subject-reduction ⊢e e₁↪e₁′) ⊢t ⊢t′ 

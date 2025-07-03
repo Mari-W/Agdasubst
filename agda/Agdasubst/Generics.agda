@@ -1,5 +1,4 @@
 -- Author(s): Guillaume Allais et al. (2020), Hannes Saffrich (2024) and Marius Weidner (2025)
-{-# OPTIONS --rewriting #-}
 module Generics where 
 
 open import Data.List using (List; []; _∷_; _++_) public
@@ -89,7 +88,7 @@ module GenericsWithSort (Sort : Mode → Set) where
         ⋯-fusion′  : ∀ {s : Sort m} {{K₁ : Kit k₁ }} {{K₂ : Kit k₂ }} {{K : Kit k }} {{C : ComposeKit K₁ K₂ K}}
                     (t : Tm d S₁ s) (ϕ₁ : S₁ →ₖ S₂) (ϕ₂ : S₂ →ₖ S₃) → 
                     (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ t ⋯ (ϕ₁ ; ϕ₂)
-        ⋯-fusion′ (`var x)  ϕ₁ ϕ₂ = sym (&/⋯-⋯ (ϕ₁ _ x) ϕ₂)
+        ⋯-fusion′ (`var x)  ϕ₁ ϕ₂ = &/⋯-⋯ (ϕ₁ _ x) ϕ₂
         ⋯-fusion′ (`con e′) ϕ₁ ϕ₂ = cong `con (⋯-fusion′′ e′ ϕ₁ ϕ₂)
 
         ⋯-fusion′′  : ∀ {s : Sort m} {{K₁ : Kit k₁ }} {{K₂ : Kit k₂ }} {{K : Kit k }} {{C : ComposeKit K₁ K₂ K}}
@@ -102,9 +101,9 @@ module GenericsWithSort (Sort : Mode → Set) where
         ⋯-fusion′′ {d′ = `■ M′}       (refl , refl) ϕ₁ ϕ₂ = refl
 
     compose : Compose
-    compose = record { ⋯-fusion = ⋯-fusion′ }
+    compose = record { ⋯-fusion′ = ⋯-fusion′ }
 
-    open Compose compose hiding (⋯-fusion)
+    open Compose compose hiding (⋯-fusion′)
 
     ⋯-fusion : ∀ {{K₁ : Kit k₁ }} {{K₂ : Kit k₂}}
                  (t : Tm d S₁ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃)  → 
@@ -124,5 +123,5 @@ module GenericsWithSort (Sort : Mode → Set) where
       associativityₛₖᵣ associativityₛₖₛ associativityₛₖₖ
       associativityₖᵣᵣ associativityₖᵣₛ associativityₖᵣₖ
       associativityₖₛᵣ associativityₖₛₛ associativityₖₛₖ
-      associativityₖₖᵣ associativityₖₖₛ associativityₖₖₖ 
-    #-}
+      associativityₖₖᵣ                  associativityₖₖₖ  
+    #-} --             associativityₖₖₛ

@@ -1,5 +1,5 @@
 -- Author(s): Marius Weidner (2025)
-{-# OPTIONS --allow-unsolved-metas --rewriting -v tc.unquote.decl:10 -v tc.unquote.def:10 #-}
+{-# OPTIONS --allow-unsolved-metas -v tc.unquote.decl:10 -v tc.unquote.def:10 #-}
 module Derive where
 
 open import Common
@@ -112,7 +112,8 @@ module _ (Sort : SORT) where
         isVarConstructor nm = do 
           `_-nm ←  quoteNameTC {A = VAR} `_ 
           returnTC (isYes (`_-nm ≟ nm))
-
+        
+        -- TODO
         deriveTraversal : Name → TC ⊤
         deriveTraversal nm = do 
           declareTy nm (∀ {m} {S₁ S₂} {s : Sort m} {k} {{K : Kit k }} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s)

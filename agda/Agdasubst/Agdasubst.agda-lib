@@ -2,6 +2,6 @@ name: Agdasubst
 depend:
   standard-library
 include:
-  Agdasubst
+  src
 flags: 
   --rewriting

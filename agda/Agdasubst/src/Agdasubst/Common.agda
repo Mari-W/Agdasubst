@@ -1,5 +1,5 @@
 -- Author(s): Marius Weidner (2025)
-module Common where 
+module Agdasubst.Common where 
 
 open import Agda.Builtin.Equality.Rewrite public
 open import Data.List using (List; _∷_; []) public

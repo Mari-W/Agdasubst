@@ -1,10 +1,16 @@
 -- Author(s): Hannes Saffrich (2024) and Marius Weidner (2025)
-module Extensions.StandardTyping.Base where
+module Agdasubst.Extensions.StandardTyping.Base where
 
-open import Extensions.Common
+open import Agdasubst.Common
+open import Agdasubst.Lib
+open import Agdasubst.Extensions.Common
+
 module _ {{lib : Library}} where 
   open Library lib
-
+  open CommonWithSort Sort public
+  open SortsMeta
+  open KitsWithSort Sort public
+  
   open import Data.Nat using (ℕ; zero; suc)
   open import Data.List using (drop)
   open import Data.Product using (∃-syntax; proj₂)

@@ -1,14 +1,14 @@
 -- Author(s): Guillaume Allais et al. (2020), Hannes Saffrich (2024) and Marius Weidner (2025)
-module Generics where 
+module Agdasubst.Extensions.Generics.Base where 
 
 open import Data.List using (List; []; _∷_; _++_) public
 open import Data.Product using (Σ; ∃-syntax; Σ-syntax; _×_; _,_)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; trans; subst)
 
-open import Common
-open import Lib
+open import Agdasubst.Common
+open import Agdasubst.Lib
 
-module GenericsWithSort (Sort : Mode → Set) where
+module GenericsWithSort (Sort : SORT) where
   
   open CommonWithSort Sort 
   open SortsMeta
@@ -34,7 +34,7 @@ module GenericsWithSort (Sort : Mode → Set) where
 
   open KitsWithSort Sort
 
-  module GenericsWithDesc (d : Desc) where
+  module WithDesc (d : Desc) where
     
     syn : Syntax
     syn = record

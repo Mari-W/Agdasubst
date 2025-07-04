@@ -1,6 +1,6 @@
 -- Author(s): Hannes Saffrich (2024) and Marius Weidner (2025)
 {-# OPTIONS --experimental-lazy-instances #-}
-module Lib where
+module Agdasubst.Lib where
 
 open import Data.List using (List; []; _∷_; _++_)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; subst; subst₂; module ≡-Reasoning)
@@ -9,7 +9,7 @@ open ≡-Reasoning
 open import Relation.Nullary using (¬_)
 open import Data.Empty using (⊥-elim) 
 
-open import Common
+open import Agdasubst.Common
 
 module KitsWithSort (Sort : SORT) where
     open CommonWithSort Sort  
@@ -144,14 +144,14 @@ module KitsWithSort (Sort : SORT) where
       --   ⋯id-x : ?
 
       record Traversal : Set₁ where
+        constructor mkTraversal
         infixl   5  _⋯_
-
         field  
           _⋯_    : ∀ {{K : Kit k}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
-          ⋯-var  : ∀ {{K : Kit k}} → (x : S₁ ∋ s) (ϕ : S₁ –[ K ]→ S₂) →
-                     (` x) ⋯ ϕ ≡ `/id {{K}} (x & ϕ)
           ⋯-id   : ∀ {{K : Kit k}} → (t : S ⊢ s) →
                      t ⋯ id {{K}} ≡ t
+          ⋯-var  : ∀ {{K : Kit k}} → (x : S₁ ∋ s) (ϕ : S₁ –[ K ]→ S₂) →
+                     (` x) ⋯ ϕ ≡ `/id {{K}} (x & ϕ)
         instance
           Kᵣ : Kit Ren
           Kᵣ = record
@@ -418,6 +418,7 @@ module KitsWithSort (Sort : SORT) where
         ϕ₁ ;[ C ] ϕ₂ = let instance _ = C in ϕ₁ ; ϕ₂  
   
         record Compose : Set₁ where
+          constructor mkCompose 
           field
             ⋯-fusion′ : ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{C : ComposeKit K₁ K₂ K₃}}
                        (t : S₁ ⊢ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) → 

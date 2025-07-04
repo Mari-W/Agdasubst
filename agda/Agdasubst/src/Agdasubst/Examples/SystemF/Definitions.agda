@@ -1,11 +1,11 @@
 -- Author(s): Hannes Saffrich (2024) and Marius Weidner (2025)
-module Examples.SystemF.Definitions where
+module Agdasubst.Examples.SystemF.Definitions where
 
 -- Imports ---------------------------------------------------------------------
 
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; cong₂)
 
-open import Prelude public
+open import Agdasubst.Prelude public
 
 -- Syntax definition
 
@@ -14,7 +14,7 @@ data Sort : SORT where
   type : Sort Bind
   kind : Sort NoBind
 
-open WithSort Sort public
+open WithSort Sort public 
 open SortsMeta public
 
 data _⊢_ : SCOPED where
@@ -32,8 +32,7 @@ variable
   t t₁ t₂ t₃ t₄ t′ t₁′ t₂′ t₃′ t₄′ : S ⊢ type
   ★ₖ ★ₖ′                           : S ⊢ kind
 
-syn : Syntax 
-syn = record { _⊢_  = _⊢_ ; `_ = `_ ; `-injective = λ { refl → refl } }
+instance syn = mkSyntax _⊢_  `_  λ { refl → refl }
 open Syntax syn hiding (_⊢_; `_) public
 
 -- Traversal definition
@@ -59,8 +58,7 @@ _⋯_ : ∀ {{K : Kit k}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ 
 ⋯-id (e • t)         = cong₂ _•_ (⋯-id e) (⋯-id t)
 ⋯-id ★               = refl
 
-traversal : Traversal
-traversal = record { _⋯_ = _⋯_  ; ⋯-id = ⋯-id  ; ⋯-var = λ x ϕ → refl }
+instance traversal = mkTraversal _⋯_ ⋯-id λ x ϕ → refl
 open Traversal traversal hiding (_⋯_; ⋯-id; ⋯-var) public
 
 -- Compositionality definition
@@ -69,7 +67,7 @@ open Traversal traversal hiding (_⋯_; ⋯-id; ⋯-var) public
 ⋯-fusion′ :
   ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{C : ComposeKit K₁ K₂ K₃}} →
     (t : S₁ ⊢ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) →
-    (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ t ⋯ (ϕ₁ ;[ C ] ϕ₂)
+    (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ t ⋯ (ϕ₁ ; ϕ₂)
 ⋯-fusion′ (` x)        ϕ₁ ϕ₂ =  ⋯-fusion-`
 ⋯-fusion′ (λx e)       ϕ₁ ϕ₂ = cong λx_ (⋯-fusion′ e (ϕ₁ ↑ₖ⋆ _) (ϕ₂ ↑ₖ⋆ _)) 
 ⋯-fusion′ (e₁ · e₂)    ϕ₁ ϕ₂ = cong₂ _·_  (⋯-fusion′ e₁ ϕ₁ ϕ₂) (⋯-fusion′ e₂ ϕ₁ ϕ₂)
@@ -79,10 +77,8 @@ open Traversal traversal hiding (_⋯_; ⋯-id; ⋯-var) public
 ⋯-fusion′ (e • t)      ϕ₁ ϕ₂ = cong₂ _•_ (⋯-fusion′ e ϕ₁ ϕ₂) (⋯-fusion′ t ϕ₁ ϕ₂)
 ⋯-fusion′ ★            ϕ₁ ϕ₂ = refl
    
-compose : Compose 
-compose = record { ⋯-fusion′ = ⋯-fusion′ }
+instance compose = mkCompose ⋯-fusion′ 
 open Compose compose hiding (⋯-fusion′) public
-
 
 ⋯-fusion : -- rewritable variant of  ⋯-fusion′
   ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} →

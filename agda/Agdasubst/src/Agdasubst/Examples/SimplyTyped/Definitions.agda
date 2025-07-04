@@ -18,9 +18,8 @@ data _⊢_ : SCOPED where
   _·_       : S ⊢ expr → S ⊢ expr → S ⊢ expr      
   _⇒_       : S ⊢ type → S ⊢ type → S ⊢ type 
 
-syn : Syntax 
-syn = record { _⊢_  = _⊢_ ; `_ = `_ ; `-injective = λ { refl → refl } }
-open Syntax syn hiding (_⊢_; `_) 
+instance syn = mkSyntax _⊢_  `_  λ { refl → refl }
+open Syntax syn hiding (_⊢_; `_) public
 
 _⋯_ : ∀ {{K : Kit k}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
 (` x)           ⋯ ϕ = `/id (x & ϕ)
@@ -28,16 +27,15 @@ _⋯_ : ∀ {{K : Kit k}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ 
 (e₁ · e₂)       ⋯ ϕ = (e₁ ⋯ ϕ) · (e₂ ⋯ ϕ)
 (t₁ ⇒ t₂)       ⋯ ϕ = (t₁ ⋯ ϕ) ⇒ (t₂ ⋯ ϕ) 
 
-{-# REWRITE id↑≡id id↑⋆≡id #-} -- special cases of rewrite rules added later
+{-# REWRITE id↑≡id id↑⋆≡id #-}
 ⋯-id : ∀ {{K : Kit k}} (t : S ⊢ s) → t ⋯ id ≡ t
 ⋯-id (` x)     = ⋯-id-`
 ⋯-id (λx e)    = cong λx_ (⋯-id e)
 ⋯-id (e₁ · e₂) = cong₂ _·_ (⋯-id e₁) (⋯-id e₂)
 ⋯-id (t₁ ⇒ t₂) = cong₂ _⇒_ (⋯-id t₁) (⋯-id t₂)
 
-traversal : Traversal
-traversal = record { _⋯_ = _⋯_   ; ⋯-id = ⋯-id ; ⋯-var = λ _ _ → refl }
-open Traversal traversal hiding (_⋯_; ⋯-id; ⋯-var)
+instance traversal = mkTraversal _⋯_ ⋯-id λ x ϕ → refl
+open Traversal traversal hiding (_⋯_; ⋯-id; ⋯-var) public
 
 {-# REWRITE dist–↑–; dist–↑⋆–; #-} 
 ⋯-fusion′ :
@@ -49,10 +47,8 @@ open Traversal traversal hiding (_⋯_; ⋯-id; ⋯-var)
 ⋯-fusion′ (t₁ · t₂) ϕ₁ ϕ₂ = cong₂ _·_ (⋯-fusion′ t₁ ϕ₁ ϕ₂) (⋯-fusion′ t₂ ϕ₁ ϕ₂)
 ⋯-fusion′ (t₁ ⇒ t₂) ϕ₁ ϕ₂ = cong₂ _⇒_ (⋯-fusion′ t₁ ϕ₁ ϕ₂) (⋯-fusion′ t₂ ϕ₁ ϕ₂)   
 
-compose : Compose 
-compose = record { ⋯-fusion′ = ⋯-fusion′ }
-
-open Compose compose hiding (⋯-fusion′) 
+instance compose = mkCompose ⋯-fusion′
+open Compose compose hiding (⋯-fusion′) public
 
 ⋯-fusion :  
   ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}}

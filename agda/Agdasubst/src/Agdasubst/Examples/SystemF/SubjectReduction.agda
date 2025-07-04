@@ -1,11 +1,9 @@
-module Examples.SystemF.SubjectReduction where
+module Agdasubst.Examples.SystemF.SubjectReduction where
 
 --Typing ----------------------------------------------------------------------
+open import Agdasubst.Extensions.StandardTyping
 
-open import Examples.SystemF.Definitions
-
-instance _ = mkLib Sort syn traversal compose  
-open import Extensions.StandardTyping
+open import Agdasubst.Examples.SystemF.Definitions
 
 types : Types
 types = record

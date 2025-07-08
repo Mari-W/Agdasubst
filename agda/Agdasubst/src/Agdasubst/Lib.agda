@@ -36,22 +36,28 @@ module KitsWithSort (Sort : SORT) where
       record Kit (k : Tag) : Set₁ where
         _∋/⊢_ = unwrap k
         field
-          id/`            : ∀ {S} {s} → S ∋ s → S ∋/⊢ s
-          `/id            : S ∋/⊢ s → S ⊢ s
+          id/`′            : ∀ {S} {s} → S ∋ s → S ∋/⊢ s
+          `/id′            : S ∋/⊢ s → S ⊢ s
           wk′             : ∀ s′ → S ∋/⊢ s → (s′ ∷ S) ∋/⊢ s
 
-          `/`-is-`        : ∀ (x : S ∋ s) → `/id (id/` x) ≡ ` x
-          id/`-injective  : id/` x₁ ≡ id/` x₂ → x₁ ≡ x₂
+          `/`-is-`        : ∀ (x : S ∋ s) → `/id′ (id/`′ x) ≡ ` x
+          id/`-injective  : id/`′ x₁ ≡ id/`′ x₂ → x₁ ≡ x₂
           `/id-injective  : ∀ {x/t₁ x/t₂ : S ∋/⊢ s} →
-                              `/id x/t₁ ≡ `/id x/t₂ → x/t₁ ≡ x/t₂
+                              `/id′ x/t₁ ≡ `/id′ x/t₂ → x/t₁ ≡ x/t₂
           wk-id/`         : ∀ s′ (x : S ∋ s) →
-                              wk′ s′ (id/` x) ≡ id/` (suc x)  
+                              wk′ s′ (id/`′ x) ≡ id/`′ (suc x)  
           lock            : Lock
 
         opaque 
           import Data.Unit using (⊤; tt)
           all_kit_definitions : Data.Unit.⊤
           all_kit_definitions = Data.Unit.tt
+
+          id/` : ∀ {S} {s} → S ∋ s → S ∋/⊢ s
+          id/` = id/`′
+
+          `/id : S ∋/⊢ s → S ⊢ s
+          `/id = `/id′
 
           _→ₖ_ : Scope → Scope → Set
           S₁ →ₖ S₂ = ∀ s → S₁ ∋ s → S₂ ∋/⊢ s
@@ -155,8 +161,8 @@ module KitsWithSort (Sort : SORT) where
         instance
           Kᵣ : Kit Ren
           Kᵣ = record
-            { id/`            = λ x → x
-            ; `/id            = `_
+            { id/`′           = λ x → x
+            ; `/id′           = `_
             ; wk′             = λ s′ x → suc x
             ; `/`-is-`        = λ x → refl
             ; id/`-injective  = λ eq → eq 
@@ -187,8 +193,8 @@ module KitsWithSort (Sort : SORT) where
         instance
           Kₛ : Kit Sub
           Kₛ = record
-            { id/`            = `_
-            ; `/id            = λ t → t
+            { id/`′           = `_
+            ; `/id′           = λ t → t
             ; wk′             = λ s′ t → t ⋯ wkᵣ
             ; `/`-is-`        = λ x → refl
             ; id/`-injective  = `-injective
@@ -313,11 +319,11 @@ module KitsWithSort (Sort : SORT) where
           wk-`/id-Wᵣ : (s : BindSort) (x : S ∋ s′) → ((` x) ⋯ᵣ (wkᵣ {s = s})) ≡ (` suc x)
           wk-`/id-Wᵣ = λ _ x/t → ⋯-var x/t wkᵣ 
         
-        Wᵣ : WkKit Kᵣ
-        Wᵣ = record { wk-`/id = wk-`/id-Wᵣ }
+          Wᵣ : WkKit Kᵣ
+          Wᵣ = record { wk-`/id = wk-`/id-Wᵣ }
 
-        Wₛ : WkKit Kₛ
-        Wₛ = record { wk-`/id = λ s x/t → refl } 
+          Wₛ : WkKit Kₛ
+          Wₛ = record { wk-`/id = λ s x/t → refl } 
         
         instance
           wkKit : {{K : Kit k}} → WkKit K
@@ -453,13 +459,20 @@ module KitsWithSort (Sort : SORT) where
                            Kit.wk′ K₂ s′ ((K₂ Kit.& x) ϕ) ≡ (K₂ Kit.& suc x) (ϕ ↑ₖ s′)
             Cᵣ-&/⋯-wk-↑ₖ _ _ = refl
 
+            Cᵣ-&/⋯-⋯ :  {{K : Kit k}} → (x/t : S₁ ∋/⊢[ Kᵣ ] s) (ϕ : S₁ –[ K ]→ S₂) → `/id x/t ⋯ ϕ ≡ `/id ((K Kit.& x/t) ϕ)
+            Cᵣ-&/⋯-⋯ x ϕ = ⋯-var x ϕ
+            
+            Cₛ-&/⋯-⋯ : {{K : Kit k}} (x/t : S₁ ∋/⊢[ Kₛ ] s) (ϕ : S₁ –[ K ]→ S₂) → `/id x/t ⋯ ϕ ≡ `/id (x/t ⋯ ϕ)
+            Cₛ-&/⋯-⋯ _ _ = refl
+
+
           -- allows ComposeKit Kᵣ K  K
           ---and    ComposeKit Kᵣ Kᵣ Kᵣ
           -- and    ComposeKit Kᵣ Kₛ Kₛ
           Cᵣ : {{K : Kit k}} → ComposeKit Kᵣ K K
           Cᵣ = record
                   { _&/⋯′_    = _&_
-                  ; &/⋯-⋯     = λ x ϕ → ⋯-var x ϕ
+                  ; &/⋯-⋯     = Cᵣ-&/⋯-⋯
                   ; &/⋯-wk-↑ₖ = Cᵣ-&/⋯-wk-↑ₖ 
                   ; lock      = unlock }
 
@@ -472,7 +485,7 @@ module KitsWithSort (Sort : SORT) where
           Cₛ : {{K : Kit k}} {{C : ComposeKit K Kᵣ K}} → ComposeKit Kₛ K Kₛ
           Cₛ  = record
                   { _&/⋯′_    = _⋯_
-                  ; &/⋯-⋯     = λ t ϕ → refl
+                  ; &/⋯-⋯     = Cₛ-&/⋯-⋯ 
                   ; &/⋯-wk-↑ₖ = λ t ϕ → let instance _ = Cᵣ in ⋯-↑ₖ-wk t ϕ _ 
                   ; lock      = unlock } 
 
@@ -511,7 +524,7 @@ module KitsWithSort (Sort : SORT) where
 
           opaque
             unfolding all_kit_and_compose_definitions 
-            def-&/⋯Cₛ : {{K : Kit k}} {{C : ComposeKit K Kᵣ K}} 
+            def-&/⋯Cₛ : {{K : Kit k}} 
               (t : S₁ ⊢ s) (ϕ : S₁ –[ K ]→ S₂) → _&/⋯_ {{Cₛ}} t ϕ ≡ t ⋯ ϕ
             def-&/⋯Cₛ _ _ = refl
 
@@ -519,15 +532,23 @@ module KitsWithSort (Sort : SORT) where
               (x : S₁ ∋ s) (ϕ : S₁ –[ K ]→ S₂) → _&/⋯_ {{Cᵣ}} x ϕ ≡ x & ϕ 
             def-&/⋯Cᵣ _ _ = refl
             
-            &/⋯-law₁ :  ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₂}} 
-                (x/t : Kit._∋/⊢_ K₂ S₂ s) (ϕ : S₁ –[ K₂ ]→ S₂) → 
-                (id/` {{K₁}} zero) &/⋯ (x/t ∙ ϕ) ≡ x/t 
-            &/⋯-law₁ {Ren} {{K₁}} {{K₂}} {{C}} x/t ϕ 
-              rewrite unique K₁ | unique–Cᵣ C = refl
-            &/⋯-law₁ {Sub} {Ren} {{K₁}} {{K₂}} {{C}} x/t ϕ 
-              rewrite unique K₁ | unique K₂ = ⊥-elim (impossible–Cᵣ {{Kᵣ}} C)
-            &/⋯-law₁ {Sub} {Sub} {{K₁}} {{K₂}} {{C}} x/t ϕ 
-              rewrite unique K₁ | unique K₂ | unique–Cₛ {{Kₛ}} {{Cₛ}} C = ⋯-var {{Kₛ}} _ _
+            -- &/⋯-∙-def₁ :  ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₂}} 
+            --     (x/t : Kit._∋/⊢_ K₂ S₂ s) (ϕ : S₁ –[ K₂ ]→ S₂) → 
+            --     (id/` {{K₁}} zero) &/⋯ (x/t ∙ ϕ) ≡ x/t 
+            -- &/⋯-∙-def₁ {Ren} {{K₁}} {{K₂}} {{C}} x/t ϕ 
+            --   rewrite unique K₁ | unique–Cᵣ C = refl
+            -- &/⋯-∙-def₁ {Sub} {Ren} {{K₁}} {{K₂}} {{C}} x/t ϕ 
+            --   rewrite unique K₁ | unique K₂ = ⊥-elim (impossible–Cᵣ {{Kᵣ}} C)
+            -- &/⋯-∙-def₁ {Sub} {Sub} {{K₁}} {{K₂}} {{C}} x/t ϕ 
+            --   rewrite unique K₁ | unique K₂ | unique–Cₛ {{Kₛ}} {{Cₛ}} C = ⋯-var {{Kₛ}} _ _
+
+            postulate
+              &/⋯→& :  ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₂}} 
+                  (x : S₁ ∋ s) (ϕ : S₁ –[ K₂ ]→ S₂) → 
+                  (id/` {{K₁}} x) &/⋯ ϕ ≡ x & ϕ 
+              -- &/⋯→⋯ : ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₂}} 
+              --     (x/t : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
+              --     (`/id x/t) &/⋯ ϕ) ≡ `/id x/t ⋯ ϕ 
 
             -- TODO: fix this to be rewritable, currently not a valid rewrite pattern on the lhs
             -- note: i.e. probably it suffices to make suc a defined function symbol instead of pattern

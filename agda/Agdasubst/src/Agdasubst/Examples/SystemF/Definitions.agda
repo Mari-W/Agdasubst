@@ -89,8 +89,8 @@ open Compose compose hiding (⋯-fusion′) public
 -- Rewrite System 
 
 {-# REWRITE 
-  id-def ∙-def₁ ∙-def₂ wk-def wkm-def ;-def def-&/⋯Cₛ def-&/⋯Cᵣ
-  &/⋯-law₁ 
+  id-def ∙-def₁ ∙-def₂ wk-def wkm-def ;-def def-&/⋯Cₛ def-&/⋯Cᵣ 
+  &/⋯→& &/⋯→⋯
   interact η-id η-law left-id right-id norm-id distributivity
   ⋯-id ⋯-fusion
   associativityᵣᵣᵣ associativityᵣᵣₛ associativityᵣᵣₖ
@@ -102,4 +102,4 @@ open Compose compose hiding (⋯-fusion′) public
   associativityₖᵣᵣ associativityₖᵣₛ associativityₖᵣₖ
   associativityₖₛᵣ associativityₖₛₛ associativityₖₛₖ
   associativityₖₖᵣ                  associativityₖₖₖ 
-#-} --             associativityₖₖₛ 
+#-} --             associativityₖₖₛ  

@@ -193,12 +193,21 @@ module _ {{lib : Library}} where
             Γ₂ ∋*/⊢*[ TK ] ϕ ∶ Γ₁ →
             Γ₂ ⊢ e ⋯ ϕ ∶ t ⋯ ϕ
 
+        opaque
+          unfolding all_kit_and_compose_definitions
+          
+          TKᵣ-id/⊢` : {Γ : Ctx S} {t : S ∶⊢ s} → Γ ∋ x ∶ t → Γ ∋ id/` x ∶ t
+          TKᵣ-id/⊢` = λ ⊢x → ⊢x
+
+          TKᵣ-⊢`/id : {t : S ∶⊢ s} {Γ : Ctx S} {e : S ∋/⊢ s} → Γ ∋ e ∶ t → Γ ⊢ `/id e ∶ t
+          TKᵣ-⊢`/id = ⊢`
+
         instance
           TKᵣ : TypingKit Kᵣ
           TKᵣ = record
             { _∋/⊢_∶_     = _∋_∶_
-            ; id/⊢`       = λ ⊢x → ⊢x
-            ; ⊢`/id       = ⊢`
+            ; id/⊢`       = λ {Γ = Γ} → TKᵣ-id/⊢` {Γ = Γ}
+            ; ⊢`/id       = TKᵣ-⊢`/id 
             ; ∋wk/⊢wk     = λ { Γ t′ x t refl → refl } }
 
         opaque
@@ -207,12 +216,18 @@ module _ {{lib : Library}} where
             Γ ⊢ e ∶ t → (t′ ∷ₜ Γ) ⊢ Kit.wk′ Kₛ s e ∶ t ⋯ wkᵣ
           TKₛ-∋wk/⊢wk = λ Γ t′ e t ⊢e → ⊢e ⊢⋯ ∋wk/⊢wk Γ t′ 
 
+          TKₛ-id/⊢` : {Γ : Ctx S} {t : S ∶⊢ s} → Γ ∋ x ∶ t → Γ ⊢ id/` x ∶ t
+          TKₛ-id/⊢` = ⊢`
+
+          TKₛ-⊢`/id : {t : S ∶⊢ s} {Γ : Ctx S} {e : S ⊢ s} → Γ ⊢ e ∶ t → Γ ⊢ `/id e ∶ t
+          TKₛ-⊢`/id = λ ⊢x → ⊢x
+
         instance 
           TKₛ : TypingKit Kₛ
           TKₛ = record
             { _∋/⊢_∶_     = _⊢_∶_
-            ; id/⊢`       = ⊢`
-            ; ⊢`/id       = λ ⊢x → ⊢x
+            ; id/⊢`       = TKₛ-id/⊢`
+            ; ⊢`/id       = TKₛ-⊢`/id
             ; ∋wk/⊢wk     = TKₛ-∋wk/⊢wk } 
 
         open TypingKit TKᵣ public using () renaming

@@ -9,7 +9,7 @@ record Library : Set₁ where
   field Sort : SORT
 
   open CommonWithSort Sort
-  open SortsMeta 
+  open Meta 
   open KitsWithSort Sort
 
   field instance syn : Syntax  

@@ -1,41 +1,8 @@
 -- Author(s): Hannes Saffrich (2024) and Marius Weidner (2025)
-module Agdasubst.Examples.SystemF.Definitions where
+module Agdasubst.Examples.SystemF.Substitution where
 
--- Imports ---------------------------------------------------------------------
-
+open import Agdasubst.Examples.SystemF.Definitions.Syntax
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; cong₂)
-
-open import Agdasubst.Prelude public
-
--- Syntax definition
-
-data Sort : SORT where
-  expr : Sort Bind
-  type : Sort Bind
-  kind : Sort NoBind
-
-open WithSort Sort public 
-open SortsMeta public
-
-data _⊢_ : SCOPED where
-  `_        : S ∋ s → S ⊢ s     
-  λx_     : (expr ∷ S) ⊢ expr → S ⊢ expr
-  Λα_     : (type ∷ S) ⊢ expr → S ⊢ expr
-  ∀[α∶_]_ : S ⊢ kind → (type ∷ S) ⊢ type → S ⊢ type
-  _·_     : S ⊢ expr → S ⊢ expr → S ⊢ expr
-  _•_     : S ⊢ expr → S ⊢ type → S ⊢ expr
-  _⇒_     : S ⊢ type → S ⊢ type → S ⊢ type
-  ★       : S ⊢ kind
- 
-variable
-  e e₁ e₂ e₃ e₄ e′ e₁′ e₂′ e₃′ e₄′ : S ⊢ expr
-  t t₁ t₂ t₃ t₄ t′ t₁′ t₂′ t₃′ t₄′ : S ⊢ type
-  ★ₖ ★ₖ′                           : S ⊢ kind
-
-instance syn = mkSyntax _⊢_  `_  λ { refl → refl }
-open Syntax syn hiding (_⊢_; `_) public
-
--- Traversal definition
 
 _⋯_ : ∀ {{K : Kit k}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
 (` x)           ⋯ ϕ = `/id (x & ϕ)
@@ -61,8 +28,6 @@ _⋯_ : ∀ {{K : Kit k}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ 
 instance traversal = mkTraversal _⋯_ ⋯-id λ x ϕ → refl
 open Traversal traversal hiding (_⋯_; ⋯-id; ⋯-var) public
 
--- Compositionality definition
-
 {-# REWRITE dist–↑–; dist–↑⋆–; #-} 
 ⋯-fusion′ :
   ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{C : ComposeKit K₁ K₂ K₃}} →
@@ -86,11 +51,12 @@ open Compose compose hiding (⋯-fusion′) public
     (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ let instance _ = K₁ ⊔ K₂ in t ⋯ (ϕ₁ ; ϕ₂)
 ⋯-fusion {{K₁}} {{K₂}} = let instance _ = K₁ ⊔ K₂ in ⋯-fusion′ 
 
--- Rewrite System 
+-- Rewrite System  
+
 
 {-# REWRITE 
-  id-def ∙-def₁ ∙-def₂ wk-def wkm-def ;-def def-&/⋯Cₛ def-&/⋯Cᵣ 
-  &/⋯→& &/⋯→⋯
+  id-def ∙-def₁ ∙-def₂ wk-def wkm-def ;-def 
+  `/`-cancel def-&/⋯Cₛ def-&/⋯Cᵣ &/⋯→& &/⋯→&′ &/⋯→⋯ &/⋯→⋯′
   interact η-id η-law left-id right-id norm-id distributivity
   ⋯-id ⋯-fusion
   associativityᵣᵣᵣ associativityᵣᵣₛ associativityᵣᵣₖ

@@ -13,7 +13,7 @@ open import Agdasubst.Common
 
 module KitsWithSort (Sort : SORT) where
     open CommonWithSort Sort  
-    open SortsMeta 
+    open Meta 
   
     record Syntax : Set₁ where
       constructor mkSyntax
@@ -36,8 +36,8 @@ module KitsWithSort (Sort : SORT) where
       record Kit (k : Tag) : Set₁ where
         _∋/⊢_ = unwrap k
         field
-          id/`′            : ∀ {S} {s} → S ∋ s → S ∋/⊢ s
-          `/id′            : S ∋/⊢ s → S ⊢ s
+          id/`′           : ∀ {S} {s} → S ∋ s → S ∋/⊢ s
+          `/id′           : S ∋/⊢ s → S ⊢ s
           wk′             : ∀ s′ → S ∋/⊢ s → (s′ ∷ S) ∋/⊢ s
 
           `/`-is-`        : ∀ (x : S ∋ s) → `/id′ (id/`′ x) ≡ ` x
@@ -230,37 +230,43 @@ module KitsWithSort (Sort : SORT) where
         Sub ⊔′ Ren = Sub
         Sub ⊔′ Sub = Sub
 
-        ⊔′-law₀ : ∀ k → k ⊔′ k ≡ k 
-        ⊔′-law₀ Ren = refl
-        ⊔′-law₀ Sub = refl 
+        ⊔′-idem : ∀ k → k ⊔′ k ≡ k 
+        ⊔′-idem Ren = refl
+        ⊔′-idem Sub = refl 
 
-        ⊔′-law₁ : ∀ k → k ⊔′ Ren ≡ k 
-        ⊔′-law₁ Ren = refl 
-        ⊔′-law₁ Sub = refl 
+        ⊔′-bot-right : ∀ k → k ⊔′ Ren ≡ k 
+        ⊔′-bot-right Ren = refl 
+        ⊔′-bot-right Sub = refl 
 
-        ⊔′-law₂ : ∀ k → Ren ⊔′ k ≡ k
-        ⊔′-law₂ Ren = refl 
-        ⊔′-law₂ Sub = refl 
+        ⊔′-bot-left : ∀ k → Ren ⊔′ k ≡ k
+        ⊔′-bot-left Ren = refl 
+        ⊔′-bot-left Sub = refl 
 
-        ⊔′-law₃ : ∀ k → k ⊔′ Sub ≡ Sub
-        ⊔′-law₃ Ren = refl 
-        ⊔′-law₃ Sub = refl  
+        ⊔′-top-right : ∀ k → k ⊔′ Sub ≡ Sub
+        ⊔′-top-right Ren = refl 
+        ⊔′-top-right Sub = refl  
 
-        ⊔′-law₄ : ∀ k → Sub ⊔′ k ≡ Sub
-        ⊔′-law₄ Ren = refl 
-        ⊔′-law₄ Sub = refl  
+        ⊔′-top-left : ∀ k → Sub ⊔′ k ≡ Sub
+        ⊔′-top-left Ren = refl 
+        ⊔′-top-left Sub = refl  
 
-        ⊔′-law₅ : ∀ k₁ k₂ k₃ →  (k₁ ⊔′ k₂) ⊔′ k₃ ≡ k₁ ⊔′ (k₂ ⊔′ k₃)
-        ⊔′-law₅ Ren Ren Ren = refl
-        ⊔′-law₅ Ren Ren Sub = refl
-        ⊔′-law₅ Ren Sub Ren = refl
-        ⊔′-law₅ Ren Sub Sub = refl
-        ⊔′-law₅ Sub Ren Ren = refl
-        ⊔′-law₅ Sub Ren Sub = refl
-        ⊔′-law₅ Sub Sub Ren = refl
-        ⊔′-law₅ Sub Sub Sub = refl
+        ⊔′-assoc : ∀ k₁ k₂ k₃ →  (k₁ ⊔′ k₂) ⊔′ k₃ ≡ k₁ ⊔′ (k₂ ⊔′ k₃)
+        ⊔′-assoc Ren Ren Ren = refl
+        ⊔′-assoc Ren Ren Sub = refl
+        ⊔′-assoc Ren Sub Ren = refl
+        ⊔′-assoc Ren Sub Sub = refl
+        ⊔′-assoc Sub Ren Ren = refl
+        ⊔′-assoc Sub Ren Sub = refl
+        ⊔′-assoc Sub Sub Ren = refl
+        ⊔′-assoc Sub Sub Sub = refl
+
+        ⊔′-comm : ∀ k₁ k₂ → (k₁ ⊔′ k₂) ≡ (k₂ ⊔′ k₁)
+        ⊔′-comm Ren Ren = refl
+        ⊔′-comm Ren Sub = refl
+        ⊔′-comm Sub Ren = refl
+        ⊔′-comm Sub Sub = refl
         
-        {-# REWRITE ⊔′-law₀ ⊔′-law₁ ⊔′-law₂ ⊔′-law₃ ⊔′-law₄ ⊔′-law₅ #-}
+        {-# REWRITE ⊔′-idem ⊔′-bot-right ⊔′-bot-left ⊔′-top-right ⊔′-top-left ⊔′-assoc #-}
 
         _⊔_ : (K₁ : Kit k₁) (K₂ : Kit k₂) → Kit (k₁ ⊔′ k₂)
         _⊔_ {Ren} {Ren} K₁ K₂ = Kᵣ
@@ -268,38 +274,45 @@ module KitsWithSort (Sort : SORT) where
         _⊔_ {Sub} {Ren} K₁ K₂ = Kₛ
         _⊔_ {Sub} {Sub} K₁ K₂ = Kₛ
 
-        ⊔-law₀ : {{K : Kit k}} → (K ⊔ K) ≡ K
-        ⊔-law₀ {Ren} {{K}} = unique–Kᵣ K
-        ⊔-law₀ {Sub} {{K}} = unique–Kₛ K
+        ⊔-idem : {{K : Kit k}} → (K ⊔ K) ≡ K
+        ⊔-idem {Ren} {{K}} = unique–Kᵣ K
+        ⊔-idem {Sub} {{K}} = unique–Kₛ K
            
-        ⊔-law₁ : {{K : Kit k}} → K ⊔ Kᵣ ≡ K 
-        ⊔-law₁ {Ren} {{K}} = unique–Kᵣ K 
-        ⊔-law₁ {Sub} {{K}} = unique–Kₛ K 
+        ⊔-bot-right : {{K : Kit k}} → K ⊔ Kᵣ ≡ K 
+        ⊔-bot-right {Ren} {{K}} = unique–Kᵣ K 
+        ⊔-bot-right {Sub} {{K}} = unique–Kₛ K 
 
-        ⊔-law₂ : {{K : Kit k}} → Kᵣ ⊔ K ≡ K  
-        ⊔-law₂ {Ren} {{K}} = unique–Kᵣ K
-        ⊔-law₂ {Sub} {{K}} = unique–Kₛ K
+        ⊔-bot-left : {{K : Kit k}} → Kᵣ ⊔ K ≡ K  
+        ⊔-bot-left {Ren} {{K}} = unique–Kᵣ K
+        ⊔-bot-left {Sub} {{K}} = unique–Kₛ K
 
-        ⊔-law₃ : {{K : Kit k}} → K ⊔ Kₛ ≡ Kₛ
-        ⊔-law₃ {Ren} = refl
-        ⊔-law₃ {Sub} = refl
+        ⊔-top-right : {{K : Kit k}} → K ⊔ Kₛ ≡ Kₛ
+        ⊔-top-right {Ren} = refl
+        ⊔-top-right {Sub} = refl
 
-        ⊔-law₄ : {{K : Kit k}} → Kₛ ⊔ K ≡ Kₛ
-        ⊔-law₄ {Ren} = refl
-        ⊔-law₄ {Sub} = refl
+        ⊔-top-left : {{K : Kit k}} → Kₛ ⊔ K ≡ Kₛ
+        ⊔-top-left {Ren} = refl
+        ⊔-top-left {Sub} = refl
 
-        ⊔-law₅ : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} → 
+        ⊔-assoc : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} → 
           (K₁ ⊔ K₂) ⊔ K₃ ≡ K₁ ⊔ (K₂ ⊔ K₃)
-        ⊔-law₅ {Ren} {Ren} {Ren} = refl
-        ⊔-law₅ {Ren} {Ren} {Sub} = refl 
-        ⊔-law₅ {Ren} {Sub} {Ren} = refl
-        ⊔-law₅ {Ren} {Sub} {Sub} = refl
-        ⊔-law₅ {Sub} {Ren} {Ren} = refl
-        ⊔-law₅ {Sub} {Ren} {Sub} = refl
-        ⊔-law₅ {Sub} {Sub} {Ren} = refl 
-        ⊔-law₅ {Sub} {Sub} {Sub} = refl
+        ⊔-assoc {Ren} {Ren} {Ren} = refl
+        ⊔-assoc {Ren} {Ren} {Sub} = refl 
+        ⊔-assoc {Ren} {Sub} {Ren} = refl
+        ⊔-assoc {Ren} {Sub} {Sub} = refl
+        ⊔-assoc {Sub} {Ren} {Ren} = refl
+        ⊔-assoc {Sub} {Ren} {Sub} = refl
+        ⊔-assoc {Sub} {Sub} {Ren} = refl 
+        ⊔-assoc {Sub} {Sub} {Sub} = refl
  
-        {-# REWRITE ⊔-law₀ ⊔-law₁ ⊔-law₂ ⊔-law₃ ⊔-law₄ ⊔-law₅ #-}
+        ⊔-comm : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} → 
+          (K₁ ⊔ K₂) ≡ subst Kit (⊔′-comm k₂ k₁) (K₂ ⊔ K₁)
+        ⊔-comm {Ren} {Ren} = refl
+        ⊔-comm {Ren} {Sub} = refl
+        ⊔-comm {Sub} {Ren} = refl
+        ⊔-comm {Sub} {Sub} = refl
+
+        {-# REWRITE ⊔-idem ⊔-bot-right ⊔-bot-left ⊔-top-right ⊔-top-left ⊔-assoc #-}
 
         module KitsMeta where
           variable 
@@ -416,7 +429,7 @@ module KitsWithSort (Sort : SORT) where
           ⋯-fusion-` : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{C : ComposeKit K₁ K₂ K₃}} 
                 {x : S₁ ∋ s} {ϕ₁ : S₁ –[ K₁ ]→ S₂} {ϕ₂ : S₂ –[ K₂ ]→ S₃} →
                  (`/id {{K₁}} (x & ϕ₁)) ⋯ ϕ₂ ≡ `/id {{K₃}} (x & (ϕ₁ ; ϕ₂))
-          ⋯-fusion-` {x = x} {ϕ₁ = ϕ₁} {ϕ₂ = ϕ₂} = &/⋯-⋯ (ϕ₁ _ x) ϕ₂ -- &/⋯-⋯ (ϕ₁ _ x) ϕ₂
+          ⋯-fusion-` {x = x} {ϕ₁ = ϕ₁} {ϕ₂ = ϕ₂} = &/⋯-⋯ (ϕ₁ _ x) ϕ₂
         
         _;[_]_  : ∀ {K₁ : Kit k₁} {K₂ : Kit k₂} {K₃ : Kit k₃} →
                   S₁ –[ K₁ ]→ S₂ → ComposeKit K₁ K₂ K₃ →
@@ -514,13 +527,13 @@ module KitsWithSort (Sort : SORT) where
             impossible–Cᵣ′ : {{K : Kit k}} → ¬ ComposeKit K Kₛ Kᵣ
             impossible–Cₛ  : ¬ ComposeKit Kᵣ Kᵣ Kₛ  
 
-          C–⊔-law₀ : {{K : Kit k}} → C–⊔ {{Kᵣ}} {{K}} ≡ Cᵣ
-          C–⊔-law₀ = unique–Cᵣ _
+          C–⊔-Cᵣ : {{K : Kit k}} → C–⊔ {{Kᵣ}} {{K}} ≡ Cᵣ
+          C–⊔-Cᵣ = unique–Cᵣ _
 
-          C–⊔-law₁ : {{K : Kit k}} → C–⊔ {{Kₛ}} {{K}} ≡ Cₛ {{C = C–⊔ {{K}} {{Kᵣ}}}}
-          C–⊔-law₁ = unique–Cₛ _
+          C–⊔-Cₛ : {{K : Kit k}} → C–⊔ {{Kₛ}} {{K}} ≡ Cₛ {{C = C–⊔ {{K}} {{Kᵣ}}}}
+          C–⊔-Cₛ = unique–Cₛ _
           
-          {-# REWRITE C–⊔-law₀ C–⊔-law₁ #-}   
+          {-# REWRITE C–⊔-Cᵣ C–⊔-Cₛ #-}   
 
           opaque
             unfolding all_kit_and_compose_definitions 
@@ -531,30 +544,26 @@ module KitsWithSort (Sort : SORT) where
             def-&/⋯Cᵣ : {{K : Kit k}} 
               (x : S₁ ∋ s) (ϕ : S₁ –[ K ]→ S₂) → _&/⋯_ {{Cᵣ}} x ϕ ≡ x & ϕ 
             def-&/⋯Cᵣ _ _ = refl
-            
-            -- &/⋯-∙-def₁ :  ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₂}} 
-            --     (x/t : Kit._∋/⊢_ K₂ S₂ s) (ϕ : S₁ –[ K₂ ]→ S₂) → 
-            --     (id/` {{K₁}} zero) &/⋯ (x/t ∙ ϕ) ≡ x/t 
-            -- &/⋯-∙-def₁ {Ren} {{K₁}} {{K₂}} {{C}} x/t ϕ 
-            --   rewrite unique K₁ | unique–Cᵣ C = refl
-            -- &/⋯-∙-def₁ {Sub} {Ren} {{K₁}} {{K₂}} {{C}} x/t ϕ 
-            --   rewrite unique K₁ | unique K₂ = ⊥-elim (impossible–Cᵣ {{Kᵣ}} C)
-            -- &/⋯-∙-def₁ {Sub} {Sub} {{K₁}} {{K₂}} {{C}} x/t ϕ 
-            --   rewrite unique K₁ | unique K₂ | unique–Cₛ {{Kₛ}} {{Cₛ}} C = ⋯-var {{Kₛ}} _ _
 
             postulate
-              &/⋯→& :  ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₂}} 
-                  (x : S₁ ∋ s) (ϕ : S₁ –[ K₂ ]→ S₂) → 
-                  (id/` {{K₁}} x) &/⋯ ϕ ≡ x & ϕ 
-              -- &/⋯→⋯ : ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₂}} 
-              --     (x/t : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
-              --     (`/id x/t) &/⋯ ϕ) ≡ `/id x/t ⋯ ϕ 
+              &/⋯→& :  {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{C : ComposeKit K₁ K₂ K₃}} 
+                       (x : S₁ ∋ s) (ϕ : S₁ –[ K₂ ]→ S₂) → 
+                       `/id ((id/` {{K₁}} x) &/⋯ ϕ) ≡ `/id (x & ϕ) 
 
-            -- TODO: fix this to be rewritable, currently not a valid rewrite pattern on the lhs
-            -- note: i.e. probably it suffices to make suc a defined function symbol instead of pattern
-            -- &/⋯-law₂ :  ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₂}} 
-            --     (x/t : Kit._∋/⊢_ K₂ S₂ s) (ϕ : S₁ –[ K₂ ]→ S₂) (x : S₁ ∋ s) → 
-            --     (id/` {{K₁}} (suc x)) &/⋯ (x/t ∙ ϕ) ≡ (id/` {{K₁}} x) &/⋯ ϕ 
+              &/⋯→&′ : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₂}} 
+                       (x : S₁ ∋ s) (ϕ : S₁ –[ K₂ ]→ S₂) → 
+                       id/` {{K₁}} x &/⋯ ϕ ≡ x & ϕ
+              
+              &/⋯→⋯ : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{C : ComposeKit K₁ K₂ K₃}} 
+                      (x/t : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
+                      `/id (x/t &/⋯ ϕ) ≡ `/id (`/id x/t ⋯ ϕ) 
+
+              &/⋯→⋯′ : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₂}} 
+                       (x/t : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
+                       `/id (x/t &/⋯ ϕ) ≡ `/id x/t ⋯ ϕ 
+
+            `/`-cancel :  {{K : Kit k}} (x : S ∋ s) → `/id {{K}} (id/` x) ≡ ` x
+            `/`-cancel {{K}} = `/`-is-` {{K}} 
 
           opaque
             unfolding all_kit_and_compose_definitions

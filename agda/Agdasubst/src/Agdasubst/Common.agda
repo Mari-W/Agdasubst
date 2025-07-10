@@ -23,7 +23,7 @@ module CommonWithSort (Sort : SORT) where
   SCOPED = ∀{m} → Scope → Sort m → Set
   SCOPED_BINDABLE = Scope → BindSort → Set
 
-  module SortsMeta where
+  module Meta where
     variable
       m m₁ m₂ m₃ m₄ m′ m₁′ m₂′ m₃′ m₄′ : Mode
       k k₁ k₂ k₃ k₄ k′ k₁′ k₂′ k₃′ k₄′ : Tag

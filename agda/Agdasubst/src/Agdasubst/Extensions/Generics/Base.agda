@@ -11,7 +11,7 @@ open import Agdasubst.Lib
 module GenericsWithSort (Sort : SORT) where
   
   open CommonWithSort Sort 
-  open SortsMeta
+  open Meta
   
   data Desc : Set₁ where
     `σ : (A : Set) → (A → Desc) → Desc
@@ -111,17 +111,17 @@ module GenericsWithSort (Sort : SORT) where
     ⋯-fusion {{K₁ }} {{K₂ }} = let instance _ = K₁ ⊔ K₂; _ = C–⊔ in ⋯-fusion′ 
 
     {-# REWRITE 
-      id-def ∙-def₁ ∙-def₂ wk-def wkm-def ;-def def-&/⋯Cₛ def-&/⋯Cᵣ
-      &/⋯-law₁ 
+      id-def ∙-def₁ ∙-def₂ wk-def wkm-def ;-def 
+      `/`-cancel def-&/⋯Cₛ def-&/⋯Cᵣ &/⋯→& &/⋯→&′ &/⋯→⋯ &/⋯→⋯′
       interact η-id η-law left-id right-id norm-id distributivity
       ⋯-id ⋯-fusion
       associativityᵣᵣᵣ associativityᵣᵣₛ associativityᵣᵣₖ
       associativityᵣₛᵣ associativityᵣₛₛ associativityᵣₛₖ
       associativityᵣₖᵣ associativityᵣₖₛ associativityᵣₖₖ
       associativityₛᵣᵣ associativityₛᵣₛ associativityₛᵣₖ
-      associativityₛₛᵣ associativityₛₛₛ associativityₛₛₖ
+      associativityₛₛᵣ associativityₛₛₛ associativityₛₛₖ 
       associativityₛₖᵣ associativityₛₖₛ associativityₛₖₖ
       associativityₖᵣᵣ associativityₖᵣₛ associativityₖᵣₖ
       associativityₖₛᵣ associativityₖₛₛ associativityₖₛₖ
-      associativityₖₖᵣ                  associativityₖₖₖ  
-    #-} --             associativityₖₖₛ
+      associativityₖₖᵣ                  associativityₖₖₖ 
+    #-} --             associativityₖₖₛ  

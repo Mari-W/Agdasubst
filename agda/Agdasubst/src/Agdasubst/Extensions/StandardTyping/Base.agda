@@ -8,7 +8,7 @@ open import Agdasubst.Extensions.Common
 module _ {{lib : Library}} where 
   open Library lib
   open CommonWithSort Sort public
-  open SortsMeta
+  open Meta
   open KitsWithSort Sort public
   
   open import Data.Nat using (ℕ; zero; suc)
@@ -16,7 +16,7 @@ module _ {{lib : Library}} where
   open import Data.Product using (∃-syntax; proj₂)
   open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; subst; module ≡-Reasoning)
   open ≡-Reasoning
-
+ 
   opaque
     unfolding all_kit_and_compose_definitions 
 
@@ -70,6 +70,7 @@ module _ {{lib : Library}} where
       t ⋯ (ϕ ↑ₖ _) ⋯ ⦅ (x/t &/⋯ ϕ) ⦆   ∎
 
   record Types : Set₁ where
+    constructor mkTypes
     field
       ↑ᵗ : ∀ {st} → Sort st → ∃[ st′ ] Sort st′
 
@@ -108,6 +109,7 @@ module _ {{lib : Library}} where
     Γ ∋ x ∶ t = wk-telescope Γ x ≡ t
 
     record Typing : Set₁ where 
+      constructor mkTyping
       infix   4  _⊢_∶_
       field
         _⊢_∶_ : ∀ {s : Sort m} → Ctx S → S ⊢ s → S ∶⊢ s → Set
@@ -176,11 +178,12 @@ module _ {{lib : Library}} where
 
       infixl  5  _∋*/⊢*[_]_∶_
       _∋*/⊢*[_]_∶_ :
-        ∀ {K : Kit k} {S₁ S₂}
+        ∀ {K : Kit k} {S₁ S₂} 
         → Ctx S₂ → TypingKit K → S₁ –[ K ]→ S₂ → Ctx S₁ → Set
       Γ₂ ∋*/⊢*[ TK ] ϕ ∶ Γ₁ = Γ₂ ∋*/⊢* ϕ ∶ Γ₁ where instance _ = TK
 
       record TypingTraversal : Set₁ where
+        constructor mkTTraversal
         field
           _⊢⋯_ :
             ∀  {{K : Kit k }} {{TK : TypingKit K}}

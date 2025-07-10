@@ -1,6 +1,4 @@
 ```
-SSC...
-
 Sort : Set 
   ... 
 
@@ -15,17 +13,15 @@ Sᵢ be Scopes,
 Xᵢ be S ∋ s
 tᵢ be S ⊢ s
 
-_⊔_ : Kit → Kit → Kit 
-
-
 language:
   `_        : S ∋ s → S ⊢ s
   ...
 
 symbols: 
-  -- _⊔_ : Kit → Kit → Kit 
-  id[ K ]`_ : S ∋ s → S ∋/⊢[ K ] s
-  `[ K ]id_ : S ∋/⊢[ K ] s → S ⊢ s
+  _⊔_   : Kit → Kit → Kit 
+  id`_  : S ∋ s → S ∋/⊢[ K ] s
+  `id_  : S ∋/⊢[ K ] s → S ⊢ s
+
   _&_   : S₁ ∋ s → S₁ –[ K ]→ S₂ → S₂ ∋/⊢[ K ] s
   _⋯_   : S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
   _∙_   : S₂ ∋/⊢[ K ] s → S₁ –[ K ]→ S₂ → (s ∷ S₁) –[ K ]→ S₂
@@ -40,6 +36,7 @@ shorthands:
   ϕ ↑ s    = id[ K ]` zero ∙ (ϕ ; wk[K = R])
 
 rules:
+  -- bounded join-semilattice? (without commutativity)
   K ⊔ K               ≡ K               -- lub-idem
   K ⊔ R               ≡ K               -- lub-ren-bot-right
   R ⊔ K               ≡ K               -- lub-ren-bot-left
@@ -50,13 +47,13 @@ rules:
   S ∋/⊢[ R ] s        ≡ _∋_             -- scoped-ren
   S ∋/⊢[ S ] s        ≡ _⊢_             -- scoped-sub
 
-  id[ R ]` x          ≡ id            -- id`-def-ren
-  id[ S ]` x          ≡ `_            -- id`-def-sub
+  id`[K = R] x        ≡ id            -- id`-def-ren
+  id`[K = S] x        ≡ `_            -- id`-def-sub
 
-  `[ R ]id x          ≡ `_            -- `id-def-ren
-  `[ S ]id x          ≡ id            -- `id-def-sub
+  `id[K = R] x        ≡ `_            -- `id-def-ren
+  `id[K = S] x        ≡ id            -- `id-def-sub
 
-  x & id[K = K]       ≡ id[ K ]` x    -- id-def
+  x & id[K = K]       ≡ id`[K = K] x    -- id-def
 
   zero & (x/t ∙ ϕ)    ≡ x/t           -- ext-def-zero
   suc x′ & (x/t ∙ ϕ)  ≡ x′ & ϕ        -- ext-def-suc
@@ -71,8 +68,8 @@ rules:
   x &/⋯ ϕ             ≡ x & ϕ           -- look-comp-var
   
   id/` x &/⋯ ϕ        ≡ x & ϕ           -- look-comp-id/`
-
-
+  id/`
+  `/id (id/` x)       ≡ ` x             -- cancel-`/`
 
 
   ... traversal laws, language dependent (insert example for system f)

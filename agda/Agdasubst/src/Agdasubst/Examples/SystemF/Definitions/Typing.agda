@@ -1,4 +1,5 @@
 -- Author(s): Hannes Saffrich (2024) and Marius Weidner (2025)
+{-# OPTIONS --rewriting --experimental-lazy-instances #-}
 module Agdasubst.Examples.SystemF.Definitions.Typing where
 
 open import Agdasubst.Extensions.StandardTyping public 
@@ -20,21 +21,21 @@ data _⊢_∶_ : {s : Sort m} → Ctx S → S ⊢ s → S ∶⊢ s → Set where
     Γ ⊢ (` x) ∶ t
   ⊢λ : 
     (t ∷ₜ Γ) ⊢ e ∶ (weaken t′) → 
-    ------------------------
+    ----------------------------
     Γ ⊢ (λx e) ∶ (t ⇒ t′)
   ⊢Λ :
-    (★ₖ ∷ₜ Γ) ⊢ e ∶ t →  
-    -------------------------
-    Γ ⊢ (Λα e) ∶ (∀[α∶ ★ₖ ] t)
+    (★ᴷ ∷ₜ Γ) ⊢ e ∶ t →  
+    --------------------------
+    Γ ⊢ (Λα e) ∶ (∀[α∶ ★ᴷ ] t)
   ⊢· : 
     Γ ⊢ e₁ ∶ (t₁ ⇒ t₂) →
     Γ ⊢ e₂ ∶ t₁ →
     --------------------
     Γ ⊢ (e₁ · e₂) ∶ t₂
   ⊢• : 
-    Γ ⊢ e ∶ (∀[α∶ ★ₖ ] t′) →
-    Γ ⊢ t ∶ ★ₖ →
-    (★ₖ ∷ₜ Γ) ⊢ t′ ∶ ★ₖ′ →
+    Γ ⊢ e ∶ (∀[α∶ ★ᴷ ] t′) →
+    Γ ⊢ t ∶ ★ᴷ →
+    (★ᴷ ∷ₜ Γ) ⊢ t′ ∶ ★ᴷ′ →
     ------------------------
     Γ ⊢ (e • t) ∶ (t′ [ t ])
   ⊢★ : 

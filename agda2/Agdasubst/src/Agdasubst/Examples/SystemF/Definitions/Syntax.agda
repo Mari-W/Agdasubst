@@ -1,5 +1,5 @@
 -- Author(s): Hannes Saffrich (2024) and Marius Weidner (2025)
-{-# OPTIONS --rewriting #-}
+{-# OPTIONS --rewriting --experimental-lazy-instances #-}
 module Agdasubst.Examples.SystemF.Definitions.Syntax where
 
 open import Agdasubst.Prelude public
@@ -26,7 +26,7 @@ data _⊢_ : Scoped where
 variable
   e e₁ e₂ e₃ e₄ e′ e₁′ e₂′ e₃′ e₄′ : S ⊢ expr
   t t₁ t₂ t₃ t₄ t′ t₁′ t₂′ t₃′ t₄′ : S ⊢ type
-  ★ₖ ★ₖ′                           : S ⊢ kind
+  ★ᴷ ★ᴷ′                           : S ⊢ kind
 
 instance syn = mkSyntax _⊢_  `_  λ { refl → refl }
 open Syntax syn hiding (_⊢_; `_) public

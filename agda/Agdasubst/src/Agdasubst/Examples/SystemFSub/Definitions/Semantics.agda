@@ -1,4 +1,5 @@
 -- Author(s): Hannes Saffrich (2024) and Marius Weidner (2025)
+{-# OPTIONS --rewriting --experimental-lazy-instances #-}
 module Agdasubst.Examples.SystemF.Definitions.Semantics where
 
 open import Agdasubst.Examples.SystemF.Definitions.Syntax

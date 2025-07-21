@@ -7,7 +7,7 @@ open import Agdasubst.Lib
 
 record Library : Set₁ where
   constructor mkLib 
-  field Sort : ModeIndexed
+  field Sort : Set
 
   open CommonWithSort Sort
   open Meta 
@@ -25,12 +25,12 @@ record Library : Set₁ where
 
 open Library {{ ... }}  
 
-module ExtensionsCommonWithSort (Sort : ModeIndexed) where  
+module ExtensionsCommonWithSort (Sort : Set) where  
   open CommonWithSort Sort
   open KitsWithSort Sort
   instance
-    lib : {{syn : Syntax}} 
+    library : {{syn : Syntax}} 
           {{traversal : Syntax.Traversal syn}} 
           {{compose : Syntax.Traversal.Compose traversal}} → 
           Library
-    lib {{syn}} {{traversal}} {{compose}} = mkLib Sort syn traversal compose  
+    library {{syn}} {{traversal}} {{compose}} = mkLib Sort syn traversal compose  

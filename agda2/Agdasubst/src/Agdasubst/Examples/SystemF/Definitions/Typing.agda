@@ -1,46 +1,49 @@
 -- Author(s): Hannes Saffrich (2024) and Marius Weidner (2025)
-{-# OPTIONS --rewriting #-}
+{-# OPTIONS --rewriting --experimental-lazy-instances #-}
 module Agdasubst.Examples.SystemF.Definitions.Typing where
 
 open import Agdasubst.Extensions.StandardTyping public 
 
+open import Data.Nat using (ℕ; zero; suc)
+open import Data.List using (drop)
+open import Relation.Binary.PropositionalEquality using (_≡_)
+
 open import Agdasubst.Examples.SystemF.Definitions.Syntax
 open import Agdasubst.Examples.SystemF.Substitution
-open import Data.Product using (_,_)
 
-instance types = mkTypes λ { expr → _ , type ; type → _ , kind ; kind → _ , kind } 
+
+instance types = mkTypes λ { expr → type ; type → kind ; kind →  kind }
 open Types types public
+open TypesMeta public
 
-variable 
-  Γ Γ₁ Γ₂ Γ₃ Γ′ Γ₁′ Γ₂′ Γ₃′ : Ctx S
-
-data _⊢_∶_ : {s : Sort m} → Ctx S → S ⊢ s → S ∶⊢ s → Set where
-  ⊢` : ∀ {s : Sort Bind} {x : S ∋ s} {t} → 
-    Γ ∋ x ∶ t →
+data _⊢_∶_ : Ctx S → S ⊢ s → S ∶⊢ s → Set where
+  ⊢` : ∀ {Γ : Ctx S} {x : S ∋ s} {t : S ∶⊢ s} →
+    Γ ∋ x ∶ t → 
     -------------
     Γ ⊢ (` x) ∶ t
   ⊢λ : 
-    (t ∷ₜ Γ) ⊢ e ∶ (weaken t′) → 
-    ----------------------------
-    Γ ⊢ (λx e) ∶ (t ⇒ t′)
-  ⊢Λ :
-    (★ₖ ∷ₜ Γ) ⊢ e ∶ t → 
+    (t ∷ₜ Γ) ⊢ e ∶ weaken t′ → 
     --------------------------
-    Γ ⊢ (Λα e) ∶ (∀[α∶ ★ₖ ] t)
+    Γ ⊢ (λx e) ∶ (t ⇒ t′) 
+  ⊢Λ :
+    (★ᴷ ∷ₜ Γ) ⊢ e ∶ t → 
+    --------------------------
+    Γ ⊢ (Λα e) ∶ (∀[α∶ ★ᴷ ] t)
   ⊢· : 
     Γ ⊢ e₁ ∶ (t₁ ⇒ t₂) →
     Γ ⊢ e₂ ∶ t₁ →
     --------------------
     Γ ⊢ (e₁ · e₂) ∶ t₂
   ⊢• : 
-    Γ ⊢ e ∶ (∀[α∶ ★ₖ ] t′) →
-    Γ ⊢ t ∶ ★ₖ →
-    (★ₖ ∷ₜ Γ) ⊢ t′ ∶ ★ₖ′ →
+    Γ ⊢ e ∶ (∀[α∶ ★ᴷ ] t′) →
+    Γ ⊢ t ∶ ★ᴷ →
+    (★ᴷ ∷ₜ Γ) ⊢ t′ ∶ ★ᴷ′ →
     ------------------------
     Γ ⊢ (e • t) ∶ (t′ [ t ])
   ⊢★ : 
     ---------
     Γ ⊢ t ∶ ★
- 
+
+
 instance typing = mkTyping _⊢_∶_ ⊢` 
 open Typing typing hiding (_⊢_∶_; ⊢`) public

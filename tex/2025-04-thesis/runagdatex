@@ -1,3 +1,12 @@
 #!/usr/bin/env bash
 
-python3 agdatex.py -v -f -e agda-generated.tex -r ../../agda ../../agda/Examples/*.agda ../../agda/Agdasubst/*.agda ../../agda/Agdasubst/Examples/*.agda
+python3 ../../../agdatex/agdatex.py -v -f -e agda-generated.tex -r ../../agda/Agdasubst/src \
+  ../../agda/Agdasubst/src/Agdasubst/*.agda \
+  ../../agda/Agdasubst/src/Agdasubst/Extensions/*.agda \
+  ../../agda/Agdasubst/src/Agdasubst/Extensions/Generics/*.agda \
+  ../../agda/Agdasubst/src/Agdasubst/Extensions/StandardTyping/*.agda \
+  ../../agda/Agdasubst/src/Agdasubst/Examples/DependentTypes/*.agda \
+  ../../agda/Agdasubst/src/Agdasubst/Examples/SystemF/*.agda \
+  ../../agda/Agdasubst/src/Agdasubst/Examples/SystemFSub/*.agda \
+  ../../agda/Agdasubst/src/examples.agda
+

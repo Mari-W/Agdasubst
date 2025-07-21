@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Directory to watch
+THESIS_DIR=$(pwd)
+AGDA_DIR="../../agda"
+
+# Function to run make
+run_make() {
+  echo "Changes detected. Running make..."
+  ./runagdatex
+  pdflatex -interaction=nonstopmode main
+}
+
+# Initial run
+run_make
+
+# Watch for changes using inotifywait
+echo "Watching for changes in main.tex and $AGDA_DIR files..."
+while true; do
+  inotifywait -q -r -e modify,create,delete,move "$THESIS_DIR/main.tex" "$AGDA_DIR"
+  run_make
+done

@@ -5,7 +5,7 @@ module Agdasubst.Prelude where
 open import Agdasubst.Common public
 open import Agdasubst.Extensions.Common public
 
-module WithSort (Sort : ModeIndexed) where
+module WithSort (Sort : Set) where
   open CommonWithSort Sort public
   open ExtensionsCommonWithSort Sort public
 

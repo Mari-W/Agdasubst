@@ -1,0 +1,718 @@
+\documentclass[screen,nonacm]{acmart}
+\usepackage[capitalize,noabbrev]{cleveref}
+\usepackage{agda}
+
+\input{unicodeletters}
+\input{agdamacros}
+\input{agda-generated}
+\input{agda-generated-examples}
+
+\definecolor{agdablue}{HTML}{0000CD}
+\newcommand{\bsym}[1]{\textcolor{agdablue}{#1}}
+\newcommand{\tdot}{\mkern2mu \textcolor{agdablue}{\cdotp} \mkern-2mu \textcolor{agdablue}{\cdotp} \mkern-2mu \textcolor{agdablue}{\cdotp} \mkern1mu}
+
+\begin{document}
+
+\title{Agdasubst: Reasoning for Substitutions over Scoped and Multi-Sorted Syntaxes}
+
+\author{Marius Weidner}
+\email{weidner@cs.uni-freiburg.de}
+\affiliation{%
+      \institution{University of Freiburg}
+      \country{Germany}}
+\orcid{0009-0008-1152-165X} % chktex 8
+\authornote{
+      I hereby declare that I am the sole author and composer of my thesis and that
+      no other sources or learning aids, other than those listed, have been used.\\
+      Furthermore, I declare that I have acknowledged the work of others by providing
+      detailed references of said work.\\
+      I hereby also declare that my thesis has not been prepared for another
+      examination or assignment, either wholly or excerpts thereof.
+      \\
+      \\
+      \begin{tabular}{p{\textwidth/2} l}
+            Freiburg, XX.XX.2025       & yadda yadda                \\ % \includegraphics[width=0.1\textwidth]{signature.png} \\
+            \rule{\textwidth/3}{0.4pt} & \rule{\textwidth/3}{0.4pt} \\
+            Place, Date                & Signature
+      \end{tabular}
+}
+
+\begin{abstract}
+
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}\label{sec:introduction}
+
+Mechanizing the metatheory of programming languages within interactive theorem
+provers frequently presents a significant and recurring technical challenge
+when handling variable binding and substitution. While these details are often
+ignored in pen-and-paper proofs, their concrete formalization in proof
+assistants demands rigorous definitions and proofs as well as a lot of manual
+effort. This burden is notable even for fundamental properties such as subject
+reduction of simple calculi.
+
+Historically, substitution has been treated as an meta-level operation. To
+formalize this, explicit substitution calculi CITE were introduced to bring
+substitutions down to a syntactic level. These calculi define substitution
+behavior through a set of reduction rules. With the $σ_{SP}$-calculus CITE, an
+extension of the $σ$-calculus, a sound and complete CITE rewrite system for
+$λ$-calculus terms with substitution has been discovered. Applying the
+reduction rules from left to right until a fixed point has reached, guarantees
+a normal form that can be compared syntactically to another.
+
+Explicit substitution calculi and the formalization of meta theory in proof
+assistants are usually based on de Bruijn indices, which provide an automatic
+and name-free method for managing variable binding and α-equivalence, thereby
+automatically resolving name clashes.
+
+A core issue in mechanizing the theory for substitutions is the need for
+separation of renamings (substitutions that map variables only to other
+variables) from general substitutions (replacing variables with full terms), to
+allow for a structurally recursive definition. This separation often leads to a
+code duplication, where key lemmas, such as substitution preserves typing, must
+be proven twice, once for renamings and then again for general substitutions
+using the result about renamings. The problem is further compounded in
+languages supporting multiple variable sorts, where a combinatory explosion of
+variable sorts and syntactic categories can lead to numerous near-identical
+substitution definitions and lemmas.
+
+The "Kit" abstraction, introduced by McBride CITE, serves to unify renamings
+and substitutions. Automation frameworks have been developed to address this
+boilerplate. For Coq, the Autosubst framework [Rambeling 2, 465, 467, 382] and
+its successor, Autosubst 2, automate much of this boilerplate [Rambeling 2,
+            465, 467, 382]. Autosubst 2 functions as an external code generator capable of
+handling multi-sorted and mutually inductive syntax, generating definitions for
+de Bruijn terms and parallel or "vectorised" substitutions [Rambeling 2, 465,
+            466, 383, 476, 480, 486, 509]. While vector substitutions aim to simplify the
+equational theory for multiple sorts [Rambeling 2, 476, 487], Autosubst 2 still
+operates in "two worlds," separating renamings and substitutions, and thus
+requires initial proofs for renamings before tackling general substitution
+properties [Rambeling 2, 466, 475, 495]. Agda's introduction of userined
+REWRITE rules presents a promising avenue for integrating σ-calculus rules
+natively [Rambeling 2, 466, 214, 246, 431, 479]. These rules allow users to
+extend the language's definitional equality with new computation rules,
+effectively turning propositional equalities into computational ones [Rambeling
+            2, 466, 222, 399, 403, 431]. However, the power of userined rewrite rules also
+introduces challenges: arbitrary rules can undermine crucial metatheoretical
+properties such as consistency, decidability of type checking, or even subject
+reduction, particularly if they are not confluent [Rambeling 2, 215, 228, 229,
+            231, 249, 404, 440, 432]. Confluence is particularly important for the
+practical feasibility of type checking [Rambeling 2, 215, 228, 229, 231, 249,
+            404, 440]. The literature presents a novel Agda library that directly addresses
+these challenges by integrating a version of the σ-calculus into Agda
+      [Rambeling 2]. This approach draws inspiration from Saffrich's work on
+multi-sorted substitutions and McBride's "kit" abstraction, which unifies
+renamings and substitutions [Rambeling 2, 364, 386, 398, 422]. The library aims
+to resolve the "two-world" problem within Agda by providing a unified
+abstraction for renamings and substitutions [Rambeling 2, 358, 479]. This
+enables fundamental lemmas, such as "substitution preserves typing," to be
+proven once for both concepts, significantly reducing the proof burden
+      [Rambeling 2, 358]. By employing Agda's REWRITE rules, the library focuses on
+natively embedding a σ-calculus-adjacent rewriting system, ensuring that
+substitution operations are not just provable but are definitionally available
+within the language [Rambeling 2, 479]. The framework facilitates the reliable
+extension of Agda's definitional equality for complex binding structures, while
+acknowledging and providing a basis for addressing the inherent metatheoretical
+challenges (e.g., confluence and subject reduction) posed by userined rewrite
+rules, with the aim for a system where confluence can be checked modularly and
+automatically [Rambeling 2, 215].
+
+\subsection*{Structure}
+
+\begin{itemize}
+      \item \cref{sec:pre} introduces the theory and tools used in this work;
+      \item \cref{sec:mis} shows how to embed a scoped and multi-sorted version of the $\sigma$-calculus in Agda, treating renamings and substitutions separately;
+      \item \cref{sec:ags} builds on \cref{sec:mis} and explains the internals of the \texttt{Agdasubst} library, where renamings and substitutions are treated uniformly;
+      \item \cref{sec:ext} shows how to build on top of the \texttt{Agdasubst} library and includes case studies.
+\end{itemize}
+
+\textbf{The supplement contains the complete Agda code underlying this paper.}
+
+\section{Preliminaries}\label{sec:pre}
+This section introduces the foundational concepts and tools required for the
+developments in this work. Our work relies on features of the Agda proof
+assistant that go beyond standard dependent types, as well as on syntactic
+frameworks for modeling substitutions and binders. We summarize the following
+components:
+
+\begin{itemize}
+      \item Agda features relevant to this work: \AgdaKeyword{instance} arguments,
+            \AgdaKeyword{opaque} blocks, and the \AgdaKeyword{REWRITE} mechanism for
+            defining custom reduction rules;
+      \item The $\sigma_{SP}$-calculus, an explicit substitution calculus that is
+            terminating and confluent, serving as a foundation for syntactic reasoning
+            about substitution.
+\end{itemize}
+
+\subsection{Agda, \AgdaKeyword{instance} Arguments, \AgdaKeyword{opaque} Blocks and \AgdaKeyword{REWRITE}
+      Rules}\label{sec:pre-agd} Agda\footnote{CITE} is a dependently typed
+programming language and proof assistant based on Martin-Löf type theory. It
+allows users to write programs and proofs in a functional language, verifying
+correctness through type checking.
+
+In addition to its well-known features such as indexed and parameterized
+inductive data types, dependent pattern matching, implicit arguments and
+records, Agda also supports three less commonly used but important features
+relevant to this work: \AgdaKeyword{instance} arguments, \AgdaKeyword{opaque}
+blocks and \AgdaKeyword{REWRITE} rules.
+
+\subsection*{\AgdaKeyword{instance} Arguments}
+
+Instance arguments, written using double braces \verb|{{...}}|, differ from
+implicit arguments \verb|{...}| in that they are automatically resolved via an
+instance search algorithm, rather than simple implicit argument resolution
+limited to the current scope. When a function expects an instance argument,
+Agda attempts to infer and insert it from values in scope marked with the
+\AgdaKeyword{instance} keyword. This mechanism enables type-directed
+programming patterns similar to type classes in Haskell.
+
+As an example, consider the following definition of a type class for types with
+a default value: \EDefault{} The record can be opened using instance argument
+resolution for its fields: \EDefFields{} We can now declare an instance for
+natural numbers: \EDefInst{} This enables implicit usage of the default value
+via instance search: \EDefEx{} Here, Agda infers from the type \verb|ℕ| of
+\verb|0| that the instance \verb|default–ℕ| applies for \verb|default|,
+inserting it automatically to conclude \verb|default ≡ 0| holds definitionally.
+
+\subsection*{\AgdaKeyword{opaque} Blocks}
+
+Agda also supports opaque definitions, which allow certain parts of the code to
+be treated as non-unfolding symbols, similar to postulates. This feature is
+useful for controlling definitional equality and can be used to prevent
+specific definitions from being unfolded during type checking or conversion
+checking.
+
+A block is marked as opaque by preceding it with the \AgdaKeyword{opaque}
+keyword. All definitions within the block become opaque, meaning they are
+excluded from definitional equality checks. However, their names and types
+remain visible and can still be used throughout the code. As an example
+consider: \EOpaque{}
+
+In this example, \verb|forty-two| is defined as the numeral \verb|42|, but it
+is opaque outside the block. This means that although \verb|forty-two| still
+has type \verb|ℕ| and can be used in expressions and proofs, it does not reduce
+to \verb|5| outside the block during definitional equality checks: \EOpaqueExO
+
+In subsequent opaque blocks, the type checker can be instructed to selectively
+unfold previously opaque definitions using the \AgdaKeyword{unfolding} keyword.
+
+Using \AgdaKeyword{unfolding}, the definition will again reduce as expected:
+\EOpaqueExT{}
+
+\subsection*{\AgdaKeyword{REWRITE} Rules}
+
+Another feature of Agda are userined \AgdaKeyword{REWRITE} rules\footnote{CITE}
+that extend the system’s notion of definitional equality by integrating them
+directly into type checking. A rewrite rule in Agda is a named equation of the
+form
+\[
+      \texttt{eq} : (x_1 : A_1)\, \ldots\, (x_k : A_k) \to f\, p_1\, \ldots\, p_n = v
+\]
+and must satisfy the following \emph{three conditions}\footnote{CITE}:
+\begin{enumerate}
+      \item The head symbol $f$ must be a \emph{postulate}, a \emph{defined function}, or a
+            \emph{constructor} applied to \emph{fully general parameters}, i.e., the
+            parameters must be distinct variables.
+      \item Each variable $x_1, \ldots, x_k$ must occur at least once in a \emph{pattern
+                  position} among $p_1, \ldots, p_n$ (see CITE for the precise definition of
+            pattern position).
+      \item The left-hand side $f\, p_1\, \ldots\, p_n$ must be \emph{neutral}, i.e., it
+            should not reduce any further under existing definitions.
+\end{enumerate}
+
+For example: \ERewrite{} The type of the lemma satisfies the conditions above
+and can be registered as a rewrite rule using the \AgdaKeyword{REWRITE} pragma:
+\ERewriteIt{}
+
+From this point forward, Agda treats \verb|n + 0| as \emph{definitionally
+      equal} to \verb|n|: \ERewriteEx
+
+To ensure consistency, Agda requires that all rewrite rules satisfy the three
+conditions stated above, and that the combined set of rules is both
+\emph{terminating} and \emph{confluent}. However, termination is not currently
+checked by Agda; it is only observable indirectly when type checking fails to
+terminate. Confluence can be checked using the
+\texttt{--local-confluence-check} and \texttt{--confluence-check} flags, but
+both checks are necessarily conservative.
+
+\subsection{Explicit Substitution Calculi}\label{sec:pre-sig}
+
+Explicit substitution calculi were introduced to formalize the traditionally
+meta-theoretic treatment of substitutions. Unlike the standard approach, where
+substitution is defined at the meta-level, these calculi treat substitutions as
+syntactic constructs and define their behavior by reduction rules.
+
+Several explicit substitution systems have been proposed. The
+$\sigma$-calculus~\cite{CITE3}, the first of its kind, introduces substitution
+primitives such as identity, extension, shifting, and composition. The
+$\sigma^\Uparrow$-calculus~\cite{CITE4} extends this with a primitive for
+lifting.
+
+The $\sigma_{SP}$-calculus is of particular interest because it includes
+additional rules to ensure confluence. It is sound, confluent, and
+complete~\cite{CITE}. As a result, any valid equality involving substitutions
+can be derived using its rules alone.
+
+In the following, we present our own three-sorted version of the
+$\sigma$-calculus, using the $\lambda$-calculus as the object language. Our
+system closely follows the $\sigma_{SP}$-calculus.
+
+\subsection*{The three-sorted $\sigma$-calculus}
+
+We present a three-sorted version of the $\sigma_{SP}$-calculus in
+Figure~\ref{fig:pre:sig}, using the $\lambda$-calculus as the object language.
+
+The syntax is sorted into de~Bruijn variables, terms, and substitution
+primitives. Variables~$x$ range over de~Bruijn indices, $t$ over terms, and
+$\sigma$ over substitutions.
+
+We use de~Bruijn variables to obtain $\alpha$-equivalence for free. The
+expression $\textcolor{agdablue}{\uparrow} \sigma$ is syntactic sugar for
+$(\texttt{\`{}}\textcolor{agdablue}{\mathsf{zero}}) \textcolor{agdablue}{\cdot}
+      (\sigma \ \textcolor{agdablue}{;} \ \textcolor{agdablue}{\mathsf{wk}})$. Unlike
+most presentations in the literature, we include explicit syntax for variable
+usage within terms. This requires distinguishing between \bsym{\textsf{suc}}
+and \bsym{\textsf{wk}}, depending on whether they appear in the sort of
+variables or substitutions.
+
+The reduction rules are grouped into four categories:
+\begin{itemize}
+      \item \textbf{Definitional laws} describe how variables are looked up in substitutions.
+      \item \textbf{Interaction laws} express equalities between substitution expressions.
+      \item \textbf{Traversal laws} describe how substitutions propagate through term syntax and under binders.
+      \item \textbf{Monad laws} describe the behavior of substitutions when applied to terms.
+\end{itemize}
+
+\begin{figure}[t]
+      \centering
+      \small
+      {\raggedright \textbf{\Large Symbols} \par}
+      \vspace{1.5em}
+
+      \begin{minipage}[t]{0.48\textwidth}
+            \raggedright
+            \textbf{Variables} $x$
+            \begin{align*}
+                  \text{innermost variable} \quad & \textcolor{agdablue}{\mathsf{zero}}    \\
+                  \text{outer variables} \quad    & \textcolor{agdablue}{\mathsf{suc}}\; x
+            \end{align*}\\
+            \vspace{1em}
+            \textbf{Terms} $t$
+            \begin{align*}
+                  \text{variable usage} \quad           & \textcolor{agdablue}{\texttt{\`{}}}x  \\
+                  \text{abstraction} \quad              & \textcolor{agdablue}{\lambda.}\, t    \\
+                  \text{application} \quad              & t_1 \ t_2                             \\
+                  \text{substitution lookup} \quad      & x \textcolor{agdablue}{\;\&\;} \sigma \\
+                  \text{substitution application} \quad & t \tdot{} \sigma
+            \end{align*}
+      \end{minipage}
+      \hfill
+      \begin{minipage}[t]{0.48\textwidth}
+            \raggedright
+            \textbf{Substitutions} $\sigma$
+            \begin{align*}
+                  \text{identity} \quad    & \textcolor{agdablue}{\mathsf{id}}              \\
+                  \text{extension} \quad   & t \textcolor{agdablue}{\cdot} \sigma           \\
+                  \text{weakening} \quad   & \textcolor{agdablue}{\mathsf{wk}}              \\
+                  \text{composition} \quad & \sigma_1 \ \textcolor{agdablue}{;} \  \sigma_2
+            \end{align*}
+      \end{minipage}
+
+      {\raggedright \vspace{2.0em} \textbf{\Large Reduction} \par}
+      \vspace{1.5em}
+      \begin{minipage}[t]{0.48\textwidth}
+            \raggedright
+            \textbf{Definitional Laws}
+            \begin{alignat*}{2}
+                  \mathsf{id}      \quad          & x \textcolor{agdablue}{\;\&\;} \textcolor{agdablue}{\mathsf{id}}                                          &  & = \textcolor{agdablue}{\texttt{\`{}}} x                    \\
+                  \mathsf{ext}_\mathsf{Z}  \quad  & \textcolor{agdablue}{\mathsf{zero}} \textcolor{agdablue}{\;\&\;} (t \textcolor{agdablue}{\cdot} \sigma)   &  & = t                                                        \\
+                  \mathsf{ext}_\mathsf{S}   \quad & \textcolor{agdablue}{\mathsf{suc}}\;x \textcolor{agdablue}{\;\&\;} (t \textcolor{agdablue}{\cdot} \sigma) &  & = x \textcolor{agdablue}{\;\&\;} \sigma                    \\
+                  \mathsf{wk}      \quad          & x \textcolor{agdablue}{\;\&\;} \textcolor{agdablue}{\mathsf{wk}}                                          &  & = \texttt{\`{}}(\textcolor{agdablue}{\mathsf{suc}} \ x)    \\
+                  \mathsf{comp}    \quad          & x \textcolor{agdablue}{\;\&\;} (\sigma_1 \ \textcolor{agdablue}{;} \  \sigma_2)                           &  & = (x \textcolor{agdablue}{\;\&\;} \sigma_1) \tdot \sigma_2
+            \end{alignat*}\\
+            \vspace{1em}
+            \textbf{Traversal Laws}
+            \begin{alignat*}{2}
+                  \mathsf{var} \quad & (\textcolor{agdablue}{\texttt{\`{}}} x)                                            & \tdot \sigma
+                                     & = x \textcolor{agdablue}{\;\&\;} \sigma                                                            \\
+                  \mathsf{lam} \quad & (\textcolor{agdablue}{\lambda.}\, t)                                               & \tdot  \sigma
+                                     & = \textcolor{agdablue}{\lambda.} (t  \tdot (\textcolor{agdablue}{\uparrow}\sigma))                 \\
+                  \mathsf{app} \quad & (t_1 \ t_2)                                                                        & \tdot \sigma
+                                     & = (t_1  \tdot \sigma) \ (t_2  \tdot \sigma)
+            \end{alignat*}
+
+      \end{minipage}
+      \hfill
+      \begin{minipage}[t]{0.48\textwidth}
+            \raggedright
+            \textbf{Interaction Laws}
+            \begin{alignat*}{2}
+                  \mathsf{comp\text{-}id}_\mathsf{L} \quad & \textcolor{agdablue}{\mathsf{id}} \ \textcolor{agdablue}{;} \  \sigma                                                                                                         &  & = \sigma                                                                                                                                                                                                           \\
+                  \mathsf{comp\text{-}id}_\mathsf{R} \quad & \sigma \ \textcolor{agdablue}{;} \  \textcolor{agdablue}{\mathsf{id}}                                                                                                         &  & = \sigma                                                                                                                                                                                                           \\
+                  \mathsf{associativity}          \quad    & (\sigma_1 \ \textcolor{agdablue}{;} \  \sigma_2) \ \textcolor{agdablue}{;} \  \sigma_3                                                                                        &  & = \sigma_1 \ \textcolor{agdablue}{;} \  (\sigma_2 \ \textcolor{agdablue}{;} \  \sigma_3)                                                                                                                           \\
+                  \mathsf{distributivity}           \quad  & (t \textcolor{agdablue}{\cdot} \sigma_1) \ \textcolor{agdablue}{;} \  \sigma_2                                                                                                &  & = (t \mkern2mu \textcolor{agdablue}{\cdotp} \mkern-2mu \textcolor{agdablue}{\cdotp} \mkern-2mu \textcolor{agdablue}{\cdotp} \sigma_2) \textcolor{agdablue}{\cdot} (\sigma_1 \ \textcolor{agdablue}{;} \  \sigma_2) \\
+                  \mathsf{interact}       \quad            & \textcolor{agdablue}{\mathsf{wk}} \ \textcolor{agdablue}{;} \  (t \textcolor{agdablue}{\cdot} \sigma)                                                                         &  & = \sigma                                                                                                                                                                                                           \\
+                  \eta\mathsf{\text{-}id}        \quad     & (\textcolor{agdablue}{\texttt{\`{}}\mathsf{zero}}) \textcolor{agdablue}{\cdot} \textcolor{agdablue}{\mathsf{wk}}                                                              &  & = \textcolor{agdablue}{\mathsf{id}}                                                                                                                                                                                \\
+                  \eta\mathsf{\text{-}law}       \quad     & (\textcolor{agdablue}{\mathsf{zero}} \textcolor{agdablue}{\;\&\;} \sigma) \textcolor{agdablue}{\cdot} (\textcolor{agdablue}{\mathsf{wk}} \ \textcolor{agdablue}{;} \  \sigma) &  & = \sigma
+            \end{alignat*}\\
+            \vspace{1em}
+            \textbf{Monad Laws}
+            \begin{alignat*}{2}
+                  \mathsf{right\text{-}id} \quad          & t  \tdot
+                  \mathsf{id}                             &           & = t        \\
+                  \mathsf{compositionality}         \quad & (t  \tdot
+                  \sigma_1)  \tdot
+                  \sigma_2                                &           & = t  \tdot
+                  (\sigma_1 ; \sigma_2)
+            \end{alignat*}
+      \end{minipage}
+      \caption{The three-sorted $\sigma$-calculus.}
+      \label{fig:pre:sig}
+\end{figure}
+
+We do not include reduction rules for the $\lambda$-calculus itself, such as
+$\beta$-reduction. Our focus is not on the $\lambda\sigma$-calculus[CITE], but
+on the behavior of substitutions applied to terms. The reduction strategy of
+the object language is part of the language and is left unspecified. The only
+term-dependent rules we need are those that describe how substitutions traverse
+terms.
+
+We believe the three-sorted $\sigma$-calculus is terminating and confluent.
+Although we do not give a formal proof, it is a reasonable variant of the
+$\sigma_{SP}$-calculus.
+
+Renamings, introduced in the next section, are needed to define substitutions
+structurally in Agda. They are believed to break completeness~\cite{CITE}. For
+this reason, we do not consider completeness a central property in this work.
+Still, we try to preserve as much completeness as possible in what follows.
+
+\section{The Multi-Sorted and Scoped Sigma Calculus in Agda}\label{sec:mis}
+
+This section gives a direct embedding of the $\sigma$-calculus rules as native
+reduction rules in Agda using the \AgdaKeyword{REWRITE} mechanism.
+
+When adapting the calculus from \cref{sec:pre-sig} to custom syntaxes in Agda,
+we face three main challenges:
+
+\begin{itemize}
+      \item \textbf{Multiple sorts:} Unlike the simply typed $\lambda$-calculus, many
+            object languages have more than one sort of syntax. For example, System~F
+            has kinds, types and expressions, with several kinds of substitution: type-in-type,
+            type-in-expression, and expression-in-expression.
+
+      \item \textbf{Scope safety:} To avoid scoping related errors, we want the
+            syntax to enforce correct scoping intrinsically. This is usually done in Agda by
+            defining the syntax as a family of types indexed by its set of free variables.
+
+      \item \textbf{Structural recursion:} In Agda, substitutions for syntaxes with binders
+            cannot be defined directly by structural recursion.
+            To obtain well-founded definitions, we need to define renamings first, which are
+            substitutions that only contain variables.
+\end{itemize}
+
+We first address the first two points by introducing intrinsically scoped and
+multi-sorted syntaxes, defined as indexed datatypes in Agda. We use System~F as
+a running example. After that, we address the third challenge by defining
+substitutions in terms of renamings, which are likewise scoped and sorted.
+Finally, we revisit the $\sigma$-calculus and adapt its laws to this setting.
+
+\subsection{Mutli-Sorted and Scoped Syntaxes}\label{sec:mis-sub}
+
+We start with a standard intrinsically scoped syntax for System~F. Types are
+indexed by the number of free type variables, and expressions are indexed by
+both free type and expression variables. Variables are represented by de Bruijn
+indices, which are numbers less than the number of free variables. This ensures
+that only well scoped terms can be formed. The left side of \cref{fig:mis:svm}
+shows this version.
+
+This approach is simple but has drawbacks. Types and expressions are separate
+datatypes, so we would need to define multiple substitution operations:
+type-in-type, expr-in-expr, and type-in-expr. These substitutions need to be
+handled and related manually, which adds boilerplate.
+
+To avoid this, we use a multi sorted syntax. Terms form a single datatype
+indexed by a list of variable sorts and a target sort. The type $S \vdash s$
+describes a term of sort $s$ with free variables of sorts in $S$. Variable
+positions are given by $S \ni s$, a proof that a variable of sort $s$ appears
+in $S$ at some position and acts as a de Bruijn index. This gives us well
+scoped and well sorted terms by construction. The right side of
+\cref{fig:mis:svm} shows this version.
+
+With this unified syntax, we can define generic operations that work uniformly
+across sorts. Next, we will use this to our advantage and define scoped and
+sorted renamings and substitutions.
+
+\begin{figure}[h]
+      \centering
+      \begin{minipage}[t]{0.48\linewidth}
+            \raggedright{}
+            \EScoped{}
+      \end{minipage}
+      \hfill
+      \begin{minipage}[t]{0.48\linewidth}
+            \raggedright{}
+            \EMultiSorted{}
+      \end{minipage}
+      \caption{Classically Scoped Syntax vs. Multi-Sorted and Scoped Syntax}
+      \label{fig:mis:svm}
+\end{figure}
+
+\subsection{Scoped and Multi Sorted Renamings and Substitutions}
+We define renamings and substitutions uniformly over all variable sorts by
+indexing them over scopes, as shown in \cref{fig:mis:ras}. A renaming from
+scope $S_1$ to $S_2$ maps each variable of a given sort in $S_1$ to a variable
+of the same sort in $S_2$. Similarly, a substitution maps variables to terms of
+the corresponding sort.
+
+The order of definitions is chosen carefully. We first introduce the renaming
+type and its primitive operations. Substitutions are then defined in terms of
+renamings, using the weakening renaming primitive to define lifting in a
+structurally recursive manner.
+
+To support all combinations of renamings and substitutions, we provide four
+forward composition primitives: renaming composed with renaming, renaming with
+substitution, substitution with renaming, and substitution with substitution.
+
+The traversal functions, \texttt{\_⋯ᴿ\_} for renaming and \texttt{\_⋯ˢ\_} for
+substitution, are defined by induction on the syntax. Each traversal applies a
+renaming or substitution to a term. The clauses in these definitions correspond
+directly to the traversal laws of the $\sigma$-calculus (with duplications for renamings), and therefore, we want these functions to reduce during type checking.
+
+All renaming and substitution primitives are declared \texttt{opaque} in Agda,
+which blocks their reduction. This abstraction is essential for formulating the
+$\sigma$-calculus laws, where the primitives must act as uninterpreted symbols
+rather than as concrete functions. Blocking reduction in this way allows
+rewrite rules to apply predictably. 
+The types for renamings and substitutions are also declared \texttt{opaque} to prevent misuse as actual functions. Their map-like behavior remains accessible through the lookup operator.
+
+Together, this setup yields a uniform treatment for renaming and
+substitution. The main drawback is
+the unavoidable duplication of primitives and the need for four composition
+operators.
+
+\begin{figure}[h]
+      \centering
+      \begin{minipage}[t]{0.48\linewidth}
+            \raggedright{}
+            \ERen{}
+      \end{minipage}
+      \hfill
+      \begin{minipage}[t]{0.48\linewidth}
+            \raggedright{}
+            \ESub{}
+      \end{minipage}
+      \caption{Scoped and Multi-Sorted Renamings and Substitutions}
+      \label{fig:mis:ras}
+\end{figure}
+% straight forward way to embed the sigma calculus in agda, but with ren and subs
+% multiple laws 
+% recall syntax from preliminaries 
+% define substitutions etc
+% proven in supplement
+% note induction on t in monad laws
+% funext dependence
+% they all are rewritable
+\begin{figure}[h]
+      \centering
+
+      \begin{minipage}[t]{0.38\linewidth}
+            \raggedright{}
+            \EDefLaws{}
+      \end{minipage}
+      \hfill
+      \begin{minipage}[t]{0.58\linewidth}
+            \raggedright{}
+            \EMonadLaws{}
+      \end{minipage}
+
+      \vspace{1em}
+      \begin{minipage}[t]{0.38\linewidth}
+            \raggedright{}
+            \ERewriteSys{}
+      \end{minipage}
+      \hfill
+      \raisebox{7.75em}[0pt][0pt]{%
+            \begin{minipage}[t]{0.58\linewidth}
+                  \raggedright{}
+                  \EInteractLaws{}
+            \end{minipage}
+      }
+      \caption{The Scoped and Multi-Sorted $\sigma$-calculus with First-Class Renamings and Substitutions.}
+      \label{fig:six-frame-layout}
+\end{figure}
+
+\subsection{}
+
+\subsection{Discussion}\label{sec:rsn-dis}
+% putting 1 and 2 together to gain new library
+% that enables one to prove stuff easy for sub
+% and ren in proof theoretic setting
+
+\section{The Agdasubst Library}\label{sec:ags}
+% work based on McBrides kits and saffrichs compose kits
+
+% \subsection{Related Work: Abstractions for Multi-Sorted Substitutions}
+
+% shows the implementation
+% explain main idea
+% running example will be system f
+% show how to but ren and sub together!
+
+\subsection{Kits and Traversal}\label{sec:ags-kit}
+
+% tags
+% symbols are abstract
+% ren and sub instances
+% symbols in explicit substitutions are not meta -> they are
+% symbols, make them opaque
+% footnote? % functions != fields % locking
+
+\subsection{Composition and Compositionality}\label{sec:ags-kit}
+% compose kits (symbols etc)
+% new operator lookup/traverse `/id
+% we will need extensions to the calculus
+
+% commutativity issue
+% postulated the uniqueness
+% bounded semi lattice structure to calculate the 3rd kit of the compose kit 
+% footnote tried only 2 but not general enough
+
+\subsection{The Final Set of Rules}\label{sec:ags-rls}
+\begin{figure}[t]
+      \centering
+      \small
+      {\raggedright \textbf{\Large Symbols} \par}
+      \vspace{1.5em}
+
+      \begin{minipage}[t]{0.48\textwidth}
+            \raggedright{}
+            \textbf{Sorts} $s$ \\
+            \ESortTy{}\\
+            \vspace{0.5em}
+            \emph{.. custom object language sorts ..}\\
+            \vspace{0.5em}
+            \textbf{Scopes} $S$ \\
+            \EScopeDefTy{}\\
+            \vspace{0.5em}
+            \EScopeDef{}\\
+            \vspace{0.5em}
+            \textbf{Variables} $x$ \\
+            \EVarsTy{}\\
+            \vspace{0.5em}
+            \EVars{}\\
+            \vspace{0.5em}
+            \textbf{Terms} $t$ \\
+            \ETmC{}\\
+            \vspace{0.5em}
+            \EVarC{}\\
+            \emph{.. custom sorted object language ..}\\
+            \vspace{1.0em}
+      \end{minipage}
+      \hfill
+      \begin{minipage}[t]{0.48\textwidth}
+            \raggedright{}
+            \textbf{Kits} $K$ \\
+            \EKitDefTy{}\\
+            \vspace{0.5em}
+            \EKitDef{}\\
+            \vspace{0.5em}
+            \textbf{Variables or Terms} $q$\\
+            \EVarTrmTy{}\\
+            \vspace{0.5em}
+            \EVarTrmApp{}\\
+            \vspace{0.5em}
+            \textbf{Renamings or Substitutions} $ϕ$\\
+            \EPrimsTy{}\\
+            \vspace{0.5em}
+            \EPrims{}\\
+            \vspace{0.5em}
+      \end{minipage}
+
+      {\raggedright \vspace{2.0em} \textbf{\Large Reduction} \par}
+      \vspace{1.5em}
+      \begin{minipage}[t]{0.48\textwidth}
+            \raggedright
+            \textbf{Kit Laws}\\
+            \ETypeLevel{}\\
+            \vspace{0.5em}
+            \textbf{Definitional Laws}\\
+            \vspace{0.5em}
+            \EDefLawTy{}\\
+            \vspace{0.5em}
+            \EDefLaw{}\\
+
+      \end{minipage}
+      \hfill
+      \begin{minipage}[t]{0.48\textwidth}
+            \raggedright
+            \textbf{Interaction Laws}\\
+            \EInteraction{}\\
+            \vspace{0.5em}
+            \textbf{Monad Laws}\\
+            \EMonad{}\\
+            \vspace{0.5em}
+            \textbf{Traversal Laws}\\
+            \ETravL{}\\
+            \emph{.. custom object language traversal ..}
+      \end{minipage}
+      \caption{The \emph{Idealized} Scoped and Multi-Sorted $\sigma$-Calculus with \AgdaDatatype{Kits}.}
+      \label{fig:ags:fin}
+\end{figure}
+
+\subsection{Limitations}\label{sec:ags-lim}
+% assoc problem, because we dont know the kit on the left
+% new symbols introduce need for more rules 
+% agda does not deem the calculus confluent
+% % -> see how many critical pairs the sigma calculus even has! 
+
+\section{Extensions}\label{sec:ext}
+\subsection{Generic Syntax}\label{sec:ext-uni}
+\subsection{Typing Kits}\label{sec:ext-tyk}
+% generic syntax allows to prove substitution lemmas only once. 
+% sometimes inconvenient to use in agda
+% generics and 
+% typing kits
+% room for more! e.g. linear types / resources etc or semantics e.g. confluence
+
+% \section{Case Studies}\label{sec:cas}
+% \subsection{System F}\label{sec:cas-sf}
+% \cite{girard1972}
+% \subsection{System F with Subtyping}\label{sec:cas-sfsub}
+% 
+% \subsection{Martin-Löf Type Theory}\label{sec:cas-mltt}
+
+\section{Related Work}\label{sec:rel}
+% the next works are essential building blocks for agdasubst and we build on both
+% only really take the idea of autosubst
+
+% \subsection{Autosubst 2}\label{sec:rel-aut}
+% Autosubst 2 (coq)
+% Nominal 2 (isabelle)
+% Abstract Binding Tree Library (agda)
+
+\section{Future Work}\label{sec:wrk}
+% make it more complete?
+% fix the assoc problem (see last sections)
+% obviously improve user exp (i.e. derive code, documentation etc)
+
+\subsection{Extensions to the Calculus}\label{sec:wrk-ext}
+% variadic bindings
+% lists / map
+% .. the kathrins thesis
+\subsection{Meta Theory}\label{sec:wrk-prp}
+% meta theoretics
+% termination
+% confluence
+% make it more complete?
+\subsection{More Generality}\label{sec:wrk-prp}
+% abstracting away the sorting to arbitrary, well behaved telescopes (by axiom)
+% suitable for intrinsic typing
+
+\section{Conclusions}\label{sec:con}
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+
+\end{document}

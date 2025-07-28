@@ -18,8 +18,8 @@
 *.agdai
 auto/
 latex/
-.agdatex-hashes.json
-agda-generated.tex
+.agdatex*
+agda-generated*
 *.pdf
 supplement.zip
 .mypy_cache

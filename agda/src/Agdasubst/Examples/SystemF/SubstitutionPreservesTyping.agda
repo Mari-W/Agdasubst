@@ -25,4 +25,3 @@ _⊢⋯_ {Γ₂ = Γ₂} {ϕ = ϕ} (⊢• {e = e} {t′ = t′} {t = t}  ⊢e �
 ⊢★             ⊢⋯ ⊢ϕ = ⊢★ 
 
 open TypingTraversal (mkTTraversal _⊢⋯_) hiding (_⊢⋯_) public  
- 

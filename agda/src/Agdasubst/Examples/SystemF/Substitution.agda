@@ -67,7 +67,7 @@ opaque
 
   ext₀–def extₛ–def
   idᴿ–def idˢ–def wkᴿ–def
-  comp-def₁ comp-def₂ comp-def₃ comp-def₄ comp-def₅
+  comp–idᴿ–def comp–idˢ–def comp–wkᴿ–def comp–ext₀–def comp–extₛ–def
 
   comp–idₗ comp–idᵣ norm–idˢ associativity distributivity interact
   η–id η–law

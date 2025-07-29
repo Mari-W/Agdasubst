@@ -38,7 +38,7 @@ module _ {{library : Library}} where
       t ⋯ wkᴿ ⋯ ⦅ q ⦆   ≡⟨ ⋯-compositionality t wkᴿ ⦅ q ⦆ ⟩
       t ⋯ (wkᴿ ; ⦅ q ⦆) ≡⟨ cong (t ⋯_) (~-ext (wk-cancels-⦅⦆ q)) ⟩
       t ⋯ id           ≡⟨ ⋯-id t ⟩
-      t                  ∎
+      t                ∎
 
     dist-↑-⦅⦆ :
       ∀  {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K : Kit k}}
@@ -50,7 +50,7 @@ module _ {{library : Library}} where
         `/id {{K}} (q &/⋯ ϕ)                            ≡⟨⟩
         `/id {{K}} (zero & ⦅ (q &/⋯ ϕ) ⦆)                ≡⟨ sym (&/⋯-& {{C₂}} zero ⦅ (q &/⋯ ϕ) ⦆) ⟩
         `/id {{K}} (id/` {{K₂}} zero &/⋯ ⦅ (q &/⋯ ϕ) ⦆)  ≡⟨⟩
-        `/id {{K}} (x & ((ϕ ↑ s) ; ⦅ (q &/⋯ ϕ) ⦆))      ∎)
+        `/id {{K}} (x & ((ϕ ↑ s) ; ⦅ (q &/⋯ ϕ) ⦆))       ∎)
     dist-↑-⦅⦆ {s = s} {{K₁}} {{K₂}} {{K}} {{C₁}} {{C₂}} q ϕ sx x@(suc y) = `/id-injective ( 
         `/id (x & (⦅ q ⦆ ; ϕ))                      ≡⟨⟩
         `/id (id/` {{K₁}} y &/⋯ ϕ)                 ≡⟨ &/⋯-& {{C₁}} y ϕ ⟩
@@ -58,7 +58,7 @@ module _ {{library : Library}} where
         `/id (y & ϕ) ⋯ wkᴿ {s = s} ⋯ ⦅ (q &/⋯ ϕ) ⦆  ≡⟨ cong (_⋯ ⦅ q &/⋯ ϕ ⦆) (wk-`/id s (y & ϕ)) ⟩
         `/id (K-wk s (y & ϕ)) ⋯ ⦅ (q &/⋯ ϕ) ⦆       ≡⟨ &/⋯-⋯ (K-wk s (y & ϕ)) ⦅ (q &/⋯ ϕ) ⦆ ⟩
         `/id (K-wk s (y & ϕ) &/⋯ ⦅ (q &/⋯ ϕ) ⦆)     ≡⟨⟩
-        `/id (x & ((ϕ ↑ s) ; ⦅ (q &/⋯ ϕ) ⦆))       ∎)
+        `/id (x & ((ϕ ↑ s) ; ⦅ (q &/⋯ ϕ) ⦆))        ∎)
 
     dist-↑-⦅⦆-⋯ :
       ∀  {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K : Kit k}} 
@@ -66,8 +66,8 @@ module _ {{library : Library}} where
          (t : (s ∷ S₁) ⊢ s′) (q : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
       t ⋯ ⦅ q ⦆ ⋯ ϕ ≡ t ⋯ (ϕ ↑ s) ⋯ ⦅ (q &/⋯ ϕ) ⦆
     dist-↑-⦅⦆-⋯ t q ϕ =
-      t ⋯ ⦅ q ⦆ ⋯ ϕ                  ≡⟨ ⋯-compositionality t ⦅ q ⦆ ϕ ⟩
-      t ⋯ (⦅ q ⦆ ; ϕ)                ≡⟨ cong (t ⋯_) (~-ext (dist-↑-⦅⦆ q ϕ)) ⟩
+      t ⋯ ⦅ q ⦆ ⋯ ϕ                 ≡⟨ ⋯-compositionality t ⦅ q ⦆ ϕ ⟩
+      t ⋯ (⦅ q ⦆ ; ϕ)               ≡⟨ cong (t ⋯_) (~-ext (dist-↑-⦅⦆ q ϕ)) ⟩
       t ⋯ ((ϕ ↑ _) ; ⦅ (q &/⋯ ϕ) ⦆) ≡⟨ sym (⋯-compositionality t (ϕ ↑ _) ⦅ q &/⋯ ϕ ⦆ ) ⟩
       t ⋯ (ϕ ↑ _) ⋯ ⦅ (q &/⋯ ϕ) ⦆   ∎
 

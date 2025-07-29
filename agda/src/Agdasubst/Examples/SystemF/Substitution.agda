@@ -6,7 +6,7 @@ open import Agdasubst.Examples.SystemF.Definitions.Syntax
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; cong₂)
 
 private _⋯_ : ∀ {{K : Kit k}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
-(` x)           ⋯ ϕ = x ⋯` ϕ
+(` x)           ⋯ ϕ = x `⋯ ϕ
 (λx e)          ⋯ ϕ = λx (e ⋯ (ϕ ↑ _))
 (e₁ · e₂)       ⋯ ϕ = (e₁ ⋯ ϕ) · (e₂ ⋯ ϕ)
 (t₁ ⇒ t₂)       ⋯ ϕ = (t₁ ⋯ ϕ) ⇒ (t₂ ⋯ ϕ)
@@ -17,7 +17,7 @@ private _⋯_ : ∀ {{K : Kit k}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S
 
 {-# REWRITE id↑≡id id↑★≡id #-} 
 ⋯-id : ∀ {{K : Kit k}} (t : S ⊢ s) → t ⋯ id ≡ t
-⋯-id (` x)           = ⋯-id`
+⋯-id (` x)           = `⋯-id
 ⋯-id (λx e)          = cong λx_ (⋯-id e)
 ⋯-id (e₁ · e₂)       = cong₂ _·_ (⋯-id e₁) (⋯-id e₂)
 ⋯-id (t₁ ⇒ t₂)       = cong₂ _⇒_ (⋯-id t₁) (⋯-id t₂)
@@ -27,7 +27,7 @@ private _⋯_ : ∀ {{K : Kit k}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S
 ⋯-id ★               = refl
 
 ⋯-var : {{K : Kit k}} (x : S₁ ∋ s) (ϕ : S₁ –[ K ]→ S₂) →
-    (` x) ⋯ ϕ ≡ x  ⋯` ϕ
+    (` x) ⋯ ϕ ≡ x  `⋯ ϕ
 ⋯-var _ _ = refl 
 
 instance traversal = mkTraversal _⋯_ ⋯-id ⋯-var
@@ -38,7 +38,7 @@ open Traversal traversal hiding (_⋯_; ⋯-id; ⋯-var) public
   ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{C : ComposeKit K₁ K₂ K₃}} →
     (t : S₁ ⊢ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) →
     (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ t ⋯ (ϕ₁ ; ϕ₂)
-⋯-compositionality (` x)        ϕ₁ ϕ₂ = ⋯-compositionality` x ϕ₁ ϕ₂
+⋯-compositionality (` x)        ϕ₁ ϕ₂ = `⋯-compositionality x ϕ₁ ϕ₂
 ⋯-compositionality (λx e)       ϕ₁ ϕ₂ = cong λx_ (⋯-compositionality e (ϕ₁ ↑★ _) (ϕ₂ ↑★ _)) 
 ⋯-compositionality (e₁ · e₂)    ϕ₁ ϕ₂ = cong₂ _·_  (⋯-compositionality e₁ ϕ₁ ϕ₂) (⋯-compositionality e₂ ϕ₁ ϕ₂)
 ⋯-compositionality (t₁ ⇒ t₂)    ϕ₁ ϕ₂ = cong₂ _⇒_ (⋯-compositionality t₁ ϕ₁ ϕ₂) (⋯-compositionality t₂ ϕ₁ ϕ₂)  
@@ -52,21 +52,22 @@ open Compose compose hiding (⋯-compositionality) public
 
 opaque 
    unfolding lib  
-   var  : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (`_ {s = s} x) &/⋯ ϕ ≡ `/id (x & ϕ)                    ; var  = refl
+   var  : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (`_ {s = s} x) &/⋯ ϕ ≡ `/id (x &/⋯ ϕ) 
+                           ; var  = refl
    lam  : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (λx e)         &/⋯ ϕ ≡ λx (e &/⋯ (ϕ ↑ _))               ; lam  = refl
-   app  : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (e₁ · e₂)      &/⋯ ϕ ≡ (e₁ &/⋯ ϕ) · (e₂ &/⋯ ϕ)           ; app  = refl
-   fun  : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (t₁ ⇒ t₂)      &/⋯ ϕ ≡ (t₁ &/⋯ ϕ) ⇒ (t₂ &/⋯ ϕ)           ; fun  = refl
+   app  : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (e₁ · e₂)      &/⋯ ϕ ≡ (e₁ &/⋯ ϕ) · (e₂ &/⋯ ϕ)          ; app  = refl
+   fun  : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (t₁ ⇒ t₂)      &/⋯ ϕ ≡ (t₁ &/⋯ ϕ) ⇒ (t₂ &/⋯ ϕ)          ; fun  = refl
    tlam : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (Λα e)         &/⋯ ϕ ≡ Λα (e &/⋯ (ϕ ↑ _))               ; tlam = refl
-   tapp : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (e • t)        &/⋯ ϕ ≡ (e &/⋯ ϕ) • (t &/⋯ ϕ)             ; tapp = refl 
+   tapp : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (e • t)        &/⋯ ϕ ≡ (e &/⋯ ϕ) • (t &/⋯ ϕ)            ; tapp = refl 
    all  : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (∀[α∶ ★ᴷ ] t)  &/⋯ ϕ ≡ ∀[α∶ ★ᴷ &/⋯ ϕ ] (t &/⋯ (ϕ ↑ _))  ; all  = refl
-   star : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → ★              &/⋯ ϕ ≡ ★                                 ; star = refl 
+   star : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → ★              &/⋯ ϕ ≡ ★                                ; star = refl 
 
 {-# REWRITE 
-  abc
   id`–def `id–def ;wk–def
 
-  ext₀–def extₛ–def comp-def
-  idˢ–def wkᴿ–def
+  ext₀–def extₛ–def
+  idᴿ–def idˢ–def wkᴿ–def
+  comp-def₁ comp-def₂ comp-def₃ comp-def₄ comp-def₅
 
   comp–idₗ comp–idᵣ norm–idˢ associativity distributivity interact
   η–id η–law

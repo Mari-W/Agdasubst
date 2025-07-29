@@ -63,7 +63,7 @@ module GenericsWithSort (Sort : Set) where
     mutual
       ⋯-id : ∀ {{K : Kit k }} → (t : Tm d S s) →
                (t ⋯ id) ≡ t
-      ⋯-id (`var x) = ⋯-id` 
+      ⋯-id (`var x) = `⋯-id 
       ⋯-id (`con e) = cong `con (⋯-id′ e)
  
       ⋯-id′ : ∀ {{K : Kit k}} {s : Sort} → (t : ⟦ d′ ⟧ (Tm d) S s) →
@@ -85,7 +85,7 @@ module GenericsWithSort (Sort : Set) where
       ⋯-compositionality  : ∀ {s : Sort} {{K₁ : Kit k₁ }} {{K₂ : Kit k₂ }} {{K : Kit k }} {{C : ComposeKit K₁ K₂ K}}
                   (t : Tm d S₁ s) (ϕ₁ : S₁ →ᴷ S₂) (ϕ₂ : S₂ →ᴷ S₃) → 
                   (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ t ⋯ (ϕ₁ ; ϕ₂)
-      ⋯-compositionality (`var x)  ϕ₁ ϕ₂ = ⋯-compositionality` x ϕ₁  ϕ₂
+      ⋯-compositionality (`var x)  ϕ₁ ϕ₂ = `⋯-compositionality x ϕ₁  ϕ₂
       ⋯-compositionality (`con e′) ϕ₁ ϕ₂ = cong `con (⋯-compositionality′ e′ ϕ₁ ϕ₂)
       ⋯-compositionality′  : ∀ {s : Sort} {{K₁ : Kit k₁ }} {{K₂ : Kit k₂ }} {{K : Kit k }} {{C : ComposeKit K₁ K₂ K}}
                    (t : ⟦ d′ ⟧ (Tm d) S₁ s) (ϕ₁ : S₁ →ᴷ S₂) (ϕ₂ : S₂ →ᴷ S₃) → 

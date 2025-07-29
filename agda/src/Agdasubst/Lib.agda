@@ -149,13 +149,13 @@ module KitsWithSort (
 
       open Kit {{...}} public hiding (wk)
 
-      _⋯`_ : ∀ {{K : Kit k}} → S₁ ∋ s → S₁ →ᴷ S₂ → S₂ ⊢ s 
-      x ⋯` ϕ = `/id (x & ϕ) 
+      _`⋯_ : ∀ {{K : Kit k}} → S₁ ∋ s → S₁ →ᴷ S₂ → S₂ ⊢ s 
+      x `⋯ ϕ = `/id (x & ϕ) 
 
       opaque 
         unfolding kit_ops
-        ⋯-id` : ∀ {{K : Kit k}} → (x ⋯` id) ≡ (` x)
-        ⋯-id` {x = x} = `/`-is-` x
+        `⋯-id : ∀ {{K : Kit k}} → (x `⋯ id) ≡ (` x)
+        `⋯-id {x = x} = `/`-is-` x
 
       --! Traveral {
       record Traversal : Set₁ where
@@ -459,10 +459,10 @@ module KitsWithSort (
         opaque
           unfolding comp_ops
 
-          ⋯-compositionality` : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{C : ComposeKit K₁ K₂ K₃}} 
+          `⋯-compositionality : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{C : ComposeKit K₁ K₂ K₃}} 
                 (x : S₁ ∋ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) →
-                 ((x ⋯` ϕ₁) ⋯ ϕ₂) ≡ (x ⋯` (ϕ₁ ; ϕ₂))
-          ⋯-compositionality` x ϕ₁ ϕ₂ = &/⋯-⋯ (ϕ₁ _ x) ϕ₂
+                 ((x `⋯ ϕ₁) ⋯ ϕ₂) ≡ (x `⋯ (ϕ₁ ; ϕ₂))
+          `⋯-compositionality x ϕ₁ ϕ₂ = &/⋯-⋯ (ϕ₁ _ x) ϕ₂
 
         --! compositionality {
         record Compose : Set₁ where
@@ -610,7 +610,7 @@ module KitsWithSort (
             unfolding lib 
  
             id`–def : ∀ {{K : Kit k}} (x : S ∋ s) → 
-              id/` x ≡ x & (id {{K}}) 
+              id/` x ≡ x &/⋯ (id {{K}})
             id`–def x = refl 
 
             postulate 
@@ -623,32 +623,51 @@ module KitsWithSort (
             ;wk–def {Ren} {{K}} ϕ rewrite unique–K K | CK–defR {{Kᴿ}} = refl 
             ;wk–def {Sub} {{K}} ϕ rewrite unique–K K | CK–defS {{Kᴿ}} = refl
             
-            -- idᴿ–def : ∀ (x : S₁ ∋ s) → x &/⋯ id[ Kᴿ ] ≡ x
-            -- idᴿ–def x = refl
+            idᴿ–def : ∀ (x : S₁ ∋ s) → x &/⋯ id[ Kᴿ ] ≡ x
+            idᴿ–def x = refl
 
-            idˢ–def : ∀ (x : S₁ ∋ s) → x & id[ Kˢ ] ≡ ` x
+            idˢ–def : ∀ (x : S₁ ∋ s) → x &/⋯ id[ Kˢ ] ≡ ` x
             idˢ–def x = refl
 
-            wkᴿ–def : (x : S₁ ∋ s) → x & (wkᴿ {s = s}) ≡ (suc x)
+            wkᴿ–def : (x : S₁ ∋ s) → x &/⋯ (wkᴿ {s = s}) ≡ (suc x)
             wkᴿ–def _ = wk-id/` _ _
 
             postulate
-              abc : {{K : Kit k}} (x : S₁ ∋ s) (ϕ : S₁ –[ K ]→ S₂) → 
-                (x &/⋯ ϕ) ≡ (x & ϕ)
+              -- abc₁ : {{K : Kit k}} (x : S₁ ∋ s) (ϕ : S₁ –[ K ]→ S₂) → 
+              --   (x &/⋯ ϕ) ≡ (x & ϕ)
+              -- abc₂ : (x : S₁ ∋ s) (ϕ : S₁ –[ Kˢ ]→ S₂) → 
+              --   (x &/⋯ ϕ) ≡ (x & ϕ)
+              -- abc₃ : {{K : Kit k}} (x : S₁ ∋ s) (ϕ : S₁ –[ K ]→ S₂) → 
+              --   (x & ϕ) ≡ (x &/⋯ ϕ)
+              comp-def₁ : {{K : Kit k}} (x : S₁ ∋ s) (ϕ₂ : S₁ –[ K ]→ S₂) → 
+                x &/⋯ (id[ Kᴿ ] ; ϕ₂) ≡ x &/⋯ ϕ₂ 
+                
+              comp-def₂ : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} 
+                          (x : S₁ ∋ s) (ϕ₂ : S₁ –[ K ]→ S₂) → 
+                x &/⋯ (id[ Kˢ ] ; ϕ₂) ≡ ` x &/⋯ ϕ₂  
 
-              comp-def : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{C : ComposeKit K₁ K₂ K₃}} 
-                          (x : S₁ ∋ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) → 
-                x & (ϕ₁ ; ϕ₂) ≡ (x & ϕ₁) &/⋯ ϕ₂
+              comp-def₃ : {{K : Kit k}} (x : S₁ ∋ s) (ϕ₂ : (s′ ∷ S₁) –[ K ]→ S₂) → 
+                x &/⋯ (wkᴿ ; ϕ₂) ≡ suc x &/⋯ ϕ₂ 
+              
+              comp-def₄ : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₂}} 
+                         (q : S₂ ∋/⊢ᴷ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) → 
+                zero &/⋯ ((q ∙ ϕ₁) ; ϕ₂) ≡ q &/⋯ ϕ₂
+            
+              comp-def₅ : ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₂}} 
+                         (q : S₂ ∋/⊢ᴷ s) (x′ : S₁ ∋ s′) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) → 
+                suc x′ &/⋯ ((q ∙ ϕ₁) ; ϕ₂) ≡ x′ &/⋯ (ϕ₁ ; ϕ₂)
+           
+                
 
             -- wkˢ–def : (x : S₁ ∋ s) → x &/⋯ (wk[ Kˢ ] {s = s}) ≡ ` (suc x)
             -- wkˢ–def _ = wk-id/` _ _
 
             ext₀–def : {{K : Kit k}} (q : S₂ ∋/⊢ᴷ s) (ϕ : S₁ –[ K ]→ S₂) → 
-              zero & (q ∙ ϕ) ≡ q
+              zero &/⋯ (q ∙ ϕ) ≡ q
             ext₀–def _ _ = refl
 
             extₛ–def : ∀ {{K : Kit k}} (q : S₂ ∋/⊢ᴷ s) (x′ : S₁ ∋ s′) (ϕ : S₁ –[ K ]→ S₂) → 
-              suc x′ & (q ∙ ϕ) ≡ x′ & ϕ
+              suc x′ &/⋯ (q ∙ ϕ) ≡ x′ &/⋯ ϕ
             extₛ–def _ _ _ = refl
 
             comp–idₗ : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₂}} 
@@ -737,14 +756,14 @@ module KitsWithSort (
             η–id : (zero {s = s} {S = S}) ∙ wkᴿ ≡ id 
             η–id = ~-ext λ { _ zero → refl ; _ (suc x) → refl }
 
-            -- η–idˢ : (` zero {s = s} {S = S}) ∙ wk ≡ id 
+            -- postulate
+            --   η–idˢ : (` zero {s = s} {S = S}) ∙ wk ≡ id 
             -- η–idˢ = ~-ext λ { _ zero → refl ; _ (suc x) → ⋯-var {{Kᴿ}} _ _ }
           
             η–law : {{K : Kit k}}
-              (ϕ : (s ∷ S₁) –[ K ]→ S₂) → (zero & ϕ) ∙ (wkᴿ ; ϕ) ≡ ϕ
+              (ϕ : (s ∷ S₁) –[ K ]→ S₂) → (zero &/⋯ ϕ) ∙ (wkᴿ ; ϕ) ≡ ϕ
             η–law ϕ = ~-ext λ { _ zero → refl ; _ (suc x) → refl }
-           
-          
+
             -- postulate
             --   η-lawˢ : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C₁ : ComposeKit Kˢ K₂ K₂}} {{C₂ : ComposeKit K₁ K₂ K₂}}
             --     (ϕ : (s ∷ S₁) –[ K₂ ]→ S₂) → ((` zero) &/⋯ ϕ) ∙ (wk {{K₁}} ; ϕ) ≡ ϕ
@@ -767,10 +786,12 @@ module KitsWithSort (
               compositionality : ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{K₄ : Kit k₄}} {{K₅ : Kit k₅}} 
                                     {{C₁ : ComposeKit K₁ K₂ K₃}} {{C₂ : ComposeKit K₃ K₄ K₅}} →
                        (q : S₁ ∋/⊢[ K₁ ] s) (ϕ₁ : S₁ –[ K₂ ]→ S₂) (ϕ₂ : S₂ –[ K₄ ]→ S₃) → 
-                       (q &/⋯ ϕ₁) &/⋯ ϕ₂ ≡ q &/⋯[ K₁ , K₂ ⊔ K₄ , K₅ ] (ϕ₁ ;[ K₂ , K₄ , (K₂ ⊔ K₄) ] ϕ₂)
+                       (q &/⋯ ϕ₁) &/⋯ ϕ₂ ≡ q &/⋯[ K₁ , K₂ ⊔ K₄ , K₅ ] (ϕ₁ ;[ K₂ , K₄ , (K₂ ⊔ K₄) ] ϕ₂) 
 
-              right–id : ∀ {{K₁ : Kit k₁}} {{K : Kit k}} {{C : ComposeKit K₁ K K₁}} (q : S₁ ∋/⊢[ K₁ ] s) →
-                         q &/⋯ id[ K ] ≡ q 
+              right–id : ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₁}} (q : S₁ ∋/⊢[ K₁ ] s) →
+                         q &/⋯ id[ K₂ ] ≡ q 
 -- (t′ &/⋯ (ϕ ↑ type)) [ t &/⋯ ϕ ]
--- (t′ &/⋯ ((id/` zero) ∙ (ϕ ;wk))) &/⋯ (t′ ∙ id) 
 
+-- (t′ &/⋯ (id/` zero) ∙ (ϕ ;wk)) &/⋯ (t′ ∙ id) 
+-- (t′ &/⋯ (zero & idᴷ) ∙ (ϕ ; wkᴿ)) &/⋯ (t′ ∙ id) 
+-- t′ &/⋯  ((zero & idᴷ) ∙ (ϕ ; wkᴿ)  ;   t′ ∙ id)

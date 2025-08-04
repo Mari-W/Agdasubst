@@ -36,69 +36,60 @@ module GenericsWithSort (Sort : Set) where
   open KitsWithSort Sort
 
   module WithDesc (d : Desc) where
-    
-    syn : Syntax
-    syn = record
-      { _⊢_         = Tm d
-      ; `_          = `var
-      ; `-injective = λ { refl → refl } }
- 
-    open Syntax syn hiding (_⊢_; `_; `-injective) public
-   
-    mutual
-      _⋯_ : ∀ {{K : Kit k }} → Tm d S₁ s → S₁ →ᴷ S₂ → Tm d S₂ s
-      (`var x)  ⋯ ϕ = `/id (x & ϕ)
-      (`con e′) ⋯ ϕ = `con (e′ ⋯′ ϕ)
- 
+    module _ where
+      instance syn = mkSyntax (Tm d) `var  λ { refl → refl }
+      open Syntax syn public 
+
+      private _⋯_ : ∀ {{K : Kit k }} → Tm d S₁ s → S₁ →ᴷ S₂ → Tm d S₂ s
       _⋯′_ : ∀ {{K : Kit k }} → ⟦ d′ ⟧ (Tm d) S₁ s → S₁ →ᴷ S₂ → ⟦ d′ ⟧ (Tm d) S₂ s
+
+      (`var x)  ⋯ ϕ = x `⋯ ϕ
+      (`con e′) ⋯ ϕ = `con (e′ ⋯′ ϕ)
       _⋯′_ {d′ = `σ A d′}     (a , D′) ϕ = a , D′ ⋯′ ϕ
       _⋯′_ {d′ = `X S′ M′ d′} (e , e′) ϕ = e ⋯ (ϕ ↑★ S′) , e′ ⋯′ ϕ
       _⋯′_ {d′ = `■ M′}       e        ϕ = e
-   
-   
-    ⋯-var : ∀ {{K : Kit k }} → (x : S₁ ∋ s) (ϕ : S₁ →ᴷ S₂) →
-              `/id (x & ϕ) ≡ `/id (x & ϕ)
-    ⋯-var x ϕ = refl
 
-    mutual
+
       ⋯-id : ∀ {{K : Kit k }} → (t : Tm d S s) →
                (t ⋯ id) ≡ t
-      ⋯-id (`var x) = `⋯-id 
+      ⋯-id′ : ∀ {{K : Kit k}} → (t : ⟦ d′ ⟧ (Tm d) S s) →
+               (t ⋯′ id) ≡ t
+      ⋯-id (`var x) = `⋯-id x
       ⋯-id (`con e) = cong `con (⋯-id′ e)
- 
-      ⋯-id′ : ∀ {{K : Kit k}} {s : Sort} → (t : ⟦ d′ ⟧ (Tm d) S s) →
-              (t ⋯′ id) ≡ t
       ⋯-id′ {d′ = `σ A d′}     (a , D′)      = cong (a ,_) (⋯-id′ D′)
       ⋯-id′ {d′ = `X S′ M′ d′} (e , e′)      = cong₂ _,_ (trans (cong (e ⋯_) (~-ext (id↑★~id S′))) (⋯-id e)) (⋯-id′ e′)
       ⋯-id′ {d′ = `■ M′}       refl          = refl
-       
-    traversal : Traversal
-    traversal = record 
-      { _⋯_ = _⋯_ 
-      ; ⋯-var = ⋯-var 
-      ; ⋯-id  = ⋯-id }
 
-    open Traversal traversal hiding (_⋯_; ⋯-id; ⋯-var)
+      instance traversal = mkTraversal _⋯_ ⋯-id λ x ϕ → refl
+      open Traversal traversal hiding (_⋯_; ⋯-id; ⋯-var) public
 
-
-    mutual
       ⋯-compositionality  : ∀ {s : Sort} {{K₁ : Kit k₁ }} {{K₂ : Kit k₂ }} {{K : Kit k }} {{C : ComposeKit K₁ K₂ K}}
                   (t : Tm d S₁ s) (ϕ₁ : S₁ →ᴷ S₂) (ϕ₂ : S₂ →ᴷ S₃) → 
                   (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ t ⋯ (ϕ₁ ; ϕ₂)
-      ⋯-compositionality (`var x)  ϕ₁ ϕ₂ = `⋯-compositionality x ϕ₁  ϕ₂
-      ⋯-compositionality (`con e′) ϕ₁ ϕ₂ = cong `con (⋯-compositionality′ e′ ϕ₁ ϕ₂)
-      ⋯-compositionality′  : ∀ {s : Sort} {{K₁ : Kit k₁ }} {{K₂ : Kit k₂ }} {{K : Kit k }} {{C : ComposeKit K₁ K₂ K}}
+      ⋯-compositionality′ : ∀ {s : Sort} {{K₁ : Kit k₁ }} {{K₂ : Kit k₂ }} {{K : Kit k }} {{C : ComposeKit K₁ K₂ K}}
                    (t : ⟦ d′ ⟧ (Tm d) S₁ s) (ϕ₁ : S₁ →ᴷ S₂) (ϕ₂ : S₂ →ᴷ S₃) → 
                    (t ⋯′ ϕ₁) ⋯′ ϕ₂ ≡ t ⋯′ (ϕ₁ ; ϕ₂)
+      ⋯-compositionality (`var x)  ϕ₁ ϕ₂ = `⋯-compositionality x ϕ₁ ϕ₂
+      ⋯-compositionality (`con e′) ϕ₁ ϕ₂ = cong `con (⋯-compositionality′ e′ ϕ₁ ϕ₂)
       ⋯-compositionality′ {d′ = `σ A d′}     (a , D′)      ϕ₁ ϕ₂ = cong (a ,_) (⋯-compositionality′ D′ ϕ₁ ϕ₂)
       ⋯-compositionality′ {d′ = `X S′ M′ d′} (e₁ , e₂)     ϕ₁ ϕ₂ = cong₂ _,_ (trans (⋯-compositionality e₁ (ϕ₁ ↑★ S′) (ϕ₂ ↑★ S′))
         (cong (e₁ ⋯_) (sym (~-ext (dist-↑★-; S′ ϕ₁ ϕ₂)))))
         (⋯-compositionality′ e₂ ϕ₁ ϕ₂)
       ⋯-compositionality′ {d′ = `■ M′}       refl          ϕ₁ ϕ₂ = refl
 
-    compose : Compose
-    compose = mkCompose ⋯-compositionality
+      compose : Compose
+      compose = mkCompose ⋯-compositionality 
 
-    open Compose compose hiding (⋯-compositionality)
+      open Compose compose hiding (⋯-compositionality) public
     
-    -- TODO
+    _&_ : {{K : Kit k}} → S₁ ∋ s → S₁ –[ K ]→ S₂ → S₂ ∋/⊢[ K ] s
+    _&_ = _&/⋯_ 
+
+    _⋯_ : {{K : Kit k}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
+    _⋯_ = _&/⋯_ 
+
+    
+
+
+    
+    

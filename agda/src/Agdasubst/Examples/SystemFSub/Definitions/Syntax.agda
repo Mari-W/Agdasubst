@@ -6,12 +6,12 @@ open import Agdasubst.Prelude public
 
 open import Relation.Binary.PropositionalEquality using (refl)
 
-data Sort : ModeIndexed where
-  expr : Sort Bind 
-  type : Sort Bind
-  cstr : Sort Bind
-  kind : Sort NoBind
-  cind : Sort NoBind 
+data Sort : Set where
+  expr : Sort 
+  type : Sort
+  cstr : Sort
+  kind : Sort
+  cind : Sort 
 
 open WithSort Sort public 
 open Meta public
@@ -25,7 +25,7 @@ data _⊢_ : Scoped where
   _•_       : S ⊢ expr → S ⊢ type → S ⊢ expr
   _⇒_       : S ⊢ type → S ⊢ type → S ⊢ type
   `tt       : S ⊢ expr
-  𝟙         : S ⊢ type
+  `⊤         : S ⊢ type
   _∶⊑_      : S ⊢ type → S ⊢ type → S ⊢ cind 
   ★         : S ⊢ kind
   sat       : S ⊢ cstr 
@@ -38,4 +38,4 @@ variable
   ★ᴷ ★ᴷ′                           : S ⊢ kind
 
 instance syn = mkSyntax _⊢_  `_  λ { refl → refl }
-open Syntax syn hiding (_⊢_; `_) public
+open Syntax syn hiding (_⊢_; `_) public 

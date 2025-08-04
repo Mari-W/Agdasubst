@@ -92,12 +92,12 @@ module KitsWithSort (
           wk = id ;wk 
 
           _∙_ : S₂ ∋/⊢ᴷ s → S₁ →ᴷ S₂ → (s ∷ S₁) →ᴷ S₂
-          (q ∙ ϕ) _ zero     = q
-          (q ∙ ϕ) _ (suc x)  = ϕ _ x 
+          (x/t ∙ ϕ) _ zero     = x/t
+          (x/t ∙ ϕ) _ (suc x)  = ϕ _ x 
         
         
         ⦅_⦆ : S ∋/⊢ᴷ s → (s ∷ S) →ᴷ S
-        ⦅ q ⦆ = q ∙ id
+        ⦅ x/t ⦆ = x/t ∙ id
 
         _↑_ : S₁ →ᴷ S₂ → ∀ s → (s ∷ S₁) →ᴷ (s ∷ S₂)
         ϕ ↑ s = (id/` zero) ∙ (ϕ ;wk)
@@ -147,15 +147,16 @@ module KitsWithSort (
       id[ K ] = Kit.id K 
       --! }
 
-      open Kit {{...}} public hiding (wk)
+      open Kit {{...}} public hiding (wk; _&_)
+      open Kit {{...}} using (_&_)
 
       _`⋯_ : ∀ {{K : Kit k}} → S₁ ∋ s → S₁ →ᴷ S₂ → S₂ ⊢ s 
       x `⋯ ϕ = `/id (x & ϕ) 
 
       opaque 
         unfolding kit_ops
-        `⋯-id : ∀ {{K : Kit k}} → (x `⋯ id) ≡ (` x)
-        `⋯-id {x = x} = `/`-is-` x
+        `⋯-id : ∀ {{K : Kit k}} (x : S ∋ s) → (x `⋯ id) ≡ (` x)
+        `⋯-id x = `/`-is-` x
 
       --! Traveral {
       record Traversal : Set₁ where
@@ -187,7 +188,7 @@ module KitsWithSort (
             } 
         
         open Kit Kᴿ public using () renaming 
-          (_→ᴷ_ to _→ᴿ_; _&_ to _&ᴿ_; _∙_ to _∙ᴿ_; id to idᴿ; wk to wkᴿ; _↑_ to _↑ᴿ_; _↑★_ to _↑ᴿ★_)
+          (_→ᴷ_ to _→ᴿ_; _&_ to _&ᴿ_; _∙_ to _∙ᴿ_; id to idᴿ; wk to wk; ⦅_⦆ to ⦅_⦆ᴿ; _↑_ to _↑ᴿ_; _↑★_ to _↑ᴿ★_)
 
         _⋯ᴿ_ : S₁ ⊢ s → S₁ →ᴿ S₂ → S₂ ⊢ s
         t ⋯ᴿ ρ = t ⋯ ρ
@@ -196,8 +197,8 @@ module KitsWithSort (
         --   unfolding kit_ops Kᴿ 
         --   private 
         --     Kˢ-wk-id/` : ∀ {S : Scope} {s} (s′) (x : S ∋ s) →
-        --                 (` x) ⋯ wkᴿ {s = s′} ≡ (` suc x)
-        --     Kˢ-wk-id/` = λ s′ x → ⋯-var x wkᴿ
+        --                 (` x) ⋯ wk {s = s′} ≡ (` suc x)
+        --     Kˢ-wk-id/` = λ s′ x → ⋯-var x wk
 
         --! InstanceSub
         instance opaque
@@ -210,16 +211,16 @@ module KitsWithSort (
           Kˢ = record
             { K-id/`           = `_
             ; K-`/id           = λ t → t
-            ; K-wk             = λ s′ t → t ⋯ wkᴿ
+            ; K-wk             = λ s′ t → t ⋯ wk
             ; `/`-is-`        = λ x → refl
             ; id/`-injective  = `-injective
             ; `/id-injective  = λ eq → eq 
-            ; wk-id/`         = λ s′ x → ⋯-var x wkᴿ
+            ; wk-id/`         = λ s′ x → ⋯-var x wk
             ; lock            = unlock
             }
 
         open Kit Kˢ public using () renaming 
-          (_→ᴷ_ to _→ˢ_; _&_ to _&ˢ_; _∙_ to _∙ˢ_; id to idˢ; _↑_ to _↑ˢ_; _↑★_ to _↑ˢ★_)
+          (_→ᴷ_ to _→ˢ_; _&_ to _&ˢ_; _∙_ to _∙ˢ_; id to idˢ; ⦅_⦆ to ⦅_⦆ˢ; _↑_ to _↑ˢ_; _↑★_ to _↑ˢ★_)
 
         _⋯ˢ_ : S₁ ⊢ s → S₁ →ˢ S₂ → S₂ ⊢ s
         t ⋯ˢ σ = t ⋯ σ 
@@ -345,17 +346,17 @@ module KitsWithSort (
         record WkKit (K : Kit k): Set₁ where 
           private instance _ = K
           field
-            wk-`/id  : ∀ s (q : S ∋/⊢[ K ] s′) → `/id q ⋯ᴿ wkᴿ ≡ `/id (K-wk s q)
+            wk-`/id  : ∀ s (x/t : S ∋/⊢[ K ] s′) → `/id x/t ⋯ᴿ wk ≡ `/id (K-wk s x/t)
 
         open WkKit {{...}} public
 
         opaque
           unfolding kits
           Wᴿ : WkKit Kᴿ
-          Wᴿ = record { wk-`/id =  λ s′ x → ⋯-var x wkᴿ }
+          Wᴿ = record { wk-`/id =  λ s′ x → ⋯-var x wk }
 
           Wˢ : WkKit Kˢ
-          Wˢ = record { wk-`/id = λ s q → refl } 
+          Wˢ = record { wk-`/id = λ s x/t → refl } 
         
         instance
           wkKit : {{K : Kit k}} → WkKit K
@@ -372,10 +373,10 @@ module KitsWithSort (
           field
             _&/⋯′_    : S₁ ∋/⊢[ K₁ ] s → S₁ –[ K₂ ]→ S₂ → S₂ ∋/⊢[ K₃ ] s 
            
-            &/⋯-⋯     : (q : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
-                        `/id q ⋯ ϕ ≡ `/id (q &/⋯′ ϕ)
-            &/⋯-wk-↑ : (q : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
-                       K-wk s′ (q &/⋯′ ϕ) ≡ K-wk s′ q &/⋯′ (ϕ ↑ s′) 
+            &/⋯-⋯     : (x/t : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
+                        `/id x/t ⋯ ϕ ≡ `/id (x/t &/⋯′ ϕ)
+            &/⋯-wk-↑ : (x/t : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
+                       K-wk s′ (x/t &/⋯′ ϕ) ≡ K-wk s′ x/t &/⋯′ (ϕ ↑ s′) 
             lock      : Lock
 
           opaque
@@ -454,7 +455,7 @@ module KitsWithSort (
 
         _&/⋯[_]_  : ∀ {K₁ : Kit k₁} {K₂ : Kit k₂} {K₃ : Kit k₃} →
                   S₁ ∋/⊢[ K₁ ] s → ComposeKit K₁ K₂ K₃ → S₁ –[ K₂ ]→ S₂ → S₂ ∋/⊢[ K₃ ] s
-        _&/⋯[_]_ {K₁} {K₂} {K₃} q C ϕ₂ = ComposeKit._&/⋯_ {K₁} {K₂} {K₃} C q ϕ₂   
+        _&/⋯[_]_ {K₁} {K₂} {K₃} x/t C ϕ₂ = ComposeKit._&/⋯_ {K₁} {K₂} {K₃} C x/t ϕ₂   
 
         opaque
           unfolding comp_ops
@@ -481,24 +482,24 @@ module KitsWithSort (
             ↑-wk  : ∀ {{K : Kit k}}
                     {{C₁ : ComposeKit K Kᴿ K}} {{C₂ : ComposeKit Kᴿ K K}} 
                     (ϕ : S₁ –[ K ]→ S₂) s → 
-                    (ϕ ; wkᴿ) ~ (wkᴿ ; (ϕ ↑ s))
+                    (ϕ ; wk) ~ (wk ; (ϕ ↑ s))
             ↑-wk {S₁} {S₂} {{K}} ϕ s sx x =  `/id-injective (
-              `/id ((ϕ ; wkᴿ) sx x)        ≡⟨⟩
-              `/id (x & ϕ &/⋯ wkᴿ)         ≡⟨ sym (&/⋯-⋯ (x & ϕ) (wkᴿ)) ⟩
-              `/id (`/id (x & ϕ) ⋯ wkᴿ)    ≡⟨ wk-`/id s (x & ϕ) ⟩
+              `/id ((ϕ ; wk) sx x)        ≡⟨⟩
+              `/id (x & ϕ &/⋯ wk)         ≡⟨ sym (&/⋯-⋯ (x & ϕ) (wk)) ⟩
+              `/id (`/id (x & ϕ) ⋯ wk)    ≡⟨ wk-`/id s (x & ϕ) ⟩
               `/id (suc x & (ϕ ↑ s))       ≡⟨ sym (&/⋯-& (suc x) (ϕ ↑ s)) ⟩
               `/id (suc x &/⋯ (ϕ ↑ s))     ≡⟨⟩
-              `/id (x & wkᴿ &/⋯ (ϕ ↑ s))   ≡⟨⟩
-              `/id ((wkᴿ ; (ϕ ↑ s)) sx x)  ∎) 
+              `/id (x & wk &/⋯ (ϕ ↑ s))   ≡⟨⟩
+              `/id ((wk ; (ϕ ↑ s)) sx x)  ∎) 
             
             ⋯-↑-wk  : ∀ {{K : Kit k}} {{C₁ : ComposeKit K Kᴿ K}} {{C₂ : ComposeKit Kᴿ K K}} 
                       (t : S₁ ⊢ s) (ϕ : S₁ –[ K ]→ S₂) s′ → 
-                      t ⋯ ϕ ⋯ wkᴿ ≡ t ⋯ wkᴿ ⋯ (ϕ ↑ s′)
+                      t ⋯ ϕ ⋯ wk ≡ t ⋯ wk ⋯ (ϕ ↑ s′)
             ⋯-↑-wk t ϕ s =
-              t ⋯ ϕ ⋯ wkᴿ           ≡⟨ ⋯-compositionality t ϕ (wkᴿ) ⟩
-              t ⋯ (ϕ ; wkᴿ)         ≡⟨ cong (t ⋯_) (~-ext (↑-wk ϕ s)) ⟩
-              t ⋯ (wkᴿ ; (ϕ ↑ s))   ≡⟨ sym (⋯-compositionality t (wkᴿ) (ϕ ↑ s)) ⟩  
-              t ⋯ wkᴿ ⋯ (ϕ ↑ s)    ∎
+              t ⋯ ϕ ⋯ wk           ≡⟨ ⋯-compositionality t ϕ (wk) ⟩
+              t ⋯ (ϕ ; wk)         ≡⟨ cong (t ⋯_) (~-ext (↑-wk ϕ s)) ⟩
+              t ⋯ (wk ; (ϕ ↑ s))   ≡⟨ sym (⋯-compositionality t (wk) (ϕ ↑ s)) ⟩  
+              t ⋯ wk ⋯ (ϕ ↑ s)    ∎
 
           instance opaque 
             unfolding comp_ops
@@ -541,7 +542,7 @@ module KitsWithSort (
             impossible–Cᴷˢᴿ : {{K : Kit k}} → ¬ ComposeKit K Kˢ Kᴿ
             impossible–Cᴿᴿˢ : ¬ ComposeKit Kᴿ Kᴿ Kˢ  
 
-          opaque
+          private opaque
             -- SAFETY: 
             --   For each usage of this definition it must be checked, that no 
             --   invalid ComposeKit (e.g. ComposeKit Kᴿ Kᴿ Kˢ) is created.
@@ -588,114 +589,111 @@ module KitsWithSort (
           K₁ ;ᶜ K₂ = K₁ , K₂ , (K₁ ⊔ K₂)
 
           -- SAFETY: By induction on K and uniqueness of Kits ∎
-          CK–defR : {{K : Kit k}} → Kᴿ , K , K ≡ Cᴿ {{K = K}}
-          CK–defR {{K}} = unique–Cᴿ {{K = K}} (Kᴿ , K , K)
+          C–defᴿ : {{K : Kit k}} → Kᴿ , K , K ≡ Cᴿ {{K = K}}
+          C–defᴿ {{K}} = unique–Cᴿ {{K = K}} (Kᴿ , K , K)
 
           -- SAFETY: By induction on K and uniqueness of Kits ∎
-          CK–defS : {{K : Kit k}} → Kˢ , K , Kˢ ≡ Cˢ {{K = K}} {{C = K , Kᴿ , K}} 
-          CK–defS {{K}} = unique–Cˢ {{K = K}} {{C′ = K , Kᴿ , K}} (Kˢ , K , Kˢ)
+          C–defˢ : {{K : Kit k}} → Kˢ , K , Kˢ ≡ Cˢ {{K = K}} {{C = K , Kᴿ , K}} 
+          C–defˢ {{K}} = unique–Cˢ {{K = K}} {{C′ = K , Kᴿ , K}} (Kˢ , K , Kˢ)
 
-          {-# REWRITE CK–defR CK–defS #-} 
-          
+          {-# REWRITE C–defᴿ C–defˢ #-} 
+
           weaken : S ⊢ s → (s′ ∷ S) ⊢ s
-          weaken t = t &/⋯ wkᴿ
+          weaken t = t &/⋯ wk
 
           _[_] : (s′ ∷ S) ⊢ s → S ⊢ s′ → S ⊢ s
           t [ t′ ] = t &/⋯ (t′ ∙ id) 
 
-          wk : {{K : Kit k}} → S –[ K ]→ (s ∷ S)
-          wk = id ; wkᴿ
-
           opaque
-            unfolding lib 
+            unfolding lib
 
             postulate
+              compositionality–safe : ∀  {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{K₄ : Kit k₄}} 
+                                    {{C₁ : ComposeKit K₁ K₂ K₃}} {{C₂ : ComposeKit K₃ K₄ Kˢ}} →
+                       (x/t : S₁ ∋/⊢[ K₁ ] s) (ϕ₁ : S₁ –[ K₂ ]→ S₂) (ϕ₂ : S₂ –[ K₄ ]→ S₃) → 
+                       (x/t &/⋯ ϕ₁) &/⋯ ϕ₂ ≡ x/t &/⋯[ K₁ , K₂ ⊔ K₄ , Kˢ ] (ϕ₁ ;[ K₂ , K₄ , (K₂ ⊔ K₄) ] ϕ₂)
+
               compositionality : ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{K₄ : Kit k₄}} {{K₅ : Kit k₅}} 
                                     {{C₁ : ComposeKit K₁ K₂ K₃}} {{C₂ : ComposeKit K₃ K₄ K₅}} →
-                       (q : S₁ ∋/⊢[ K₁ ] s) (ϕ₁ : S₁ –[ K₂ ]→ S₂) (ϕ₂ : S₂ –[ K₄ ]→ S₃) → 
-                       (q &/⋯ ϕ₁) &/⋯ ϕ₂ ≡ q &/⋯[ K₁ , K₂ ⊔ K₄ , K₅ ] (ϕ₁ ;[ K₂ , K₄ , (K₂ ⊔ K₄) ] ϕ₂) 
+                       (x/t : S₁ ∋/⊢[ K₁ ] s) (ϕ₁ : S₁ –[ K₂ ]→ S₂) (ϕ₂ : S₂ –[ K₄ ]→ S₃) → 
+                       (x/t &/⋯ ϕ₁) &/⋯ ϕ₂ ≡ x/t &/⋯[ K₁ , K₂ ⊔ K₄ , K₅ ] (ϕ₁ ;[ K₂ , K₄ , (K₂ ⊔ K₄) ] ϕ₂) 
 
-              right–id : ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₁}} (q : S₁ ∋/⊢[ K₁ ] s) →
-                         q &/⋯ id[ K₂ ] ≡ q 
-
+              right–id : ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₁}} (x/t : S₁ ∋/⊢[ K₁ ] s) →
+                         x/t &/⋯ id[ K₂ ] ≡ x/t 
  
             id`–def : ∀ {{K : Kit k}} (x : S ∋ s) → 
               id/` x ≡ x &/⋯ (id {{K}})
             id`–def x = refl 
  
-            `id–def : ∀ {{K : Kit k}} (q : S ∋/⊢[ K ] s) → 
+            `id–def : ∀ {{K : Kit k}} (x/t : S ∋/⊢[ K ] s) → 
               -- SAFETY: By induction on K and uniqueness of Kits ∎
-              `/id q ≡ q &/⋯[ K , Kˢ , Kˢ ] id {{Kˢ}} 
-            `id–def {Ren} {{K}} q rewrite unique–K K | CK–defR {{Kˢ}} = refl
-            `id–def {Sub} {{K}} q rewrite unique–K K | CK–defS {{Kˢ}} = sym (right–id {{Kˢ}} {{Kˢ}} {{Cˢˢ}} _)
+              `/id x/t ≡ x/t &/⋯[ K , Kˢ , Kˢ ] id {{Kˢ}} 
+            `id–def {Ren} {{K}} x/t rewrite unique–K K | C–defᴿ {{Kˢ}} = refl
+            `id–def {Sub} {{K}} x/t rewrite unique–K K | C–defˢ {{Kˢ}} = sym (right–id {{Kˢ}} {{Kˢ}} {{Cˢˢ}} _)
             
-            ;wk–def : ∀ {{K : Kit k}} (ϕ : S₁ –[ K ]→ S₂) → 
+            ;wk–def : ∀ {{K : Kit k}} (ϕ : S₁ –[ K ]→ S₂) →  
               -- SAFETY: By induction on K and uniqueness of Kits ∎
-              ϕ ;wk ≡ ϕ ;[ K , Kᴿ , K ] (wkᴿ {s = s})
-            ;wk–def {Ren} {{K}} ϕ rewrite unique–K K | CK–defR {{Kᴿ}} = refl 
-            ;wk–def {Sub} {{K}} ϕ rewrite unique–K K | CK–defS {{Kᴿ}} = refl
-            
-            idᴿ–def : ∀ (x : S₁ ∋ s) → x &/⋯ id[ Kᴿ ] ≡ x
-            idᴿ–def x = refl
+              ϕ ;wk ≡ ϕ ;[ K , Kᴿ , K ] (wk {s = s})
+            ;wk–def {Ren} {{K}} ϕ rewrite unique–K K | C–defᴿ {{Kᴿ}} = refl 
+            ;wk–def {Sub} {{K}} ϕ rewrite unique–K K | C–defˢ {{Kᴿ}} = refl
 
             idˢ–def : ∀ (x : S₁ ∋ s) → x &/⋯ id[ Kˢ ] ≡ ` x
             idˢ–def x = refl
 
-            wkᴿ–def : (x : S₁ ∋ s) → x &/⋯ (wkᴿ {s = s}) ≡ (suc x)
-            wkᴿ–def _ = wk-id/` _ _
+            wk–def : (x : S₁ ∋ s) → x &/⋯ (wk {s = s′}) ≡ (suc x)
+            wk–def _ = wk-id/` _ _
 
-            ext₀–def : {{K : Kit k}} (q : S₂ ∋/⊢ᴷ s) (ϕ : S₁ –[ K ]→ S₂) → 
-              zero &/⋯ (q ∙ ϕ) ≡ q
+            ext₀–def : {{K : Kit k}} (x/t : S₂ ∋/⊢ᴷ s) (ϕ : S₁ –[ K ]→ S₂) → 
+              zero &/⋯ (x/t ∙ ϕ) ≡ x/t
             ext₀–def _ _ = refl
 
-            extₛ–def : ∀ {{K : Kit k}} (q : S₂ ∋/⊢ᴷ s) (x′ : S₁ ∋ s′) (ϕ : S₁ –[ K ]→ S₂) → 
-              suc x′ &/⋯ (q ∙ ϕ) ≡ x′ &/⋯ ϕ
+            extₛ–def : ∀ {{K : Kit k}} (x/t : S₂ ∋/⊢ᴷ s) (x′ : S₁ ∋ s′) (ϕ : S₁ –[ K ]→ S₂) → 
+              suc x′ &/⋯ (x/t ∙ ϕ) ≡ x′ &/⋯ ϕ
             extₛ–def _ _ _ = refl
 
             comp–def : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{K₄ : Kit k₄}} {{K₅ : Kit k₅}} 
                        {{C₁ : ComposeKit K₁ K₂ K₃}} {{C₂ : ComposeKit K₃ K₄ K₅}}
                       (x : S₁ ∋ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) → 
                       x &/⋯ (ϕ₁ ; ϕ₂) ≡ (x &/⋯ ϕ₁) &/⋯ ϕ₂
-            comp–def _ _ _ = refl
+            comp–def _ _ _ = refl 
 
-            comp–idᴿ–def : {{K : Kit k}} 
-                        (x : S₁ ∋ s) (ϕ₂ : S₁ –[ K ]→ S₂) → 
-              x &/⋯ (id[ Kᴿ ] ; ϕ₂) ≡ x &/⋯ ϕ₂
-            comp–idᴿ–def _ _ = refl 
-                
-            comp–idˢ–def : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} 
+            comp–def–safe : (x : S₁ ∋ s) (ϕ₁ : S₁ –[ Kᴿ ]→ S₂) (ϕ₂ : S₂ –[ Kᴿ ]→ S₃) → 
+                      x &/⋯ (ϕ₁ ; ϕ₂) ≡ (x &/⋯ ϕ₁) &/⋯ ϕ₂
+            comp–def–safe _ _ _ = refl
+
+            compₗ–idˢ–def : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} 
                         (x : S₁ ∋ s) (ϕ₂ : S₁ –[ K ]→ S₂) → 
               x &/⋯ (id[ Kˢ ] ; ϕ₂) ≡ ` x &/⋯ ϕ₂  
-            comp–idˢ–def _ _ = refl
+            compₗ–idˢ–def _ _ = refl
 
-            comp–wkᴿ–def : {{K : Kit k}} (x : S₁ ∋ s) (ϕ₂ : (s′ ∷ S₁) –[ K ]→ S₂) → 
-              x &/⋯ (wkᴿ ; ϕ₂) ≡ suc x &/⋯ ϕ₂ 
-            comp–wkᴿ–def _ _ = refl 
+            compₗ–wk–def : {{K : Kit k}} (x : S₁ ∋ s) (ϕ₂ : (s′ ∷ S₁) –[ K ]→ S₂) → 
+              x &/⋯ (wk ; ϕ₂) ≡ suc x &/⋯ ϕ₂ 
+            compₗ–wk–def _ _ = refl 
 
-            comp–ext₀–def  : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{C : ComposeKit K₁ K₂ K₃}} 
-                       (q : S₂ ∋/⊢ᴷ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) → 
-              zero &/⋯ ((q ∙ ϕ₁) ; ϕ₂) ≡ q &/⋯ ϕ₂
-            comp–ext₀–def _ _ _ = refl
+            compₗ–ext₀–def  : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{C : ComposeKit K₁ K₂ K₃}} 
+                       (x/t : S₂ ∋/⊢ᴷ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) → 
+              zero &/⋯ ((x/t ∙ ϕ₁) ; ϕ₂) ≡ x/t &/⋯ ϕ₂
+            compₗ–ext₀–def _ _ _ = refl
             
-            comp–extₛ–def : ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{C : ComposeKit K₁ K₂ K₃}} 
-                       (q : S₂ ∋/⊢ᴷ s) (x′ : S₁ ∋ s′) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) → 
-              suc x′ &/⋯ ((q ∙ ϕ₁) ; ϕ₂) ≡ x′ &/⋯ (ϕ₁ ; ϕ₂)
-            comp–extₛ–def _ _ _ _ = refl
+            compₗ–extₛ–def : ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{C : ComposeKit K₁ K₂ K₃}} 
+                       (x/t : S₂ ∋/⊢ᴷ s) (x′ : S₁ ∋ s′) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) → 
+              suc x′ &/⋯ ((x/t ∙ ϕ₁) ; ϕ₂) ≡ x′ &/⋯ (ϕ₁ ; ϕ₂)
+            compₗ–extₛ–def _ _ _ _ = refl
                 
-            comp–idₗ : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₂}} 
+            compₗ–id : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₂}} 
               (ϕ : S₁ –[ K₂ ]→ S₂) → id {{K₁}} ; ϕ ≡ ϕ 
-            comp–idₗ {Ren} {k₂} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique–C {{K₁}} C | unique–K K₁ | CK–defR {{K₂}}
+            compₗ–id {Ren} {k₂} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique–C {{K₁}} C | unique–K K₁ | C–defᴿ {{K₂}}
               =  refl
-            comp–idₗ {Sub} {Ren} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique–K K₁ | unique–K K₂ = ⊥-elim (impossible–Cˢᴷᴿ {{Kᴿ}} C)
-            comp–idₗ {Sub} {Sub} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique–C {{K₁}} {{K₂}} {{K₂}} C | unique–K K₁ | unique–K K₂ | CK–defS {{Kˢ}} 
+            compₗ–id {Sub} {Ren} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique–K K₁ | unique–K K₂ = ⊥-elim (impossible–Cˢᴷᴿ {{Kᴿ}} C)
+            compₗ–id {Sub} {Sub} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique–C {{K₁}} {{K₂}} {{K₂}} C | unique–K K₁ | unique–K K₂ | C–defˢ {{Kˢ}} 
               = ~-ext {{Kˢ}} λ _ x → ⋯-var {{Kˢ}} _ _  
 
-            comp–idᵣ : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₁}} 
-              (ϕ : S₁ –[ K₁ ]→ S₂) → ϕ ; id {{K₂}} ≡ ϕ
-            comp–idᵣ {Ren} {Ren} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique–C {{K₁}} {{K₂}} {{K₁}} C | unique–K K₁ | unique–K K₂ | CK–defR {{Kᴿ}}  
+            compᵣ–id : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{C : ComposeKit K₁ K₂ K₁}} 
+              (ϕ : S₁ –[ K₁ ]→ S₂) → ϕ ; id {{K₂}} ≡ ϕ 
+            compᵣ–id {Ren} {Ren} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique–C {{K₁}} {{K₂}} {{K₁}} C | unique–K K₁ | unique–K K₂ | C–defᴿ {{Kᴿ}}  
               =  refl
-            comp–idᵣ {Ren} {Sub} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique–K K₁ | unique–K K₂ = ⊥-elim (impossible–Cᴷˢᴿ {{Kᴿ}} C)
-            comp–idᵣ {Sub} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique–C {{K₁}} {{K₂}} {{K₁}} C | unique–K K₁ | CK–defS {{K₂}} 
+            compᵣ–id {Ren} {Sub} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique–K K₁ | unique–K K₂ = ⊥-elim (impossible–Cᴷˢᴿ {{Kᴿ}} C)
+            compᵣ–id {Sub} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique–C {{K₁}} {{K₂}} {{K₁}} C | unique–K K₁ | C–defˢ {{K₂}} 
               = ~-ext {{Kˢ}} λ _ x → ⋯-id {{K₂}} _
 
             -- the idiomatic way to transform a ren into a sub is to compose id sub on the right. 
@@ -703,10 +701,20 @@ module KitsWithSort (
             norm–idˢ : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} 
               -- SAFETY: By induction on K and uniqueness of Kits ∎
               (ϕ : S₁ –[ K ]→ S₂) → id {{Kˢ}} ; ϕ ≡ (ϕ ;[ K , Kˢ , Kˢ ] id {{Kˢ}}) 
-            norm–idˢ {Ren} {{K}} ϕ rewrite unique–K K | CK–defR {{Kˢ}} = 
+            norm–idˢ {Ren} {{K}} ϕ rewrite unique–K K | C–defᴿ {{Kˢ}} = 
               ~-ext {{Kˢ}} λ _ x → ⋯-var {{Kᴿ}} _ _
-            norm–idˢ {Sub} {{K}} ϕ rewrite unique–K K | CK–defS {{Kˢ}} = 
-              ~-ext {{Kˢ}} λ _ x → _ ≡⟨ ⋯-var {{Kˢ}} _ _ ⟩ _ ≡⟨ sym (⋯-id {{Kˢ}} _) ⟩ _ ∎ 
+            norm–idˢ {Sub} {{K}} ϕ rewrite unique–K K | C–defˢ {{Kˢ}} = 
+              ~-ext {{Kˢ}} λ _ x → _ ≡⟨ ⋯-var {{Kˢ}} _ _ ⟩ _ ≡⟨ sym (⋯-id {{Kˢ}} _) ⟩ _ ∎  
+            
+            -- postulate
+            --   norm-wk : (ϕ : S₁ –[ Kᴿ ]→ S₂) → (ϕ ; wk) ≡ wk ; (ϕ ↑ s)
+            -- norm–idˢ : {{K : Kit k}} {{C : ComposeKit K Kˢ Kˢ}} 
+            --   -- SAFETY: By induction on K and uniqueness of Kits ∎
+            --   (ϕ : S₁ –[ K ]→ S₂) → (ϕ ; id {{Kˢ}}) ≡ id {{Kˢ}} ;[ Kˢ , K , Kˢ ] ϕ
+            -- norm–idˢ {Ren} {{K}} {{C}} ϕ rewrite unique–C {{K}} C | unique–K K | C–defᴿ {{Kˢ}} | C–defˢ {{Kᴿ}} = 
+            --   ~-ext {{Kˢ}} λ _ x → sym (⋯-var {{Kᴿ}} _ _) -- ⋯-var {{Kᴿ}} _ _
+            -- norm–idˢ {Sub} {{K}} {{C}} ϕ rewrite unique–C {{K}} {{Kˢ}} {{Kˢ}} C | unique–K K | C–defˢ {{Kˢ}} = 
+            --   ~-ext {{Kˢ}} λ _ x → sym (_ ≡⟨ ⋯-var {{Kˢ}} _ _ ⟩ _ ≡⟨ sym (⋯-id {{Kˢ}} _) ⟩ _ ∎)
 
             associativity : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{K₄ : Kit k₄}} {{K₅ : Kit k₅}} 
                             {{C₁ : ComposeKit K₁ K₂ K₃}} {{C₂ : ComposeKit K₃ K₄ K₅}}
@@ -729,45 +737,61 @@ module KitsWithSort (
               rewrite unique–C {{K₁}} {{K₂}} {{K₃}} C₁ | unique–K K₁ | unique–K K₃ = ⊥-elim (impossible–Cˢᴷᴿ C₁)
             associativity {Ren} {Ren} {Ren} {Ren} {Ren} {{K₁}} {{K₂}} {{K₃}} {{K₄}} {{K₅}} {{C₁}} {{C₂}} ϕ₁ ϕ₂ ϕ₃ 
               -- SAFETY: K₁ , (K₂ ⊔ K₄) , K₅ ≡ Kᴿ , Kᴿ , Kᴿ and K₂ , K₄ , (K₂ ⊔ K₄) = Kᴿ , Kᴿ , Kᴿ ∎
-              rewrite unique–C {{K₁}} {{K₂}} {{K₃}} C₁ | unique–C {{K₃}} {{K₄}} {{K₅}} C₂ | unique–K K₁ | unique–K K₂ | unique–K K₃ | unique–K K₄ | unique–K K₅ | CK–defR {{Kᴿ}} = refl
+              rewrite unique–C {{K₁}} {{K₂}} {{K₃}} C₁ | unique–C {{K₃}} {{K₄}} {{K₅}} C₂ | unique–K K₁ | unique–K K₂ | unique–K K₃ | unique–K K₄ | unique–K K₅ | C–defᴿ {{Kᴿ}} = refl
             associativity {Ren} {Ren} {Ren} {Sub} {Sub} {{K₁}} {{K₂}} {{K₃}} {{K₄}} {{K₅}} {{C₁}} {{C₂}} ϕ₁ ϕ₂ ϕ₃ 
               -- SAFETY: K₁ , (K₂ ⊔ K₄) , K₅ ≡ Kᴿ , Kˢ , Kˢ and K₂ , K₄ , (K₂ ⊔ K₄) = Kᴿ , Kˢ , Kˢ ∎
-              rewrite unique–C {{K₁}} {{K₂}} {{K₃}} C₁ | unique–C {{K₃}} {{K₄}} {{K₅}} C₂ | unique–K K₁ | unique–K K₂ | unique–K K₃ | unique–K K₄ | unique–K K₅ | CK–defR {{Kᴿ}} | CK–defR {{Kˢ}} = refl
+              rewrite unique–C {{K₁}} {{K₂}} {{K₃}} C₁ | unique–C {{K₃}} {{K₄}} {{K₅}} C₂ | unique–K K₁ | unique–K K₂ | unique–K K₃ | unique–K K₄ | unique–K K₅ | C–defᴿ {{Kᴿ}} | C–defᴿ {{Kˢ}} = refl
             associativity {Ren} {Sub} {Sub} {Ren} {Sub} {{K₁}} {{K₂}} {{K₃}} {{K₄}} {{K₅}} {{C₁}} {{C₂}} ϕ₁ ϕ₂ ϕ₃ 
               -- SAFETY: K₁ , (K₂ ⊔ K₄) , K₅ ≡ Kᴿ , Kˢ , Kˢ and K₂ , K₄ , (K₂ ⊔ K₄) = Kˢ , Kˢ , Kˢ ∎
-              rewrite unique–C {{K₁}} {{K₂}} {{K₃}} C₁ | unique–C {{K₃}} {{K₄}} {{K₅}} C₂ | unique–K K₁ | unique–K K₂ | unique–K K₃ | unique–K K₄ | unique–K K₅ | CK–defR {{Kˢ}} | CK–defS {{Kᴿ}} = refl
+              rewrite unique–C {{K₁}} {{K₂}} {{K₃}} C₁ | unique–C {{K₃}} {{K₄}} {{K₅}} C₂ | unique–K K₁ | unique–K K₂ | unique–K K₃ | unique–K K₄ | unique–K K₅ | C–defᴿ {{Kˢ}} | C–defˢ {{Kᴿ}} = refl
             associativity {Ren} {Sub} {Sub} {Sub} {Sub} {{K₁}} {{K₂}} {{K₃}} {{K₄}} {{K₅}} {{C₁}} {{C₂}} ϕ₁ ϕ₂ ϕ₃ 
               -- SAFETY: K₁ , (K₂ ⊔ K₄) , K₅ ≡ Kᴿ , Kˢ , Kˢ and K₂ , K₄ , (K₂ ⊔ K₄) = Kˢ , Kˢ , Kˢ ∎
-              rewrite unique–C {{K₁}} {{K₂}} {{K₃}} C₁ | unique–C {{K₃}} {{K₄}} {{K₅}} C₂ | unique–K K₁ | unique–K K₂ | unique–K K₃ | unique–K K₄ | unique–K K₅ | CK–defR {{Kˢ}} | CK–defS {{Kˢ}} = refl
+              rewrite unique–C {{K₁}} {{K₂}} {{K₃}} C₁ | unique–C {{K₃}} {{K₄}} {{K₅}} C₂ | unique–K K₁ | unique–K K₂ | unique–K K₃ | unique–K K₄ | unique–K K₅ | C–defᴿ {{Kˢ}} | C–defˢ {{Kˢ}} = refl
             associativity {Sub} {Ren} {Sub} {Ren} {Sub} {{K₁}} {{K₂}} {{K₃}} {{K₄}} {{K₅}} {{C₁}} {{C₂}} ϕ₁ ϕ₂ ϕ₃ 
               -- SAFETY: K₁ , (K₂ ⊔ K₄) , K₅ ≡ Kˢ , Kᴿ , Kˢ and K₂ , K₄ , (K₂ ⊔ K₄) = Kᴿ , Kᴿ , Kᴿ ∎
-              rewrite unique–C {{K₁}} {{K₂}} {{K₃}} C₁ | unique–C {{K₃}} {{K₄}} {{K₅}} C₂ | unique–K K₁ | unique–K K₂ | unique–K K₃ | unique–K K₄ | unique–K K₅ | CK–defS {{Kᴿ}} | CK–defR {{Kᴿ}}
+              rewrite unique–C {{K₁}} {{K₂}} {{K₃}} C₁ | unique–C {{K₃}} {{K₄}} {{K₅}} C₂ | unique–K K₁ | unique–K K₂ | unique–K K₃ | unique–K K₄ | unique–K K₅ | C–defˢ {{Kᴿ}} | C–defᴿ {{Kᴿ}}
               = ~-ext {{Kˢ}} λ s x →  ⋯-compositionality {{Kᴿ}} {{Kᴿ}} {{Kᴿ}} {{Cᴿᴿ}} _ _ _ 
             associativity {Sub} {Ren} {Sub} {Sub} {Sub} {{K₁}} {{K₂}} {{K₃}} {{K₄}} {{K₅}} {{C₁}} {{C₂}} ϕ₁ ϕ₂ ϕ₃ 
               -- SAFETY: K₁ , (K₂ ⊔ K₄) , K₅ ≡ Kˢ , Kˢ , Kˢ and K₂ , K₄ , (K₂ ⊔ K₄) = Kᴿ , Kˢ , Kˢ ∎
-              rewrite unique–C {{K₁}} {{K₂}} {{K₃}} C₁ | unique–C {{K₃}} {{K₄}} {{K₅}} C₂ | unique–K K₁ | unique–K K₂ | unique–K K₃ | unique–K K₄ | unique–K K₅ | CK–defS {{Kᴿ}} | CK–defS {{Kˢ}} | CK–defR {{Kˢ}}
+              rewrite unique–C {{K₁}} {{K₂}} {{K₃}} C₁ | unique–C {{K₃}} {{K₄}} {{K₅}} C₂ | unique–K K₁ | unique–K K₂ | unique–K K₃ | unique–K K₄ | unique–K K₅ | C–defˢ {{Kᴿ}} | C–defˢ {{Kˢ}} | C–defᴿ {{Kˢ}}
               = ~-ext {{Kˢ}} λ s x →  ⋯-compositionality {{Kᴿ}} {{Kˢ}} {{Kˢ}} {{Cᴿˢ}} _ _ _
             associativity {Sub} {Sub} {Sub} {Ren} {Sub} {{K₁}} {{K₂}} {{K₃}} {{K₄}} {{K₅}} {{C₁}} {{C₂}} ϕ₁ ϕ₂ ϕ₃ 
                -- SAFETY: K₁ , (K₂ ⊔ K₄) , K₅ ≡ Kˢ , Kˢ , Kˢ and K₂ , K₄ , (K₂ ⊔ K₄) = Kˢ , Kᴿ , Kˢ ∎
-              rewrite unique–C {{K₁}} {{K₂}} {{K₃}} C₁ | unique–C {{K₃}} {{K₄}} {{K₅}} C₂ | unique–K K₁ | unique–K K₂ | unique–K K₃ | unique–K K₄ | unique–K K₅ | CK–defS {{Kᴿ}} | CK–defS {{Kˢ}} 
+              rewrite unique–C {{K₁}} {{K₂}} {{K₃}} C₁ | unique–C {{K₃}} {{K₄}} {{K₅}} C₂ | unique–K K₁ | unique–K K₂ | unique–K K₃ | unique–K K₄ | unique–K K₅ | C–defˢ {{Kᴿ}} | C–defˢ {{Kˢ}} 
               = ~-ext {{Kˢ}} λ s x →  ⋯-compositionality {{Kˢ}} {{Kᴿ}} {{Kˢ}} {{Cˢᴿ}} _ _ _
             associativity {Sub} {Sub} {Sub} {Sub} {Sub} {{K₁}} {{K₂}} {{K₃}} {{K₄}} {{K₅}} {{C₁}} {{C₂}} ϕ₁ ϕ₂ ϕ₃ 
               -- SAFETY: K₁ , (K₂ ⊔ K₄) , K₅ ≡ Kˢ , Kˢ , Kˢ and K₂ , K₄ , (K₂ ⊔ K₄) = Kˢ , Kˢ , Kˢ ∎
-              rewrite unique–C {{K₁}} {{K₂}} {{K₃}} C₁ | unique–C {{K₃}} {{K₄}} {{K₅}} C₂ | unique–K K₁ | unique–K K₂ | unique–K K₃ | unique–K K₄ | unique–K K₅ | CK–defS {{Kˢ}}  
+              rewrite unique–C {{K₁}} {{K₂}} {{K₃}} C₁ | unique–C {{K₃}} {{K₄}} {{K₅}} C₂ | unique–K K₁ | unique–K K₂ | unique–K K₃ | unique–K K₄ | unique–K K₅ | C–defˢ {{Kˢ}}  
               = ~-ext {{Kˢ}} λ s x →  ⋯-compositionality {{Kˢ}} {{Kˢ}} {{Kˢ}} {{Cˢˢ}} _ _ _
         
             distributivity : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{C : ComposeKit K₁ K₂ K₃}} 
-              (q : S₂ ∋/⊢[ K₁ ] s)  (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) → 
-              (q ∙ ϕ₁) ; ϕ₂ ≡ (q &/⋯ ϕ₂) ∙ (ϕ₁ ; ϕ₂)
+              (x/t : S₂ ∋/⊢[ K₁ ] s)  (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) → 
+              (x/t ∙ ϕ₁) ; ϕ₂ ≡ (x/t &/⋯ ϕ₂) ∙ (ϕ₁ ; ϕ₂)
             distributivity _ _ _ = ~-ext λ { _ zero → refl ; _ (suc x) → refl } 
             
             interact : {{K : Kit k}} 
-              (q : S₂ ∋/⊢[ K ] s) (ϕ : S₁ –[ K ]→ S₂) → wkᴿ ; (q ∙ ϕ) ≡ ϕ 
-            interact q ϕ = refl
+              (x/t : S₂ ∋/⊢[ K ] s) (ϕ : S₁ –[ K ]→ S₂) → wk ; (x/t ∙ ϕ) ≡ ϕ 
+            interact x/t ϕ = refl
         
-            η–id : (zero {s = s} {S = S}) ∙ wkᴿ ≡ id 
+            η–id : (zero {s = s} {S = S}) ∙ wk ≡ id 
             η–id = ~-ext λ { _ zero → refl ; _ (suc x) → refl }
  
             η–law : {{K : Kit k}}
-              (ϕ : (s ∷ S₁) –[ K ]→ S₂) → (zero &/⋯ ϕ) ∙ (wkᴿ ; ϕ) ≡ ϕ
-            η–law ϕ = ~-ext λ { _ zero → refl ; _ (suc x) → refl }
+              (ϕ : (s ∷ S₁) –[ K ]→ S₂) → (zero &/⋯ ϕ) ∙ (wk ; ϕ) ≡ ϕ
+            η–law ϕ = ~-ext λ { _ zero → refl ; _ (suc x) → refl } 
+
+            postulate
+              coincidenceₓ : (x : S₁ ∋ s) (ϕ : S₁ –[ Kᴿ ]→ S₂) → 
+                x &/⋯ (ϕ ; idˢ) ≡ ` (x &/⋯ ϕ)
+              coincidenceₜ : (t : S₁ ⊢ s) (ϕ : S₁ –[ Kᴿ ]→ S₂) → 
+                t &/⋯ (ϕ ; idˢ) ≡ t &/⋯ ϕ
+
+              coincidenceₓ² : (x : S₁ ∋ s) (ϕ₁ : S₁ –[ Kᴿ ]→ S₂) (ϕ₂ : S₂ –[ Kᴿ ]→ S₃) → 
+                x &/⋯ (ϕ₁ ; (ϕ₂ ; idˢ)) ≡ ` (x &/⋯ (ϕ₁ ; ϕ₂))
+              coincidenceₜ² : (t : S₁ ⊢ s) (ϕ₁ : S₁ –[ Kᴿ ]→ S₂) (ϕ₂ : S₂ –[ Kᴿ ]→ S₃)  → 
+                t &/⋯ (ϕ₁ ; (ϕ₂ ; idˢ)) ≡ t &/⋯ (ϕ₁ ; ϕ₂) 
+
+              coincidenceₓ³ : (x : S₁ ∋ s) (ϕ₁ : S₁ –[ Kᴿ ]→ S₂) (ϕ₂ : S₂ –[ Kᴿ ]→ S₃) (ϕ₃ : S₃ –[ Kᴿ ]→ S₄) → 
+                x &/⋯ (ϕ₁ ; (ϕ₂ ; (ϕ₃ ; idˢ))) ≡ ` (x &/⋯ (ϕ₁ ; (ϕ₂ ; ϕ₃)))
+              coincidenceₜ³ : (t : S₁ ⊢ s) (ϕ₁ : S₁ –[ Kᴿ ]→ S₂) (ϕ₂ : S₂ –[ Kᴿ ]→ S₃) (ϕ₃ : S₃ –[ Kᴿ ]→ S₄) → 
+                t &/⋯ (ϕ₁ ; (ϕ₂ ; (ϕ₃ ; idˢ))) ≡ t &/⋯ (ϕ₁ ; (ϕ₂ ; ϕ₃)) 

@@ -8,7 +8,7 @@ open import Agdasubst.Examples.SystemFSub.Definitions.Syntax
 open import Agdasubst.Examples.SystemFSub.Substitution
 open import Data.Product using (_,_)
 
-instance types = mkTypes λ { expr → _ , type ; type → _ , kind ; cstr → _ , cind ; cind → _ , kind ; kind → _ , kind } 
+instance types = mkTypes λ { expr → type ; type → kind ; cstr → cind ; cind → kind ; kind → kind } 
 open Types types public 
 
 variable 
@@ -23,8 +23,8 @@ data _⊢_⊑_ where
     Γ ⊢ c ∶ (t₂ ∶⊑ t₃) →
     Γ ⊢ t₃ ⊑ t₄ →
     Γ ⊢ t₁ ⊑ t₄
-  ⊑-𝟙 :
-    Γ ⊢ t ⊑ 𝟙
+  ⊑-`⊤ :
+    Γ ⊢ t ⊑ `⊤
   ⊑-⇒ :
     Γ ⊢ t₁′ ⊑ t₁ →
     Γ ⊢ t₂  ⊑ t₂′ →
@@ -39,7 +39,7 @@ data _⊢_⊑_ where
 ⊑-refl {S} {Γ} {` x}          = ⊑-refl-var
 ⊑-refl {S} {Γ} {∀[α⊑ t₁ ] t₂} = ⊑-∀ ⊑-refl
 ⊑-refl {S} {Γ} {t₁ ⇒ t₂}      = ⊑-⇒ ⊑-refl ⊑-refl
-⊑-refl {S} {Γ} {𝟙}            = ⊑-𝟙
+⊑-refl {S} {Γ} {`⊤}            = ⊑-`⊤
 
 ⊑-trans :
   Γ ⊢ t₁ ⊑ t₂ →
@@ -49,7 +49,7 @@ data _⊢_⊑_ where
 ⊑-trans (⊑-⇒ t₁′⊑t₁ t₂⊑t₂′) (⊑-⇒ t₁′′⊑t₁′ t₂′⊑t₂′′) = ⊑-⇒ (⊑-trans t₁′′⊑t₁′ t₁′⊑t₁) (⊑-trans t₂⊑t₂′ t₂′⊑t₂′′)
 ⊑-trans (⊑-∀ t₁⊑t₂)         (⊑-∀ t₂⊑t₃)             = ⊑-∀ (⊑-trans t₁⊑t₂ t₂⊑t₃)
 ⊑-trans ⊑-refl-var          t₂⊑t₃                   = t₂⊑t₃
-⊑-trans t₁⊑t₂               ⊑-𝟙                     = ⊑-𝟙
+⊑-trans t₁⊑t₂               ⊑-`⊤                     = ⊑-`⊤
 ⊑-trans t₁⊑t₂               (⊑-` t₂⊑t₃ y t₄⊑t₅)     = ⊑-` (⊑-trans t₁⊑t₂ t₂⊑t₃) y t₄⊑t₅
 
 data _⊢_∶_ where
@@ -73,7 +73,7 @@ data _⊢_∶_ where
     Γ ⊢ e₁ ∶ (∀[α⊑ t ] t₁) →
     Γ ⊢ (e₁ • t₂) ∶ (t₁ [ t₂ ])
   ⊢tt :
-    Γ ⊢ `tt ∶ 𝟙
+    Γ ⊢ `tt ∶ `⊤
   ⊢★ :
     Γ ⊢ t ∶ ★
   ⊢cstr :

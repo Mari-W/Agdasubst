@@ -14,6 +14,7 @@ record Library : Set₁ where
 
   field instance syn : Syntax  
   open Syntax syn public
+  open Kit {{...}} using (_&_) public
 
   field instance traversal : Traversal
   open Traversal traversal public
@@ -21,18 +22,13 @@ record Library : Set₁ where
   field instance compose : Compose
   open Compose compose public 
 
-  -- _ = {! id`–def   !}
 
-  -- {-# REWRITE 
-  --   id`–def `id–def ;wk-def
-  --   extᶻ–def extˢ–def  
-  --   idᴿ–def idˢ–def wkᴿ–def wkˢ–def 
--- 
-  --   comp–idₗ comp–idᴿ norm–idˢ associativity distributivity interact
-  --   η–idᴿ η–idˢ η–lawᴿ η-lawˢ
--- 
-  --   compositionality right–id
-  -- #-}
+  _&′_ : ∀ {k s S₁ S₂} {{K : Kit k}} → S₁ ∋ s → S₁ –[ K ]→ S₂ → S₂ ∋/⊢[ K ] s
+  _&′_ = _&/⋯_ 
+  
+  _⋯′_ : ∀ {k s S₁ S₂} {{K : Kit k}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
+  _⋯′_ {{K}} = _&/⋯_ 
+
 
 open Library {{ ... }}  
 

@@ -23,53 +23,53 @@ module _ {{library : Library}} where
     unfolding lib 
 
     wk-cancels-⦅⦆ :
-      ∀ {{K : Kit k}} (q : S ∋/⊢[ K ] s) →
-      (wkᴿ {s = s} ; ⦅ q ⦆) ~ id 
-    wk-cancels-⦅⦆ {{K}} q sx x = `/id-injective (
-        `/id {{K}} (x & (wkᴿ ; ⦅ q ⦆))        ≡⟨⟩
-        `/id {{K}} (id/` (suc x) &/⋯ ⦅ q ⦆)   ≡⟨ &/⋯-& {{Cᴿ {{K}}}} (suc x) ⦅ q ⦆ ⟩
+      ∀ {{K : Kit k}} (x/t : S ∋/⊢[ K ] s) →
+      (wk {s = s} ; ⦅ x/t ⦆) ~ id 
+    wk-cancels-⦅⦆ {{K}} x/t sx x = `/id-injective (
+        `/id {{K}} (x & (wk ; ⦅ x/t ⦆))         ≡⟨⟩
+        `/id {{K}} (id/` (suc x) &/⋯ ⦅ x/t ⦆)   ≡⟨ &/⋯-& {{Cᴿ {{K}}}} (suc x) ⦅ x/t ⦆ ⟩
         `/id {{K}} (id/` x)                  ≡⟨⟩
         `/id {{K}} (x & id)                  ∎)
 
     wk-cancels-⦅⦆-⋯ :
-      ∀ {{K : Kit k}} (t : S ⊢ s′) (q : S ∋/⊢[ K ] s) →
-      t ⋯ wkᴿ {s = s} ⋯ ⦅ q ⦆ ≡ t
-    wk-cancels-⦅⦆-⋯ t q =
-      t ⋯ wkᴿ ⋯ ⦅ q ⦆   ≡⟨ ⋯-compositionality t wkᴿ ⦅ q ⦆ ⟩
-      t ⋯ (wkᴿ ; ⦅ q ⦆) ≡⟨ cong (t ⋯_) (~-ext (wk-cancels-⦅⦆ q)) ⟩
+      ∀ {{K : Kit k}} (t : S ⊢ s′) (x/t : S ∋/⊢[ K ] s) →
+      t ⋯ wk {s = s} ⋯ ⦅ x/t ⦆ ≡ t
+    wk-cancels-⦅⦆-⋯ t x/t =
+      t ⋯ wk ⋯ ⦅ x/t ⦆   ≡⟨ ⋯-compositionality t wk ⦅ x/t ⦆ ⟩
+      t ⋯ (wk ; ⦅ x/t ⦆) ≡⟨ cong (t ⋯_) (~-ext (wk-cancels-⦅⦆ x/t)) ⟩
       t ⋯ id           ≡⟨ ⋯-id t ⟩
       t                ∎
 
     dist-↑-⦅⦆ :
       ∀  {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K : Kit k}}
          {{C₁ : ComposeKit K₁ K₂ K}} {{C₂ : ComposeKit K₂ K K}}
-         (q : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
-      (⦅ q ⦆ ; ϕ) ~ ((ϕ ↑ s) ; ⦅ (q &/⋯ ϕ) ⦆)
-    dist-↑-⦅⦆ {s = s} {{K₁}} {{K₂}} {{K}} {{C₁}} {{C₂}} q ϕ sx x@zero = `/id-injective (
-        `/id {{K}} (x & (⦅ q ⦆ ; ϕ))                     ≡⟨⟩
-        `/id {{K}} (q &/⋯ ϕ)                            ≡⟨⟩
-        `/id {{K}} (zero & ⦅ (q &/⋯ ϕ) ⦆)                ≡⟨ sym (&/⋯-& {{C₂}} zero ⦅ (q &/⋯ ϕ) ⦆) ⟩
-        `/id {{K}} (id/` {{K₂}} zero &/⋯ ⦅ (q &/⋯ ϕ) ⦆)  ≡⟨⟩
-        `/id {{K}} (x & ((ϕ ↑ s) ; ⦅ (q &/⋯ ϕ) ⦆))       ∎)
-    dist-↑-⦅⦆ {s = s} {{K₁}} {{K₂}} {{K}} {{C₁}} {{C₂}} q ϕ sx x@(suc y) = `/id-injective ( 
-        `/id (x & (⦅ q ⦆ ; ϕ))                      ≡⟨⟩
+         (x/t : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
+      (⦅ x/t ⦆ ; ϕ) ~ ((ϕ ↑ s) ; ⦅ (x/t &/⋯ ϕ) ⦆)
+    dist-↑-⦅⦆ {s = s} {{K₁}} {{K₂}} {{K}} {{C₁}} {{C₂}} x/t ϕ sx x@zero = `/id-injective (
+        `/id {{K}} (x & (⦅ x/t ⦆ ; ϕ))                     ≡⟨⟩
+        `/id {{K}} (x/t &/⋯ ϕ)                            ≡⟨⟩
+        `/id {{K}} (zero & ⦅ (x/t &/⋯ ϕ) ⦆)                ≡⟨ sym (&/⋯-& {{C₂}} zero ⦅ (x/t &/⋯ ϕ) ⦆) ⟩
+        `/id {{K}} (id/` {{K₂}} zero &/⋯ ⦅ (x/t &/⋯ ϕ) ⦆)  ≡⟨⟩
+        `/id {{K}} (x & ((ϕ ↑ s) ; ⦅ (x/t &/⋯ ϕ) ⦆))       ∎)
+    dist-↑-⦅⦆ {s = s} {{K₁}} {{K₂}} {{K}} {{C₁}} {{C₂}} x/t ϕ sx x@(suc y) = `/id-injective ( 
+        `/id (x & (⦅ x/t ⦆ ; ϕ))                      ≡⟨⟩
         `/id (id/` {{K₁}} y &/⋯ ϕ)                 ≡⟨ &/⋯-& {{C₁}} y ϕ ⟩
-        `/id (y & ϕ)                               ≡⟨ sym (wk-cancels-⦅⦆-⋯ (`/id (y & ϕ)) (q &/⋯ ϕ)) ⟩
-        `/id (y & ϕ) ⋯ wkᴿ {s = s} ⋯ ⦅ (q &/⋯ ϕ) ⦆  ≡⟨ cong (_⋯ ⦅ q &/⋯ ϕ ⦆) (wk-`/id s (y & ϕ)) ⟩
-        `/id (K-wk s (y & ϕ)) ⋯ ⦅ (q &/⋯ ϕ) ⦆       ≡⟨ &/⋯-⋯ (K-wk s (y & ϕ)) ⦅ (q &/⋯ ϕ) ⦆ ⟩
-        `/id (K-wk s (y & ϕ) &/⋯ ⦅ (q &/⋯ ϕ) ⦆)     ≡⟨⟩
-        `/id (x & ((ϕ ↑ s) ; ⦅ (q &/⋯ ϕ) ⦆))        ∎)
+        `/id (y & ϕ)                               ≡⟨ sym (wk-cancels-⦅⦆-⋯ (`/id (y & ϕ)) (x/t &/⋯ ϕ)) ⟩
+        `/id (y & ϕ) ⋯ wk {s = s} ⋯ ⦅ (x/t &/⋯ ϕ) ⦆  ≡⟨ cong (_⋯ ⦅ x/t &/⋯ ϕ ⦆) (wk-`/id s (y & ϕ)) ⟩
+        `/id (K-wk s (y & ϕ)) ⋯ ⦅ (x/t &/⋯ ϕ) ⦆       ≡⟨ &/⋯-⋯ (K-wk s (y & ϕ)) ⦅ (x/t &/⋯ ϕ) ⦆ ⟩
+        `/id (K-wk s (y & ϕ) &/⋯ ⦅ (x/t &/⋯ ϕ) ⦆)     ≡⟨⟩
+        `/id (x & ((ϕ ↑ s) ; ⦅ (x/t &/⋯ ϕ) ⦆))        ∎)
 
     dist-↑-⦅⦆-⋯ :
       ∀  {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K : Kit k}} 
          {{C₁ : ComposeKit K₁ K₂ K}} {{C₂ : ComposeKit K₂ K K}}
-         (t : (s ∷ S₁) ⊢ s′) (q : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
-      t ⋯ ⦅ q ⦆ ⋯ ϕ ≡ t ⋯ (ϕ ↑ s) ⋯ ⦅ (q &/⋯ ϕ) ⦆
-    dist-↑-⦅⦆-⋯ t q ϕ =
-      t ⋯ ⦅ q ⦆ ⋯ ϕ                 ≡⟨ ⋯-compositionality t ⦅ q ⦆ ϕ ⟩
-      t ⋯ (⦅ q ⦆ ; ϕ)               ≡⟨ cong (t ⋯_) (~-ext (dist-↑-⦅⦆ q ϕ)) ⟩
-      t ⋯ ((ϕ ↑ _) ; ⦅ (q &/⋯ ϕ) ⦆) ≡⟨ sym (⋯-compositionality t (ϕ ↑ _) ⦅ q &/⋯ ϕ ⦆ ) ⟩
-      t ⋯ (ϕ ↑ _) ⋯ ⦅ (q &/⋯ ϕ) ⦆   ∎
+         (t : (s ∷ S₁) ⊢ s′) (x/t : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
+      t ⋯ ⦅ x/t ⦆ ⋯ ϕ ≡ t ⋯ (ϕ ↑ s) ⋯ ⦅ (x/t &/⋯ ϕ) ⦆
+    dist-↑-⦅⦆-⋯ t x/t ϕ =
+      t ⋯ ⦅ x/t ⦆ ⋯ ϕ                 ≡⟨ ⋯-compositionality t ⦅ x/t ⦆ ϕ ⟩
+      t ⋯ (⦅ x/t ⦆ ; ϕ)               ≡⟨ cong (t ⋯_) (~-ext (dist-↑-⦅⦆ x/t ϕ)) ⟩
+      t ⋯ ((ϕ ↑ _) ; ⦅ (x/t &/⋯ ϕ) ⦆) ≡⟨ sym (⋯-compositionality t (ϕ ↑ _) ⦅ x/t &/⋯ ϕ ⦆ ) ⟩
+      t ⋯ (ϕ ↑ _) ⋯ ⦅ (x/t &/⋯ ϕ) ⦆   ∎
 
   record Types : Set₁ where
     constructor mkTypes
@@ -99,15 +99,15 @@ module _ {{library : Library}} where
     (t ∷ₜ Γ) _ (suc x)  = Γ _ x
 
     wk-drop-∈ : (x : S ∋ s) → drop-∈ x S ⊢ s′ → S ⊢ s′
-    wk-drop-∈ zero     t = t &/⋯ wkᴿ
-    wk-drop-∈ (suc x)  t = wk-drop-∈ x t &/⋯ wkᴿ
+    wk-drop-∈ zero     t = t &/⋯ wk
+    wk-drop-∈ (suc x)  t = wk-drop-∈ x t &/⋯ wk
 
-    wk-telescope : Ctx S → S ∋ s → S ∶⊢ s
-    wk-telescope Γ x = wk-drop-∈ x (Γ _ x)
+    lookup : Ctx S → S ∋ s → S ∶⊢ s
+    lookup Γ x = wk-drop-∈ x (Γ _ x)
 
     infix   4  _∋_∶_
     _∋_∶_ : Ctx S → S ∋ s → S ∶⊢ s → Set
-    Γ ∋ x ∶ t = wk-telescope Γ x ≡ t
+    Γ ∋ x ∶ t = lookup Γ x ≡ t
 
     module TypesMeta where
       variable
@@ -135,13 +135,13 @@ module _ {{library : Library}} where
           ∋wk/⊢wk      : ∀ (Γ : Ctx S) (t′ : S ∶⊢ s) (e : S ∋/⊢ᴷ s′)
                            (t : S ∶⊢ s′) →
                          Γ ∋/⊢ e ∶ t →
-                         (t′ ∷ₜ Γ) ∋/⊢ K-wk _ e ∶ t &/⋯ wkᴿ 
+                         (t′ ∷ₜ Γ) ∋/⊢ K-wk _ e ∶ t &/⋯ wk 
 
         _∋*/⊢*_∶_ : Ctx S₂ → S₁ –[ K ]→ S₂ → Ctx S₁ → Set
         _∋*/⊢*_∶_ {S₂} {S₁} Γ₂ ϕ Γ₁ =
           ∀ {s₁} (x : S₁ ∋ s₁) (t : S₁ ∶⊢ s₁) →
           Γ₁ ∋ x ∶ t → 
-          Γ₂ ∋/⊢ (x &/⋯ ϕ) ∶ (t &/⋯ ϕ)
+          Γ₂ ∋/⊢ (x &′ ϕ) ∶ (t ⋯′ ϕ)
 
         opaque 
           unfolding lib
@@ -149,18 +149,18 @@ module _ {{library : Library}} where
             {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} {ϕ : S₁ –[ K ]→ S₂} →
             Γ₂             ∋*/⊢* ϕ       ∶ Γ₁ →
             (t : S₁ ∶⊢ s) →
-            ((t &/⋯ ϕ) ∷ₜ Γ₂) ∋*/⊢* (ϕ ↑ s) ∶ (t ∷ₜ Γ₁) 
+            ((t ⋯′ ϕ) ∷ₜ Γ₂) ∋*/⊢* (ϕ ↑ s) ∶ (t ∷ₜ Γ₁) 
           _∋↑/⊢↑_ {S₁} {S₂} {s} {Γ₁} {Γ₂} {ϕ} ⊢ϕ t {sx} x@zero _ refl =
             subst (  ((t ⋯ ϕ) ∷ₜ Γ₂) ∋/⊢ (zero & (ϕ ↑ s)) ∶_ )
-                  (  t ⋯ ϕ ⋯ wkᴿ {s = s}                       ≡⟨ ⋯-↑-wk {{C₁ = K ;ᶜ Kᴿ}} t ϕ s ⟩
-                     t ⋯ wkᴿ {s = s} ⋯ (ϕ ↑ s)                ≡⟨⟩
-                     wk-telescope (t ∷ₜ Γ₁) zero ⋯ (ϕ ↑ s)    ∎)
+                  (  t ⋯ ϕ ⋯ wk {s = s}                       ≡⟨ ⋯-↑-wk {{C₁ = K ;ᶜ Kᴿ}} t ϕ s ⟩
+                     t ⋯ wk {s = s} ⋯ (ϕ ↑ s)                ≡⟨⟩
+                     lookup (t ∷ₜ Γ₁) zero ⋯ (ϕ ↑ s)    ∎)
                   (  id/⊢` {x = zero} {Γ = (t ⋯ ϕ) ∷ₜ Γ₂} refl )
           _∋↑/⊢↑_ {S₁} {S₂} {s} {Γ₁} {Γ₂} {ϕ} ⊢ϕ t {sx} x@(suc y) _ refl =  
-            subst (((t &/⋯ ϕ) ∷ₜ Γ₂) ∋/⊢ (suc y & (ϕ ↑ s)) ∶_)
-                  (wk-telescope Γ₁ y ⋯ ϕ ⋯ wkᴿ {s = s}          ≡⟨ ⋯-↑-wk {{C₁ = K ;ᶜ Kᴿ}} _ ϕ s ⟩
-                   wk-telescope Γ₁ y ⋯ wkᴿ {s = s} ⋯ (ϕ ↑ s)   ≡⟨⟩
-                   wk-telescope (t ∷ₜ Γ₁) (suc y) ⋯ (ϕ ↑ s)    ∎)
+            subst (((t ⋯′ ϕ) ∷ₜ Γ₂) ∋/⊢ (suc y & (ϕ ↑ s)) ∶_)
+                  (lookup Γ₁ y ⋯ ϕ ⋯ wk {s = s}          ≡⟨ ⋯-↑-wk {{C₁ = K ;ᶜ Kᴿ}} _ ϕ s ⟩
+                   lookup Γ₁ y ⋯ wk {s = s} ⋯ (ϕ ↑ s)   ≡⟨⟩
+                   lookup (t ∷ₜ Γ₁) (suc y) ⋯ (ϕ ↑ s)    ∎)
                   (∋wk/⊢wk _ _ _ _ (⊢ϕ y _ refl))
 
           ⊢⦅_⦆ : ∀ {s S} {Γ : Ctx S} {t : S ∋/⊢ᴷ s} {T : S ∶⊢ s}
@@ -169,14 +169,14 @@ module _ {{library : Library}} where
           ⊢⦅_⦆ {s} {S} {Γ} {t} {T} ⊢x/t x@zero _ refl =
             subst (Γ ∋/⊢ t ∶_)
                   (T               ≡⟨ sym (wk-cancels-⦅⦆-⋯ T t) ⟩
-                   T ⋯ wkᴿ ⋯ ⦅ t ⦆  ≡⟨⟩
-                   wk-telescope (T ∷ₜ Γ) zero ⋯ ⦅ t ⦆  ∎)
+                   T ⋯ wk ⋯ ⦅ t ⦆  ≡⟨⟩
+                   lookup (T ∷ₜ Γ) zero ⋯ ⦅ t ⦆  ∎)
                   ⊢x/t
           ⊢⦅_⦆ {s} {S} {Γ} {t} {T} ⊢x/t x@(suc y) _ refl =
             subst (Γ ∋/⊢ id/` y ∶_)
-                  (wk-telescope Γ y              ≡⟨ sym (wk-cancels-⦅⦆-⋯ _ t) ⟩
-                   wk-telescope Γ y ⋯ wkᴿ ⋯ ⦅ t ⦆ ≡⟨⟩
-                   wk-telescope (T ∷ₜ Γ) (suc y) ⋯ ⦅ t ⦆  ∎)
+                  (lookup Γ y              ≡⟨ sym (wk-cancels-⦅⦆-⋯ _ t) ⟩
+                   lookup Γ y ⋯ wk ⋯ ⦅ t ⦆ ≡⟨⟩
+                   lookup (T ∷ₜ Γ) (suc y) ⋯ ⦅ t ⦆  ∎)
                   (id/⊢` refl)
 
       open TypingKit {{ ...}} public
@@ -196,7 +196,7 @@ module _ {{library : Library}} where
                {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} {ϕ : S₁ –[ K ]→ S₂} →
             Γ₁ ⊢ e ∶ t →
             Γ₂ ∋*/⊢*[ TK ] ϕ ∶ Γ₁ →
-            Γ₂ ⊢ e &/⋯ ϕ ∶ t &/⋯ ϕ
+            Γ₂ ⊢ e ⋯′ ϕ ∶ t ⋯′ ϕ
 
         opaque
           unfolding lib 
@@ -210,7 +210,7 @@ module _ {{library : Library}} where
           TKᴿ-∋wk/⊢wk : (Γ : Ctx S) (t′ : S ∶⊢ s)
                 (e : S ∋/⊢ᴷ s′) (t : S ∶⊢ s′) →
                 Γ ∋ e ∶ t →
-                (t′ ∷ₜ Γ) ∋ K-wk _ e ∶ t &/⋯ wkᴿ
+                (t′ ∷ₜ Γ) ∋ K-wk _ e ∶ t &/⋯ wk
           TKᴿ-∋wk/⊢wk _ _ _ _ refl = refl
 
         instance
@@ -224,7 +224,7 @@ module _ {{library : Library}} where
         opaque
           unfolding lib  
           TKˢ-∋wk/⊢wk : (Γ : Ctx S) (t′ : S ∶⊢ s) (e : S ⊢ s′) (t : S ∶⊢ s′) → 
-            Γ ⊢ e ∶ t → (t′ ∷ₜ Γ) ⊢ K-wk _ e ∶ t  &/⋯ wkᴿ
+            Γ ⊢ e ∶ t → (t′ ∷ₜ Γ) ⊢ K-wk _ e ∶ t  &/⋯ wk
           TKˢ-∋wk/⊢wk = λ Γ t′ e t ⊢e → ⊢e ⊢⋯ ∋wk/⊢wk Γ t′ 
 
           TKˢ-id/⊢` : {Γ : Ctx S} {t : S ∶⊢ s} → Γ ∋ x ∶ t → Γ ⊢ id/` x ∶ t
@@ -242,20 +242,20 @@ module _ {{library : Library}} where
             ; ∋wk/⊢wk     = TKˢ-∋wk/⊢wk } 
 
         open TypingKit TKᴿ public using () renaming
-          (∋wk/⊢wk to ⊢wk; _∋*/⊢*_∶_ to _∋*_∶_; ⊢⦅_⦆ to ⊢⦅_⦆ᴿ)
+          (∋wk/⊢wk to ⊢wk; _∋*/⊢*_∶_ to _∋*_∶_; _∋↑/⊢↑_ to _∋↑_; ⊢⦅_⦆ to ⊢⦅_⦆ᴿ)
         open TypingKit TKˢ public using () renaming
-          (∋wk/⊢wk to ∋wk; _∋*/⊢*_∶_ to _⊢*_∶_; ⊢⦅_⦆ to ⊢⦅_⦆ˢ)
+          (∋wk/⊢wk to ∋wk; _∋*/⊢*_∶_ to _⊢*_∶_; _∋↑/⊢↑_ to _⊢↑_; ⊢⦅_⦆ to ⊢⦅_⦆ˢ) 
 
         _⊢⋯ᴿ_ : ∀ {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
                   {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} {ρ : S₁ →ᴿ S₂} →
                 Γ₁ ⊢ e ∶ t →
                 Γ₂ ∋* ρ ∶ Γ₁ →
-                Γ₂ ⊢ e &/⋯ ρ ∶ t &/⋯ ρ
+                Γ₂ ⊢ e ⋯′ ρ ∶ t ⋯′ ρ
         _⊢⋯ᴿ_ = _⊢⋯_
 
         _⊢⋯ˢ_ : ∀ {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
                   {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} {σ : S₁ →ˢ S₂} →
                 Γ₁ ⊢ e ∶ t →
                 Γ₂ ⊢* σ ∶ Γ₁ →
-                Γ₂ ⊢ e &/⋯ σ ∶ t &/⋯ σ
+                Γ₂ ⊢ e ⋯′ σ ∶ t ⋯′ σ
         _⊢⋯ˢ_ = _⊢⋯_ 

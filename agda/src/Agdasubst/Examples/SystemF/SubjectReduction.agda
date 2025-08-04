@@ -12,8 +12,8 @@ subject-reduction :
   Γ ⊢ e ∶ t →
   e ↪ e′ →
   Γ ⊢ e′ ∶ t 
-subject-reduction (⊢· (⊢λ ⊢e₁) ⊢e₂)     (β-λ _)         = ⊢e₁ ⊢⋯ ⊢⦅ ⊢e₂ ⦆ˢ
-subject-reduction (⊢• (⊢Λ ⊢e) ⊢t ⊢t′)   β-Λ             = ⊢e ⊢⋯ ⊢⦅ ⊢t ⦆ˢ
+subject-reduction (⊢· {e₂ = e₂} (⊢λ ⊢e₁) ⊢e₂) (β-λ _)   = _⊢⋯ˢ_ {σ = ⦅ e₂ ⦆ˢ} ⊢e₁ ⊢⦅ ⊢e₂ ⦆ˢ
+subject-reduction (⊢• {t = t} (⊢Λ ⊢e) ⊢t ⊢t′) β-Λ       = _⊢⋯ˢ_ {σ = ⦅ t ⦆ˢ} ⊢e ⊢⦅ ⊢t ⦆ˢ
 subject-reduction (⊢· ⊢e₁ ⊢e₂)          (ξ-·₁ e₁↪e₁′)   = ⊢· (subject-reduction ⊢e₁ e₁↪e₁′) ⊢e₂
 subject-reduction (⊢· ⊢e₁ ⊢e₂)          (ξ-·₂ e₂↪e₂′ _) = ⊢· ⊢e₁ (subject-reduction ⊢e₂ e₂↪e₂′)
 subject-reduction (⊢• ⊢e ⊢t ⊢t′)        (ξ-• e₁↪e₁′)    = ⊢• (subject-reduction ⊢e e₁↪e₁′) ⊢t ⊢t′

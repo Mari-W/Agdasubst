@@ -4,7 +4,7 @@ module Agdasubst.Examples.SystemFSub.Definitions.Syntax where
 
 open import Agdasubst.Prelude public
 
-open import Relation.Binary.PropositionalEquality using (refl)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 
 data Sort : Set where
   expr : Sort 
@@ -25,7 +25,7 @@ data _⊢_ : Scoped where
   _•_       : S ⊢ expr → S ⊢ type → S ⊢ expr
   _⇒_       : S ⊢ type → S ⊢ type → S ⊢ type
   `tt       : S ⊢ expr
-  `⊤         : S ⊢ type
+  `⊤        : S ⊢ type
   _∶⊑_      : S ⊢ type → S ⊢ type → S ⊢ cind 
   ★         : S ⊢ kind
   sat       : S ⊢ cstr 
@@ -37,5 +37,8 @@ variable
   c c₁ c₂ c₃ c₄ c′ c₁′ c₂′ c₃′tc₄′ : S ⊢ cstr
   ★ᴷ ★ᴷ′                           : S ⊢ kind
 
-instance syn = mkSyntax _⊢_  `_  λ { refl → refl }
+inj : (` x₁) ≡ (` x₂) → x₁ ≡ x₂
+inj refl = refl
+instance syn = mkSyntax _⊢_  `_  inj
 open Syntax syn hiding (_⊢_; `_) public 
+{-# NOINLINE syn #-}

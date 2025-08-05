@@ -28,8 +28,8 @@ module _ {{library : Library}} where
     wk-cancels-⦅⦆ {{K}} x/t sx x = `/id-injective (
         `/id {{K}} (x & (wk ; ⦅ x/t ⦆))         ≡⟨⟩
         `/id {{K}} (id/` (suc x) &/⋯ ⦅ x/t ⦆)   ≡⟨ &/⋯-& {{Cᴿ {{K}}}} (suc x) ⦅ x/t ⦆ ⟩
-        `/id {{K}} (id/` x)                  ≡⟨⟩
-        `/id {{K}} (x & id)                  ∎)
+        `/id {{K}} (id/` x)                    ≡⟨⟩
+        `/id {{K}} (x & id)                    ∎)
 
     wk-cancels-⦅⦆-⋯ :
       ∀ {{K : Kit k}} (t : S ⊢ s′) (x/t : S ∋/⊢[ K ] s) →
@@ -37,8 +37,8 @@ module _ {{library : Library}} where
     wk-cancels-⦅⦆-⋯ t x/t =
       t ⋯ wk ⋯ ⦅ x/t ⦆   ≡⟨ ⋯-compositionality t wk ⦅ x/t ⦆ ⟩
       t ⋯ (wk ; ⦅ x/t ⦆) ≡⟨ cong (t ⋯_) (~-ext (wk-cancels-⦅⦆ x/t)) ⟩
-      t ⋯ id           ≡⟨ ⋯-id t ⟩
-      t                ∎
+      t ⋯ id            ≡⟨ ⋯-id t ⟩
+      t                 ∎
 
     dist-↑-⦅⦆ :
       ∀  {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K : Kit k}}
@@ -53,9 +53,9 @@ module _ {{library : Library}} where
         `/id {{K}} (x & ((ϕ ↑ s) ; ⦅ (x/t &/⋯ ϕ) ⦆))       ∎)
     dist-↑-⦅⦆ {s = s} {{K₁}} {{K₂}} {{K}} {{C₁}} {{C₂}} x/t ϕ sx x@(suc y) = `/id-injective ( 
         `/id (x & (⦅ x/t ⦆ ; ϕ))                      ≡⟨⟩
-        `/id (id/` {{K₁}} y &/⋯ ϕ)                 ≡⟨ &/⋯-& {{C₁}} y ϕ ⟩
-        `/id (y & ϕ)                               ≡⟨ sym (wk-cancels-⦅⦆-⋯ (`/id (y & ϕ)) (x/t &/⋯ ϕ)) ⟩
-        `/id (y & ϕ) ⋯ wk {s = s} ⋯ ⦅ (x/t &/⋯ ϕ) ⦆  ≡⟨ cong (_⋯ ⦅ x/t &/⋯ ϕ ⦆) (wk-`/id s (y & ϕ)) ⟩
+        `/id (id/` {{K₁}} y &/⋯ ϕ)                   ≡⟨ &/⋯-& {{C₁}} y ϕ ⟩
+        `/id (y & ϕ)                                 ≡⟨ sym (wk-cancels-⦅⦆-⋯ (`/id (y & ϕ)) (x/t &/⋯ ϕ)) ⟩
+        `/id (y & ϕ) ⋯ wk {s = s} ⋯ ⦅ (x/t &/⋯ ϕ) ⦆   ≡⟨ cong (_⋯ ⦅ x/t &/⋯ ϕ ⦆) (wk-`/id s (y & ϕ)) ⟩
         `/id (K-wk s (y & ϕ)) ⋯ ⦅ (x/t &/⋯ ϕ) ⦆       ≡⟨ &/⋯-⋯ (K-wk s (y & ϕ)) ⦅ (x/t &/⋯ ϕ) ⦆ ⟩
         `/id (K-wk s (y & ϕ) &/⋯ ⦅ (x/t &/⋯ ϕ) ⦆)     ≡⟨⟩
         `/id (x & ((ϕ ↑ s) ; ⦅ (x/t &/⋯ ϕ) ⦆))        ∎)
@@ -153,13 +153,13 @@ module _ {{library : Library}} where
           _∋↑/⊢↑_ {S₁} {S₂} {s} {Γ₁} {Γ₂} {ϕ} ⊢ϕ t {sx} x@zero _ refl =
             subst (  ((t ⋯ ϕ) ∷ₜ Γ₂) ∋/⊢ (zero & (ϕ ↑ s)) ∶_ )
                   (  t ⋯ ϕ ⋯ wk {s = s}                       ≡⟨ ⋯-↑-wk {{C₁ = K ;ᶜ Kᴿ}} t ϕ s ⟩
-                     t ⋯ wk {s = s} ⋯ (ϕ ↑ s)                ≡⟨⟩
+                     t ⋯ wk {s = s} ⋯ (ϕ ↑ s)                 ≡⟨⟩
                      lookup (t ∷ₜ Γ₁) zero ⋯ (ϕ ↑ s)    ∎)
                   (  id/⊢` {x = zero} {Γ = (t ⋯ ϕ) ∷ₜ Γ₂} refl )
           _∋↑/⊢↑_ {S₁} {S₂} {s} {Γ₁} {Γ₂} {ϕ} ⊢ϕ t {sx} x@(suc y) _ refl =  
             subst (((t ⋯′ ϕ) ∷ₜ Γ₂) ∋/⊢ (suc y & (ϕ ↑ s)) ∶_)
                   (lookup Γ₁ y ⋯ ϕ ⋯ wk {s = s}          ≡⟨ ⋯-↑-wk {{C₁ = K ;ᶜ Kᴿ}} _ ϕ s ⟩
-                   lookup Γ₁ y ⋯ wk {s = s} ⋯ (ϕ ↑ s)   ≡⟨⟩
+                   lookup Γ₁ y ⋯ wk {s = s} ⋯ (ϕ ↑ s)    ≡⟨⟩
                    lookup (t ∷ₜ Γ₁) (suc y) ⋯ (ϕ ↑ s)    ∎)
                   (∋wk/⊢wk _ _ _ _ (⊢ϕ y _ refl))
 
@@ -168,14 +168,14 @@ module _ {{library : Library}} where
             → Γ ∋*/⊢* ⦅ t ⦆ ∶ (T ∷ₜ Γ)
           ⊢⦅_⦆ {s} {S} {Γ} {t} {T} ⊢x/t x@zero _ refl =
             subst (Γ ∋/⊢ t ∶_)
-                  (T               ≡⟨ sym (wk-cancels-⦅⦆-⋯ T t) ⟩
+                  (T              ≡⟨ sym (wk-cancels-⦅⦆-⋯ T t) ⟩
                    T ⋯ wk ⋯ ⦅ t ⦆  ≡⟨⟩
                    lookup (T ∷ₜ Γ) zero ⋯ ⦅ t ⦆  ∎)
                   ⊢x/t
           ⊢⦅_⦆ {s} {S} {Γ} {t} {T} ⊢x/t x@(suc y) _ refl =
             subst (Γ ∋/⊢ id/` y ∶_)
-                  (lookup Γ y              ≡⟨ sym (wk-cancels-⦅⦆-⋯ _ t) ⟩
-                   lookup Γ y ⋯ wk ⋯ ⦅ t ⦆ ≡⟨⟩
+                  (lookup Γ y                      ≡⟨ sym (wk-cancels-⦅⦆-⋯ _ t) ⟩
+                   lookup Γ y ⋯ wk ⋯ ⦅ t ⦆          ≡⟨⟩
                    lookup (T ∷ₜ Γ) (suc y) ⋯ ⦅ t ⦆  ∎)
                   (id/⊢` refl)
 

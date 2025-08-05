@@ -39,7 +39,7 @@ subject-reduction ⊢Γ (⊢· {e₂ = e₂} ⊢e₁ ⊢e₂)          β-λ
 subject-reduction ⊢Γ (⊢• {t = t} {t₁ = t₁} {t₂ = t₂} ⊢t₁ ⊢t₂ t₁⊑t ⊢e) (β-Λ {e₁ = e₁}) 
   with _ , t₁′ , ∀[α⊑t₁′]t₂′⊑∀[α⊑t₁]t₂ , ⊢e ← invert-Λ ⊢e 
   with refl , t₂′⊑t₂ ← invert-⊑∀ ⊢Γ ∀[α⊑t₁′]t₂′⊑∀[α⊑t₁]t₂
-  = {!   ⊢⊑ (_⊢⋯ˢ_ {σ = ⦅ sat ⦆ˢ} (_⊢⋯ˢ_ {e = weaken {s′ = cstr} e₁} {t = weaken {s′ = cstr} t₁′} {σ = ⦅ t₂ ⦆ˢ ↑ cstr} ⊢e (_⊢↑_ {ϕ = ⦅ t₂ ⦆ˢ} ⊢⦅ ⊢t₂ ⦆ˢ ((` zero) ∶⊑ weaken t))) ⊢⦅ ⊢cstr t₁⊑t ⦆ˢ) (_⊑⋯_ {ϕ = ⦅ t₂ ⦆ˢ} t₂′⊑t₂ ⊢⦅ ⊢t₂ ⦆ˢ)!} 
+  = ⊢⊑ (_⊢⋯ˢ_ {σ = ⦅ sat ⦆ˢ} (_⊢⋯ˢ_ {e = weaken {s′ = cstr} e₁} {t = weaken {s′ = cstr} t₁′} {σ = ⦅ t₂ ⦆ˢ ↑ cstr} ⊢e (_⊢↑_ {ϕ = ⦅ t₂ ⦆ˢ} ⊢⦅ ⊢t₂ ⦆ˢ ((` zero) ∶⊑ weaken t))) ⊢⦅ ⊢cstr t₁⊑t ⦆ˢ) (_⊑⋯_ {ϕ = ⦅ t₂ ⦆ˢ} t₂′⊑t₂ ⊢⦅ ⊢t₂ ⦆ˢ)
 subject-reduction ⊢Γ (⊢λ ⊢e)               (ξ-λ e↪e')  = ⊢λ (subject-reduction (_ ∷ⱽ ⊢Γ) ⊢e e↪e')
 subject-reduction ⊢Γ (⊢Λ ⊢e)               (ξ-Λ e↪e')  = ⊢Λ (subject-reduction (_ ∷ⱽ (★ ∷ⱽ ⊢Γ)) ⊢e (ren-pres-↪ wk e↪e'))
 subject-reduction ⊢Γ (⊢· ⊢e₁ ⊢e₂)          (ξ-·₁ e↪e') = ⊢· (subject-reduction ⊢Γ ⊢e₁ e↪e') ⊢e₂

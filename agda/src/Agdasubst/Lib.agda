@@ -174,7 +174,7 @@ module KitsWithSort (
                      (` x) ⋯ ϕ ≡ `/id {{K}} (x & ϕ)
 
         --! InstanceRen
-        instance opaque 
+        opaque instance 
           Kᴿ : Kit Ren 
           Kᴿ = record
             { K-id/`           = λ x → x
@@ -201,23 +201,24 @@ module KitsWithSort (
         --     Kˢ-wk-id/` = λ s′ x → ⋯-var x wk
 
         --! InstanceSub
-        instance opaque
+        opaque 
           unfolding kit_ops Kᴿ
 
           kits : ⊤
           kits = tt
 
-          Kˢ : Kit Sub
-          Kˢ = record
-            { K-id/`           = `_
-            ; K-`/id           = λ t → t
-            ; K-wk             = λ s′ t → t ⋯ wk
-            ; `/`-is-`        = λ x → refl
-            ; id/`-injective  = `-injective
-            ; `/id-injective  = λ eq → eq 
-            ; wk-id/`         = λ s′ x → ⋯-var x wk
-            ; lock            = unlock
-            }
+          instance
+            Kˢ : Kit Sub
+            Kˢ = record
+              { K-id/`           = `_
+              ; K-`/id           = λ t → t
+              ; K-wk             = λ s′ t → t ⋯ wk
+              ; `/`-is-`        = λ x → refl
+              ; id/`-injective  = `-injective
+              ; `/id-injective  = λ eq → eq 
+              ; wk-id/`         = λ s′ x → ⋯-var x wk
+              ; lock            = unlock
+              }
 
         open Kit Kˢ public using () renaming 
           (_→ᴷ_ to _→ˢ_; _&_ to _&ˢ_; _∙_ to _∙ˢ_; id to idˢ; ⦅_⦆ to ⦅_⦆ˢ; _↑_ to _↑ˢ_; _↑★_ to _↑ˢ★_)
@@ -487,8 +488,8 @@ module KitsWithSort (
               `/id ((ϕ ; wk) sx x)        ≡⟨⟩
               `/id (x & ϕ &/⋯ wk)         ≡⟨ sym (&/⋯-⋯ (x & ϕ) (wk)) ⟩
               `/id (`/id (x & ϕ) ⋯ wk)    ≡⟨ wk-`/id s (x & ϕ) ⟩
-              `/id (suc x & (ϕ ↑ s))       ≡⟨ sym (&/⋯-& (suc x) (ϕ ↑ s)) ⟩
-              `/id (suc x &/⋯ (ϕ ↑ s))     ≡⟨⟩
+              `/id (suc x & (ϕ ↑ s))      ≡⟨ sym (&/⋯-& (suc x) (ϕ ↑ s)) ⟩
+              `/id (suc x &/⋯ (ϕ ↑ s))    ≡⟨⟩
               `/id (x & wk &/⋯ (ϕ ↑ s))   ≡⟨⟩
               `/id ((wk ; (ϕ ↑ s)) sx x)  ∎) 
             
@@ -501,26 +502,28 @@ module KitsWithSort (
               t ⋯ (wk ; (ϕ ↑ s))   ≡⟨ sym (⋯-compositionality t (wk) (ϕ ↑ s)) ⟩  
               t ⋯ wk ⋯ (ϕ ↑ s)    ∎
 
-          instance opaque 
+          opaque 
             unfolding comp_ops
-            --! InstanceCRen
-            Cᴿ : {{K : Kit k}} → ComposeKit Kᴿ K K
+            instance
+              --! InstanceCRen
+              Cᴿ : {{K : Kit k}} → ComposeKit Kᴿ K K
 
-            Cᴿ = record
-                    { _&/⋯′_    = _&_ 
-                    ; &/⋯-⋯     = λ x ϕ → ⋯-var x ϕ
-                    ; &/⋯-wk-↑ = λ x ϕ → refl
-                    ; lock      = unlock }
+              Cᴿ = record
+                      { _&/⋯′_    = _&_ 
+                      ; &/⋯-⋯     = λ x ϕ → ⋯-var x ϕ
+                      ; &/⋯-wk-↑ = λ x ϕ → refl
+                      ; lock      = unlock }
 
-          instance opaque
+           
+          opaque
             unfolding comp_ops Cᴿ 
 
             lib : ⊤ 
             lib = tt
-
+            
             --! InstanceCSub
-            Cˢ : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} → ComposeKit Kˢ K Kˢ
-            Cˢ  = record
+            Cˢ′ : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} → ComposeKit Kˢ K Kˢ
+            Cˢ′  = record
                     { _&/⋯′_    = _⋯_
                     ; &/⋯-⋯     = λ x ϕ → refl
                     ; &/⋯-wk-↑ = λ t ϕ → ⋯-↑-wk t ϕ _ 
@@ -528,13 +531,13 @@ module KitsWithSort (
 
           Cᴿᴿ = Cᴿ {{Kᴿ}}
           Cᴿˢ = Cᴿ {{Kˢ}}
-          Cˢᴿ = Cˢ {{Kᴿ}} {{Cᴿ {{Kᴿ}}}}
-          Cˢˢ = Cˢ {{Kˢ}} {{Cˢ {{Kᴿ}} {{Cᴿ {{Kᴿ}}}}}}
+          Cˢᴿ = Cˢ′ {{Kᴿ}} {{Cᴿ {{Kᴿ}}}}
+          Cˢˢ = Cˢ′ {{Kˢ}} {{Cˢ′ {{Kᴿ}} {{Cᴿ {{Kᴿ}}}}}}
 
           --! UniqueCKits
           private postulate
             unique–Cᴿ  : {{K : Kit k}} (C : ComposeKit Kᴿ K K) → C ≡ Cᴿ
-            unique–Cˢ  : {{K : Kit k}} {{C′ : ComposeKit K Kᴿ K}} → (C : ComposeKit Kˢ K Kˢ) → C ≡ Cˢ 
+            unique–Cˢ  : {{K : Kit k}} {{C′ : ComposeKit K Kᴿ K}} → (C : ComposeKit Kˢ K Kˢ) → C ≡ Cˢ′
             
             -- By assumption all _incoming_ ComposeKits to a function must be valid. 
             -- Invalid ones can be disgarded using the functions below. 
@@ -573,15 +576,11 @@ module KitsWithSort (
             unique–C {Sub} {Ren} {Sub} {{K₁}} {{K₂}} {{K₃}} C 
               rewrite unique–K K₁ | unique–K K₂ | unique–K K₃ | unique–Cˢ {{Kᴿ}} {{Cᴿ {{Kᴿ}}}} C = refl
             unique–C {Sub} {Sub} {Sub} {{K₁}} {{K₂}} {{K₃}} C 
-              rewrite unique–K K₁ | unique–K K₂ | unique–K K₃ | unique–Cˢ {{Kˢ}} C = refl
+              rewrite unique–K K₁ | unique–K K₂ | unique–K K₃ | unique–Cˢ {{Kˢ}} {{Cˢ′ {{Kᴿ}} {{Cᴿ {{Kᴿ}}}}}} C = refl
 
           instance 
-            Cᴷᴿᴷ : {{K : Kit k}} → ComposeKit K Kᴿ K 
-            {-# INCOHERENT Cᴷᴿᴷ #-}
-            -- SAFETY: By induction on K and uniqueness of Kits.
-            --  If K = Kᴿ, we have Kᴿ , Kᴿ , Kᴿ ∎
-            --  If K = Kˢ, we have Kˢ , Kᴿ , ^Kˢ ∎
-            Cᴷᴿᴷ {{K}} = K , Kᴿ , K 
+            Cˢ : {{K : Kit k}} → ComposeKit Kˢ K Kˢ
+            Cˢ {{K}} = Cˢ′ {{K = K}} {{C = K , Kᴿ , K}}
 
           -- Safe variant of _,_,_.
           _;ᶜ_ : (K₁ : Kit k₁) (K₂ : Kit k₂) → ComposeKit K₁ K₂ (K₁ ⊔ K₂)
@@ -593,7 +592,7 @@ module KitsWithSort (
           C–defᴿ {{K}} = unique–Cᴿ {{K = K}} (Kᴿ , K , K)
 
           -- SAFETY: By induction on K and uniqueness of Kits ∎
-          C–defˢ : {{K : Kit k}} → Kˢ , K , Kˢ ≡ Cˢ {{K = K}} {{C = K , Kᴿ , K}} 
+          C–defˢ : {{K : Kit k}} → Kˢ , K , Kˢ ≡ Cˢ {{K = K}} 
           C–defˢ {{K}} = unique–Cˢ {{K = K}} {{C′ = K , Kᴿ , K}} (Kˢ , K , Kˢ)
 
           {-# REWRITE C–defᴿ C–defˢ #-} 
@@ -661,7 +660,7 @@ module KitsWithSort (
                       x &/⋯ (ϕ₁ ; ϕ₂) ≡ (x &/⋯ ϕ₁) &/⋯ ϕ₂
             comp–def–safe _ _ _ = refl
 
-            compₗ–idˢ–def : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} 
+            compₗ–idˢ–def : {{K : Kit k}}
                         (x : S₁ ∋ s) (ϕ₂ : S₁ –[ K ]→ S₂) → 
               x &/⋯ (id[ Kˢ ] ; ϕ₂) ≡ ` x &/⋯ ϕ₂  
             compₗ–idˢ–def _ _ = refl
@@ -698,7 +697,7 @@ module KitsWithSort (
 
             -- the idiomatic way to transform a ren into a sub is to compose id sub on the right. 
             -- if its applied on the left, we transform it.   
-            norm–idˢ : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} 
+            norm–idˢ : {{K : Kit k}}
               -- SAFETY: By induction on K and uniqueness of Kits ∎
               (ϕ : S₁ –[ K ]→ S₂) → id {{Kˢ}} ; ϕ ≡ (ϕ ;[ K , Kˢ , Kˢ ] id {{Kˢ}}) 
             norm–idˢ {Ren} {{K}} ϕ rewrite unique–K K | C–defᴿ {{Kˢ}} = 

@@ -27,7 +27,7 @@ record Library : Set₁ where
   _&′_ = _&/⋯_ 
   
   _⋯′_ : ∀ {k s S₁ S₂} {{K : Kit k}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
-  _⋯′_ {{K}} = _&/⋯_ 
+  _⋯′_ {{K}} = let instance _ = K , Kᴿ , K in _&/⋯_ 
 
 
 open Library {{ ... }}  

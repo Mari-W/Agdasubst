@@ -24,7 +24,7 @@ module _ {{library : Library}} where
 
     wk-cancels-⦅⦆ :
       ∀ {{K : Kit k}} (x/t : S ∋/⊢[ K ] s) →
-      (wk {s = s} ; ⦅ x/t ⦆) ~ id 
+      (wk {s = s} ; ⦅ x/t ⦆) ~ id  
     wk-cancels-⦅⦆ {{K}} x/t sx x = `/id-injective (
         `/id {{K}} (x & (wk ; ⦅ x/t ⦆))         ≡⟨⟩
         `/id {{K}} (id/` (suc x) &/⋯ ⦅ x/t ⦆)   ≡⟨ &/⋯-& {{Cᴿ {{K}}}} (suc x) ⦅ x/t ⦆ ⟩

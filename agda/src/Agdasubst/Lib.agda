@@ -522,22 +522,23 @@ module KitsWithSort (
             lib = tt
             
             --! InstanceCSub
-            Cˢ′ : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} → ComposeKit Kˢ K Kˢ
-            Cˢ′  = record
-                    { _&/⋯′_    = _⋯_
-                    ; &/⋯-⋯     = λ x ϕ → refl
-                    ; &/⋯-wk-↑ = λ t ϕ → ⋯-↑-wk t ϕ _ 
-                    ; lock      = unlock }  
+            instance
+              Cˢ : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} → ComposeKit Kˢ K Kˢ
+              Cˢ  = record
+                      { _&/⋯′_    = _⋯_
+                      ; &/⋯-⋯     = λ x ϕ → refl
+                      ; &/⋯-wk-↑ = λ t ϕ → ⋯-↑-wk t ϕ _ 
+                      ; lock      = unlock }  
 
           Cᴿᴿ = Cᴿ {{Kᴿ}}
           Cᴿˢ = Cᴿ {{Kˢ}}
-          Cˢᴿ = Cˢ′ {{Kᴿ}} {{Cᴿ {{Kᴿ}}}}
-          Cˢˢ = Cˢ′ {{Kˢ}} {{Cˢ′ {{Kᴿ}} {{Cᴿ {{Kᴿ}}}}}}
+          Cˢᴿ = Cˢ {{Kᴿ}} {{Cᴿ {{Kᴿ}}}}
+          Cˢˢ = Cˢ {{Kˢ}} {{Cˢ {{Kᴿ}} {{Cᴿ {{Kᴿ}}}}}}
 
           --! UniqueCKits
           private postulate
             unique–Cᴿ  : {{K : Kit k}} (C : ComposeKit Kᴿ K K) → C ≡ Cᴿ
-            unique–Cˢ  : {{K : Kit k}} {{C′ : ComposeKit K Kᴿ K}} → (C : ComposeKit Kˢ K Kˢ) → C ≡ Cˢ′
+            unique–Cˢ  : {{K : Kit k}} {{C′ : ComposeKit K Kᴿ K}} → (C : ComposeKit Kˢ K Kˢ) → C ≡ Cˢ
             
             -- By assumption all _incoming_ ComposeKits to a function must be valid. 
             -- Invalid ones can be disgarded using the functions below. 
@@ -545,7 +546,8 @@ module KitsWithSort (
             impossible–Cᴷˢᴿ : {{K : Kit k}} → ¬ ComposeKit K Kˢ Kᴿ
             impossible–Cᴿᴿˢ : ¬ ComposeKit Kᴿ Kᴿ Kˢ  
 
-          private opaque
+          
+          opaque
             -- SAFETY: 
             --   For each usage of this definition it must be checked, that no 
             --   invalid ComposeKit (e.g. ComposeKit Kᴿ Kᴿ Kˢ) is created.
@@ -576,11 +578,11 @@ module KitsWithSort (
             unique–C {Sub} {Ren} {Sub} {{K₁}} {{K₂}} {{K₃}} C 
               rewrite unique–K K₁ | unique–K K₂ | unique–K K₃ | unique–Cˢ {{Kᴿ}} {{Cᴿ {{Kᴿ}}}} C = refl
             unique–C {Sub} {Sub} {Sub} {{K₁}} {{K₂}} {{K₃}} C 
-              rewrite unique–K K₁ | unique–K K₂ | unique–K K₃ | unique–Cˢ {{Kˢ}} {{Cˢ′ {{Kᴿ}} {{Cᴿ {{Kᴿ}}}}}} C = refl
+              rewrite unique–K K₁ | unique–K K₂ | unique–K K₃ | unique–Cˢ {{Kˢ}} {{Cˢ {{Kᴿ}} {{Cᴿ {{Kᴿ}}}}}} C = refl
 
-          instance 
-            Cˢ : {{K : Kit k}} → ComposeKit Kˢ K Kˢ
-            Cˢ {{K}} = Cˢ′ {{K = K}} {{C = K , Kᴿ , K}}
+          -- instance 
+          --   Cˢ : {{K : Kit k}} → ComposeKit Kˢ K Kˢ
+          --   Cˢ {{K}} = Cˢ′ {{K = K}} {{C = K , Kᴿ , K}}
 
           -- Safe variant of _,_,_.
           _;ᶜ_ : (K₁ : Kit k₁) (K₂ : Kit k₂) → ComposeKit K₁ K₂ (K₁ ⊔ K₂)
@@ -592,7 +594,7 @@ module KitsWithSort (
           C–defᴿ {{K}} = unique–Cᴿ {{K = K}} (Kᴿ , K , K)
 
           -- SAFETY: By induction on K and uniqueness of Kits ∎
-          C–defˢ : {{K : Kit k}} → Kˢ , K , Kˢ ≡ Cˢ {{K = K}} 
+          C–defˢ : {{K : Kit k}} → Kˢ , K , Kˢ ≡ Cˢ {{K = K}} {{C = K , Kᴿ , K}}
           C–defˢ {{K}} = unique–Cˢ {{K = K}} {{C′ = K , Kᴿ , K}} (Kˢ , K , Kˢ)
 
           {-# REWRITE C–defᴿ C–defˢ #-} 
@@ -626,7 +628,7 @@ module KitsWithSort (
  
             `id–def : ∀ {{K : Kit k}} (x/t : S ∋/⊢[ K ] s) → 
               -- SAFETY: By induction on K and uniqueness of Kits ∎
-              `/id x/t ≡ x/t &/⋯[ K , Kˢ , Kˢ ] id {{Kˢ}} 
+              `/id x/t ≡ x/t &/⋯[ K , Kˢ , Kˢ ] id {{Kˢ}}  
             `id–def {Ren} {{K}} x/t rewrite unique–K K | C–defᴿ {{Kˢ}} = refl
             `id–def {Sub} {{K}} x/t rewrite unique–K K | C–defˢ {{Kˢ}} = sym (right–id {{Kˢ}} {{Kˢ}} {{Cˢˢ}} _)
             
@@ -660,13 +662,13 @@ module KitsWithSort (
                       x &/⋯ (ϕ₁ ; ϕ₂) ≡ (x &/⋯ ϕ₁) &/⋯ ϕ₂
             comp–def–safe _ _ _ = refl
 
-            compₗ–idˢ–def : {{K : Kit k}}
-                        (x : S₁ ∋ s) (ϕ₂ : S₁ –[ K ]→ S₂) → 
-              x &/⋯ (id[ Kˢ ] ; ϕ₂) ≡ ` x &/⋯ ϕ₂  
-            compₗ–idˢ–def _ _ = refl
-
+            compₗ–idˢ–def : {{K : Kit k}} 
+                        (x : S₁ ∋ s) (ϕ₂ : S₁ –[ Kᴿ ]→ S₂) → 
+              x &/⋯ (id[ Kˢ ] ; ϕ₂) ≡ ` (x &/⋯ ϕ₂)
+            compₗ–idˢ–def _ _ = ⋯-var _ _ 
+ 
             compₗ–wk–def : {{K : Kit k}} (x : S₁ ∋ s) (ϕ₂ : (s′ ∷ S₁) –[ K ]→ S₂) → 
-              x &/⋯ (wk ; ϕ₂) ≡ suc x &/⋯ ϕ₂ 
+              x &/⋯ (wk ; ϕ₂) ≡ (suc x) &/⋯ ϕ₂ 
             compₗ–wk–def _ _ = refl 
 
             compₗ–ext₀–def  : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{C : ComposeKit K₁ K₂ K₃}} 
@@ -695,9 +697,9 @@ module KitsWithSort (
             compᵣ–id {Sub} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique–C {{K₁}} {{K₂}} {{K₁}} C | unique–K K₁ | C–defˢ {{K₂}} 
               = ~-ext {{Kˢ}} λ _ x → ⋯-id {{K₂}} _
 
-            -- the idiomatic way to transform a ren into a sub is to compose id sub on the right. 
+            -- the idiomatic way to transform a ren/sub into a sub is to compose id sub on the right. 
             -- if its applied on the left, we transform it.   
-            norm–idˢ : {{K : Kit k}}
+            norm–idˢ : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}}
               -- SAFETY: By induction on K and uniqueness of Kits ∎
               (ϕ : S₁ –[ K ]→ S₂) → id {{Kˢ}} ; ϕ ≡ (ϕ ;[ K , Kˢ , Kˢ ] id {{Kˢ}}) 
             norm–idˢ {Ren} {{K}} ϕ rewrite unique–K K | C–defᴿ {{Kˢ}} = 
@@ -705,11 +707,11 @@ module KitsWithSort (
             norm–idˢ {Sub} {{K}} ϕ rewrite unique–K K | C–defˢ {{Kˢ}} = 
               ~-ext {{Kˢ}} λ _ x → _ ≡⟨ ⋯-var {{Kˢ}} _ _ ⟩ _ ≡⟨ sym (⋯-id {{Kˢ}} _) ⟩ _ ∎  
             
-            -- postulate
+            postulate
             --   norm-wk : (ϕ : S₁ –[ Kᴿ ]→ S₂) → (ϕ ; wk) ≡ wk ; (ϕ ↑ s)
-            -- norm–idˢ : {{K : Kit k}} {{C : ComposeKit K Kˢ Kˢ}} 
-            --   -- SAFETY: By induction on K and uniqueness of Kits ∎
-            --   (ϕ : S₁ –[ K ]→ S₂) → (ϕ ; id {{Kˢ}}) ≡ id {{Kˢ}} ;[ Kˢ , K , Kˢ ] ϕ
+                 norm–idˢ′ : {{K : Kit k}} {{C : ComposeKit K Kˢ Kˢ}} 
+                   -- SAFETY: By induction on K and uniqueness of Kits ∎
+                   (ϕ : S₁ –[ K ]→ S₂) → (ϕ ; id {{Kˢ}}) ≡ id {{Kˢ}} ;[ Kˢ , K , Kˢ ] ϕ
             -- norm–idˢ {Ren} {{K}} {{C}} ϕ rewrite unique–C {{K}} C | unique–K K | C–defᴿ {{Kˢ}} | C–defˢ {{Kᴿ}} = 
             --   ~-ext {{Kˢ}} λ _ x → sym (⋯-var {{Kᴿ}} _ _) -- ⋯-var {{Kᴿ}} _ _
             -- norm–idˢ {Sub} {{K}} {{C}} ϕ rewrite unique–C {{K}} {{Kˢ}} {{Kˢ}} C | unique–K K | C–defˢ {{Kˢ}} = 
@@ -726,7 +728,7 @@ module KitsWithSort (
             associativity {_} {_} {_} {Sub} {Ren} {{K₁}} {{K₂}} {{K₃}} {{K₄}} {{K₅}} {{C₁}} {{C₂}} ϕ₁ ϕ₂ ϕ₃ 
               rewrite unique–C {{K₃}} {{K₄}} {{K₅}} C₂ | unique–K K₄ | unique–K K₅ = ⊥-elim (impossible–Cᴷˢᴿ C₂)
             associativity {_} {_} {Sub} {_} {Ren} {{K₁}} {{K₂}} {{K₃}} {{K₄}} {{K₅}} {{C₁}} {{C₂}} ϕ₁ ϕ₂ ϕ₃ 
-              rewrite unique–C {{K₃}} {{K₄}} {{K₅}} C₂ | unique–K K₃ | unique–K K₅ = ⊥-elim (impossible–Cˢᴷᴿ C₂)
+             rewrite unique–C {{K₃}} {{K₄}} {{K₅}} C₂ | unique–K K₃ | unique–K K₅ = ⊥-elim (impossible–Cˢᴷᴿ C₂)
             associativity {Ren} {Ren} {Sub} {_} {_} {{K₁}} {{K₂}} {{K₃}} {{K₄}} {{K₅}} {{C₁}} {{C₂}} ϕ₁ ϕ₂ ϕ₃ 
               rewrite unique–C {{K₁}} {{K₂}} {{K₃}} C₁ | unique–K K₁ | unique–K K₂ | unique–K K₃ = 
               ⊥-elim (impossible–Cᴿᴿˢ C₁)

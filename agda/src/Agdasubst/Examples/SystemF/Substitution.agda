@@ -68,7 +68,7 @@ _&_ : {{K : Kit k}} → S₁ ∋ s → S₁ –[ K ]→ S₂ → S₂ ∋/⊢[ K
 _&_ = _&/⋯_ 
 
 _⋯_ : {{K : Kit k}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
-_⋯_ = _&/⋯_ 
+_⋯_ {{K}} = let instance _ = K , Kᴿ , K in _&/⋯_ 
 
 {-# REWRITE 
   id`–def `id–def ;wk–def
@@ -77,8 +77,9 @@ _⋯_ = _&/⋯_
   ext₀–def compₗ–ext₀–def 
   extₛ–def compₗ–extₛ–def
   comp–def–safe
+  coincidenceₓ
 
-  compₗ–id compᵣ–id  norm–idˢ  
+  compₗ–id compᵣ–id
   associativity distributivity interact
   η–id η–law
 

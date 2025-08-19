@@ -491,7 +491,6 @@ module _B where
     comp-idᵣᴿᴿ  : ρ ;ᴿᴿ idᴿ  ≡ ρ 
     comp-idᵣˢˢ  : σ ;ˢˢ idˢ  ≡ σ;    comp-idᵣˢᴿ  : σ ;ˢᴿ idᴿ  ≡ σ 
     comp-idₗˢˢ  : idˢ ;ˢˢ σ  ≡ σ
-    norm-id     : idˢ ;ˢᴿ ρ  ≡ ρ ;ᴿˢ idˢ
 
     associativityᴿᴿᴿ  : (ρ₁ ;ᴿᴿ ρ₂) ;ᴿᴿ ρ₃  ≡ ρ₁ ;ᴿᴿ (ρ₂ ;ᴿᴿ ρ₃)
     associativityᴿᴿˢ  : (ρ₁ ;ᴿᴿ ρ₂) ;ᴿˢ σ₃  ≡ ρ₁ ;ᴿˢ (ρ₂ ;ᴿˢ σ₃)
@@ -557,7 +556,6 @@ module _B where
     comp-idₗᴿᴿ = refl
     comp-idᵣᴿᴿ = refl
     comp-idₗᴿˢ = refl
-    norm-id = refl 
     comp-idₗˢˢ = refl
     comp-idᵣˢᴿ {σ = σ} = fun-exti (fun-ext λ x → right-idᴿ (x &ˢ σ))
     comp-idᵣˢˢ {σ = σ} = fun-exti (fun-ext λ x → right-idˢ (x &ˢ σ))
@@ -634,7 +632,6 @@ module _B where
       compᴿᴿ compᴿˢ compˢᴿ compˢˢ
       comp-idₗᴿᴿ comp-idₗᴿˢ comp-idᵣᴿᴿ 
       comp-idᵣˢˢ comp-idᵣˢᴿ comp-idₗˢˢ
-      norm-id
       associativityᴿᴿᴿ associativityᴿᴿˢ 
       associativityᴿˢᴿ associativityᴿˢˢ
       associativityˢᴿᴿ associativityˢᴿˢ 

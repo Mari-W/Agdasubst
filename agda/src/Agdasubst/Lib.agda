@@ -395,6 +395,7 @@ module KitsWithSort (
 
             (ϕ₁ ; ϕ₂) _ x = (x & ϕ₁) &/⋯ ϕ₂
             _&/⋯_ = _&/⋯′_ 
+
  
           opaque
             unfolding comp_ops 
@@ -457,6 +458,8 @@ module KitsWithSort (
         _&/⋯[_]_  : ∀ {K₁ : Kit k₁} {K₂ : Kit k₂} {K₃ : Kit k₃} →
                   S₁ ∋/⊢[ K₁ ] s → ComposeKit K₁ K₂ K₃ → S₁ –[ K₂ ]→ S₂ → S₂ ∋/⊢[ K₃ ] s
         _&/⋯[_]_ {K₁} {K₂} {K₃} x/t C ϕ₂ = ComposeKit._&/⋯_ {K₁} {K₂} {K₃} C x/t ϕ₂   
+
+
 
         opaque
           unfolding comp_ops
@@ -696,33 +699,24 @@ module KitsWithSort (
             compᵣ–id {Ren} {Sub} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique–K K₁ | unique–K K₂ = ⊥-elim (impossible–Cᴷˢᴿ {{Kᴿ}} C)
             compᵣ–id {Sub} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique–C {{K₁}} {{K₂}} {{K₁}} C | unique–K K₁ | C–defˢ {{K₂}} 
               = ~-ext {{Kˢ}} λ _ x → ⋯-id {{K₂}} _
-
+ 
             -- the idiomatic way to transform a ren/sub into a sub is to compose id sub on the right. 
             -- if its applied on the left, we transform it.   
-            norm–idˢ : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}}
-              -- SAFETY: By induction on K and uniqueness of Kits ∎
-              (ϕ : S₁ –[ K ]→ S₂) → id {{Kˢ}} ; ϕ ≡ (ϕ ;[ K , Kˢ , Kˢ ] id {{Kˢ}}) 
-            norm–idˢ {Ren} {{K}} ϕ rewrite unique–K K | C–defᴿ {{Kˢ}} = 
-              ~-ext {{Kˢ}} λ _ x → ⋯-var {{Kᴿ}} _ _
-            norm–idˢ {Sub} {{K}} ϕ rewrite unique–K K | C–defˢ {{Kˢ}} = 
-              ~-ext {{Kˢ}} λ _ x → _ ≡⟨ ⋯-var {{Kˢ}} _ _ ⟩ _ ≡⟨ sym (⋯-id {{Kˢ}} _) ⟩ _ ∎  
-            
             postulate
-            --   norm-wk : (ϕ : S₁ –[ Kᴿ ]→ S₂) → (ϕ ; wk) ≡ wk ; (ϕ ↑ s)
-                 norm–idˢ′ : {{K : Kit k}} {{C : ComposeKit K Kˢ Kˢ}} 
-                   -- SAFETY: By induction on K and uniqueness of Kits ∎
-                   (ϕ : S₁ –[ K ]→ S₂) → (ϕ ; id {{Kˢ}}) ≡ id {{Kˢ}} ;[ Kˢ , K , Kˢ ] ϕ
-            -- norm–idˢ {Ren} {{K}} {{C}} ϕ rewrite unique–C {{K}} C | unique–K K | C–defᴿ {{Kˢ}} | C–defˢ {{Kᴿ}} = 
-            --   ~-ext {{Kˢ}} λ _ x → sym (⋯-var {{Kᴿ}} _ _) -- ⋯-var {{Kᴿ}} _ _
-            -- norm–idˢ {Sub} {{K}} {{C}} ϕ rewrite unique–C {{K}} {{Kˢ}} {{Kˢ}} C | unique–K K | C–defˢ {{Kˢ}} = 
-            --   ~-ext {{Kˢ}} λ _ x → sym (_ ≡⟨ ⋯-var {{Kˢ}} _ _ ⟩ _ ≡⟨ sym (⋯-id {{Kˢ}} _) ⟩ _ ∎)
+              norm–idˢ : {{K : Kit k}}
+                -- SAFETY: By induction on K and uniqueness of Kits ∎
+                (ϕ : S₁ –[ K ]→ S₂) → id {{Kˢ}} ;[ Cˢ {{K}} {{K , Kᴿ , K}} ] ϕ ≡ (ϕ ;[ K , Kˢ , Kˢ ] id {{Kˢ}}) 
+            -- norm–idˢ {Ren} {{K}} ϕ rewrite unique–K K | C–defᴿ {{Kˢ}} = 
+            --   ~-ext {{Kˢ}} λ _ x → ⋯-var {{Kᴿ}} _ _
+            -- norm–idˢ {Sub} {{K}} ϕ rewrite unique–K K | C–defˢ {{Kˢ}} = 
+            --   ~-ext {{Kˢ}} λ _ x → _ ≡⟨ ⋯-var {{Kˢ}} _ _ ⟩ _ ≡⟨ sym (⋯-id {{Kˢ}} _) ⟩ _ ∎  
 
             associativity : {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{K₄ : Kit k₄}} {{K₅ : Kit k₅}} 
                             {{C₁ : ComposeKit K₁ K₂ K₃}} {{C₂ : ComposeKit K₃ K₄ K₅}}
               (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) (ϕ₃ : S₃ –[ K₄ ]→ S₄) →   
               -- SAFETY: By assumption the incoming C₁ : ComposeKit K₁ K₂ K₃ and C₂ : ComposeKit K₃ K₄ K₅ are valid.
               --         By induction on K₁, K₂, K₃, K₄ and K₅, the definition of _⊔_ and uniqueness of Kits, we prove the cases below ∎
-              (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ;[ K₁ , (K₂ ⊔ K₄) , K₅ ](ϕ₂ ;[ K₂ , K₄ , (K₂ ⊔ K₄) ] ϕ₃) 
+              (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ;[ K₁ , (K₂ ⊔ K₄) , K₅ ] (ϕ₂ ;[ K₂ , K₄ , (K₂ ⊔ K₄) ] ϕ₃) 
             associativity {_} {_} {Ren} {Ren} {Sub} {{K₁}} {{K₂}} {{K₃}} {{K₄}} {{K₅}} {{C₁}} {{C₂}} ϕ₁ ϕ₂ ϕ₃ 
               rewrite unique–C {{K₃}} {{K₄}} {{K₅}} C₂ | unique–K K₃ | unique–K K₄ | unique–K K₅ = ⊥-elim (impossible–Cᴿᴿˢ C₂)
             associativity {_} {_} {_} {Sub} {Ren} {{K₁}} {{K₂}} {{K₃}} {{K₄}} {{K₅}} {{C₁}} {{C₂}} ϕ₁ ϕ₂ ϕ₃ 
@@ -784,15 +778,6 @@ module KitsWithSort (
             postulate
               coincidenceₓ : (x : S₁ ∋ s) (ϕ : S₁ –[ Kᴿ ]→ S₂) → 
                 x &/⋯ (ϕ ; idˢ) ≡ ` (x &/⋯ ϕ)
-              coincidenceₜ : (t : S₁ ⊢ s) (ϕ : S₁ –[ Kᴿ ]→ S₂) → 
-                t &/⋯ (ϕ ; idˢ) ≡ t &/⋯ ϕ
-
-              coincidenceₓ² : (x : S₁ ∋ s) (ϕ₁ : S₁ –[ Kᴿ ]→ S₂) (ϕ₂ : S₂ –[ Kᴿ ]→ S₃) → 
-                x &/⋯ (ϕ₁ ; (ϕ₂ ; idˢ)) ≡ ` (x &/⋯ (ϕ₁ ; ϕ₂))
-              coincidenceₜ² : (t : S₁ ⊢ s) (ϕ₁ : S₁ –[ Kᴿ ]→ S₂) (ϕ₂ : S₂ –[ Kᴿ ]→ S₃)  → 
-                t &/⋯ (ϕ₁ ; (ϕ₂ ; idˢ)) ≡ t &/⋯ (ϕ₁ ; ϕ₂) 
-
-              coincidenceₓ³ : (x : S₁ ∋ s) (ϕ₁ : S₁ –[ Kᴿ ]→ S₂) (ϕ₂ : S₂ –[ Kᴿ ]→ S₃) (ϕ₃ : S₃ –[ Kᴿ ]→ S₄) → 
-                x &/⋯ (ϕ₁ ; (ϕ₂ ; (ϕ₃ ; idˢ))) ≡ ` (x &/⋯ (ϕ₁ ; (ϕ₂ ; ϕ₃)))
-              coincidenceₜ³ : (t : S₁ ⊢ s) (ϕ₁ : S₁ –[ Kᴿ ]→ S₂) (ϕ₂ : S₂ –[ Kᴿ ]→ S₃) (ϕ₃ : S₃ –[ Kᴿ ]→ S₄) → 
-                t &/⋯ (ϕ₁ ; (ϕ₂ ; (ϕ₃ ; idˢ))) ≡ t &/⋯ (ϕ₁ ; (ϕ₂ ; ϕ₃)) 
+              coincidenceₜ : {{K : Kit k}} {{C : ComposeKit K Kˢ Kˢ}} 
+                            (t : S₁ ⊢ s) (ϕ : S₁ –[ K ]→ S₂) → 
+                t &/⋯ (ϕ ; idˢ) ≡ let instance _ = K , Kᴿ , K in t &/⋯ ϕ

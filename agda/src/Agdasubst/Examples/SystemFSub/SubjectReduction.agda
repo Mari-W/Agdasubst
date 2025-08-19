@@ -19,8 +19,8 @@ ren-pres-↪ : {e e′ : S ⊢ s′} (ρ : S →ᴿ S′) →
 ren-pres-↪ {e = e} {e′ = e′} ρ e↪e′ 
   with #e ← e ⋯ ρ in eq-e | #he′ ← e′ ⋯ ρ in eq-e′ 
   with e↪e′ | eq-e | eq-e′
-... | β-λ        | refl | refl = β-λ
-... | β-Λ        | refl | refl = β-Λ
+... | β-λ        | refl | refl rewrite norm–idˢ ρ = β-λ
+... | β-Λ        | refl | refl rewrite norm–idˢ ρ = β-Λ
 ... | ξ-λ e↪e′′  | refl | refl = ξ-λ (ren-pres-↪ (ρ ↑ _) e↪e′′)
 ... | ξ-Λ e↪e′′  | refl | refl = ξ-Λ (ren-pres-↪ (ρ ↑ _) e↪e′′)
 ... | ξ-·₁ e↪e′′ | refl | refl = ξ-·₁ (ren-pres-↪ ρ e↪e′′)

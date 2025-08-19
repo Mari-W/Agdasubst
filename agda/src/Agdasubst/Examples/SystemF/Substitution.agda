@@ -79,7 +79,7 @@ _⋯_ {{K}} = let instance _ = K , Kᴿ , K in _&/⋯_
   comp–def–safe
   coincidenceₓ
 
-  compₗ–id compᵣ–id
+  compₗ–id compᵣ–id 
   associativity distributivity interact
   η–id η–law
 

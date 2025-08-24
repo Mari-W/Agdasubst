@@ -7,7 +7,7 @@ open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; cong
 
 module _ where
   opaque
-    private _⋯_ : ∀ {{K : Kit k}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
+    private _⋯_ : ∀ {{K : Kit M}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
     (` x)          ⋯ ϕ = x `⋯ ϕ
     (λx e)         ⋯ ϕ = λx (e ⋯ (ϕ ↑★ _))
     (e₁ · e₂)      ⋯ ϕ = (e₁ ⋯ ϕ) · (e₂ ⋯ ϕ)
@@ -25,7 +25,7 @@ module _ where
   opaque 
     unfolding _⋯_
     {-# REWRITE id↑≡id id↑★≡id #-}
-    ⋯-id : ∀ {{K : Kit k}} (t : S ⊢ s) → t ⋯ id ≡ t
+    ⋯-id : ∀ {{K : Kit M}} (t : S ⊢ s) → t ⋯ id ≡ t
     ⋯-id {{K}} (` x)    = `⋯-id x
     ⋯-id (λx e)         = cong λx_ (⋯-id e)
     ⋯-id (e₁ · e₂)      = cong₂ _·_ (⋯-id e₁) (⋯-id e₂)
@@ -40,12 +40,12 @@ module _ where
     ⋯-id sat            = refl
     ⋯-id ✰              = refl 
   
-  ⋯-id′ : ∀ {{K : Kit k}} (t : S ⊢ s) → t ⋯ id ≡ t
+  ⋯-id′ : ∀ {{K : Kit M}} (t : S ⊢ s) → t ⋯ id ≡ t
   ⋯-id′ t rewrite ⋯-id t = refl 
 
   opaque
     unfolding _⋯_
-    ⋯-var′ : ∀ {{K : Kit k}} → (x : S₁ ∋ s) (ϕ : S₁ –[ K ]→ S₂) →
+    ⋯-var′ : ∀ {{K : Kit M}} → (x : S₁ ∋ s) (ϕ : S₁ –[ K ]→ S₂) →
                        (` x) ⋯ ϕ ≡ x `⋯ ϕ
     ⋯-var′ _ _ = refl
 
@@ -62,7 +62,7 @@ module _ where
     {-# REWRITE dist–↑–; dist–↑★–; #-} 
     postulate
       ⋯-compositionality :
-        ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{C : ComposeKit K₁ K₂ K₃}} →
+        ∀ {{K₁ : Kit M₁}} {{K₂ : Kit M₂}} {{K₃ : Kit M₃}} {{C : ComposeKit K₁ K₂ K₃}} →
           (t : S₁ ⊢ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) →
           (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ t ⋯ (ϕ₁ ; ϕ₂)
     -- ⋯-compositionality (` x)          ϕ₁ ϕ₂ = `⋯-compositionality x ϕ₁ ϕ₂
@@ -90,35 +90,34 @@ module _ where
  
 opaque
   unfolding lib compose  
-  &/⋯–`   : {{K : Kit k}}   {{C : ComposeKit K Kᴿ K}}{ϕ : S₁ –[ K ]→ S₂} → 
+  &/⋯–`   : {{K : Kit M}}   {{C : ComposeKit K V K}}{ϕ : S₁ –[ K ]→ S₂} → 
     (`_ {s = s} x)  &/⋯ ϕ ≡ `/id (x &/⋯ ϕ)                     ; &/⋯–`  = refl
-  &/⋯–λ   : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (λx e)          &/⋯ ϕ ≡ λx (e &/⋯ (ϕ ↑ _))                ; &/⋯–λ  = refl
-  &/⋯–·   : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (e₁ · e₂)       &/⋯ ϕ ≡ (e₁ &/⋯ ϕ) · (e₂ &/⋯ ϕ)           ; &/⋯–·  = refl
-  &/⋯–⇒   : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (t₁ ⇒ t₂)       &/⋯ ϕ ≡ (t₁ &/⋯ ϕ) ⇒ (t₂ &/⋯ ϕ)           ; &/⋯–⇒  = refl
-  &/⋯–Λ   : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (Λα e)          &/⋯ ϕ ≡ Λα (e &/⋯ (ϕ ↑ _))                ; &/⋯–Λ = refl
-  &/⋯–∀   : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (∀[α⊑ t₁ ] t₂)  &/⋯ ϕ ≡ ∀[α⊑ t₁ &/⋯ ϕ ] (t₂ &/⋯ (ϕ ↑ _))  ; &/⋯–∀  = refl
-  &/⋯–•   : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (e • t)         &/⋯ ϕ ≡ (e &/⋯ ϕ) • (t &/⋯ ϕ)             ; &/⋯–• = refl 
-  &/⋯–tt  : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → `tt             &/⋯ ϕ ≡ `tt                               ; &/⋯–tt  = refl
-  &/⋯–`⊤  : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → `⊤              &/⋯ ϕ ≡ `⊤                                ; &/⋯–`⊤ = refl
-  &/⋯–∶⊑  : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (t₁ ∶⊑ t₂)      &/⋯ ϕ ≡ (t₁ &/⋯ ϕ) ∶⊑ (t₂ &/⋯ ϕ)          ; &/⋯–∶⊑ = refl
-  &/⋯–★   : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → ★               &/⋯ ϕ ≡ ★                                 ; &/⋯–★ = refl 
-  &/⋯–sat : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → sat             &/⋯ ϕ ≡ sat                               ; &/⋯–sat = refl 
-  &/⋯–✰   : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → ✰               &/⋯ ϕ ≡ ✰                                 ; &/⋯–✰  = refl 
+  &/⋯–λ   : {{K : Kit M}} {{C : ComposeKit K V K}} {ϕ : S₁ –[ K ]→ S₂} → (λx e)          &/⋯ ϕ ≡ λx (e &/⋯ (ϕ ↑ _))                ; &/⋯–λ  = refl
+  &/⋯–·   : {{K : Kit M}} {{C : ComposeKit K V K}} {ϕ : S₁ –[ K ]→ S₂} → (e₁ · e₂)       &/⋯ ϕ ≡ (e₁ &/⋯ ϕ) · (e₂ &/⋯ ϕ)           ; &/⋯–·  = refl
+  &/⋯–⇒   : {{K : Kit M}} {{C : ComposeKit K V K}} {ϕ : S₁ –[ K ]→ S₂} → (t₁ ⇒ t₂)       &/⋯ ϕ ≡ (t₁ &/⋯ ϕ) ⇒ (t₂ &/⋯ ϕ)           ; &/⋯–⇒  = refl
+  &/⋯–Λ   : {{K : Kit M}} {{C : ComposeKit K V K}} {ϕ : S₁ –[ K ]→ S₂} → (Λα e)          &/⋯ ϕ ≡ Λα (e &/⋯ (ϕ ↑ _))                ; &/⋯–Λ = refl
+  &/⋯–∀   : {{K : Kit M}} {{C : ComposeKit K V K}} {ϕ : S₁ –[ K ]→ S₂} → (∀[α⊑ t₁ ] t₂)  &/⋯ ϕ ≡ ∀[α⊑ t₁ &/⋯ ϕ ] (t₂ &/⋯ (ϕ ↑ _))  ; &/⋯–∀  = refl
+  &/⋯–•   : {{K : Kit M}} {{C : ComposeKit K V K}} {ϕ : S₁ –[ K ]→ S₂} → (e • t)         &/⋯ ϕ ≡ (e &/⋯ ϕ) • (t &/⋯ ϕ)             ; &/⋯–• = refl 
+  &/⋯–tt  : {{K : Kit M}} {{C : ComposeKit K V K}} {ϕ : S₁ –[ K ]→ S₂} → `tt             &/⋯ ϕ ≡ `tt                               ; &/⋯–tt  = refl
+  &/⋯–`⊤  : {{K : Kit M}} {{C : ComposeKit K V K}} {ϕ : S₁ –[ K ]→ S₂} → `⊤              &/⋯ ϕ ≡ `⊤                                ; &/⋯–`⊤ = refl
+  &/⋯–∶⊑  : {{K : Kit M}} {{C : ComposeKit K V K}} {ϕ : S₁ –[ K ]→ S₂} → (t₁ ∶⊑ t₂)      &/⋯ ϕ ≡ (t₁ &/⋯ ϕ) ∶⊑ (t₂ &/⋯ ϕ)          ; &/⋯–∶⊑ = refl
+  &/⋯–★   : {{K : Kit M}} {{C : ComposeKit K V K}} {ϕ : S₁ –[ K ]→ S₂} → ★               &/⋯ ϕ ≡ ★                                 ; &/⋯–★ = refl 
+  &/⋯–sat : {{K : Kit M}} {{C : ComposeKit K V K}} {ϕ : S₁ –[ K ]→ S₂} → sat             &/⋯ ϕ ≡ sat                               ; &/⋯–sat = refl 
+  &/⋯–✰   : {{K : Kit M}} {{C : ComposeKit K V K}} {ϕ : S₁ –[ K ]→ S₂} → ✰               &/⋯ ϕ ≡ ✰                                 ; &/⋯–✰  = refl 
 
-_&_ : {{K : Kit k}} → S₁ ∋ s → S₁ –[ K ]→ S₂ → S₂ ∋/⊢[ K ] s
+_&_ : {{K : Kit M}} → S₁ ∋ s → S₁ –[ K ]→ S₂ → S₂ ∋/⊢[ K ] s
 _&_ = _&/⋯_ 
 
-_⋯_ : {{K : Kit k}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
-_⋯_ {{K}} = let instance _ = K , Kᴿ , K in _&/⋯_ 
+_⋯_ : {{K : Kit M}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
+_⋯_ {{K}} = let instance _ = K ;ᴷ V in _&/⋯_ 
 
 {-# REWRITE 
   id`–def `id–def ;wk–def
-  idˢ–def  compₗ–idˢ–def 
+  idˢ–def  compₗ–idˢ–def compᵣ–idˢ–def 
   wk–def   compₗ–wk–def 
   ext₀–def compₗ–ext₀–def 
   extₛ–def compₗ–extₛ–def
   comp–def–safe
-  coincidenceₓ 
 
   compᵣ–id compₗ–id 
   associativity distributivity interact
@@ -127,5 +126,5 @@ _⋯_ {{K}} = let instance _ = K , Kᴿ , K in _&/⋯_
   compositionality–safe
   right–id
   &/⋯–` &/⋯–λ &/⋯–· &/⋯–⇒ &/⋯–Λ &/⋯–∀ &/⋯–• &/⋯–tt &/⋯–`⊤ &/⋯–∶⊑ &/⋯–★ &/⋯–sat &/⋯–✰ 
-  coincidenceₜ 
+  coincidence coincidence–fold coincidence–push
 #-}  

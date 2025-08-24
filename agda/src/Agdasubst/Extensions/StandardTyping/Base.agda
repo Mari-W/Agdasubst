@@ -23,7 +23,7 @@ module _ {{library : Library}} where
     unfolding lib 
 
     wk-cancels-⦅⦆ :
-      ∀ {{K : Kit k}} (x/t : S ∋/⊢[ K ] s) →
+      ∀ {{K : Kit M}} (x/t : S ∋/⊢[ K ] s) →
       (wk {s = s} ; ⦅ x/t ⦆) ~ id  
     wk-cancels-⦅⦆ {{K}} x/t sx x = `/id-injective (
         `/id {{K}} (x & (wk ; ⦅ x/t ⦆))         ≡⟨⟩
@@ -32,7 +32,7 @@ module _ {{library : Library}} where
         `/id {{K}} (x & id)                    ∎)
 
     wk-cancels-⦅⦆-⋯ :
-      ∀ {{K : Kit k}} (t : S ⊢ s′) (x/t : S ∋/⊢[ K ] s) →
+      ∀ {{K : Kit M}} (t : S ⊢ s′) (x/t : S ∋/⊢[ K ] s) →
       t ⋯ wk {s = s} ⋯ ⦅ x/t ⦆ ≡ t
     wk-cancels-⦅⦆-⋯ t x/t =
       t ⋯ wk ⋯ ⦅ x/t ⦆   ≡⟨ ⋯-compositionality t wk ⦅ x/t ⦆ ⟩
@@ -41,7 +41,7 @@ module _ {{library : Library}} where
       t                 ∎
 
     dist-↑-⦅⦆ :
-      ∀  {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K : Kit k}}
+      ∀  {{K₁ : Kit M₁}} {{K₂ : Kit M₂}} {{K : Kit M}}
          {{C₁ : ComposeKit K₁ K₂ K}} {{C₂ : ComposeKit K₂ K K}}
          (x/t : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
       (⦅ x/t ⦆ ; ϕ) ~ ((ϕ ↑ s) ; ⦅ (x/t &/⋯ ϕ) ⦆)
@@ -61,7 +61,7 @@ module _ {{library : Library}} where
         `/id (x & ((ϕ ↑ s) ; ⦅ (x/t &/⋯ ϕ) ⦆))        ∎)
 
     dist-↑-⦅⦆-⋯ :
-      ∀  {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K : Kit k}} 
+      ∀  {{K₁ : Kit M₁}} {{K₂ : Kit M₂}} {{K : Kit M}} 
          {{C₁ : ComposeKit K₁ K₂ K}} {{C₂ : ComposeKit K₂ K K}}
          (t : (s ∷ S₁) ⊢ s′) (x/t : S₁ ∋/⊢[ K₁ ] s) (ϕ : S₁ –[ K₂ ]→ S₂) →
       t ⋯ ⦅ x/t ⦆ ⋯ ϕ ≡ t ⋯ (ϕ ↑ s) ⋯ ⦅ (x/t &/⋯ ϕ) ⦆
@@ -122,7 +122,7 @@ module _ {{library : Library}} where
         ⊢` : ∀ {Γ : Ctx S} {x : S ∋ s} {t} →
             Γ ∋ x ∶ t → Γ ⊢ ` x ∶ t
 
-      record TypingKit (K : Kit k) : Set₁ where
+      record TypingKit (K : Kit M) : Set₁ where
         private instance _ = K
         infix   4  _∋/⊢_∶_  _∋*/⊢*_∶_
         infixl  6  _∋↑/⊢↑_
@@ -152,13 +152,13 @@ module _ {{library : Library}} where
             ((t ⋯′ ϕ) ∷ₜ Γ₂) ∋*/⊢* (ϕ ↑ s) ∶ (t ∷ₜ Γ₁) 
           _∋↑/⊢↑_ {S₁} {S₂} {s} {Γ₁} {Γ₂} {ϕ} ⊢ϕ t {sx} x@zero _ refl =
             subst (  ((t ⋯ ϕ) ∷ₜ Γ₂) ∋/⊢ (zero & (ϕ ↑ s)) ∶_ )
-                  (  t ⋯ ϕ ⋯ wk {s = s}                       ≡⟨ ⋯-↑-wk {{C₁ = K ;ᶜ Kᴿ}} t ϕ s ⟩
+                  (  t ⋯ ϕ ⋯ wk {s = s}                       ≡⟨ ⋯-↑-wk {{C₁ = K ;ᴷ V}} t ϕ s ⟩
                      t ⋯ wk {s = s} ⋯ (ϕ ↑ s)                 ≡⟨⟩
                      lookup (t ∷ₜ Γ₁) zero ⋯ (ϕ ↑ s)    ∎)
                   (  id/⊢` {x = zero} {Γ = (t ⋯ ϕ) ∷ₜ Γ₂} refl )
           _∋↑/⊢↑_ {S₁} {S₂} {s} {Γ₁} {Γ₂} {ϕ} ⊢ϕ t {sx} x@(suc y) _ refl =  
             subst (((t ⋯′ ϕ) ∷ₜ Γ₂) ∋/⊢ (suc y & (ϕ ↑ s)) ∶_)
-                  (lookup Γ₁ y ⋯ ϕ ⋯ wk {s = s}          ≡⟨ ⋯-↑-wk {{C₁ = K ;ᶜ Kᴿ}} _ ϕ s ⟩
+                  (lookup Γ₁ y ⋯ ϕ ⋯ wk {s = s}          ≡⟨ ⋯-↑-wk {{C₁ = K ;ᴷ V}} _ ϕ s ⟩
                    lookup Γ₁ y ⋯ wk {s = s} ⋯ (ϕ ↑ s)    ≡⟨⟩
                    lookup (t ∷ₜ Γ₁) (suc y) ⋯ (ϕ ↑ s)    ∎)
                   (∋wk/⊢wk _ _ _ _ (⊢ϕ y _ refl))
@@ -183,7 +183,7 @@ module _ {{library : Library}} where
 
       infixl  5  _∋*/⊢*[_]_∶_
       _∋*/⊢*[_]_∶_ :
-        ∀ {K : Kit k} {S₁ S₂} 
+        ∀ {K : Kit M} {S₁ S₂} 
         → Ctx S₂ → TypingKit K → S₁ –[ K ]→ S₂ → Ctx S₁ → Set
       Γ₂ ∋*/⊢*[ TK ] ϕ ∶ Γ₁ = Γ₂ ∋*/⊢* ϕ ∶ Γ₁ where instance _ = TK
 
@@ -191,7 +191,7 @@ module _ {{library : Library}} where
         constructor mkTTraversal 
         field
           _⊢⋯_ :
-            ∀  {{K : Kit k}} {{TK : TypingKit K}}
+            ∀  {{K : Kit M}} {{TK : TypingKit K}}
                {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} 
                {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} {ϕ : S₁ –[ K ]→ S₂} →
             Γ₁ ⊢ e ∶ t →
@@ -201,49 +201,49 @@ module _ {{library : Library}} where
         opaque
           unfolding lib 
           
-          TKᴿ-id/⊢` : {Γ : Ctx S} {t : S ∶⊢ s} → Γ ∋ x ∶ t → Γ ∋ id/` x ∶ t
-          TKᴿ-id/⊢` = λ ⊢x → ⊢x
+          TV-id/⊢` : {Γ : Ctx S} {t : S ∶⊢ s} → Γ ∋ x ∶ t → Γ ∋ id/` x ∶ t
+          TV-id/⊢` = λ ⊢x → ⊢x
 
-          TKᴿ-⊢`/id : {t : S ∶⊢ s} {Γ : Ctx S} {e : S ∋/⊢ᴷ s} → Γ ∋ e ∶ t → Γ ⊢ `/id e ∶ t
-          TKᴿ-⊢`/id = ⊢`
+          TV-⊢`/id : {t : S ∶⊢ s} {Γ : Ctx S} {e : S ∋/⊢ᴷ s} → Γ ∋ e ∶ t → Γ ⊢ `/id e ∶ t
+          TV-⊢`/id = ⊢`
 
-          TKᴿ-∋wk/⊢wk : (Γ : Ctx S) (t′ : S ∶⊢ s)
+          TV-∋wk/⊢wk : (Γ : Ctx S) (t′ : S ∶⊢ s)
                 (e : S ∋/⊢ᴷ s′) (t : S ∶⊢ s′) →
                 Γ ∋ e ∶ t →
                 (t′ ∷ₜ Γ) ∋ K-wk _ e ∶ t &/⋯ wk
-          TKᴿ-∋wk/⊢wk _ _ _ _ refl = refl
+          TV-∋wk/⊢wk _ _ _ _ refl = refl
 
         instance
-          TKᴿ : TypingKit Kᴿ
-          TKᴿ = record
+          TV : TypingKit V
+          TV = record
             { _∋/⊢_∶_     = _∋_∶_
-            ; id/⊢`       = λ {Γ = Γ} → TKᴿ-id/⊢` {Γ = Γ}
-            ; ⊢`/id       = TKᴿ-⊢`/id 
-            ; ∋wk/⊢wk     = TKᴿ-∋wk/⊢wk }
+            ; id/⊢`       = λ {Γ = Γ} → TV-id/⊢` {Γ = Γ}
+            ; ⊢`/id       = TV-⊢`/id 
+            ; ∋wk/⊢wk     = TV-∋wk/⊢wk }
 
         opaque
           unfolding lib  
-          TKˢ-∋wk/⊢wk : (Γ : Ctx S) (t′ : S ∶⊢ s) (e : S ⊢ s′) (t : S ∶⊢ s′) → 
+          TT-∋wk/⊢wk : (Γ : Ctx S) (t′ : S ∶⊢ s) (e : S ⊢ s′) (t : S ∶⊢ s′) → 
             Γ ⊢ e ∶ t → (t′ ∷ₜ Γ) ⊢ K-wk _ e ∶ t  &/⋯ wk
-          TKˢ-∋wk/⊢wk = λ Γ t′ e t ⊢e → ⊢e ⊢⋯ ∋wk/⊢wk Γ t′ 
+          TT-∋wk/⊢wk = λ Γ t′ e t ⊢e → ⊢e ⊢⋯ ∋wk/⊢wk Γ t′ 
 
-          TKˢ-id/⊢` : {Γ : Ctx S} {t : S ∶⊢ s} → Γ ∋ x ∶ t → Γ ⊢ id/` x ∶ t
-          TKˢ-id/⊢` = ⊢`
+          TT-id/⊢` : {Γ : Ctx S} {t : S ∶⊢ s} → Γ ∋ x ∶ t → Γ ⊢ id/` x ∶ t
+          TT-id/⊢` = ⊢`
 
-          TKˢ-⊢`/id : {t : S ∶⊢ s} {Γ : Ctx S} {e : S ⊢ s} → Γ ⊢ e ∶ t → Γ ⊢ `/id e ∶ t
-          TKˢ-⊢`/id = λ ⊢x → ⊢x
+          TT-⊢`/id : {t : S ∶⊢ s} {Γ : Ctx S} {e : S ⊢ s} → Γ ⊢ e ∶ t → Γ ⊢ `/id e ∶ t
+          TT-⊢`/id = λ ⊢x → ⊢x
 
         instance 
-          TKˢ : TypingKit Kˢ
-          TKˢ = record
+          TT : TypingKit T
+          TT = record
             { _∋/⊢_∶_     = _⊢_∶_
-            ; id/⊢`       = TKˢ-id/⊢`
-            ; ⊢`/id       = TKˢ-⊢`/id
-            ; ∋wk/⊢wk     = TKˢ-∋wk/⊢wk } 
+            ; id/⊢`       = TT-id/⊢`
+            ; ⊢`/id       = TT-⊢`/id
+            ; ∋wk/⊢wk     = TT-∋wk/⊢wk } 
 
-        open TypingKit TKᴿ public using () renaming
+        open TypingKit TV public using () renaming
           (∋wk/⊢wk to ⊢wk; _∋*/⊢*_∶_ to _∋*_∶_; _∋↑/⊢↑_ to _∋↑_; ⊢⦅_⦆ to ⊢⦅_⦆ᴿ)
-        open TypingKit TKˢ public using () renaming
+        open TypingKit TT public using () renaming
           (∋wk/⊢wk to ∋wk; _∋*/⊢*_∶_ to _⊢*_∶_; _∋↑/⊢↑_ to _⊢↑_; ⊢⦅_⦆ to ⊢⦅_⦆ˢ) 
 
         _⊢⋯ᴿ_ : ∀ {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}

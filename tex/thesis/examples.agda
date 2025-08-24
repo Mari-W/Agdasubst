@@ -51,16 +51,26 @@ record _a : Set₁ where
       `_ : S ∋ s → S ⊢ s
 
   
+    -- postulate
+    --   Mode : Set 
+    --   Vᴹ  : Mode
+    --   Tᴹ  : Mode
+    --   _⨆_ : Mode → Mode → Mode
+-- 
+    -- 
+    -- variable
+    --   M M₁ M₂ M₃ M₄ M₅ : Mode
+
     postulate
       --!! KitDefTy
       Kit : Set 
       --! KitDef
-      𝓡   : Kit 
-      𝓢   : Kit 
+      V    : Kit
+      T    : Kit
       _⊔_  : Kit → Kit → Kit 
 
     variable
-      𝓚 𝓚₁ 𝓚₂ 𝓚₃ : Kit
+      K K₁ K₂ K₃ : Kit
 
     postulate
       --!! VarTrmTy
@@ -69,102 +79,134 @@ record _a : Set₁ where
       --!! PrimsTy
       _–[_]→_  : Scope → Kit → Scope → Set
       --! Prims
-      id   : S –[ 𝓚 ]→ S
-      wk  : S –[ 𝓡 ]→ (s ∷ S)
-      _∙_  : S₂ ∋/⊢[ 𝓚 ] s → S₁ –[ 𝓚 ]→ S₂ → (s ∷ S₁) –[ 𝓚 ]→ S₂
-      _;_  : S₁ –[ 𝓚₁ ]→ S₂ → S₂ –[ 𝓚₂ ]→ S₃ → S₁ –[ 𝓚₃ ]→ S₃ 
+      id   : S –[ K ]→ S
+      wk   : S –[ V ]→ (s ∷ S)
+      _∙_  : S₂ ∋/⊢[ K ] s → S₁ –[ K ]→ S₂ → (s ∷ S₁) –[ K ]→ S₂
+      _;_  : S₁ –[ K₁ ]→ S₂ → S₂ –[ K₂ ]→ S₃ → S₁ –[ K₃ ]→ S₃ 
 
       --! VarTrmApp
-      _&/⋯_ : S₁ ∋/⊢[ 𝓚₁ ] s → S₁ –[ 𝓚₂ ]→ S₂ → S₂ ∋/⊢[ 𝓚₃ ] s
+      _&/⋯_ : S₁ ∋/⊢[ K₁ ] s → S₁ –[ K₂ ]→ S₂ → S₂ ∋/⊢[ K₃ ] s
 
-      _;[_,_,_]_   : S₁ –[ 𝓚₁ ]→ S₂ → Kit → Kit → Kit → S₂ –[ 𝓚₂ ]→ S₃ → S₁ –[ 𝓚₃ ]→ S₃
-      _&/⋯[_,_,_]_ : S₁ ∋/⊢[ 𝓚₁ ] s → Kit → Kit → Kit → S₁ –[ 𝓚₂ ]→ S₂ → S₂ ∋/⊢[ 𝓚₃ ] s
-      id[_]   : Kit → S –[ 𝓚 ]→ S
-      _∙[_]_  : S₂ ∋/⊢[ 𝓚 ] s → Kit → S₁ –[ 𝓚 ]→ S₂ → (s ∷ S₁) –[ 𝓚 ]→ S₂
-    
+      _;[_,_,_]_   : S₁ –[ K₁ ]→ S₂ → Kit → Kit → Kit → S₂ –[ K₂ ]→ S₃ → S₁ –[ K₃ ]→ S₃
+      _&/⋯[_,_,_]_ : S₁ ∋/⊢[ K₁ ] s → Kit → Kit → Kit → S₁ –[ K₂ ]→ S₂ → S₂ ∋/⊢[ K₃ ] s
+      id[_]   : Kit → S –[ K ]→ S
+      _∙[_]_  : S₂ ∋/⊢[ K ] s → Kit → S₁ –[ K ]→ S₂ → (s ∷ S₁) –[ K ]→ S₂
+
+      -- --! TypeLevelMode
+      -- ＋botᴿ   : M  ⨆ Vᴹ         ≡ M             
+      -- ＋botₗ   : Vᴹ ⨆ M          ≡ M              
+      -- ＋topᴿ   : M ⨆ Tᴹ          ≡ Tᴹ              
+      -- ＋topₗ   : Tᴹ ⨆ M          ≡ Tᴹ     
+      -- ＋idem   : M ⨆ M           ≡ M                      
+      -- ＋assoc  : (M₁ ⨆ M₂) ⨆ M₃  ≡ M₁ ⨆ (M₂ ⨆ M₃)  
+
+    -- {-# REWRITE ＋botᴿ ＋botₗ ＋topᴿ ＋topₗ ＋idem ＋assoc #-}
+    postulate
       --! TypeLevel   
-      botᵣ   : 𝓚 ⊔ 𝓡           ≡ 𝓚               
-      botₗ   : 𝓡 ⊔ 𝓚           ≡ 𝓚               
-      topᵣ   : 𝓚 ⊔ 𝓢           ≡ 𝓢              
-      topₗ   : 𝓢 ⊔ 𝓚           ≡ 𝓢     
-      idem   : 𝓚 ⊔ 𝓚           ≡ 𝓚                        
-      assoc  : (𝓚₁ ⊔ 𝓚₂) ⊔ 𝓚₃  ≡ 𝓚₁ ⊔ (𝓚₂ ⊔ 𝓚₃)  
+      botᴿ   : K ⊔ V           ≡ K               
+      botₗ   : V ⊔ K           ≡ K               
+      topᴿ   : K ⊔ T           ≡ T              
+      topₗ   : T ⊔ K           ≡ T     
+      idem   : K ⊔ K           ≡ K                        
+      assoc  : (K₁ ⊔ K₂) ⊔ K₃  ≡ K₁ ⊔ (K₂ ⊔ K₃)  
 
-    {-# REWRITE botᵣ botₗ topᵣ topₗ idem assoc #-}
+    {-# REWRITE botᴿ botₗ topᴿ topₗ idem assoc #-}
     postulate
       --! DefLawTy
-      imgˢ : S ∋/⊢[ 𝓡 ] s ≡ S ∋ s   
-      imgᴿ : S ∋/⊢[ 𝓢 ] s ≡ S ⊢ s 
+      imgⱽ : S ∋/⊢[ V ] s ≡ S ∋ s   
+      imgᵀ : S ∋/⊢[ T ] s ≡ S ⊢ s 
 
-    {-# REWRITE imgˢ imgᴿ #-}
+    {-# REWRITE imgⱽ imgᵀ #-}
     module foo
-       {{𝓚₁ : Kit}} {{𝓚₂ : Kit}} {{𝓚₃ : Kit}} {{𝓚₄ : Kit}} {{𝓚₅ : Kit}}
-       (ρ : S₁ –[ 𝓡 ]→ S₂) (ρ₁ : S₁ –[ 𝓡 ]→ S₂) (ρ₂ : S₂ –[ 𝓡 ]→ S₃) (ρ₄ : S₃ –[ 𝓡 ]→ S₄)
-       (σ : S₁ –[ 𝓢 ]→ S₂) (σ ₁ : S₁ –[ 𝓢 ]→ S₂) (σ ₂ : S₂ –[ 𝓢 ]→ S₃) (σ₄ : S₃ –[ 𝓢 ]→ S₄)
-      (ϕ : S₁ –[ 𝓚₁ ]→ S₂) (ϕ₁ : S₁ –[ 𝓚₁ ]→ S₂) (ϕ₂ : S₂ –[ 𝓚₂ ]→ S₃) (ϕ₄ : S₃ –[ 𝓚₄ ]→ S₄)
-      (x/t : S₂ ∋/⊢[ 𝓚₁ ] s)   (x/t₁ : S₂ ∋/⊢[ 𝓚₁ ] s) (t : S₂ ⊢ s) (x : S₁ ∋ s) (x′ : S₁ ∋ s′) (ϕ′ : (s ∷ S₁) –[ 𝓚₂ ]→ S₂) 
+       {{K₁ : Kit}} {{K₂ : Kit}} {{K₃ : Kit}} {{K₄ : Kit}} {{K₅ : Kit}}
+       (ρ : S₁ –[ V ]→ S₂) (ρ₁ : S₁ –[ V ]→ S₂) (ρ₂ : S₂ –[ V ]→ S₃) (ρ₄ : S₃ –[ V ]→ S₄)
+       (σ : S₁ –[ T ]→ S₂) (σ₁ : S₁ –[ T ]→ S₂) (σ₂ : S₂ –[ T ]→ S₃) (σ₄ : S₃ –[ T ]→ S₄)
+      (ϕ : S₁ –[ K₁ ]→ S₂) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) (ϕ₄ : S₃ –[ K₄ ]→ S₄)
+      (x/t : S₂ ∋/⊢[ K₁ ] s)   (x/t₁ : S₂ ∋/⊢[ K₁ ] s) (t : S₂ ⊢ s) (t′ : S₂ ⊢ s′) (x : S₁ ∋ s) (x′ : S₁ ∋ s′) (ϕ′ : (s ∷ S₁) –[ K₂ ]→ S₂) 
       where 
 
       postulate
-        --! DefLaw
-        ＋idˢ  : x &/⋯[ 𝓡 , 𝓢 , 𝓢 ] id[ 𝓢 ]                ≡ ` x
-        ＋wk   : x &/⋯[ 𝓡 , 𝓡 , 𝓡 ] wk                     ≡ suc x
-        ext₀   : zero &/⋯[ 𝓡 , 𝓚 , 𝓚 ] (x/t ∙[ 𝓚 ] ϕ)        ≡ x/t
-        extₛ   : suc x′ &/⋯[ 𝓡 , 𝓚 , 𝓚 ] (x/t ∙[ 𝓚 ] ϕ)      ≡ 
-                 x′ &/⋯[ 𝓡 , 𝓚 , 𝓚 ] ϕ
-        comp   : x &/⋯[ 𝓡 , 𝓡 , 𝓡 ] (ρ₁ ;[ 𝓡 , 𝓡 , 𝓡 ] ρ₂) ≡ 
-                 (x &/⋯[ 𝓡 , 𝓡 , 𝓡 ] ρ₁) &/⋯[ 𝓡 , 𝓡 , 𝓡 ] ρ₂
-        compₗ–idˢ     : x &/⋯[ 𝓡 , 𝓢 , 𝓢 ]  (id[ 𝓢 ] ;[ 𝓢 , 𝓚 , 𝓢 ] ϕ₂)  ≡ 
-                        (` x) &/⋯[ 𝓢 , 𝓚 , 𝓢 ] ϕ₂  
-        compₗ–wk      : x &/⋯[ 𝓡 , 𝓚 , 𝓚 ] (wk ;[ 𝓡 , 𝓚 , 𝓚 ] ϕ′)        ≡ 
-                        suc x &/⋯[ 𝓡 , 𝓚 , 𝓚 ] ϕ′ 
-        compₗ–ext₀    : zero &/⋯[ 𝓡 , 𝓚₃ , 𝓚₃ ] ((x/t₁ ∙[ 𝓚₁ ] ϕ₁) ;[ 𝓚₁ , 𝓚₂ , 𝓚₃ ] ϕ₂)    ≡ 
-                        x/t &/⋯[ 𝓚₁ , 𝓚₂ , 𝓚₃ ] ϕ₂
-        compₗ–extₛ    : suc x′ &/⋯[ 𝓡 , 𝓚₃ , 𝓚₃ ] ((x/t₁ ∙[ 𝓚₁ ] ϕ₁) ;[ 𝓚₁ , 𝓚₂ , 𝓚₃ ] ϕ₂)  ≡ 
-                        x′ &/⋯[ 𝓡 , 𝓚₃ , 𝓚₃ ] (ϕ₁ ;[ 𝓚₁ , 𝓚₂ , 𝓚₃ ] ϕ₂)
-        coincidenceₓ  : x &/⋯[ 𝓡 , 𝓢 , 𝓢 ] (ρ ;[ 𝓡 , 𝓢 , 𝓢 ] id[ 𝓢 ])                     ≡ 
-                        ` (x &/⋯[ 𝓡 , 𝓡 , 𝓡 ] ρ)
+        --! DefLaw {
+        ＋idˢ   : x &/⋯[ V , T , T ] id[ T ]                 ≡ ` x
+        ＋wk    : x &/⋯[ V , V , V ] wk                      ≡ suc x
+        ext₀    : zero &/⋯[ V , K , K ] (x/t ∙[ K ] ϕ)       ≡ x/t
+        extₛ    : suc x′ &/⋯[ V , K , K ] (x/t ∙[ K ] ϕ)     ≡ 
+                 x′ &/⋯[ V , K , K ] ϕ
+        comp    : x &/⋯[ V , V , V ] (ρ₁ ;[ V , V , V ] ρ₂)  ≡ 
+                 (x &/⋯[ V , V , V ] ρ₁) &/⋯[ V , V , V ] ρ₂
+        --! }
+
+        --! CompGeneral 
+        comp–general : 
+          x/t &/⋯[ K₃ , K₄ , K₅ ] (ϕ₁ ;[ K₁ , K₂ , K₃ ] ϕ₂) ≡ 
+          (x/t &/⋯[ K₁ , K₂ , K₃ ] ϕ₁) &/⋯[ K₃ , K₄ , K₅ ] ϕ₂
+
+
+        --! SpecialDefLaws
+        compᵣ–idˢ   : x &/⋯[ V , T , T ] (ρ₁ ;[ V , T , T ] id[ T ])    ≡ 
+                      ` (x &/⋯[ V , V , V ] ρ₁)
+        compₗ–idˢ   : x &/⋯[ V , T , T ]  (id[ T ] ;[ T , V , T ] ρ₂)  ≡ 
+                      ` (x &/⋯[ V , V , V ] ρ₂)  
+        compₗ–wk    : x &/⋯[ V , K , K ] (wk ;[ V , K , K ] ϕ′)        ≡ 
+                      suc x &/⋯[ V , K , K ] ϕ′ 
+        compₗ–ext₀  : zero &/⋯[ V , K₃ , K₃ ] ((x/t₁ ∙[ K₁ ] ϕ₁) ;[ K₁ , K₂ , K₃ ] ϕ₂)    ≡ 
+                      x/t &/⋯[ K₁ , K₂ , K₃ ] ϕ₂
+        compₗ–extₛ  : suc x′ &/⋯[ V , K₃ , K₃ ] ((x/t₁ ∙[ K₁ ] ϕ₁) ;[ K₁ , K₂ , K₃ ] ϕ₂)  ≡ 
+                      x′ &/⋯[ V , K₃ , K₃ ] (ϕ₁ ;[ K₁ , K₂ , K₃ ] ϕ₂)
+    
         --! Interaction
-        comp-idₗ        : id[ 𝓚 ] ;[ 𝓚 , 𝓚 , 𝓚 ] ϕ                                  ≡  ϕ
-        comp-idᴿ        : ϕ ;[ 𝓚 , 𝓚 , 𝓚 ] id[ 𝓚 ]                                  ≡ ϕ
-        norm-idˢ        : id[ 𝓢 ] ;[ 𝓢 , 𝓚 , 𝓢 ] ϕ                                  ≡  
-                          ϕ ;[ 𝓚 , 𝓢 , 𝓢 ] id[ 𝓢 ]
-        associativity   : (ϕ₁ ;[ 𝓚₁ , 𝓚₂ , 𝓚₃ ] ϕ₂) ;[ 𝓚₃ , 𝓚₄ , 𝓚₅ ] ϕ₄            ≡ 
-                          ϕ₁ ;[ 𝓚₁ , (𝓚₂ ⊔ 𝓚₄) , 𝓚₅ ] (ϕ₂ ;[ 𝓚₂ , 𝓚₄ , (𝓚₂ ⊔ 𝓚₄) ] ϕ₄) 
-        distributivity  : (x/t₁ ∙[ 𝓚₁ ] ϕ₁) ;[ 𝓚₁ , 𝓚₂ , 𝓚₃ ] ϕ₂                      ≡ 
-                          (x/t₁ &/⋯[ 𝓚₁ , 𝓚₂ , 𝓚₃ ] ϕ₂) ∙[ 𝓚₃ ] (ϕ₁ ;[ 𝓚₁ , 𝓚₂ , 𝓚₃ ] ϕ₂)
-        interact        : wk ;[ 𝓡 , 𝓚 , 𝓚 ] (x/t ∙[ 𝓚 ] ϕ)                            ≡ ϕ 
-        η–id            : zero ∙[ 𝓡 ] wk                                            ≡ id[ 𝓡 ]
-        η–law           : (zero &/⋯[ 𝓡 , 𝓚 , 𝓚 ] ϕ′) ∙[ 𝓚 ] (wk ;[ 𝓡 , 𝓚 , 𝓚 ] ϕ′)  ≡ ϕ′
+        comp-idₗ        : id[ K ] ;[ K , K , K ] ϕ                                  ≡  ϕ
+        comp-idᵣ        : ϕ ;[ K , K , K ] id[ K ]                                  ≡ ϕ
+        associativity   : (ϕ₁ ;[ K₁ , K₂ , K₃ ] ϕ₂) ;[ K₃ , K₄ , K₅ ] ϕ₄            ≡ 
+                          ϕ₁ ;[ K₁ , (K₂ ⊔ K₄) , K₅ ] (ϕ₂ ;[ K₂ , K₄ , (K₂ ⊔ K₄) ] ϕ₄) 
+        distributivity  : (x/t₁ ∙[ K₁ ] ϕ₁) ;[ K₁ , K₂ , K₃ ] ϕ₂                      ≡ 
+                          (x/t₁ &/⋯[ K₁ , K₂ , K₃ ] ϕ₂) ∙[ K₃ ] (ϕ₁ ;[ K₁ , K₂ , K₃ ] ϕ₂)
+        interact        : wk ;[ V , K , K ] (x/t ∙[ K ] ϕ)                            ≡ ϕ 
+        η–id            : zero ∙[ V ] wk                                            ≡ id[ V ]
+        η–law           : (zero &/⋯[ V , K , K ] ϕ′) ∙[ K ] (wk ;[ V , K , K ] ϕ′)  ≡ ϕ′
 
       record _c : Set₁ where
         field
           --! Monad
-          compositionality  : (x/t₁ &/⋯[ 𝓚₁ , 𝓚₂ , 𝓚₃ ] ϕ₁) ;[ 𝓚₃ , 𝓚₄ , 𝓢 ] ϕ₄  ≡ 
-                              x/t₁ &/⋯[ 𝓚₁ , 𝓚₂ ⊔ 𝓚₄ , 𝓢 ] (ϕ₁ ;[ 𝓚₂ , 𝓚₄ , (𝓚₂ ⊔ 𝓚₄) ] ϕ₂)
-          right-id          : x/t₁ &/⋯[ 𝓚₁ , 𝓚₂ , 𝓚₁ ] id[ 𝓚₂ ] ≡ x/t₁
-          coincidenceₜ      : t &/⋯[ 𝓢 , 𝓢 , 𝓢 ] (ρ ;[ 𝓡 , 𝓢 , 𝓢 ] id[ 𝓢 ])  ≡ 
-                              t &/⋯[ 𝓢 , 𝓡 , 𝓢 ] ρ 
+          right-id          : x/t₁ &/⋯[ K₁ , K₂ , K₁ ] id[ K₂ ] ≡ x/t₁
+          compositionality  : (x/t₁ &/⋯[ K₁ , K₂ , K₃ ] ϕ₁) &/⋯[ K₃ , K₄ , T ] ϕ₄  ≡ 
+                              x/t₁ &/⋯[ K₁ , K₂ ⊔ K₄ , T ] (ϕ₁ ;[ K₂ , K₄ , (K₂ ⊔ K₄) ] ϕ₂)
+
+          --! CompoGeneral
+          compositionality–general  : 
+            (x/t₁ &/⋯[ K₁ , K₂ , K₃ ] ϕ₁) &/⋯[ K₃ , K₄ , K₅ ] ϕ₄  ≡ 
+            x/t₁ &/⋯[ K₁ , K₂ ⊔ K₄ , K₅ ] (ϕ₁ ;[ K₂ , K₄ , (K₂ ⊔ K₄) ] ϕ₂)
+
+          --! Coincidence Laws
+          coincidence       : t &/⋯[ T , T , T ] (ϕ ;[ K , T , T ] id[ T ])  ≡ 
+                              t &/⋯[ T , K , T ] ϕ  
+          coincidence–fold : t &/⋯[ T , T , T ] ((x/t &/⋯[ K , T , T ] id[ T ]) ∙ (ϕ ;[ K , T , T ] id[ T ]))   ≡ 
+                             (t &/⋯[ T , K , T ] (x/t ∙ ϕ))
+          
+          coincidence–push : t &/⋯[ T , T , T ] (t′ ∙ (ϕ ;[ K , T , T ] id[ T ])) ≡ 
+                             t &/⋯[ T , T , T ] (t′ ∙ (id[ T ] ;[ T , K , T ]  ϕ))
+          
+
     
       record _d : Set₁ where
         field
           --! TravL
-          var : (` x) &/⋯[  𝓢 , 𝓚 , 𝓢 ] ϕ ≡ 
-                (x &/⋯[ 𝓡 , 𝓚 , 𝓚 ] ϕ) &/⋯[ 𝓚 , 𝓢 , 𝓢 ] id[ 𝓢 ]
+          var : (` x) &/⋯[  T , K , T ] ϕ ≡ 
+                (x &/⋯[ V , K , K ] ϕ) &/⋯[ K , T , T ] id[ T ]
         
 
 
-open import Data.List
+open import Data.List hiding ([_])
 open import Data.Nat hiding (_⊔_)
 open import Data.Fin using (Fin)
 
 --! Rewrite
-+–idᴿ : ∀ n → n + 0 ≡ n
-+–idᴿ zero     = refl
-+–idᴿ (suc n)  = cong suc (+–idᴿ n)
++–idᵣ : ∀ n → n + 0 ≡ n
++–idᵣ zero     = refl
++–idᵣ (suc n)  = cong suc (+–idᵣ n)
 
 --! RewriteIt
-{-# REWRITE +–idᴿ #-}
+{-# REWRITE +–idᵣ #-}
 
 --! RewriteEx
 _ : ∀ {n} → n + 0 ≡ n
@@ -359,6 +401,8 @@ data _⊢_ : Scoped where
 --! } 
 
 variable
+  e e₁ e₂ e′ : S ⊢ expr
+  k k′ : S ⊢ kind
   x x′ : S ∋ s
   t t₁ t₂ t′ : S ⊢ s
 
@@ -463,9 +507,12 @@ module _B where
       ＋compositionalityˢᴿ  : (t : S₁ ⊢ s) → (t ⋯ˢ σ₁) ⋯ᴿ ρ₂  ≡ t ⋯ˢ (σ₁ ;ˢᴿ ρ₂)
       ＋compositionalityˢˢ  : (t : S₁ ⊢ s) → (t ⋯ˢ σ₁) ⋯ˢ σ₂  ≡ t ⋯ˢ (σ₁ ;ˢˢ σ₂)
 
-      ＋coincidence  : (t : S₁ ⊢ s) → t ⋯ˢ (ρ ;ᴿˢ idˢ)  ≡ t ⋯ᴿ ρ
+      -- Coincidence Laws
+      ＋coincidence       : (t : S₁ ⊢ s) → t ⋯ˢ (ρ ;ᴿˢ idˢ)  ≡ t ⋯ᴿ ρ
+      ＋coincidence-fold  : (t : (s′ ∷ S₁) ⊢ s) → t ⋯ˢ ((` x) ∙ˢ (ρ ;ᴿˢ idˢ)) ≡ t ⋯ᴿ (x ∙ᴿ ρ)
       --! } 
-  opaque
+      ＋coincidence-push  : (t : (s′ ∷ S₁) ⊢ s) → t ⋯ˢ (t′ ∙ˢ (ρ ;ᴿˢ idˢ)) ≡ t ⋯ˢ (t′ ∙ˢ (idˢ ;ˢᴿ ρ))
+  opaque 
     unfolding _→ᴿ_ _&ᴿ_ idᴿ wk _∙ᴿ_ _;ᴿᴿ_ _→ˢ_ _&ˢ_ idˢ _∙ˢ_ _;ᴿˢ_ _;ˢᴿ_ _;ˢˢ_
 
     --! DefLaws {
@@ -473,11 +520,11 @@ module _B where
     ＋idᴿ  : x &ᴿ idᴿ             ≡ x
     ＋wk   : x &ᴿ wk {s = s′}     ≡ suc x
     ext₀ᴿ  : zero &ᴿ (x ∙ᴿ ρ)     ≡ x
-    extₛᴿ  : (suc x′) &ᴿ (x ∙ᴿ ρ) ≡ x′ &ᴿ ρ 
+    extˢᴿ  : (suc x′) &ᴿ (x ∙ᴿ ρ) ≡ x′ &ᴿ ρ 
 
     ＋idˢ  : x &ˢ idˢ             ≡ ` x
     ext₀ˢ  : zero &ˢ (t ∙ˢ σ)     ≡ t
-    extₛˢ  : (suc x) &ˢ (t ∙ˢ σ)  ≡ x &ˢ σ
+    extˢˢ  : (suc x) &ˢ (t ∙ˢ σ)  ≡ x &ˢ σ
 
     compᴿᴿ  : x &ᴿ (ρ₁ ;ᴿᴿ ρ₂)  ≡ (x &ᴿ ρ₁) &ᴿ ρ₂
     compᴿˢ  : x &ˢ (ρ₁ ;ᴿˢ σ₂)  ≡ (x &ᴿ ρ₁) &ˢ σ₂
@@ -488,8 +535,8 @@ module _B where
     --! InteractLaws {
     -- Interaction Laws
     comp-idₗᴿᴿ  : idᴿ ;ᴿᴿ ρ  ≡ ρ;    comp-idₗᴿˢ  : idᴿ ;ᴿˢ σ  ≡ σ
-    comp-idᵣᴿᴿ  : ρ ;ᴿᴿ idᴿ  ≡ ρ 
-    comp-idᵣˢˢ  : σ ;ˢˢ idˢ  ≡ σ;    comp-idᵣˢᴿ  : σ ;ˢᴿ idᴿ  ≡ σ 
+    comp-idᴿᴿᴿ  : ρ ;ᴿᴿ idᴿ  ≡ ρ 
+    comp-idᴿˢˢ  : σ ;ˢˢ idˢ  ≡ σ;    comp-idᴿˢᴿ  : σ ;ˢᴿ idᴿ  ≡ σ 
     comp-idₗˢˢ  : idˢ ;ˢˢ σ  ≡ σ
 
     associativityᴿᴿᴿ  : (ρ₁ ;ᴿᴿ ρ₂) ;ᴿᴿ ρ₃  ≡ ρ₁ ;ᴿᴿ (ρ₂ ;ᴿᴿ ρ₃)
@@ -525,15 +572,16 @@ module _B where
     compositionalityˢˢ  : (t : S₁ ⊢ s) → (t ⋯ˢ σ₁) ⋯ˢ σ₂  ≡ t ⋯ˢ (σ₁ ;ˢˢ σ₂)
 
     coincidence  : (t : S₁ ⊢ s) → t ⋯ˢ (ρ ;ᴿˢ idˢ)  ≡ t ⋯ᴿ ρ
+    coincidence-fold  : (t : (s′ ∷ S₁) ⊢ s) → t ⋯ˢ ((` x) ∙ˢ (ρ ;ᴿˢ idˢ)) ≡ t ⋯ᴿ (x ∙ᴿ ρ)
 
     -- All proofs
     ＋idᴿ = refl 
     ＋wk = refl 
     ext₀ᴿ = refl
-    extₛᴿ = refl
+    extˢᴿ = refl
     ＋idˢ = refl
     ext₀ˢ = refl
-    extₛˢ = refl
+    extˢˢ = refl
 
     compᴿᴿ = refl
     compᴿˢ = refl
@@ -554,11 +602,11 @@ module _B where
     distributivityˢˢ = fun-exti (fun-ext (λ { zero → refl ; (suc x) → refl }))
 
     comp-idₗᴿᴿ = refl
-    comp-idᵣᴿᴿ = refl
+    comp-idᴿᴿᴿ = refl
     comp-idₗᴿˢ = refl
     comp-idₗˢˢ = refl
-    comp-idᵣˢᴿ {σ = σ} = fun-exti (fun-ext λ x → right-idᴿ (x &ˢ σ))
-    comp-idᵣˢˢ {σ = σ} = fun-exti (fun-ext λ x → right-idˢ (x &ˢ σ))
+    comp-idᴿˢᴿ {σ = σ} = fun-exti (fun-ext λ x → right-idᴿ (x &ˢ σ))
+    comp-idᴿˢˢ {σ = σ} = fun-exti (fun-ext λ x → right-idˢ (x &ˢ σ))
 
     right-idᴿ (` x)        = refl
     right-idᴿ (λx e)       = cong λx_ (trans (cong (_⋯ᴿ_ {S₂ = expr ∷ _} e) η-id) (right-idᴿ e))
@@ -615,6 +663,7 @@ module _B where
     compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} ★            = refl
     
     coincidence = {!   !} 
+    coincidence-fold = {!   !} 
 
     associativityᴿᴿᴿ = refl
     associativityᴿᴿˢ = refl
@@ -625,24 +674,110 @@ module _B where
     associativityˢˢᴿ {σ₁ = σ₁} = fun-exti (fun-ext λ x → compositionalityˢᴿ (x &ˢ σ₁))
     associativityˢˢˢ {σ₁ = σ₁} = fun-exti (fun-ext λ x → compositionalityˢˢ (x &ˢ σ₁))
 
-    --! RewriteSys {
-    {-# REWRITE 
-      ＋idᴿ ＋wk ext₀ᴿ extₛᴿ
-      ＋idˢ ext₀ˢ extₛˢ
-      compᴿᴿ compᴿˢ compˢᴿ compˢˢ
-      comp-idₗᴿᴿ comp-idₗᴿˢ comp-idᵣᴿᴿ 
-      comp-idᵣˢˢ comp-idᵣˢᴿ comp-idₗˢˢ
-      associativityᴿᴿᴿ associativityᴿᴿˢ 
-      associativityᴿˢᴿ associativityᴿˢˢ
-      associativityˢᴿᴿ associativityˢᴿˢ 
-      associativityˢˢᴿ associativityˢˢˢ
-      distributivityᴿᴿ distributivityᴿˢ 
-      distributivityˢᴿ distributivityˢˢ
-      interactᴿ interactˢ
-      η-id η-lawᴿ η-lawˢ
-      right-idᴿ right-idˢ
-      compositionalityᴿᴿ compositionalityᴿˢ 
-      compositionalityˢᴿ compositionalityˢˢ
-      coincidence
-    #-}
+  --! RewriteSys {
+  {-# REWRITE 
+    ＋idᴿ ＋wk ext₀ᴿ extˢᴿ
+    ＋idˢ ext₀ˢ extˢˢ
+    compᴿᴿ compᴿˢ compˢᴿ compˢˢ
+    comp-idₗᴿᴿ comp-idₗᴿˢ comp-idᴿᴿᴿ 
+    comp-idᴿˢˢ comp-idᴿˢᴿ comp-idₗˢˢ
+    associativityᴿᴿᴿ associativityᴿᴿˢ 
+    associativityᴿˢᴿ associativityᴿˢˢ
+    associativityˢᴿᴿ associativityˢᴿˢ 
+    associativityˢˢᴿ associativityˢˢˢ
+    distributivityᴿᴿ distributivityᴿˢ 
+    distributivityˢᴿ distributivityˢˢ
+    interactᴿ interactˢ
+    η-id η-lawᴿ η-lawˢ
+    right-idᴿ right-idˢ
+    compositionalityᴿᴿ compositionalityᴿˢ 
+    compositionalityˢᴿ compositionalityˢˢ
+    coincidence coincidence-fold
+  #-}
     --! }
+
+  -- Typing ----------------------------------------------------------------------
+
+  ↑ᵗ_ : Sort → Sort 
+  ↑ᵗ expr = type
+  ↑ᵗ type = kind
+  ↑ᵗ kind = kind
+
+  _∶⊢_ : Scope → Sort → Set
+  S ∶⊢ s = S ⊢ (↑ᵗ s)
+
+  depth : S ∋ s → ℕ
+  depth zero     = zero
+  depth (suc x)  = suc (depth x)
+
+  -- We need to drop one extra using `suc`, because otherwise the types in a
+  -- context are allowed to use themselves.
+  drop-∈ : S ∋ s → Scope → Scope
+  drop-∈ e xs = drop (suc (depth e)) xs
+
+  Ctx : Scope → Set
+  Ctx S = ∀ s → (x : S ∋ s) → drop-∈ x S ∶⊢ s
+
+  []ₜ : Ctx []
+  []ₜ _ ()
+
+  _∷ₜ_ : S ∶⊢ s → Ctx S → Ctx (s ∷ S)
+  (t ∷ₜ Γ) _ zero     = t
+  (t ∷ₜ Γ) _ (suc x)  = Γ _ x
+
+  weaken : S ⊢ s → (s′ ∷ S) ⊢ s
+  weaken t = t ⋯ᴿ wk
+
+  _[_] : (s′ ∷ S) ⊢ s → S ⊢ s′ → S ⊢ s
+  t [ t′ ] = t ⋯ˢ (t′ ∙ˢ idˢ) 
+
+  wk-drop-∈ : (x : S ∋ s) → drop-∈ x S ⊢ s′ → S ⊢ s′
+  wk-drop-∈ zero t = weaken t 
+  wk-drop-∈ (suc x)  t = weaken (wk-drop-∈ x t) 
+
+  wk-telescope : Ctx S → S ∋ s → S ∶⊢ s
+  wk-telescope Γ x = wk-drop-∈ x (Γ _ x)
+
+  infix   4  _∋_∶_
+  _∋_∶_ : Ctx S → S ∋ s → S ∶⊢ s → Set
+  Γ ∋ x ∶ t = wk-telescope Γ x ≡ t
+
+  variable 
+    Γ Γ₁ Γ₂ Γ₃ Γ′ Γ₁′ Γ₂′ Γ₃′ : Ctx S
+
+  data _⊢_∶_ : {s : Sort} → Ctx S → S ⊢ s → S ∶⊢ s → Set where
+    ⊢` : ∀ {x : S ∋ s} {t} → 
+      Γ ∋ x ∶ t →
+      -------------
+      Γ ⊢ (` x) ∶ t
+    ⊢λ : 
+      (t ∷ₜ Γ) ⊢ e ∶ (weaken t′) → 
+      ------------------------
+      Γ ⊢ (λx e) ∶ (t ⇒ t′)
+    ⊢Λ : 
+      (k ∷ₜ Γ) ⊢ e ∶ t →  
+      -------------------------
+      Γ ⊢ (Λα e) ∶ (∀[α∶ k ] t)
+    ⊢· : 
+      Γ ⊢ e₁ ∶ (t₁ ⇒ t₂) →
+      Γ ⊢ e₂ ∶ t₁ →
+      --------------------
+      Γ ⊢ (e₁ · e₂) ∶ t₂
+    ⊢∙ : 
+      Γ ⊢ e ∶ (∀[α∶ k ] t′) →
+      Γ ⊢ t ∶ k →
+      (k ∷ₜ Γ) ⊢ t′ ∶ k′ →
+      ------------------------
+      Γ ⊢ (e • t) ∶ (t′ [ t ])
+    ⊢★ : {t : S ⊢ type} →
+      ---------
+      Γ ⊢ t ∶ ★
+
+  _∶_→ᴿ_ : S₁ →ᴿ S₂ → Ctx S₁ → Ctx S₂ → Set
+  _∶_→ᴿ_ {S₁} {S₂} ρ Γ₁ Γ₂ = ∀ (s : Sort) (x : S₁ ∋ s) (t : S₁ ∶⊢ s) → (Γ₁ ∋ x ∶ t) → Γ₂ ∋ (x &ᴿ ρ) ∶ t ⋯ᴿ ρ 
+
+  _∶_→ˢ_ : S₁ →ˢ S₂ → Ctx S₁ → Ctx S₂ → Set
+  _∶_→ˢ_ {S₁} {S₂} σ Γ₁ Γ₂ = ∀ (s : Sort) (x : S₁ ∋ s) (t : S₁ ∶⊢ s) → (Γ₁ ∋ x ∶ t) → Γ₂ ⊢ (x &ˢ σ) ∶ (t ⋯ˢ σ) 
+
+
+  

@@ -1,10 +1,10 @@
 -- Author(s): Hannes Saffrich (2024) and Marius Weidner (2025)
 {-# OPTIONS --rewriting --experimental-lazy-instances #-}
-module Agdasubst.Examples.SystemF.SubstitutionPreservesTyping where
+module Agdasubst.Examples.SystemF.TᴹstitutionPreservesTyping where
 
 open import Agdasubst.Examples.SystemF.Definitions.Syntax
 open import Agdasubst.Examples.SystemF.Definitions.Typing
-open import Agdasubst.Examples.SystemF.Substitution
+open import Agdasubst.Examples.SystemF.Tᴹstitution
 
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; subst; module ≡-Reasoning)
 open ≡-Reasoning

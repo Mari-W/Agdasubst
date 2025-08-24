@@ -5,7 +5,7 @@ module Agdasubst.Examples.SystemF.Definitions.Typing where
 open import Agdasubst.Extensions.StandardTyping public 
 
 open import Agdasubst.Examples.SystemF.Definitions.Syntax
-open import Agdasubst.Examples.SystemF.Substitution
+open import Agdasubst.Examples.SystemF.Tᴹstitution
 
 instance types = mkTypes λ { expr → type ; type → kind ; kind →  kind }
 open Types types public

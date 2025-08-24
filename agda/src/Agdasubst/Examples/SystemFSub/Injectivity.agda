@@ -15,7 +15,7 @@ variable
   t₁₁ t₁₂ t₂₁ t₂₂ : S ⊢ type
   e₁₁ e₁₂ e₂₁ e₂₂ : S ⊢ expr 
 
-Injective-Map : ∀ {{K : Kit k}} → S₁ –[ K ]→ S₂ → Set
+Injective-Map : ∀ {{K : Kit M}} → S₁ –[ K ]→ S₂ → Set
 Injective-Map ϕ = ∀ s (x x′ : _ ∋ s) → x & ϕ ≡ x′ & ϕ → x ≡ x′
 
 suc-injective : suc {s′ = s′} x ≡ suc x′ → x ≡ x′ 

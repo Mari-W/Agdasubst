@@ -3,7 +3,7 @@
 module Agdasubst.Examples.SystemF.Definitions.Semantics where
 
 open import Agdasubst.Examples.SystemF.Definitions.Syntax
-open import Agdasubst.Examples.SystemF.Substitution
+open import Agdasubst.Examples.SystemF.Tᴹstitution
 
 data Val : S ⊢ expr → Set where
   vλ : Val (λx e)

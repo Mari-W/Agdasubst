@@ -1,12 +1,12 @@
 -- Author(s): Hannes Saffrich (2024) and Marius Weidner (2025)
 {-# OPTIONS --rewriting --experimental-lazy-instances #-}
-module Agdasubst.Examples.SystemF.SubjectReduction where
+module Agdasubst.Examples.SystemF.TᴹjectReduction where
 
 open import Agdasubst.Examples.SystemF.Definitions.Syntax
 open import Agdasubst.Examples.SystemF.Definitions.Typing
 open import Agdasubst.Examples.SystemF.Definitions.Semantics
-open import Agdasubst.Examples.SystemF.Substitution
-open import Agdasubst.Examples.SystemF.SubstitutionPreservesTyping
+open import Agdasubst.Examples.SystemF.Tᴹstitution
+open import Agdasubst.Examples.SystemF.TᴹstitutionPreservesTyping
 
 subject-reduction :
   Γ ⊢ e ∶ t →

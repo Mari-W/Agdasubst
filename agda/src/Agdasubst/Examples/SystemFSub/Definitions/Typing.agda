@@ -53,9 +53,9 @@ data _⊢_⊑_ where
 ⊑-trans t₁⊑t₂               (⊑-` t₂⊑t₃ y t₄⊑t₅)     = ⊑-` (⊑-trans t₁⊑t₂ t₂⊑t₃) y t₄⊑t₅
 
 data _⊢_∶_ where
-  ⊢` : ∀ {x : S ∋ s} {T : S ∶⊢ s} →
-    Γ ∋ x ∶ T →
-    Γ ⊢ ` x ∶ T
+  ⊢` : ∀ {x : S ∋ s} {t : S ∶⊢ s} →
+    Γ ∋ x ∶ t →
+    Γ ⊢ ` x ∶ t
   ⊢λ : ∀ {e : (expr ∷ S) ⊢ expr} →
     (t₁ ∷ₜ Γ) ⊢ e ∶ weaken t₂ →
     Γ ⊢ (λx e) ∶ (t₁ ⇒ t₂)

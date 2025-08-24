@@ -1,6 +1,6 @@
 -- Author(s): Hannes Saffrich (2024) and Marius Weidner (2025)
 {-# OPTIONS --rewriting --experimental-lazy-instances #-}
-module Agdasubst.Examples.SystemF.Substitution where
+module Agdasubst.Examples.SystemF.Tᴹstitution where
 
 open import Agdasubst.Examples.SystemF.Definitions.Syntax
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; cong₂)
@@ -38,7 +38,7 @@ module _ where
   opaque 
     {-# REWRITE dist–↑–; dist–↑★–; #-} 
     ⋯-compositionality :
-      ∀ {{K₁ : Kit k₁}} {{K₂ : Kit k₂}} {{K₃ : Kit k₃}} {{C : ComposeKit K₁ K₂ K₃}} →
+      ∀ {{K₁ : Kit M₁}} {{K₂ : Kit M₂}} {{K₃ : Kit M₃}} {{C : ComposeKit K₁ K₂ K₃}} →
         (t : S₁ ⊢ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) →
         (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ t ⋯ (ϕ₁ ; ϕ₂)
     ⋯-compositionality (` x)        ϕ₁ ϕ₂ = `⋯-compositionality x ϕ₁ ϕ₂
@@ -55,20 +55,20 @@ module _ where
 
 opaque 
   unfolding lib  
-  &/⋯–`  : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (`_ {s = s} x)  &/⋯ ϕ ≡ `/id (x &/⋯ ϕ)                   ; &/⋯–` = refl
-  &/⋯–λ  : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (λx e)          &/⋯ ϕ ≡ λx (e &/⋯ (ϕ ↑ _))               ; &/⋯–λ = refl
-  &/⋯–·  : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (e₁ · e₂)       &/⋯ ϕ ≡ (e₁ &/⋯ ϕ) · (e₂ &/⋯ ϕ)          ; &/⋯–· = refl
-  &/⋯–⇒  : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (t₁ ⇒ t₂)       &/⋯ ϕ ≡ (t₁ &/⋯ ϕ) ⇒ (t₂ &/⋯ ϕ)          ; &/⋯–⇒ = refl
-  &/⋯–Λ  : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (Λα e)          &/⋯ ϕ ≡ Λα (e &/⋯ (ϕ ↑ _))               ; &/⋯–Λ = refl
-  &/⋯–•  : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (e • t)         &/⋯ ϕ ≡ (e &/⋯ ϕ) • (t &/⋯ ϕ)            ; &/⋯–• = refl 
-  &/⋯–∀  : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → (∀[α∶ ★ᴷ ] t)   &/⋯ ϕ ≡ ∀[α∶ ★ᴷ &/⋯ ϕ ] (t &/⋯ (ϕ ↑ _))  ; &/⋯–∀ = refl
-  &/⋯–★  : {{K : Kit k}} {{C : ComposeKit K Kᴿ K}} {ϕ : S₁ –[ K ]→ S₂} → ★               &/⋯ ϕ ≡ ★                                ; &/⋯–★ = refl 
+  &/⋯–`  : {{K : Kit k}} {{C : ComposeKit K V K}} {ϕ : S₁ –[ K ]→ S₂} → (`_ {s = s} x)  &/⋯ ϕ ≡ `/id (x &/⋯ ϕ)                   ; &/⋯–` = refl
+  &/⋯–λ  : {{K : Kit k}} {{C : ComposeKit K V K}} {ϕ : S₁ –[ K ]→ S₂} → (λx e)          &/⋯ ϕ ≡ λx (e &/⋯ (ϕ ↑ _))               ; &/⋯–λ = refl
+  &/⋯–·  : {{K : Kit k}} {{C : ComposeKit K V K}} {ϕ : S₁ –[ K ]→ S₂} → (e₁ · e₂)       &/⋯ ϕ ≡ (e₁ &/⋯ ϕ) · (e₂ &/⋯ ϕ)          ; &/⋯–· = refl
+  &/⋯–⇒  : {{K : Kit k}} {{C : ComposeKit K V K}} {ϕ : S₁ –[ K ]→ S₂} → (t₁ ⇒ t₂)       &/⋯ ϕ ≡ (t₁ &/⋯ ϕ) ⇒ (t₂ &/⋯ ϕ)          ; &/⋯–⇒ = refl
+  &/⋯–Λ  : {{K : Kit k}} {{C : ComposeKit K V K}} {ϕ : S₁ –[ K ]→ S₂} → (Λα e)          &/⋯ ϕ ≡ Λα (e &/⋯ (ϕ ↑ _))               ; &/⋯–Λ = refl
+  &/⋯–•  : {{K : Kit k}} {{C : ComposeKit K V K}} {ϕ : S₁ –[ K ]→ S₂} → (e • t)         &/⋯ ϕ ≡ (e &/⋯ ϕ) • (t &/⋯ ϕ)            ; &/⋯–• = refl 
+  &/⋯–∀  : {{K : Kit k}} {{C : ComposeKit K V K}} {ϕ : S₁ –[ K ]→ S₂} → (∀[α∶ ★ᴷ ] t)   &/⋯ ϕ ≡ ∀[α∶ ★ᴷ &/⋯ ϕ ] (t &/⋯ (ϕ ↑ _))  ; &/⋯–∀ = refl
+  &/⋯–★  : {{K : Kit k}} {{C : ComposeKit K V K}} {ϕ : S₁ –[ K ]→ S₂} → ★               &/⋯ ϕ ≡ ★                                ; &/⋯–★ = refl 
 
 _&_ : {{K : Kit k}} → S₁ ∋ s → S₁ –[ K ]→ S₂ → S₂ ∋/⊢[ K ] s
 _&_ = _&/⋯_ 
 
 _⋯_ : {{K : Kit k}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
-_⋯_ {{K}} = let instance _ = K , Kᴿ , K in _&/⋯_ 
+_⋯_ {{K}} = let instance _ = K , V , K in _&/⋯_ 
 
 {-# REWRITE 
   id`–def `id–def ;wk–def

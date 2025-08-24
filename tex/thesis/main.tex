@@ -71,7 +71,7 @@ Mechanizing the metatheory of programming languages within interactive theorem
 provers often presents recurring technical challenges when handeling variable
 binding and substitution. While such details are usually ignored in
 pen-and-paper proofs, their mechanization in proof assistants requires precise
-definitions, rigorous proofs, and a significant amount of manual effort.
+definitions and a significant amount of manual effort.
 
 Historically, substitution has been treated as an meta-level operation. To
 formalize this, explicit substitution calculi CITE were introduced to bring
@@ -86,8 +86,9 @@ compared for equality.
 The $σ$-calculus laws generalize to custom syntaxes without much difficulty,
 and it is tempting to assume that this would also make it easy to embed these
 laws into proof assistants and then solve equations between terms with
-substitution automatically by applying them from left to right, Either via
-taktics or native reduction. In practice, however, two major challenges remain.
+substitution automatically by applying them from left to right, either via
+taktics or embedding as native reduction. In practice, however, when we try to
+embed the $\sigma$-calculus into Agda, two major challenges remain.
 
 First, we need to distinguish renamings (substitutions mapping variables to
 variables) from general substitutions (mapping variables to terms) in order to
@@ -96,16 +97,16 @@ a code duplication, where key lemmas, such as substitution preserves typing,
 must be proven twice, once for renamings and then again for substitutions using
 the result about renamings.
 
-Second, the problem is further compounded in languages with multiple variable
-sorts, where the combination of several syntactic categories and the separation
-of renamings and substitutions can lead to a combinatorial explosion of
-near-identical substitution definitions and lemmas.
+Second, in languages with multiple variable sorts, the combination of several
+syntactic categories and the separation of renamings and substitutions can lead
+to a combinatorial explosion of near-identical substitution definitions and
+lemmas.
 
 When choosing a syntax representation, several options are available:
 extrinsically scoped and typed, intrinsically scoped but extrinsically typed,
 or intrinsically scoped and typed. We argue that the intrinsically scoped but
-extrinsically typed approach is the sweatspot between these extremes. We adopt
-a multi-sorted, intrinsically scoped syntax to avoid the combinatorial
+extrinsically typed approach is the sweatspot between these extremes. In Agda,
+using a multi-sorted, intrinsically scoped syntax avoids the combinatorial
 explosion of lemmas. As we will see, adapting the σ-calculus to a setting with
 multi-sorted, scoped syntax and first-class renamings is not particularly
 difficult, but already highly beneficial.
@@ -127,7 +128,7 @@ uniformly.
       \item \cref{sec:ags} explains the internals of the \textsc{Agdasubst} library, where renamings and substitutions can be treated uniformly;
       \item \cref{sec:ext} shows how to use the \textsc{Agdasubst} library and includes case studies;
       \item \cref{sec:rel} compares the \textsc{Agdasubst} library to similar works;
-      \item \cref{sec:con} concludes this work and gives ideas on how to extend \textsc{Agdasubst} in the future.
+      \item \cref{sec:fwk} outlines possible future improvements to the \textsc{Agdasubst} library;
 \end{itemize}
 
 \noindent\textbf{The supplement contains the complete Agda code underlying this paper.}
@@ -835,6 +836,7 @@ assumption of valid Compose Kits and the non-existance of invalid Compose Kits:
 verification to avoid inconsistencies.
 
 \subsection{The Scoped and Multi-Sorted $\sigma$-Calculus with Kits and Maps}\label{sec:ags-rls}
+
 \begin{figure}[t]
       \centering
       \small
@@ -936,22 +938,25 @@ intrinsic scoping at the type level. Variables are supplied by the library,
 while terms are user-defined, subject only to the requirement of a variable
 constructor in the appropriate form. We define the type for Kits and the
 variable and term Kit, together with their least upper bound operation. We then
-define the type of Maps and the four map primitives, parameterized by Kits.
-When the Kit in the type of Maps is known to be $V$ or $T$, we write $\rho$ and
-$\sigma$, respectively. From Kits we further obtain the combined type of
-variables-or-terms, together with the lookup or traversal
-operator.\footnote{While there are separate type definitions for variables,
-      terms, and variables-or-terms, there is only one type definition for Maps,
-      specialized via the Kit index. There is no technical reason not to unify
+define the type of Maps and the four map primitives, parameterized by Kits. We
+only specialize \AgdaFunction{wk} directly to renamings in order to avoid
+duplication, since it can always be embedded as a substitution by composing
+with the identity substitution. When the Kit in the type of Maps is known to be
+$V$ or $T$, we write $\rho$ and $\sigma$, respectively. From Kits we further
+obtain the combined type of variables-or-terms, together with the lookup or
+traversal operator.\footnote{While there are separate type definitions for
+      variables, terms, and variables-or-terms, there is only one type definition for
+      Maps, specialized via the Kit index. There is no technical reason not to unify
       variables and terms in the same way. However, unlike renamings, substitutions,
       and maps, terms are user-supplied, whereas variables are library-defined and
       thus qualify for a distinct type definition.}%%
 
-We already discussed the Kit laws in \cref{sec:ags-sko}, so we now turn to the
-remaining ones. We begin with the type-level reduction laws \AgdaFunction{imgⱽ}
-and \AgdaFunction{imgᵀ}, which rewrite the type of variables-or-terms to either
-the type of variables or the type of terms when the Kit index is known to be
-$V$ or $T$, respectively.
+We already discussed the \textbf{Kit Laws} in \cref{sec:ags-sko}, so we now
+turn to the remaining ones. We begin with the type-level reduction laws
+\AgdaFunction{imgⱽ} and \AgdaFunction{imgᵀ} inside the \textbf{Definitional
+      Laws}, which rewrite the type of variables-or-terms to either the type of
+variables or the type of terms when the Kit index is known to be $V$ or $T$,
+respectively.
 
 Next comes the definition of lookup on the identity substitution. It is given
 in terms of the unified lookup/traversal operator. In fact, we never use the
@@ -961,9 +966,10 @@ specialized lookup or traversal operators at all.\footnote{ We considered
       are certainly situations where such duplication could help, but in our case
       studies, with the addition of the definitional composition specialization laws,
       we had no need for laws specialized to lookup or traversal.} Identity renaming
-does not require its own law, since it is already covered by the now generalized
-\AgdaField{right-id} in the Monad laws, which handles both a term traversed by
-an identity substitution and a variable looked up in the identity renaming.
+ddoes not require its own law, since it is already covered by the now
+generalized \AgdaField{right-id} from the \textbf{Monad Laws}, which handles
+both a term traversed by an identity substitution and a variable looked up in
+the identity renaming.
 
 The laws \AgdaFunction{wk}, \AgdaFunction{ext₀}, and \AgdaFunction{extₛ} are
 the straightforward generalizations of their familiar counterparts for renaming
@@ -997,7 +1003,7 @@ To avoid nontermination, we adopt the following heuristic:
             specialized \AgdaFunction{comp} law shown in the figure.
       \item \textbf{Term position ($K_5 = T$):} use \AgdaField{compositionality}. Here no
             restrictions on the other indices arise, so the law is preserved in
-            most of its generality and appears under the Monad laws.
+            most of its generality and appears under the  \textbf{Monad Laws}.
 \end{itemize}
 
 \noindent If neither condition applies (i.e.\ we do not know whether we are dealing with
@@ -1006,19 +1012,63 @@ either by equational reasoning or by using \AgdaKeyword{rewrite}.
 
 With this heuristic the \AgdaFunction{comp} law is rather restricted. We now
 miss cases where we would make progress by applying this law, when $\varphi_1$
-and $\varphi_2$ are not both renamings. Hence, we consider all
-situations where progress would be made directly after applying \AgdaFunction{comp}, by specializing on $\varphi_1$ or
-$\varphi_2$. We call these cases the Definitional Composition Specialization
-Laws. 
+and $\varphi_2$ are not both renamings. Hence, we consider all situations where
+progress would be made directly after applying \AgdaFunction{comp}, by
+specializing on $\varphi_1$ or $\varphi_2$. These appear under the name
+\textbf{Definitional Composition Specialization Laws} in \cref{fig:ags-fin}.
+
+The \textbf{Interaction Laws} are the straightforward generalizations of their
+original $\sigma$-calculus counterparts to Kits. Next come the
+\textbf{Traversal Laws}. Since we are independent of the object syntax except
+for the required variable constructor, we only show the law specific to the
+traversal of a variable. When a variable constructor is applied to a map, the
+variable it holds is mapped accordingly. To turn the result back into a term,
+as it may otherwise be either a variable or a term, depending on the map, we
+subsequently apply the identity substitution.
+
+To illustrate another case for traversal, consider an object language that
+supports $\lambda$-abstractions. The corresponding user-supplied traversal
+function, needed to construct a Kit, would then include a clause \FSLambdaExT.
+However, this clause does not directly corresponds to a traversal law. It must
+first be lifted from the traversal operator to the more general
+lookup/traversal operator: \FSLambdaExL. This equality can be proven by
+reflexivity, when we unfold the definition of the unfiied lookup/traversal
+operator. It can then be added as a rewrite rule.
+
+Finally, the \textbf{Coincidence Laws} generalize from renamings to maps and
+allow any map to be pulled out of a substitution when feasible. These laws are
+again not a complete account of all possible ways to pull maps out of
+substitutions. The search for more sophisticated laws that cover additional
+cases where this can be done would certainly be worthwhile.
 
 \subsection{Discussion}
-% superset of laws in section with separete ren and sub
-% noticed that coincidence laws slow down tpye checking
+The generalization of the $\sigma$-calculus laws requires unsafe computation
+and a careful formulation of the laws so that they remain valid rewrite rules
+while still allowing the inference of Kits and ComposeKits to be offloaded to
+the instance resolution algorithm. The key difficulty in adapting the laws to
+the Kit-setting stems from the duality between the general versions of the
+\AgdaFunction{comp} and the \AgdaField{compositionality} laws. Our solution is
+a heuristic that resolves the conflict by restricting the laws to cases where
+it is known whether we are dealing with a term or a variable. In particular,
+when this distinction is unclear, the direction in which the laws should “flow”
+becomes ambiguous. In such situations, the user must resort to manual
+application of the laws. In contrast to the laws from \cref{sec:mis-sig}, the
+Kit-based laws allow us to establish properties directly for Maps, without the
+need to first carry out separate but structurally similar proofs for renamings
+and substitutions.
 
 \section{Case Studies}\label{sec:ext}
-\subsection{Generic Syntax}\label{sec:ext-uni}
+We will discuss three examples for the usage of the \textsc{Agdasubst} library.
+The first two is a proof of subject reduction for System F with and without
+subtyping. We first discuss the proof, the laws from \cref{sec:mis-sig} and
+then with the Kit-based approach from \cref{sec:ags-rls} The secobd is the
+based on CITE and gives an instantition for generic universe of scoped syntax.
+\subsection{SystemF}\label{sec:ext-syf}
 
-\subsection{Typing Kits}\label{sec:ext-tyk}
+\subsection{SystemF with Subtyping}\label{sec:ext-sfs}
+
+\subsection{Generic Syntax}\label{sec:ext-uni}
+CITE
 % generic syntax allows to prove substitution lemmas only once. 
 % sometimes inconvenient to use in agda
 % generics and 
@@ -1033,34 +1083,90 @@ Laws.
 % \subsection{Martin-Löf Type Theory}\label{sec:cas-mltt}
 
 \section{Related Work}\label{sec:rel}
-% the next works are essential building blocks for agdasubst and we build on both
-% only really take the idea of autosubst
+Most of this work is inspired by and builds upon \textsc{Autosubst~2}~\cite{CITE}. 
+\textsc{Autosubst}, like \textsc{Agdasubst}, uses the laws of the $\sigma$-calculus to automatically solve equations between terms with substitutions in the Coq proof assistant. 
+With version~2, \textsc{Autosubst} also introduced first-class renamings, making their law set comparable to the one presented in \cref{sec:mis-sig}. 
+Since Coq is more tactic-oriented, \textsc{Autosubst} provides a tactic to apply these laws, whereas in Agda we opted to embed the laws natively via the rewrite mechanism to achieve definitional equalities. 
+Additionally, \textsc{Autosubst} supports code generation of syntax-dependent functions and laws from a Higher-Order Abstract Syntax (HOAS) definition, while we currently have no such counterpart. If we add code generation in the future we envision a solution use reflection within Agda instead of relying on external code generation.
+Unlike our approach, \textsc{Autosubst} does not provide an abstraction similar to Kits for unifying proofs about renamings and substitutions.
 
-% \subsection{Autosubst 2}\label{sec:rel-aut}
-% Autosubst 2 (coq)
-% Nominal 2 (isabelle)
-% Abstract Binding Tree Library (agda)
-% substitution without copy and paste
+The idea of Kits was originally proposed by CITE in an intrinsically typed setting, 
+which is also reflected in CITE. 
+The latter also experiments with a uniform treatment of renamings and substitutions. 
+CITE developed a framework based on the Kit concept for scoped syntax, 
+but without providing any strategy for automatically solving equations between terms with substitutions. 
+Their focus was instead on abstracting over typing relations and the semantics of the object language, 
+while providing a uniform treatment of renamings and substitutions in that context. 
+These results apply directly to \textsc{Agdasubst}, as demonstrated in \cref{sec:cas}, 
+where we used typing Kits from this work. 
+Our laws integrate seamlessly with these extension Kits and substantially simplify the proofs required for their instantiation.
+
+There already exists another Agda library with a similar goal to \textsc{Agdasubst}, called
+\textsc{Abstract Binding Trees}, which is, for example, used in CITE. 
+It allows one to construct an object language from a generic syntax, similar to 
+\cref{sec:ext-uni}, but in contrast it supports only extrinsic scoping, not intrinsic. 
+Rather than focusing on specific relations, for instance the typing relation, as in CITE, it abstracts over arbitrary predicates about the language. 
+The library also offers experimental support for rewriting, but the current state of this feature is unknown to us. 
+In any case, rewriting is only supported in the style of treating renamings and substitutions separately, 
+as in \cref{sec:mis-sig}, rather than in a uniform threatement.
+
+More distantly related is \textsc{Nominal 2}~\cite{CITE}, 
+an Isabelle package that addresses the $\alpha$-equivalence problem not via de Bruijn indices, 
+as in previous work, but using so-called nominal datatypes and freshness conditions. 
+This approach is closer to the intuitive notion of variables, but the tool does not provide 
+any strategy for solving equations involving terms with substitutions. 
+
+Additionally, there are tools such as \textsc{Needle and Knot}~\cite{CITE}, 
+which is a code generator for unscoped syntax using de Bruijn indices. 
+This tool generate substitution and interaction lemmas for single-pointed substitutions 
+in languages that feature multiple variable sorts and binders capable of binding lists of variables.
 
 \section{Further Work}\label{sec:con-wrk}
-\subsection*{Code Generaction and Reflection}
-\subsection*{Extensions to the Calculus}
-% variadic bindings
-% lists / map
-% .. the kathrins thesis
+This section outlines possible directions for improving \textsc{Agdasubst} in
+the future.
+
+\subsection*{Reflection}
+In comparison to other libraries discussed in \cref{sec:rel}, users of
+\textsc{Agdasubst} still need to manually provide the definitions for
+traversal, the proofs of \AgdaField{right-id} and \AgdaField{compositionality},
+as well as the lifting of traversal to the more general operator.
+\citeauthor{CITE} have shown that these definitions can be derived
+automatically using Agda's reflection mechanism. There is no reason why the
+same approach could not be applied here.
+
+\subsection*{Extensions}
+\citeauthor{CITE} introduced several interesting extensions to the $\sigma$-calculus that could
+also be added to \textsc{Agdasubst}. One example is support for variadic binders,
+that is, binders of a variable or unknown number of variables, which are useful for languages with
+pattern matching. Another possible extension is support for lists of terms, allowing a variable or
+unknown number of terms in the syntax type. This would, for instance, enable support for
+languages with $n$-ary application.
+
 \subsection*{Meta Theory}
-% meta theoretics
-% termination
-% confluence
-% make it more complete?
-\subsection*{More Generality}
-% abstracting away the sorting to arbitrary, well behaved telescopes (by axiom)
-% suitable for intrinsic typing
+In its current state, \textsc{Agdasubst} completely lacks a meta-theoretical
+analysis. While we believe it to be terminating and confluent, it would be
+interesting to formally establish these properties.
+
+\subsection*{Completeness}
+As mentioned, \textsc{Agdasubst} is not complete once we move beyond reasoning
+about only renamings or substitutions. As soon as we cross the boundary between
+these two worlds, by considering more general maps or Kits, we definitely
+cannot solve all equations. It would therefore be worthwhile to investigate
+additional laws, similar in spirit to the coincidence laws, to increase the
+space of solvable equations.
+
+\subsection*{Performance}
+At the moment, the performance of \textsc{Agdasubst} is, quite frankly, very
+poor. For instance, the proof of subject reduction for System~F with subtyping
+requires several minutes to check. Our analysis shows that most of this time is
+spent on instance resolution and function coverage analysis (i.e., verifying
+that pattern matching clauses are exhaustive). Currently, we have no concrete
+strategy to improve these aspects, except that we know, that the addition of
+the coincidence laws dramatically increases type-checking time.
 
 \section{Conclusion}\label{sec:con}
-% make it more complete?
-% fix the assoc problem (see last sections)
-% obviously improve user exp (i.e. derive code, documentation etc)
+
+
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}
 

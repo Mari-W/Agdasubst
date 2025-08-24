@@ -3,12 +3,14 @@
 module Agdasubst.Examples.SystemF.Definitions.Semantics where
 
 open import Agdasubst.Examples.SystemF.Definitions.Syntax
-open import Agdasubst.Examples.SystemF.Tᴹstitution
+open import Agdasubst.Examples.SystemF.Substitution
 
+--! Val
 data Val : S ⊢ expr → Set where
   vλ : Val (λx e)
   vΛ : Val (Λα e)
 
+--! Sem
 data _↪_ : S ⊢ expr → S ⊢ expr → Set where
   β-λ :
     Val e₂ →

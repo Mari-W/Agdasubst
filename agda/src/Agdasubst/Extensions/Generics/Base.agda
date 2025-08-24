@@ -40,8 +40,8 @@ module GenericsWithSort (Sort : Set) where
       instance syn = mkSyntax (Tm d) `var  λ { refl → refl }
       open Syntax syn public 
 
-      private _⋯_ : ∀ {{K : Kit k }} → Tm d S₁ s → S₁ →ᴷ S₂ → Tm d S₂ s
-      _⋯′_ : ∀ {{K : Kit k }} → ⟦ d′ ⟧ (Tm d) S₁ s → S₁ →ᴷ S₂ → ⟦ d′ ⟧ (Tm d) S₂ s
+      private _⋯_ : ∀ {{K : Kit M}} → Tm d S₁ s → S₁ →ᴷ S₂ → Tm d S₂ s
+      _⋯′_ : ∀ {{K : Kit M}} → ⟦ d′ ⟧ (Tm d) S₁ s → S₁ →ᴷ S₂ → ⟦ d′ ⟧ (Tm d) S₂ s
 
       (`var x)  ⋯ ϕ = x `⋯ ϕ
       (`con e′) ⋯ ϕ = `con (e′ ⋯′ ϕ)
@@ -50,9 +50,9 @@ module GenericsWithSort (Sort : Set) where
       _⋯′_ {d′ = `■ M′}       e        ϕ = e
 
 
-      ⋯-id : ∀ {{K : Kit k }} → (t : Tm d S s) →
+      ⋯-id : ∀ {{K : Kit M}} → (t : Tm d S s) →
                (t ⋯ id) ≡ t
-      ⋯-id′ : ∀ {{K : Kit k}} → (t : ⟦ d′ ⟧ (Tm d) S s) →
+      ⋯-id′ : ∀ {{K : Kit M}} → (t : ⟦ d′ ⟧ (Tm d) S s) →
                (t ⋯′ id) ≡ t
       ⋯-id (`var x) = `⋯-id x
       ⋯-id (`con e) = cong `con (⋯-id′ e)
@@ -63,10 +63,10 @@ module GenericsWithSort (Sort : Set) where
       instance traversal = mkTraversal _⋯_ ⋯-id λ x ϕ → refl
       open Traversal traversal hiding (_⋯_; ⋯-id; ⋯-var) public
 
-      ⋯-compositionality  : ∀ {s : Sort} {{K₁ : Kit k₁ }} {{K₂ : Kit k₂ }} {{K : Kit k }} {{C : ComposeKit K₁ K₂ K}}
+      ⋯-compositionality  : ∀ {s : Sort} {{K₁ : Kit M₁}} {{K₂ : Kit M₂}} {{K₃ : Kit M₃}} {{C : ComposeKit K₁ K₂ K₃}}
                   (t : Tm d S₁ s) (ϕ₁ : S₁ →ᴷ S₂) (ϕ₂ : S₂ →ᴷ S₃) → 
                   (t ⋯ ϕ₁) ⋯ ϕ₂ ≡ t ⋯ (ϕ₁ ; ϕ₂)
-      ⋯-compositionality′ : ∀ {s : Sort} {{K₁ : Kit k₁ }} {{K₂ : Kit k₂ }} {{K : Kit k }} {{C : ComposeKit K₁ K₂ K}}
+      ⋯-compositionality′ : ∀ {s : Sort} {{K₁ : Kit M₁}} {{K₂ : Kit M₂}} {{K₃ : Kit M₃}} {{C : ComposeKit K₁ K₂ K₃}}
                    (t : ⟦ d′ ⟧ (Tm d) S₁ s) (ϕ₁ : S₁ →ᴷ S₂) (ϕ₂ : S₂ →ᴷ S₃) → 
                    (t ⋯′ ϕ₁) ⋯′ ϕ₂ ≡ t ⋯′ (ϕ₁ ; ϕ₂)
       ⋯-compositionality (`var x)  ϕ₁ ϕ₂ = `⋯-compositionality x ϕ₁ ϕ₂
@@ -82,13 +82,12 @@ module GenericsWithSort (Sort : Set) where
 
       open Compose compose hiding (⋯-compositionality) public
     
-    _&_ : {{K : Kit k}} → S₁ ∋ s → S₁ –[ K ]→ S₂ → S₂ ∋/⊢[ K ] s
+    _&_ : {{K : Kit M}} → S₁ ∋ s → S₁ –[ K ]→ S₂ → S₂ ∋/⊢[ K ] s
     _&_ = _&/⋯_ 
 
-    _⋯_ : {{K : Kit k}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
-    _⋯_ = _&/⋯_ 
+    _⋯_ : {{K : Kit M}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
+    _⋯_ {{K}} = let instance _ = K ;ᴷ V in _&/⋯_ 
 
-    
 
 
     

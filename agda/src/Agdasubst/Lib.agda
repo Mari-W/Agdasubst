@@ -133,7 +133,11 @@ module KitsWithSort (
             id/` (suc x)         ≡⟨⟩
             id s (suc x)         ∎
           
-          id↑≡id :  (id/` (zero {s = s} {S = S})) ∙ (id ;wk) ≡ id
+          
+          id↑≡id :  
+            --!! IdLift 
+            (id/` (zero {s = s} {S = S})) ∙ (id ;wk) ≡ id
+
           id↑≡id = ~-ext id↑~id
 
           id↑★~id : ∀ S → (id ↑★ S) ~ id {S ++ S′}
@@ -157,16 +161,15 @@ module KitsWithSort (
       id[ K ] = Kit.id K 
       --! }
 
-      open Kit {{...}} public hiding (wk; _&_)
-      open Kit {{...}} using (_&_)
+      open Kit {{...}} public hiding (wk)
 
       _`⋯_ : ∀ {{K : Kit M}} → S₁ ∋ s → S₁ →ᴷ S₂ → S₂ ⊢ s 
       x `⋯ ϕ = `/id (x & ϕ) 
 
       opaque 
         unfolding kit_ops
-        `⋯-id : ∀ {{K : Kit M}} (x : S ∋ s) → (x `⋯ id) ≡ (` x)
-        `⋯-id x = `/`-is-` x
+        `⋯-right-id : ∀ {{K : Kit M}} (x : S ∋ s) → (x `⋯ id) ≡ (` x)
+        `⋯-right-id x = `/`-is-` x
 
       record Traversal : Set₁ where
         constructor mkTraversal
@@ -174,7 +177,7 @@ module KitsWithSort (
         field
           --! Traversal {  
           _⋯_    : ∀ {{K : Kit M}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
-          ⋯-id   : ∀ {{K : Kit M}} → (t : S ⊢ s) → t ⋯ id[ K ] ≡ t
+          ⋯-right-id   : ∀ {{K : Kit M}} → (t : S ⊢ s) → t ⋯ id[ K ] ≡ t
           --! }
           ⋯-var  : ∀ {{K : Kit M}} → (x : S₁ ∋ s) (ϕ : S₁ –[ K ]→ S₂) →
                      (` x) ⋯ ϕ ≡ `/id {{K}} (x & ϕ)
@@ -252,13 +255,13 @@ module KitsWithSort (
           Tᴹ  ⨆ Vᴹ  = Tᴹ
           Tᴹ  ⨆ Tᴹ  = Tᴹ
           --! ModeLubLaws
-          ⨆-idem       : M ⨆ M   ≡ M 
+          ⨆-idem       : M ⨆ M           ≡ M 
+          ⨆-assoc      : (M₁ ⨆ M₂) ⨆ M₃  ≡ M₁ ⨆ (M₂ ⨆ M₃)
+          ⨆-comm       : (M₁ ⨆ M₂)       ≡ (M₂ ⨆ M₁)
           ⨆-bot-right  : M ⨆ Vᴹ  ≡ M 
           ⨆-bot-left   : Vᴹ ⨆ M  ≡ M
           ⨆-top-right  : M ⨆ Tᴹ  ≡ Tᴹ
           ⨆-top-left   : Tᴹ ⨆ M  ≡ Tᴹ
-          ⨆-assoc      : (M₁ ⨆ M₂) ⨆ M₃  ≡ M₁ ⨆ (M₂ ⨆ M₃)
-          ⨆-comm       : (M₁ ⨆ M₂)  ≡ (M₂ ⨆ M₁)
 
           ⨆-idem {Vᴹ} = refl
           ⨆-idem {Tᴹ} = refl 
@@ -303,14 +306,14 @@ module KitsWithSort (
 
           --! KitLubLaws {
           ⊔-idem       : {{K : Kit M}} → K ⊔ K   ≡ K
-          ⊔-bot-right  : {{K : Kit M}} → K ⊔ V  ≡ K
-          ⊔-bot-left   : {{K : Kit M}} → V ⊔ K  ≡ K  
-          ⊔-top-right  : {{K : Kit M}} → K ⊔ T  ≡ T
-          ⊔-top-left   : {{K : Kit M}} → T ⊔ K  ≡ T
           ⊔-assoc      : {{K₁ : Kit M₁}} {{K₂ : Kit M₂}} {{K₃ : Kit M₃}} → 
             (K₁ ⊔ K₂) ⊔ K₃ ≡ K₁ ⊔ (K₂ ⊔ K₃)
           ⊔-comm       : {{K₁ : Kit M₁}} {{K₂ : Kit M₂}} → 
             (K₁ ⊔ K₂) ≡ subst Kit (⨆-comm {M₂} {M₁}) (K₂ ⊔ K₁) 
+          ⊔-bot-right  : {{K : Kit M}} → K ⊔ V  ≡ K
+          ⊔-bot-left   : {{K : Kit M}} → V ⊔ K  ≡ K  
+          ⊔-top-right  : {{K : Kit M}} → K ⊔ T  ≡ T
+          ⊔-top-left   : {{K : Kit M}} → T ⊔ K  ≡ T
           --! }
 
           --! KitLubExcerpt {
@@ -439,7 +442,10 @@ module KitsWithSort (
               )
             
             dist–↑–; : ∀ s (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) →
+
+                       --!! DistLift 
                        ((ϕ₁ ↑ s) ; (ϕ₂ ↑ s)) ≡ ((ϕ₁ ; ϕ₂) ↑ s)
+
             dist–↑–; s ϕ₁ ϕ₂ = sym (~-ext (dist-↑-; s ϕ₁ ϕ₂))
 
             dist-↑★-;  : ∀ S (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) →
@@ -563,14 +569,10 @@ module KitsWithSort (
             --! CKitUnsafe
             {-# NON_COVERING #-}
             _,_,_ : (K₁ : Kit M₁) (K₂ : Kit M₂) (K₃ : Kit M₃) → ComposeKit K₁ K₂ K₃
-            _,_,_ {Vᴹ} {Vᴹ} {Vᴹ} K₁ K₂ K₃ rewrite unique–K K₁ | unique–K K₂ | unique–K K₃ 
-              = Cᴿ
-            _,_,_ {Vᴹ} {Tᴹ} {Tᴹ} K₁ K₂ K₃ rewrite unique–K K₁ | unique–K K₂ | unique–K K₃ 
-              = Cᴿ
-            _,_,_ {Tᴹ} {Vᴹ} {Tᴹ} K₁ K₂ K₃ rewrite unique–K K₁ | unique–K K₂ | unique–K K₃ 
-              = Cˢ
-            _,_,_ {Tᴹ} {Tᴹ} {Tᴹ} K₁ K₂ K₃ rewrite unique–K K₁ | unique–K K₂ | unique–K K₃ 
-              = Cˢ
+            _,_,_ {Vᴹ} {Vᴹ} {Vᴹ} K₁ K₂ K₃ rewrite unique–K K₁ | unique–K K₂ | unique–K K₃ = Cᴿ
+            _,_,_ {Vᴹ} {Tᴹ} {Tᴹ} K₁ K₂ K₃ rewrite unique–K K₁ | unique–K K₂ | unique–K K₃ = Cᴿ
+            _,_,_ {Tᴹ} {Vᴹ} {Tᴹ} K₁ K₂ K₃ rewrite unique–K K₁ | unique–K K₂ | unique–K K₃ = Cˢ
+            _,_,_ {Tᴹ} {Tᴹ} {Tᴹ} K₁ K₂ K₃ rewrite unique–K K₁ | unique–K K₂ | unique–K K₃ = Cˢ
 
             {-# WARNING_ON_USAGE _,_,_ "SAFETY: For each usage of this definition it must be checked, that no invalid ComposeKit (e.g. ComposeKit V V T) is created." #-}
 
@@ -629,12 +631,10 @@ module KitsWithSort (
              private postulate 
                --! AssocTryO
                associativity : 
-                 {{K₁ : Kit M₁}} {{K₂ : Kit M₂}} {{K₃ : Kit M₃}} 
-                 {{K₄ : Kit M₄}} {{K₅ : Kit M₅}} {{K₆ : Kit M₆}}
-                 {{C₁ : ComposeKit K₁ K₂ K₃}} {{C₂ : ComposeKit K₃ K₄ K₅}} 
-                 {{C₃ : ComposeKit K₁ K₆ K₅}} {{C₄ : ComposeKit K₂ K₄ K₆}}  
+                 {{K₁ : Kit M₁}} {{K₂ : Kit M₂}} {{K₃ : Kit M₃}} {{K₄ : Kit M₄}} {{K₅ : Kit M₅}} {{K₆ : Kit M₆}}
+                 {{C₁ : ComposeKit K₁ K₂ K₃}} {{C₂ : ComposeKit K₃ K₄ K₅}} {{C₃ : ComposeKit K₁ K₆ K₅}} {{C₄ : ComposeKit K₂ K₄ K₆}}  
                  (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) (ϕ₃ : S₃ –[ K₄ ]→ S₄) →   
-                 (ϕ₁ ; ϕ₂) ; ϕ₃ ≡ ϕ₁ ; (ϕ₂ ; ϕ₃) 
+                 (ϕ₁ ;[ C₁ ] ϕ₂) ;[ C₂ ] ϕ₃ ≡ ϕ₁ ;[ C₃ ] (ϕ₂ ;[ C₄ ] ϕ₃) 
 
           opaque
             unfolding lib
@@ -726,7 +726,7 @@ module KitsWithSort (
               =  refl
             compᵣ–id {Vᴹ} {Tᴹ} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique–K K₁ | unique–K K₂ = ⊥-elim (impossible–Cᴷˢᴿ {{V}} C)
             compᵣ–id {Tᴹ} {{K₁}} {{K₂}} {{C}} ϕ rewrite unique–C {{K₁}} {{K₂}} {{K₁}} C | unique–K K₁ | C–defˢ {{K₂}} 
-              = ~-ext {{T}} λ _ x → ⋯-id {{K₂}} _
+              = ~-ext {{T}} λ _ x → ⋯-right-id {{K₂}} _
  
             -- the idiomatic way to transform a ren/sub into a sub is to compose id sub on the right. 
             -- if its applied on the left, we transform it.   
@@ -737,7 +737,7 @@ module KitsWithSort (
             -- norm–idˢ {Vᴹ} {{K}} ϕ rewrite unique–K K | C–defᴿ {{T}} = 
             --   ~-ext {{T}} λ _ x → ⋯-var {{V}} _ _
             -- norm–idˢ {Tᴹ} {{K}} ϕ rewrite unique–K K | C–defˢ {{T}} = 
-            --   ~-ext {{T}} λ _ x → _ ≡⟨ ⋯-var {{T}} _ _ ⟩ _ ≡⟨ sym (⋯-id {{T}} _) ⟩ _ ∎  
+            --   ~-ext {{T}} λ _ x → _ ≡⟨ ⋯-var {{T}} _ _ ⟩ _ ≡⟨ sym (⋯-right-id {{T}} _) ⟩ _ ∎  
 
             --! AssocTryT
             associativity : 
@@ -816,16 +816,16 @@ module KitsWithSort (
                              (t : S₁ ⊢ s) (ϕ : S₁ –[ K ]→ S₂) → 
                 t &/⋯ (ϕ ; idˢ) ≡ let instance _ = K , V , K in t &/⋯ ϕ
               -- coincidenceₜ²
-              coincidence–fold : {{K : Kit M}} {{C : ComposeKit K T T}}
+              coincidence–foldᴷ : {{K : Kit M}} {{C : ComposeKit K T T}}
                             (t : (s′ ∷ S₁) ⊢ s) (x/t : S₂ ∋/⊢[ K ] s′) (ϕ : S₁ –[ K ]→ S₂) → 
                 t &/⋯ ((x/t &/⋯ id[ T ]) ∙ (ϕ ; idˢ)) ≡ let instance _ = K , V , K in 
                   (t &/⋯ (x/t ∙ ϕ))
-              -- coincidence–ext₂ : {{K : Kit M}} {{C : ComposeKit K T T}} {{C : ComposeKit K V K}}
-              --               (t : (s′ ∷ S₁) ⊢ s) (t′ : S₁ ⊢ s′) (ϕ : S₁ –[ K ]→ S₂) → 
-              --   t &/⋯ ((t′ &/⋯ ϕ) ∙ (ϕ ; idˢ)) ≡ t &/⋯ ((t′ ∙ idˢ) ; ϕ)
-              coincidence–push : {{K : Kit M}} {{C : ComposeKit K T T}}
-                            (t : (s′ ∷ S₁) ⊢ s) (t′ : S₂ ⊢ s′) (ϕ : S₁ –[ K ]→ S₂) → 
-                t &/⋯ (t′ ∙ (ϕ ; idˢ)) ≡ let instance _ = K , V , K in t &/⋯ (t′ ∙ (idˢ ; ϕ))
+              coincidence–foldᵀ : {{K : Kit M}} {{C : ComposeKit K T T}} {{C : ComposeKit K V K}}
+                            (t : (s′ ∷ S₁) ⊢ s) (t′ : S₁ ⊢ s′) (ϕ : S₁ –[ K ]→ S₂) → 
+                t &/⋯ ((t′ &/⋯ ϕ) ∙ (ϕ ; idˢ)) ≡ (t &/⋯ (t′ ∙ idˢ)) &/⋯ ϕ
+              -- coincidence–push : {{K : Kit M}} {{C : ComposeKit K T T}}
+              --               (t : (s′ ∷ S₁) ⊢ s) (t′ : S₂ ⊢ s′) (ϕ : S₁ –[ K ]→ S₂) → 
+              --   t &/⋯ (t′ ∙ (ϕ ; idˢ)) ≡ let instance _ = K , V , K in t &/⋯ (t′ ∙ (idˢ ; ϕ))
               -- coincidence-ext²  
               -- coincidence–push₂ : {{K : Kit M}} {{C : ComposeKit K T T}} 
               --               (t : (s′ ∷ S₁) ⊢ s) (t′ : S₂ ⊢ s′) (ϕ : S₁ –[ K ]→ S₂) → 

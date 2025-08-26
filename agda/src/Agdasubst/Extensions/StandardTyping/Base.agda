@@ -37,7 +37,7 @@ module _ {{library : Library}} where
     wk-cancels-⦅⦆-⋯ t x/t =
       t ⋯ wk ⋯ ⦅ x/t ⦆   ≡⟨ ⋯-compositionality t wk ⦅ x/t ⦆ ⟩
       t ⋯ (wk ; ⦅ x/t ⦆) ≡⟨ cong (t ⋯_) (~-ext (wk-cancels-⦅⦆ x/t)) ⟩
-      t ⋯ id            ≡⟨ ⋯-id t ⟩
+      t ⋯ id            ≡⟨ ⋯-right-id t ⟩
       t                 ∎
 
     dist-↑-⦅⦆ :

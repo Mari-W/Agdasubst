@@ -14,7 +14,6 @@ record Library : Set₁ where
 
   field instance syn : Syntax  
   open Syntax syn public
-  open Kit {{...}} using (_&_) public
 
   field instance traversal : Traversal
   open Traversal traversal public

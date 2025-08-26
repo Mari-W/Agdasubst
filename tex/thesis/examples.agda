@@ -180,11 +180,10 @@ record _a : Set₁ where
           --! Coincidence Laws
           coincidence       : t &/⋯[ T , T , T ] (ϕ ;[ K , T , T ] id[ T ])  ≡ 
                               t &/⋯[ T , K , T ] ϕ  
-          coincidence–fold : t &/⋯[ T , T , T ] ((x/t &/⋯[ K , T , T ] id[ T ]) ∙ (ϕ ;[ K , T , T ] id[ T ]))   ≡ 
-                             (t &/⋯[ T , K , T ] (x/t ∙ ϕ))
-          
-          coincidence–push : t &/⋯[ T , T , T ] (t′ ∙ (ϕ ;[ K , T , T ] id[ T ])) ≡ 
-                             t &/⋯[ T , T , T ] (t′ ∙ (id[ T ] ;[ T , K , T ]  ϕ))
+          coincidence–foldᴷ : t &/⋯[ T , T , T ] ((x/t &/⋯[ K , T , T ] id[ T ]) ∙ (ϕ ;[ K , T , T ] id[ T ]))   ≡ 
+                              (t &/⋯[ T , K , T ] (x/t ∙ ϕ))
+          coincidence–foldᵀ : t &/⋯[ T , T , T ] ((t′ &/⋯[ T , K , T ] ϕ) ∙ (ϕ ;[ K , T , T ] id[ T ])) ≡ 
+                              (t &/⋯[ T , T , T ] (t′ ∙ (id[ T ]))) &/⋯[ T , K , T ] ϕ
           
 
     
@@ -217,7 +216,7 @@ record Default {ℓ} (A : Set ℓ) : Set ℓ where
   field default : A
 
 --! DefFields
-open Default {{...}} public
+open Default {{...}}
 
 --! DefInst
 instance 
@@ -499,19 +498,19 @@ module _B where
     field
       --! MonadLaws {
       -- Monad Laws
-      ＋right-idᴿ  : (t : S ⊢ s) → t ⋯ᴿ idᴿ  ≡ t
-      ＋right-idˢ  : (t : S ⊢ s) → t ⋯ˢ idˢ  ≡ t
+      ＋right-idᴿ  : t ⋯ᴿ idᴿ  ≡ t
+      ＋right-idˢ  : t ⋯ˢ idˢ  ≡ t
 
-      ＋compositionalityᴿᴿ  : (t : S₁ ⊢ s) → (t ⋯ᴿ ρ₁) ⋯ᴿ ρ₂  ≡ t ⋯ᴿ (ρ₁ ;ᴿᴿ ρ₂)
-      ＋compositionalityᴿˢ  : (t : S₁ ⊢ s) → (t ⋯ᴿ ρ₁) ⋯ˢ σ₂  ≡ t ⋯ˢ (ρ₁ ;ᴿˢ σ₂)
-      ＋compositionalityˢᴿ  : (t : S₁ ⊢ s) → (t ⋯ˢ σ₁) ⋯ᴿ ρ₂  ≡ t ⋯ˢ (σ₁ ;ˢᴿ ρ₂)
-      ＋compositionalityˢˢ  : (t : S₁ ⊢ s) → (t ⋯ˢ σ₁) ⋯ˢ σ₂  ≡ t ⋯ˢ (σ₁ ;ˢˢ σ₂)
+      ＋compositionalityᴿᴿ  : (t ⋯ᴿ ρ₁) ⋯ᴿ ρ₂  ≡ t ⋯ᴿ (ρ₁ ;ᴿᴿ ρ₂)
+      ＋compositionalityᴿˢ  : (t ⋯ᴿ ρ₁) ⋯ˢ σ₂  ≡ t ⋯ˢ (ρ₁ ;ᴿˢ σ₂)
+      ＋compositionalityˢᴿ  : (t ⋯ˢ σ₁) ⋯ᴿ ρ₂  ≡ t ⋯ˢ (σ₁ ;ˢᴿ ρ₂)
+      ＋compositionalityˢˢ  : (t ⋯ˢ σ₁) ⋯ˢ σ₂  ≡ t ⋯ˢ (σ₁ ;ˢˢ σ₂)
 
       -- Coincidence Laws
-      ＋coincidence       : (t : S₁ ⊢ s) → t ⋯ˢ (ρ ;ᴿˢ idˢ)  ≡ t ⋯ᴿ ρ
-      ＋coincidence-fold  : (t : (s′ ∷ S₁) ⊢ s) → t ⋯ˢ ((` x) ∙ˢ (ρ ;ᴿˢ idˢ)) ≡ t ⋯ᴿ (x ∙ᴿ ρ)
+      ＋coincidence        : t ⋯ˢ (ρ ;ᴿˢ idˢ)  ≡ t ⋯ᴿ ρ
+      ＋coincidence-foldⱽ  : t ⋯ˢ ((` x) ∙ˢ (ρ ;ᴿˢ idˢ)) ≡ t ⋯ᴿ (x ∙ᴿ ρ)
+      ＋coincidence-foldᵀ  : t ⋯ˢ ((t′ ⋯ᴿ ρ) ∙ˢ (ρ ;ᴿˢ idˢ)) ≡ (t ⋯ˢ (t′ ∙ˢ idˢ)) ⋯ᴿ ρ
       --! } 
-      ＋coincidence-push  : (t : (s′ ∷ S₁) ⊢ s) → t ⋯ˢ (t′ ∙ˢ (ρ ;ᴿˢ idˢ)) ≡ t ⋯ˢ (t′ ∙ˢ (idˢ ;ˢᴿ ρ))
   opaque 
     unfolding _→ᴿ_ _&ᴿ_ idᴿ wk _∙ᴿ_ _;ᴿᴿ_ _→ˢ_ _&ˢ_ idˢ _∙ˢ_ _;ᴿˢ_ _;ˢᴿ_ _;ˢˢ_
 
@@ -520,11 +519,11 @@ module _B where
     ＋idᴿ  : x &ᴿ idᴿ             ≡ x
     ＋wk   : x &ᴿ wk {s = s′}     ≡ suc x
     ext₀ᴿ  : zero &ᴿ (x ∙ᴿ ρ)     ≡ x
-    extˢᴿ  : (suc x′) &ᴿ (x ∙ᴿ ρ) ≡ x′ &ᴿ ρ 
+    extₛᴿ  : (suc x′) &ᴿ (x ∙ᴿ ρ) ≡ x′ &ᴿ ρ 
 
     ＋idˢ  : x &ˢ idˢ             ≡ ` x
     ext₀ˢ  : zero &ˢ (t ∙ˢ σ)     ≡ t
-    extˢˢ  : (suc x) &ˢ (t ∙ˢ σ)  ≡ x &ˢ σ
+    extₛˢ  : (suc x) &ˢ (t ∙ˢ σ)  ≡ x &ˢ σ
 
     compᴿᴿ  : x &ᴿ (ρ₁ ;ᴿᴿ ρ₂)  ≡ (x &ᴿ ρ₁) &ᴿ ρ₂
     compᴿˢ  : x &ˢ (ρ₁ ;ᴿˢ σ₂)  ≡ (x &ᴿ ρ₁) &ˢ σ₂
@@ -572,16 +571,17 @@ module _B where
     compositionalityˢˢ  : (t : S₁ ⊢ s) → (t ⋯ˢ σ₁) ⋯ˢ σ₂  ≡ t ⋯ˢ (σ₁ ;ˢˢ σ₂)
 
     coincidence  : (t : S₁ ⊢ s) → t ⋯ˢ (ρ ;ᴿˢ idˢ)  ≡ t ⋯ᴿ ρ
-    coincidence-fold  : (t : (s′ ∷ S₁) ⊢ s) → t ⋯ˢ ((` x) ∙ˢ (ρ ;ᴿˢ idˢ)) ≡ t ⋯ᴿ (x ∙ᴿ ρ)
+    coincidence-foldⱽ  : (t : (s′ ∷ S₁) ⊢ s) → t ⋯ˢ ((` x) ∙ˢ (ρ ;ᴿˢ idˢ)) ≡ t ⋯ᴿ (x ∙ᴿ ρ)
+    coincidence-foldᵀ  : (t : (s′ ∷ S₁) ⊢ s) → t ⋯ˢ ((t′ ⋯ᴿ ρ) ∙ˢ (ρ ;ᴿˢ idˢ)) ≡ (t ⋯ˢ (t′ ∙ˢ idˢ)) ⋯ᴿ ρ
 
     -- All proofs
     ＋idᴿ = refl 
     ＋wk = refl 
     ext₀ᴿ = refl
-    extˢᴿ = refl
+    extₛᴿ = refl
     ＋idˢ = refl
     ext₀ˢ = refl
-    extˢˢ = refl
+    extₛˢ = refl
 
     compᴿᴿ = refl
     compᴿˢ = refl
@@ -663,7 +663,8 @@ module _B where
     compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} ★            = refl
     
     coincidence = {!   !} 
-    coincidence-fold = {!   !} 
+    coincidence-foldⱽ = {!   !} 
+    coincidence-foldᵀ = {!   !}
 
     associativityᴿᴿᴿ = refl
     associativityᴿᴿˢ = refl
@@ -676,9 +677,10 @@ module _B where
 
   --! RewriteSys {
   {-# REWRITE 
-    ＋idᴿ ＋wk ext₀ᴿ extˢᴿ
-    ＋idˢ ext₀ˢ extˢˢ
+    ＋idᴿ ＋wk ext₀ᴿ extₛᴿ
+    ＋idˢ ext₀ˢ extₛˢ
     compᴿᴿ compᴿˢ compˢᴿ compˢˢ
+
     comp-idₗᴿᴿ comp-idₗᴿˢ comp-idᴿᴿᴿ 
     comp-idᴿˢˢ comp-idᴿˢᴿ comp-idₗˢˢ
     associativityᴿᴿᴿ associativityᴿᴿˢ 
@@ -689,22 +691,28 @@ module _B where
     distributivityˢᴿ distributivityˢˢ
     interactᴿ interactˢ
     η-id η-lawᴿ η-lawˢ
+
     right-idᴿ right-idˢ
     compositionalityᴿᴿ compositionalityᴿˢ 
     compositionalityˢᴿ compositionalityˢˢ
-    coincidence coincidence-fold
+
+    coincidence 
+    coincidence-foldⱽ coincidence-foldᵀ
   #-}
     --! }
 
   -- Typing ----------------------------------------------------------------------
 
+  --! UpArrow
   ↑ᵗ_ : Sort → Sort 
   ↑ᵗ expr = type
   ↑ᵗ type = kind
   ↑ᵗ kind = kind
 
+  --! TypeOf
   _∶⊢_ : Scope → Sort → Set
   S ∶⊢ s = S ⊢ (↑ᵗ s)
+  
 
   depth : S ∋ s → ℕ
   depth zero     = zero
@@ -725,9 +733,12 @@ module _B where
   (t ∷ₜ Γ) _ zero     = t
   (t ∷ₜ Γ) _ (suc x)  = Γ _ x
 
+  --!! Wk 
   weaken : S ⊢ s → (s′ ∷ S) ⊢ s
+
   weaken t = t ⋯ᴿ wk
 
+  --!! Subst
   _[_] : (s′ ∷ S) ⊢ s → S ⊢ s′ → S ⊢ s
   t [ t′ ] = t ⋯ˢ (t′ ∙ˢ idˢ) 
 
@@ -739,13 +750,17 @@ module _B where
   wk-telescope Γ x = wk-drop-∈ x (Γ _ x)
 
   infix   4  _∋_∶_
+
+  --!! Lookup
   _∋_∶_ : Ctx S → S ∋ s → S ∶⊢ s → Set
+
   Γ ∋ x ∶ t = wk-telescope Γ x ≡ t
 
   variable 
     Γ Γ₁ Γ₂ Γ₃ Γ′ Γ₁′ Γ₂′ Γ₃′ : Ctx S
 
-  data _⊢_∶_ : {s : Sort} → Ctx S → S ⊢ s → S ∶⊢ s → Set where
+  --! Typing
+  data _⊢_∶_ : Ctx S → S ⊢ s → S ∶⊢ s → Set where
     ⊢` : ∀ {x : S ∋ s} {t} → 
       Γ ∋ x ∶ t →
       -------------
@@ -763,7 +778,7 @@ module _B where
       Γ ⊢ e₂ ∶ t₁ →
       --------------------
       Γ ⊢ (e₁ · e₂) ∶ t₂
-    ⊢∙ : 
+    ⊢• : 
       Γ ⊢ e ∶ (∀[α∶ k ] t′) →
       Γ ⊢ t ∶ k →
       (k ∷ₜ Γ) ⊢ t′ ∶ k′ →
@@ -773,11 +788,106 @@ module _B where
       ---------
       Γ ⊢ t ∶ ★
 
+  --!! WTR
   _∶_→ᴿ_ : S₁ →ᴿ S₂ → Ctx S₁ → Ctx S₂ → Set
+
   _∶_→ᴿ_ {S₁} {S₂} ρ Γ₁ Γ₂ = ∀ (s : Sort) (x : S₁ ∋ s) (t : S₁ ∶⊢ s) → (Γ₁ ∋ x ∶ t) → Γ₂ ∋ (x &ᴿ ρ) ∶ t ⋯ᴿ ρ 
 
+  --!! WTS
   _∶_→ˢ_ : S₁ →ˢ S₂ → Ctx S₁ → Ctx S₂ → Set
+
   _∶_→ˢ_ {S₁} {S₂} σ Γ₁ Γ₂ = ∀ (s : Sort) (x : S₁ ∋ s) (t : S₁ ∶⊢ s) → (Γ₁ ∋ x ∶ t) → Γ₂ ⊢ (x &ˢ σ) ∶ (t ⋯ˢ σ) 
 
+  --! Semantics {
+  data Val : S ⊢ expr → Set where
+    vλ : Val (λx e)
+    vΛ : Val (Λα e)
 
-  
+  data _↪_ : S ⊢ expr → S ⊢ expr → Set where
+    β-λ :
+      Val e₂ →
+      ----------------------------
+      ((λx e₁) · e₂) ↪ (e₁ [ e₂ ])
+    β-Λ :
+      ------------------------
+      ((Λα e) • t) ↪ (e [ t ])
+    ξ-·₁ :
+      e₁ ↪ e →
+      --------------------
+      (e₁ · e₂) ↪ (e · e₂)
+    ξ-·₂ :
+      e₂ ↪ e →
+      Val e₁ →
+      --------------------
+      (e₁ · e₂) ↪ (e₁ · e)
+    ξ-• :
+      e ↪ e′ →
+      ------------------
+      (e • t) ↪ (e′ • t)
+  --! }
+
+  ⊢wkᴿ : ∀ (Γ : Ctx S) (x : S ∋ s) t (t′ : S ∶⊢ s′) → Γ ∋ x ∶ t → (t′ ∷ₜ Γ) ∋ (suc x) ∶ (weaken t) 
+  ⊢wkᴿ _ _ _ _ refl = refl
+
+  ⊢↑ᴿ : ρ ∶ Γ₁ →ᴿ Γ₂ → (t : S₁ ∶⊢ s) → (ρ ↑ᴿ s) ∶ (t ∷ₜ Γ₁) →ᴿ ((t ⋯ᴿ ρ) ∷ₜ Γ₂)
+  ⊢↑ᴿ ⊢ρ _ _ (zero) _ refl = refl
+  ⊢↑ᴿ {ρ = ρ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} ⊢ρ t _ (suc x) _ refl =  ⊢wkᴿ Γ₂ (x &ᴿ ρ) (wk-drop-∈ x (Γ₁ _ x) ⋯ᴿ ρ) (t ⋯ᴿ ρ) (⊢ρ _ x _ refl)
+
+  --! RPT
+  _⊢⋯ᴿ_ : ∀ {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} →
+    ρ ∶ Γ₁ →ᴿ Γ₂ →
+    Γ₁ ⊢ e ∶ t →
+    Γ₂ ⊢ (e ⋯ᴿ ρ) ∶ (t ⋯ᴿ ρ)
+  ⊢ρ ⊢⋯ᴿ (⊢` ⊢x)    = 
+    ⊢` (⊢ρ _ _ _ ⊢x) 
+  ⊢ρ ⊢⋯ᴿ (⊢λ ⊢e)        = 
+    ⊢λ ((⊢↑ᴿ ⊢ρ _) ⊢⋯ᴿ ⊢e)
+  ⊢ρ ⊢⋯ᴿ (⊢Λ ⊢e)        =
+    ⊢Λ ((⊢↑ᴿ ⊢ρ _) ⊢⋯ᴿ ⊢e)
+  ⊢ρ ⊢⋯ᴿ (⊢· ⊢e₁ ⊢e₂)   = 
+    ⊢· (⊢ρ ⊢⋯ᴿ ⊢e₁) (⊢ρ ⊢⋯ᴿ ⊢e₂)
+  ⊢ρ ⊢⋯ᴿ (⊢• ⊢e ⊢t ⊢t') = 
+    ⊢• (⊢ρ ⊢⋯ᴿ ⊢e) (⊢ρ ⊢⋯ᴿ ⊢t)((⊢↑ᴿ ⊢ρ _) ⊢⋯ᴿ ⊢t')
+  ⊢ρ ⊢⋯ᴿ ⊢★             = 
+    ⊢★
+
+  ⊢wkˢ : ∀ (Γ : Ctx S) (e : S ⊢ s) (t : S ∶⊢ s) (t′ : S ∶⊢ s′) → Γ ⊢ e ∶ t → (t′ ∷ₜ Γ) ⊢ weaken e ∶ weaken t 
+  ⊢wkˢ Γ _ _ t' ⊢t = (λ s x t ⊢x → ⊢wkᴿ Γ x t t' ⊢x) ⊢⋯ᴿ ⊢t
+
+  ⊢↑ˢ : σ ∶ Γ₁ →ˢ Γ₂ → (t : S ∶⊢ s) → (σ ↑ˢ s) ∶ t ∷ₜ Γ₁ →ˢ ((t ⋯ˢ σ) ∷ₜ Γ₂)
+  ⊢↑ˢ ⊢σ _ _ (zero) _ refl = ⊢` refl
+  ⊢↑ˢ {σ = σ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} ⊢σ t _ (suc x) _ refl = ⊢wkˢ Γ₂ (x &ˢ σ) (wk-drop-∈ x (Γ₁ _ x) ⋯ˢ σ) (t ⋯ˢ σ) (⊢σ _ x _ refl)
+
+  --! SPT
+  _⊢⋯ˢ_ : ∀ {σ : S₁ →ˢ S₂} {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} →
+    σ ∶ Γ₁ →ˢ Γ₂ →
+    Γ₁ ⊢ e ∶ t →
+    Γ₂ ⊢ (e ⋯ˢ σ) ∶ (t ⋯ˢ σ)
+  ⊢σ ⊢⋯ˢ (⊢` ⊢x)                = 
+    ⊢σ _ _ _ ⊢x
+  _⊢⋯ˢ_ {σ = σ} ⊢σ (⊢λ ⊢e)        = 
+    ⊢λ (_⊢⋯ˢ_ {σ = σ ↑ˢ _} (⊢↑ˢ {σ = σ} ⊢σ _) ⊢e)
+  _⊢⋯ˢ_ {σ = σ}  ⊢σ (⊢Λ ⊢e)       = 
+    ⊢Λ (_⊢⋯ˢ_ {σ = σ ↑ˢ _} (⊢↑ˢ {σ = σ} ⊢σ _) ⊢e)
+  _⊢⋯ˢ_ {σ = σ} ⊢σ (⊢· ⊢e₁ ⊢e₂)   =
+    ⊢· (_⊢⋯ˢ_ {σ = σ} ⊢σ ⊢e₁) (_⊢⋯ˢ_ {σ = σ} ⊢σ ⊢e₂)
+  _⊢⋯ˢ_ {σ = σ} ⊢σ (⊢• ⊢e ⊢t ⊢t') = 
+    ⊢• (_⊢⋯ˢ_ {σ = σ} ⊢σ ⊢e) (_⊢⋯ˢ_ {σ = σ} ⊢σ ⊢t) 
+       (_⊢⋯ˢ_ {σ = σ ↑ˢ _} (⊢↑ˢ {σ = σ} ⊢σ _) ⊢t')
+  _⊢⋯ˢ_ ⊢σ ⊢★             = 
+    ⊢★
+
+  ⊢[] : ∀ {Γ : Ctx S} {e : S ⊢ s} {t : S ∶⊢ s} → Γ ⊢ e ∶ t → (e ∙ˢ idˢ) ∶ (t ∷ₜ Γ) →ˢ Γ
+  ⊢[] ⊢t _ zero     _ refl = ⊢t
+  ⊢[] ⊢t _ (suc x)  _ refl = ⊢` refl
+
+  --! SR
+  subject-reduction : 
+    Γ ⊢ e ∶ t →   
+    e ↪ e′ → 
+    Γ ⊢ e′ ∶ t 
+  subject-reduction (⊢· {e₂ = e₂} (⊢λ ⊢e₁) ⊢e₂) (β-λ v₂)        = _⊢⋯ˢ_ {σ = e₂ ∙ˢ idˢ} (⊢[] ⊢e₂) ⊢e₁
+  subject-reduction (⊢• {t = t} (⊢Λ ⊢e) ⊢t ⊢t') β-Λ             = _⊢⋯ˢ_ {σ = t ∙ˢ idˢ} (⊢[] ⊢t) ⊢e     
+  subject-reduction (⊢· ⊢e₁ ⊢e₂)                (ξ-·₁ e₁↪e)     = ⊢· (subject-reduction ⊢e₁ e₁↪e) ⊢e₂
+  subject-reduction (⊢· ⊢e₁ ⊢e₂)                (ξ-·₂ e₂↪e x)   = ⊢· ⊢e₁ (subject-reduction ⊢e₂ e₂↪e)          
+  subject-reduction (⊢• ⊢e ⊢t ⊢t')              (ξ-• e↪e')      = ⊢• (subject-reduction ⊢e e↪e') ⊢t ⊢t'  

@@ -7,10 +7,7 @@ open import Agdasubst.Extensions.StandardTyping public
 open import Agdasubst.Examples.SystemF.Definitions.Syntax
 open import Agdasubst.Examples.SystemF.Substitution
 
-instance types = mkTypes 
-
---! TyOf
-λ { expr → type ; type → kind ; kind →  kind }
+instance types = mkTypes λ { expr → type ; type → kind ; kind →  kind }
 
 open Types types public
 open TypesMeta public
@@ -45,4 +42,4 @@ data _⊢_∶_ : Ctx S → S ⊢ s → S ∶⊢ s → Set where
     Γ ⊢ t ∶ ★
 
 instance typing = mkTyping _⊢_∶_ ⊢` 
-open Typing typing hiding (_⊢_∶_; ⊢`) public
+open Typing typing hiding (_⊢_∶_; ⊢`) renaming (⊢⦅_⦆ to ⊢[]) public

@@ -28,31 +28,31 @@ module _ where
 
 
   {-# REWRITE id↑≡id id↑★≡id #-}
-  ⋯-id : ∀ {{K : Kit M}} (t : S ⊢ s) → t ⋯ id ≡ t
-  ⋯-id {{K}} (` x)    = `⋯-id x
-  ⋯-id (λx e)         = cong λx_ (⋯-id e)
-  ⋯-id (e₁ · e₂)      = cong₂ _·_ (⋯-id e₁) (⋯-id e₂)
-  ⋯-id (t₁ ⇒ t₂)      = cong₂ _⇒_ (⋯-id t₁) (⋯-id t₂)
-  ⋯-id (Λα t)         = cong Λα_ (⋯-id t)
-  ⋯-id (∀[α⊑ t₁ ] t₂) = cong₂ ∀[α⊑_]_ (⋯-id t₁) (⋯-id t₂)
-  ⋯-id (e • t)        = cong₂ _•_ (⋯-id e) (⋯-id t)
-  ⋯-id `tt            = refl
-  ⋯-id `⊤             = refl
-  ⋯-id (t₁ ∶⊑ t₂)     = cong₂ _∶⊑_ (⋯-id t₁) (⋯-id t₂)
-  ⋯-id ★              = refl
-  ⋯-id sat            = refl
-  ⋯-id ✰              = refl 
+  ⋯-right-id : ∀ {{K : Kit M}} (t : S ⊢ s) → t ⋯ id ≡ t
+  ⋯-right-id {{K}} (` x)    = `⋯-right-id x
+  ⋯-right-id (λx e)         = cong λx_ (⋯-right-id e)
+  ⋯-right-id (e₁ · e₂)      = cong₂ _·_ (⋯-right-id e₁) (⋯-right-id e₂)
+  ⋯-right-id (t₁ ⇒ t₂)      = cong₂ _⇒_ (⋯-right-id t₁) (⋯-right-id t₂)
+  ⋯-right-id (Λα t)         = cong Λα_ (⋯-right-id t)
+  ⋯-right-id (∀[α⊑ t₁ ] t₂) = cong₂ ∀[α⊑_]_ (⋯-right-id t₁) (⋯-right-id t₂)
+  ⋯-right-id (e • t)        = cong₂ _•_ (⋯-right-id e) (⋯-right-id t)
+  ⋯-right-id `tt            = refl
+  ⋯-right-id `⊤             = refl
+  ⋯-right-id (t₁ ∶⊑ t₂)     = cong₂ _∶⊑_ (⋯-right-id t₁) (⋯-right-id t₂)
+  ⋯-right-id ★              = refl
+  ⋯-right-id sat            = refl
+  ⋯-right-id ✰              = refl 
   
-  ⋯-id′ : ∀ {{K : Kit M}} (t : S ⊢ s) → t ⋯ id ≡ t
-  ⋯-id′ t rewrite ⋯-id t = refl 
+  ⋯-right-id′ : ∀ {{K : Kit M}} (t : S ⊢ s) → t ⋯ id ≡ t
+  ⋯-right-id′ t rewrite ⋯-right-id t = refl 
 
   
   ⋯-var′ : ∀ {{K : Kit M}} → (x : S₁ ∋ s) (ϕ : S₁ –[ K ]→ S₂) →
                      (` x) ⋯ ϕ ≡ x `⋯ ϕ
   ⋯-var′ _ _ = refl
 
-  instance traversal = mkTraversal _⋯_ ⋯-id′ ⋯-var′
-  open Traversal traversal hiding (_⋯_; ⋯-id; ⋯-var) public
+  instance traversal = mkTraversal _⋯_ ⋯-right-id′ ⋯-var′
+  open Traversal traversal hiding (_⋯_; ⋯-right-id; ⋯-var) public
 
   
   {-# REWRITE dist–↑–; dist–↑★–; #-} 
@@ -120,5 +120,5 @@ _⋯_ {{K}} = let instance _ = K ;ᴷ V in _&/⋯_
   compositionality–safe
   right–id
   &/⋯–` &/⋯–λ &/⋯–· &/⋯–⇒ &/⋯–Λ &/⋯–∀ &/⋯–• &/⋯–tt &/⋯–`⊤ &/⋯–∶⊑ &/⋯–★ &/⋯–sat &/⋯–✰ 
-  coincidence coincidence–fold coincidence–push
+  coincidence coincidence–foldᴷ coincidence–foldᵀ
 #-}  

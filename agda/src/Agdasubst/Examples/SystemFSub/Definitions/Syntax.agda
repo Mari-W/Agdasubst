@@ -31,6 +31,8 @@ data _⊢_ : Scoped where
   sat       : S ⊢ cstr 
   ✰         : S ⊢ kind
 
+  
+
 variable
   e e₁ e₂ e₃ e₄ e′ e₁′ e₂′ e₃′ e₄′ : S ⊢ expr
   t t₁ t₂ t₃ t₄ t′ t₁′ t₂′ t₃′ t₄′ : S ⊢ type
@@ -40,5 +42,5 @@ variable
 inj : (` x₁) ≡ (` x₂) → x₁ ≡ x₂
 inj refl = refl
 instance syn = mkSyntax _⊢_  `_  inj
-open Syntax syn hiding (_⊢_; `_) public 
+open Syntax syn hiding (_⊢_; `_; _&_) public 
 {-# NOINLINE syn #-}

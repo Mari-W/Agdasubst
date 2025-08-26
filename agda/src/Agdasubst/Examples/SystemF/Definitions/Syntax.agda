@@ -29,4 +29,4 @@ variable
   ★ᴷ ★ᴷ′                           : S ⊢ kind
 
 instance syn = mkSyntax _⊢_  `_  λ { refl → refl }
-open Syntax syn hiding (_⊢_; `_) public
+open Syntax syn hiding (_⊢_; `_; _&_) public

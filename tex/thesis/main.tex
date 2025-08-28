@@ -409,27 +409,27 @@ type-in-type, expr-in-expr, and type-in-expr. These substitutions need to be
 handled and related manually, which adds boilerplate.
 
 To avoid this, we use a multi-sorted syntax. Terms form a single datatype
-indexed by a list of variable sorts and a target sort. The type $S$ \AgdaDatatype{⊢} $s$
-describes a term of sort $s$ with free variables of sorts in $S$. Variable
-positions are given by $S$ \AgdaDatatype{∋} $s$, a proof that a variable of sort $s$ appears
-in $S$ at some position. This position acts as the de Bruijn index. This gives
-us well scoped and well sorted terms by construction. The right side of
-\cref{fig:pre-svm} shows this version. With this unified syntax, we can define
-scoped and multi-sorted renamings and substitutions that work uniformly across
-sorts.
+indexed by a list of variable sorts and a target sort. The type $S$
+\AgdaDatatype{⊢} $s$ describes a term of sort $s$ with free variables of sorts
+in $S$. Variable positions are given by $S$ \AgdaDatatype{∋} $s$, a proof that
+a variable of sort $s$ appears in $S$ at some position. This position acts as
+the de Bruijn index. This gives us well scoped and well sorted terms by
+construction. The right side of \cref{fig:pre-svm} shows this version. With
+this unified syntax, we can define scoped and multi-sorted renamings and
+substitutions that work uniformly across sorts.
 
 \section{The Multi-Sorted and Scoped Sigma Calculus with First-Class Renamings}\label{sec:mis}
 
 This section gives a direct embedding of the $\sigma$-calculus rules as native
-reduction rules in Agda using the rewrite mechanism for the
-muti-sorted and scoped version of System~F from \cref{fig:pre-svm} as an
-example for any custom syntax. When adapting the $\sigma$-calculus from
-\cref{sec:pre-sig} to custom multi-sorted and scoped syntaxes in Agda, we face
-the problem that, in Agda, substitutions for syntaxes with binders cannot be
-defined directly by structural recursion. To obtain well-founded definitions,
-we need to define renamings first, which are substitutions that only map to
-variables.muti-sorted and scoped version of System~F from \cref{sec:pre-syn} as
-an example for any custom syntax.
+reduction rules in Agda using the rewrite mechanism for the muti-sorted and
+scoped version of System~F from \cref{fig:pre-svm} as an example for any custom
+syntax. When adapting the $\sigma$-calculus from \cref{sec:pre-sig} to custom
+multi-sorted and scoped syntaxes in Agda, we face the problem that, in Agda,
+substitutions for syntaxes with binders cannot be defined directly by
+structural recursion. To obtain well-founded definitions, we need to define
+renamings first, which are substitutions that only map to variables.muti-sorted
+and scoped version of System~F from \cref{sec:pre-syn} as an example for any
+custom syntax.
 
 When adapting the $\sigma$-calculus from \cref{sec:pre-sig} to custom
 multi-sorted and scoped syntaxes in Agda, we face the problem that, in Agda,
@@ -1112,15 +1112,16 @@ substitution, show that general substitution preserves typing as well.
       \ESPT{}
 \end{minipage}
 
-Both proofs rely on the types for well-typed renamings \EWTR and well-typed
-substitutions \EWTS, whose definitions we omit here. Within the respective
-cases, we look up the well-typed variable in the typed renaming/substitution,
-and when going under a binder we use the typed lifting of renamings and
-substitutions. Thanks to the automatic application of the $\sigma$-calculus
-laws, both proofs follow directly by induction, even in the cases where we go
-under a binder. Using the two results, we can then prove subject reduction for
-System~F: \ESR{}All cases go through without requiring any explicit law about
-substitutions.
+Both proofs rely on the types for well-typed renamings \EWTR{} \; and
+well-typed substitutions \EWTS{}, whose definitions we omit here. Within the
+respective cases, we look up the well-typed variable in the typed
+renaming/substitution, and when going under a binder we use the typed lifting
+of renamings and substitutions. Thanks to the automatic application of the
+$\sigma$-calculus laws, both proofs follow directly by induction, even in the
+cases where we go under a binder. Using the two results, we can then prove
+subject reduction for System~F: \ESR{}All cases follow without requiring any
+explicit application of substitution lemmas. In the $beta$-reduction cases, we
+use the substitution preserves typing lemma.
 
 \subsection*{Using \textsc{Agdasubst}}
 We first instantiate the library by providing the traversal function and the syntax dependent laws.
@@ -1346,10 +1347,10 @@ type-checking time.
 
 \section{Conclusion}\label{sec:con}
 We have shown how to take advantage of the laws of the $\sigma$-calculus to
-automatically solve equations inside proofs about syntax with binders, in Agda. 
-We first embedded the $\sigma$-calculus with
-first-class renamings directly into Agda as reduction rules, using its rewrite
-mechanism to yield definitional equalities.
+automatically solve equations inside proofs about syntax with binders, in Agda.
+We first embedded the $\sigma$-calculus with first-class renamings directly
+into Agda as reduction rules, using its rewrite mechanism to yield definitional
+equalities.
 
 We then wanted to unify proofs about renamings and substitutions, which led to
 the current state of the \textsc{Agdasubst} library. To achieve our goal, we

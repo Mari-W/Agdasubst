@@ -144,17 +144,15 @@ record _a : Set₁ where
 
 
         --! SpecialDefLaws
-        compᵣ–idˢ   : x &/⋯[ V , T , T ] (ρ₁ ;[ V , T , T ] id[ T ])   ≡ 
+        compᵣ–idˢ   : x &/⋯[ V , T , T ] (ρ₁ ;[ V , T , T ] id[ T ])    ≡ 
                       ` (x &/⋯[ V , V , V ] ρ₁)
         compₗ–idˢ   : x &/⋯[ V , T , T ]  (id[ T ] ;[ T , V , T ] ρ₂)  ≡ 
                       ` (x &/⋯[ V , V , V ] ρ₂)  
         compₗ–wk    : x &/⋯[ V , K , K ] (wk ;[ V , K , K ] ϕ′)        ≡ 
                       suc x &/⋯[ V , K , K ] ϕ′ 
-        compₗ–ext₀  : zero &/⋯[ V , K₃ , K₃ ] 
-                           ((x/t₁ ∙[ K₁ ] ϕ₁) ;[ K₁ , K₂ , K₃ ] ϕ₂)    ≡ 
+        compₗ–ext₀  : zero &/⋯[ V , K₃ , K₃ ] ((x/t₁ ∙[ K₁ ] ϕ₁) ;[ K₁ , K₂ , K₃ ] ϕ₂)    ≡ 
                       x/t &/⋯[ K₁ , K₂ , K₃ ] ϕ₂
-        compₗ–extₛ  : suc x′ &/⋯[ V , K₃ , K₃ ] 
-                             ((x/t₁ ∙[ K₁ ] ϕ₁) ;[ K₁ , K₂ , K₃ ] ϕ₂)  ≡ 
+        compₗ–extₛ  : suc x′ &/⋯[ V , K₃ , K₃ ] ((x/t₁ ∙[ K₁ ] ϕ₁) ;[ K₁ , K₂ , K₃ ] ϕ₂)  ≡ 
                       x′ &/⋯[ V , K₃ , K₃ ] (ϕ₁ ;[ K₁ , K₂ , K₃ ] ϕ₂)
     
         --! Interaction
@@ -183,11 +181,9 @@ record _a : Set₁ where
           --! Coincidence Laws
           coincidence       : t &/⋯[ T , T , T ] (ϕ ;[ K , T , T ] id[ T ])  ≡ 
                               t &/⋯[ T , K , T ] ϕ  
-          coincidence–foldᴷ : t &/⋯[ T , T , T ]  ((x/t &/⋯[ K , T , T ] id[ T ]) ∙[ T ] 
-                                                  (ϕ ;[ K , T , T ] id[ T ]))             ≡ 
+          coincidence–foldᴷ : t &/⋯[ T , T , T ] ((x/t &/⋯[ K , T , T ] id[ T ]) ∙[ T ] (ϕ ;[ K , T , T ] id[ T ]))   ≡ 
                               (t &/⋯[ T , K , T ] (x/t ∙[ K ] ϕ))
-          coincidence–foldᵀ : t &/⋯[ T , T , T ]  ((t′ &/⋯[ T , K , T ] ϕ) ∙[ T ] 
-                                                  (ϕ ;[ K , T , T ] id[ T ]))             ≡ 
+          coincidence–foldᵀ : t &/⋯[ T , T , T ] ((t′ &/⋯[ T , K , T ] ϕ) ∙[ T ] (ϕ ;[ K , T , T ] id[ T ])) ≡ 
                               (t &/⋯[ T , T , T ] (t′ ∙[ T ] (id[ T ]))) &/⋯[ T , K , T ] ϕ
           
 

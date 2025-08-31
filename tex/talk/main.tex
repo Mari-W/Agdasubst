@@ -1,0 +1,134 @@
+\documentclass[dvipsnames,aspectratio=169,pdftex]{beamer}
+\usepackage{agda}
+\usepackage{stmaryrd}
+\usepackage{xcolor}
+\usepackage{txfonts}
+\usepackage[T1]{fontenc}
+\usepackage{microtype}
+\DisableLigatures[-]{encoding=T1}
+\usepackage{tikz}
+\usetikzlibrary{cd}
+
+
+\input{agda-generated}
+\input{unicodeletters}
+\input{agdamacros}
+
+% Define University of Freiburg colors
+\definecolor{UFRBlue100}{RGB}{52, 74, 154}    % #344A9A
+\definecolor{UFRBlue80}{RGB}{82, 101, 164}    % #5265A4
+\definecolor{UFRBlue60}{RGB}{112, 128, 178}   % #7080B2
+\definecolor{UFRBlue40}{RGB}{143, 156, 191}   % #8F9CBF
+\definecolor{UFRBlue20}{RGB}{173, 183, 205}   % #ADB7CD
+\definecolor{UFRBlack}{RGB}{0, 0, 0}          % #000000
+\definecolor{UFRWhite}{RGB}{255, 255, 255}    % #FFFFFF
+\definecolor{UFRSand100}{RGB}{246, 241, 227}  % #F6F1E3
+\definecolor{UFRSand50}{RGB}{250, 248, 241}   % #FAF8F1
+\definecolor{UFRGreen100}{RGB}{0, 160, 130}   % #00A082
+\definecolor{UFRGreen80}{RGB}{51, 179, 155}   % #33B39B
+\definecolor{UFRGreen60}{RGB}{102, 198, 180}  % #66C6B4
+\definecolor{UFRGreen40}{RGB}{153, 217, 205}  % #99D9CD
+\definecolor{UFRGreen20}{RGB}{204, 236, 230}  % #CCECE6
+\definecolor{UFRBrown100}{RGB}{143, 107, 48}  % #8F6B30
+\definecolor{UFRBrown80}{RGB}{165, 137, 89}   % #A58959
+\definecolor{UFRBrown60}{RGB}{186, 166, 130}  % #BAA682
+\definecolor{UFRBrown40}{RGB}{208, 196, 171}  % #D0C4AB
+\definecolor{UFRBrown20}{RGB}{229, 226, 211}  % #E5E2D3
+\definecolor{UFRRosa100}{RGB}{255, 0, 120}    % #FF0078
+\definecolor{UFRRosa80}{RGB}{255, 51, 140}    % #FF338C
+\definecolor{UFRRosa60}{RGB}{255, 102, 160}   % #FF66A0
+\definecolor{UFRRosa40}{RGB}{255, 153, 180}   % #FF99B4
+\definecolor{UFRRosa20}{RGB}{255, 204, 200}   % #FFCCC8
+\definecolor{UFRYellow100}{RGB}{255, 200, 10} % #FFC80A
+\definecolor{UFRYellow80}{RGB}{255, 210, 51}  % #FFD233
+\definecolor{UFRYellow60}{RGB}{255, 221, 92}  % #FFDD5C
+\definecolor{UFRYellow40}{RGB}{255, 231, 133} % #FFE785
+\definecolor{UFRYellow20}{RGB}{255, 242, 174} % #FFF2AE
+
+\usetheme{Madrid}
+
+% Set Beamer color scheme
+\setbeamercolor{normal text}{fg=UFRBlack, bg=UFRSand50} % Main text with sand background
+\setbeamercolor{structure}{fg=UFRBlue100} % Structural elements in primary blue
+\setbeamercolor{alerted text}{fg=UFRRosa100} % Alerts in primary rosa
+\setbeamercolor{frametitle}{fg=UFRWhite, bg=UFRBlue100} % Frame titles with blue background
+\setbeamercolor{title}{fg=UFRWhite, bg=UFRBlue100} % Title slide with blue background
+\setbeamercolor{item}{fg=UFRBlue100} % Bullet points in primary blue
+\setbeamercolor{subitem}{fg=UFRBlue80} % Sub-bullets in lighter blue
+\setbeamercolor{block title}{fg=UFRWhite, bg=UFRGreen100} % Block titles with green background
+\setbeamercolor{block body}{fg=UFRBlack, bg=UFRGreen20} % Block body with light green background
+\setbeamercolor{example text}{fg=UFRBrown100} % Example text in primary brown
+\setbeamercolor{section in toc}{fg=UFRBlue100} % Table of contents sections in blue
+\setbeamercolor{subsection in toc}{fg=UFRBlue80} % Subsections in TOC in lighter blue
+\setbeamercolor{button}{fg=UFRWhite, bg=UFRRosa100} % Buttons in primary rosa
+
+% Yellow is now used for special highlighting
+\setbeamercolor{note}{fg=UFRBlack, bg=UFRYellow40} % Notes in light yellow
+
+\newcommand{\SubItem}[1]{
+    {\setlength\itemindent{15pt} \item[-] #1}
+}
+
+\AtBeginSection[]{%
+  \begin{frame}<beamer>
+    \frametitle{Outline}
+    \tableofcontents[currentsection]%[sectionstyle=show/show,subsectionstyle=hide/show/hide]
+  \end{frame}
+  \addtocounter{framenumber}{-1}% If you don't want them to affect the slide number
+}
+
+\title{Automated Reasoning over Syntaxes with Binding in Agda}
+\author{Marius Weidner}
+\institute{University of Freiburg}
+\date{\today \ (Master Thesis Talk, Freiburg im Breisgau)}
+
+\begin{document}
+
+\begin{frame}{\null}
+  \titlepage 
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Overview}
+  \tableofcontents
+\end{frame}
+
+\section{Intro}
+
+\begin{frame}[fragile]
+  \frametitle{Programming Languages and Substitution}
+  \begin{itemize}
+    \item ...
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Explicit Substitution Calculi}
+  \begin{itemize}
+    \item ...
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Problem 1: Multiple Variable Sorts}
+  \begin{itemize}
+    \item ...
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Problem 2: Structually Recursive Substitution Definition}
+  \begin{itemize}
+    \item ...
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Nerd Time!}
+  \begin{center}
+    \includegraphics[height=0.9\textheight]{image.png}
+  \end{center}
+\end{frame}
+
+
+\end{document}

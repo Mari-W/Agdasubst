@@ -20,7 +20,11 @@ module KitsWithSort (
 
   ) where
     open CommonWithSort Sort 
-    open Meta 
+    private variable
+      M M₁ M₂ M₃ M₄ M₅ M₆ M′ M₁′ M₂′ M₃′ M₄′ M₅′ M₆′ : Mode
+      s s₁ s₂ s₃ s₄ s₅ s₆ s′ s₁′ s₂′ s₃′ s₄′ s₅′ s₆′ : Sort
+      S S₁ S₂ S₃ S₄ S₅ S₆ S′ S₁′ S₂′ S₃′ S₄′ S₅′ S₆′ : Scope
+      x x₁ x₂ x₃ x₄ x₅ x₆ x′ x₁′ x₂′ x₃′ x₄′ x₅′ x₆′ : S ∋ s
 
     record Syntax : Set₁ where
       constructor mkSyntax
@@ -34,7 +38,7 @@ module KitsWithSort (
         `-injective : ` x₁ ≡ ` x₂ → x₁ ≡ x₂  
 
       --! Image
-      image : Mode → Scoped
+      image : Mode → (List Sort → Sort → Set)
       image Vᴹ  = _∋_
       image Tᴹ  = _⊢_ 
 
@@ -51,6 +55,7 @@ module KitsWithSort (
           K-id/`  : S ∋ s → S ∋/⊢ᴷ s
           K-`/id  : S ∋/⊢ᴷ s → S ⊢ s
           K-wk    : ∀ s′ → S ∋/⊢ᴷ s → (s′ ∷ S) ∋/⊢ᴷ s
+          -- axioms ... 
 
           --!! LockField
           K-lock    : Lock
@@ -161,7 +166,10 @@ module KitsWithSort (
       id[ K ] = Kit.id K 
       --! }
 
-      open Kit {{...}} public hiding (wk)
+      --!! OpenKit
+      open Kit {{...}} 
+      
+        public hiding (wk)
 
       _`⋯_ : ∀ {{K : Kit M}} → S₁ ∋ s → S₁ →ᴷ S₂ → S₂ ⊢ s 
       x `⋯ ϕ = `/id (x & ϕ) 
@@ -190,7 +198,7 @@ module KitsWithSort (
               { K-id/`           = λ x → x
               ; K-`/id           = `_
               ; K-wk             = λ s′ x → suc x
-              -- ...
+              -- axioms ... 
           --! }
 
               ; `/`-is-`        = λ x → refl
@@ -215,7 +223,7 @@ module KitsWithSort (
               { K-id/`           = `_
               ; K-`/id           = λ t → t
               ; K-wk             = λ s′ t → t ⋯ wk
-              -- ...
+              -- axioms ... 
               --! }
               ; `/`-is-`        = λ x → refl
               ; id/`-injective  = `-injective
@@ -382,6 +390,7 @@ module KitsWithSort (
           private instance _ = K₁; _ = K₂; _ = K₁⊔K₂
           field
             C-_&/⋯_    : S₁ ∋/⊢[ K₁ ] s → S₁ –[ K₂ ]→ S₂ → S₂ ∋/⊢[ K₁⊔K₂ ] s
+            -- axioms ...
           
           infixl 8 C-_&/⋯_
           field
@@ -521,7 +530,7 @@ module KitsWithSort (
             --! InstanceCRen {
             instance
               Cᴿ : {{K : Kit M}} → ComposeKit V K K
-              Cᴿ = record { C-_&/⋯_ = _&_ -- ...
+              Cᴿ = record { C-_&/⋯_ = _&_ -- axioms ... 
               --! }
                       ; &/⋯-⋯     = λ x ϕ → ⋯-var x ϕ
                       ; &/⋯-wk-↑ = λ x ϕ → refl
@@ -537,7 +546,7 @@ module KitsWithSort (
             --! InstanceCSub {
             instance
               Cˢ : {{K : Kit M}} {{C : ComposeKit K V K}} → ComposeKit T K T
-              Cˢ  = record { C-_&/⋯_ = _⋯_ -- ...
+              Cˢ  = record { C-_&/⋯_ = _⋯_ -- axioms ... 
             --! }
                       ; &/⋯-⋯     = λ x ϕ → refl
                       ; &/⋯-wk-↑ = λ t ϕ → ⋯-↑-wk t ϕ _ 
@@ -562,11 +571,12 @@ module KitsWithSort (
             impossible–Cᴿᴿˢ : ¬ ComposeKit V V T  
 
           
-          opaque
+        
             -- SAFETY: 
             --   For each usage of this definition it must be checked, that no 
             --   invalid ComposeKit (e.g. ComposeKit V V T) is created.
-            --! CKitUnsafe
+          --! CKitUnsafe
+          opaque private
             {-# NON_COVERING #-}
             _,_,_ : (K₁ : Kit M₁) (K₂ : Kit M₂) (K₃ : Kit M₃) → ComposeKit K₁ K₂ K₃
             _,_,_ {Vᴹ} {Vᴹ} {Vᴹ} K₁ K₂ K₃ rewrite unique–K K₁ | unique–K K₂ | unique–K K₃ = Cᴿ
@@ -697,6 +707,10 @@ module KitsWithSort (
                         (x : S₁ ∋ s) (ϕ₂ : S₁ –[ V ]→ S₂) → 
               x &/⋯ (id[ T ] ; ϕ₂) ≡ ` (x &/⋯ ϕ₂)
             compₗ–idˢ–def _ _ = ⋯-var _ _ 
+
+            compᵣ–idˢ–def : (x : S₁ ∋ s) (ϕ : S₁ –[ V ]→ S₂) → 
+                x &/⋯ (ϕ ; idˢ) ≡ ` (x &/⋯ ϕ)
+            compᵣ–idˢ–def _ _ = refl
  
             compₗ–wk–def : {{K : Kit M}} (x : S₁ ∋ s) (ϕ₂ : (s′ ∷ S₁) –[ K ]→ S₂) → 
               x &/⋯ (wk ; ϕ₂) ≡ (suc x) &/⋯ ϕ₂ 
@@ -731,9 +745,12 @@ module KitsWithSort (
             -- the idiomatic way to transform a ren/sub into a sub is to compose id sub on the right. 
             -- if its applied on the left, we transform it.   
             postulate
-              norm–idˢ : {{K : Kit M}}
+              norm–idˢ : {{K : Kit M}} {{C : ComposeKit K T T}}
                 -- SAFETY: By induction on K and uniqueness of Kits ∎
-                (ϕ : S₁ –[ K ]→ S₂) → id {{T}} ;[ Cˢ {{K}} {{K , V , K}} ] ϕ ≡ (ϕ ;[ K , T , T ] id {{T}}) 
+                (ϕ : S₁ –[ K ]→ S₂) →
+                  --!! NormId 
+                  ϕ ; id[ T ] ≡ id[ T ] ;[ T ;ᴷ K ] ϕ 
+
             -- norm–idˢ {Vᴹ} {{K}} ϕ rewrite unique–K K | C–defᴿ {{T}} = 
             --   ~-ext {{T}} λ _ x → ⋯-var {{V}} _ _
             -- norm–idˢ {Tᴹ} {{K}} ϕ rewrite unique–K K | C–defˢ {{T}} = 
@@ -807,14 +824,17 @@ module KitsWithSort (
             η–law : {{K : Kit M}}
               (ϕ : (s ∷ S₁) –[ K ]→ S₂) → (zero &/⋯ ϕ) ∙ (wk ; ϕ) ≡ ϕ
             η–law ϕ = ~-ext λ { _ zero → refl ; _ (suc x) → refl } 
-
             postulate
-              compᵣ–idˢ–def : (x : S₁ ∋ s) (ϕ : S₁ –[ V ]→ S₂) → 
-                x &/⋯ (ϕ ; idˢ) ≡ ` (x &/⋯ ϕ)
-              -- coincidenceₓ²
               coincidence : {{K : Kit M}} {{C : ComposeKit K T T}}
-                             (t : S₁ ⊢ s) (ϕ : S₁ –[ K ]→ S₂) → 
-                t &/⋯ (ϕ ; idˢ) ≡ let instance _ = K , V , K in t &/⋯ ϕ
+                               (t : S₁ ⊢ s) (ϕ : S₁ –[ K ]→ S₂) → 
+                  t &/⋯ (ϕ ; idˢ) ≡ let instance _ = K , V , K in t &/⋯ ϕ
+            -- coincidence {Vᴹ} {{K}} {{C}} t ϕ rewrite unique–C C | unique–K K = {! cong (_⋯_ {{K = ?}} t) ?  !}
+            -- coincidence {Tᴹ} {{K}} {{C}} t ϕ rewrite unique–C C | unique–K K | C–defˢ {{T}} = 
+            --   cong (_⋯_ {{K = T}} t) {!   !}
+            --   
+            postulate
+              
+              -- coincidenceₓ²
               -- coincidenceₜ²
               coincidence–foldᴷ : {{K : Kit M}} {{C : ComposeKit K T T}}
                             (t : (s′ ∷ S₁) ⊢ s) (x/t : S₂ ∋/⊢[ K ] s′) (ϕ : S₁ –[ K ]→ S₂) → 

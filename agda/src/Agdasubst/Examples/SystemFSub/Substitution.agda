@@ -12,7 +12,7 @@ module _ where
   (` x)          ⋯ ϕ = x `⋯ ϕ
 
   --!! LambdaExT
-  (λx e)         ⋯ ϕ = λx (e ⋯ (ϕ ↑ _))
+  (λx e)         ⋯ ϕ = λx (e ⋯ (ϕ ↑ expr))
 
   (e₁ · e₂)      ⋯ ϕ = (e₁ ⋯ ϕ) · (e₂ ⋯ ϕ)
   (t₁ ⇒ t₂)      ⋯ ϕ = (t₁ ⋯ ϕ) ⇒ (t₂ ⋯ ϕ)
@@ -43,20 +43,15 @@ module _ where
   ⋯-right-id sat            = refl
   ⋯-right-id ✰              = refl 
   
-  ⋯-right-id′ : ∀ {{K : Kit M}} (t : S ⊢ s) → t ⋯ id ≡ t
-  ⋯-right-id′ t rewrite ⋯-right-id t = refl 
-
-  
-  ⋯-var′ : ∀ {{K : Kit M}} → (x : S₁ ∋ s) (ϕ : S₁ –[ K ]→ S₂) →
+  ⋯-var : ∀ {{K : Kit M}} → (x : S₁ ∋ s) (ϕ : S₁ –[ K ]→ S₂) →
                      (` x) ⋯ ϕ ≡ x `⋯ ϕ
-  ⋯-var′ _ _ = refl
+  ⋯-var _ _ = refl
 
-  instance traversal = mkTraversal _⋯_ ⋯-right-id′ ⋯-var′
+  instance traversal = mkTraversal _⋯_ ⋯-right-id ⋯-var
   open Traversal traversal hiding (_⋯_; ⋯-right-id; ⋯-var) public
 
   
   {-# REWRITE dist–↑–; dist–↑★–; #-} 
-  
   ⋯-compositionality :
     ∀ {{K₁ : Kit M₁}} {{K₂ : Kit M₂}} {{K₃ : Kit M₃}} {{C : ComposeKit K₁ K₂ K₃}} →
       (t : S₁ ⊢ s) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) →
@@ -84,7 +79,7 @@ opaque
     (`_ {s = s} x)  &/⋯ ϕ ≡ `/id (x &/⋯ ϕ)                     ; &/⋯–`  = refl
   &/⋯–λ   : {{K : Kit M}} {{C : ComposeKit K V K}} {ϕ : S₁ –[ K ]→ S₂} → 
     --!! LambdaExL
-    (λx e) &/⋯ ϕ ≡ λx (e &/⋯ (ϕ ↑ _))                
+    (λx e) &/⋯ ϕ ≡ λx (e &/⋯ (ϕ ↑ expr))                
   
   &/⋯–λ  = refl
   &/⋯–·   : {{K : Kit M}} {{C : ComposeKit K V K}} {ϕ : S₁ –[ K ]→ S₂} → (e₁ · e₂)       &/⋯ ϕ ≡ (e₁ &/⋯ ϕ) · (e₂ &/⋯ ϕ)           ; &/⋯–·  = refl
@@ -122,3 +117,29 @@ _⋯_ {{K}} = let instance _ = K ;ᴷ V in _&/⋯_
   &/⋯–` &/⋯–λ &/⋯–· &/⋯–⇒ &/⋯–Λ &/⋯–∀ &/⋯–• &/⋯–tt &/⋯–`⊤ &/⋯–∶⊑ &/⋯–★ &/⋯–sat &/⋯–✰ 
   coincidence coincidence–foldᴷ coincidence–foldᵀ
 #-}  
+
+-- {-# REWRITE  id`–def `id–def ;wk–def idˢ–def #-}
+-- 
+-- ex : ?
+-- ex = 
+--   --!! ExTerm
+--   ((` zero) ∙ˢ ((t₁ ∙ˢ idˢ) ; wk)) ; (t₂ ∙ˢ idˢ)          
+-- 
+-- ≡⟨ distributivity (` zero) ((t₁ ∙ˢ idˢ) ; wk) (t₂ ∙ˢ idˢ) ⟩
+--     (((` zero) ⋯ (t₂ ∙ˢ idˢ)) ∙ˢ (((t₁ ∙ˢ idˢ) ; wk) ; (t₂ ∙ˢ idˢ))) ≡⟨ cong (_ ∙ˢ_) (associativity (t₁ ∙ˢ idˢ) wk (t₂ ∙ˢ idˢ)) ⟩
+--     (((` zero) ⋯ (t₂ ∙ˢ idˢ)) ∙ˢ ((t₁ ∙ˢ idˢ) ; (wk ; (t₂ ∙ˢ idˢ)))) ≡⟨ {! interact  !} ⟩
+--     ((((` zero) ⋯ (t₂ ∙ˢ idˢ)) ∙ˢ ((t₁ ∙ˢ idˢ) ; idˢ)))              ≡⟨ {!   !} ⟩ 
+--     {!   !}
+--   ∎ 
+-- 
+-- {-# REWRITE 
+--   id`–def `id–def ;wk–def
+--   associativity distributivity interact
+--   norm–idˢ
+-- #-}  
+-- 
+-- foo : (e : (s ∷ S) ⊢ s) (t₂ : S ⊢ s) (t₁ : S ⊢ s) {{K : Kit M}} 
+--     (ϕ : S₁ –[ K ]→ S₂) → {!   !} 
+-- 
+-- foo {s = s} e t₂ t₁ ϕ  = {! (⦅ t₁ ⦆ˢ ↑ s) ; ⦅ t₂ ⦆ˢ  !}
+-- 

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+python3 ../../../agdatex/agdatex.py -v -f -e agda-generated.tex -r ../../agda/src \
+  ../../agda/src/Agdasubst/*.agda \
+  ../../agda/src/Agdasubst/Extensions/*.agda \
+  ../../agda/src/Agdasubst/Extensions/Generics/*.agda \
+  ../../agda/src/Agdasubst/Extensions/StandardTyping/*.agda \
+  ../../agda/src/Agdasubst/Examples/SystemF/Definitions/*.agda \
+  ../../agda/src/Agdasubst/Examples/SystemF/*.agda \
+  ../../agda/src/Agdasubst/Examples/SystemFSub/Definitions/*.agda \
+  ../../agda/src/Agdasubst/Examples/SystemFSub/*.agda \
+
+
+python3 ../../../agdatex/agdatex.py -v -f -e agda-generated-examples.tex -r . -x examples \
+  examples.agda
+
+

@@ -217,7 +217,7 @@ _ : ∀ {n} → n + 0 ≡ n
 _ = refl
 
 --! Default
-record Default {ℓ} (A : Set ℓ) : Set ℓ where
+record Default (A : Set) : Set where
   field default : A
 
 --! DefFields
@@ -257,116 +257,6 @@ opaque
   _ : forty–two ≡ 42
   _ = refl
 --! }
-
-module C where
-  data Sort : Set where 
-    expr type kind : Sort 
-
-  variable 
-    s s′ : Sort 
-    S S₁ S₂ S₃ S₄ : List Sort
-
-  Scope = List Sort
-  Scoped = Scope → Sort → Set
-
-  data _∋_ : Scoped where
-    zero  : ∀ {S s} → (s ∷ S) ∋ s
-    suc   : ∀ {S s s′} → S ∋ s → (s′ ∷ S) ∋ s
-
-  data _⊢_ : Scoped where 
-    `_       : S ∋ s → S ⊢ s     
-    λx_      : (expr ∷ S) ⊢ expr → S ⊢ expr
-    Λα_      : (type ∷ S) ⊢ expr → S ⊢ expr
-    ∀[α∶_]_  : S ⊢ kind → (type ∷ S) ⊢ type → S ⊢ type
-    _·_      : S ⊢ expr → S ⊢ expr → S ⊢ expr
-    _•_      : S ⊢ expr → S ⊢ type → S ⊢ expr
-    _⇒_      : S ⊢ type → S ⊢ type → S ⊢ type
-    ★        : S ⊢ kind
-
-  data Tag : Set where 
-    instance Ren Sub : Tag 
-
-  image : Tag → Scoped 
-  image Ren = _∋_
-  image Sub = _⊢_
-
-  _∋/⊢[_]_ : Scope → Tag → Sort → Set
-  S ∋/⊢[ k ] s = image k S s 
-
-  opaque 
-    _→ᴷ_ : {{k : Tag}} → Scope → Scope → Set
-    _→ᴷ_ {{k}} S₁ S₂ = ∀ {s} → S₁ ∋ s → S₂ ∋/⊢[ k ] s
-
-  _–[_]→_ : Scope → Tag → Scope → Set
-  S₁ –[ k ]→ S₂ = _→ᴷ_ {{k}} S₁ S₂
-
-  _→ᴿ_ : Scope → Scope → Set
-  _→ᴿ_ = _–[ Ren ]→_
-
-  _→ˢ_ : Scope → Scope → Set
-  _→ˢ_ = _–[ Sub ]→_
-
-  opaque
-    unfolding _→ᴷ_
-
-    _&_ : ∀ {{k : Tag}} → S₁ ∋ s → S₁ –[ k ]→ S₂ → S₂ ∋/⊢[ k ] s
-    x & ϕ = ϕ x
-
-    _∙_ : ∀ {{k : Tag}} → S₂ ∋/⊢[ k ] s → S₁ –[ k ]→ S₂ → (s ∷ S₁) –[ k ]→ S₂
-    (x/t ∙ _) zero   = x/t
-    (_ ∙ ϕ) (suc x)  = ϕ x
-
-    id : ∀ {{k : Tag}} → S –[ k ]→ S 
-    id {{Ren}} x = x 
-    id {{Sub}} x = ` x 
-
-    wk : S →ᴿ (s ∷ S)
-    wk x = suc x
-
-    _;ᴿᴷ_ : ∀ {{k : Tag}} → S₁ →ᴿ S₂ → S₂ –[ k ]→ S₃ → S₁ –[ k ]→ S₃
-    (ρ₁ ;ᴿᴷ ϕ₂) x = ϕ₂ (ρ₁ x) 
-
-  _↑ᴿ_ : S₁ →ᴿ S₂ → ∀ s → (s ∷ S₁) →ᴿ (s ∷ S₂)
-  ρ ↑ᴿ _ = zero ∙ (ρ ;ᴿᴷ wk) 
-
-  _⋯ᴿ_ : S₁ ⊢ s → S₁ →ᴿ S₂ → S₂ ⊢ s
-  -- Traversal Laws
-  (` x)         ⋯ᴿ ρ = ` (x & ρ)
-  (λx e)        ⋯ᴿ ρ = λx (e ⋯ᴿ (ρ ↑ᴿ _))
-  (Λα e)        ⋯ᴿ ρ = Λα (e ⋯ᴿ (ρ ↑ᴿ _))
-  (∀[α∶ k ] t)  ⋯ᴿ ρ = ∀[α∶ k ⋯ᴿ ρ ] (t ⋯ᴿ (ρ ↑ᴿ _))
-  (e₁ · e₂)     ⋯ᴿ ρ = (e₁ ⋯ᴿ ρ) · (e₂ ⋯ᴿ ρ)
-  (e • t)       ⋯ᴿ ρ = (e ⋯ᴿ ρ) • (t ⋯ᴿ ρ)
-  (t₁ ⇒ t₂)     ⋯ᴿ ρ = (t₁ ⋯ᴿ ρ) ⇒ (t₂ ⋯ᴿ ρ)
-  ★             ⋯ᴿ ρ = ★  
-
-  opaque
-    unfolding 
-      _→ᴷ_ _&_ _∙_ id wk _;ᴿᴷ_
-
-    _;ˢᴿ_ : S₁ →ˢ S₂ → S₂ →ᴿ S₃ → S₁ →ˢ S₃
-    (σ₁ ;ˢᴿ ρ₂) x = (σ₁ x) ⋯ᴿ ρ₂
-  
-  _↑ˢ_ : S₁ →ˢ S₂ → ∀ s → (s ∷ S₁) →ˢ (s ∷ S₂)
-  (σ ↑ˢ _) = (` zero) ∙ (σ ;ˢᴿ wk)
-
-  _⋯ˢ_ : S₁ ⊢ s → S₁ →ˢ S₂ → S₂ ⊢ s
-  -- Traversal Laws
-  (` x)         ⋯ˢ σ = (x & σ)
-  (λx e)        ⋯ˢ σ = λx (e ⋯ˢ (σ ↑ˢ _))
-  (Λα e)        ⋯ˢ σ = Λα (e ⋯ˢ (σ ↑ˢ _))
-  (∀[α∶ k ] t)  ⋯ˢ σ = ∀[α∶ k ⋯ˢ σ ] (t ⋯ˢ (σ ↑ˢ _))
-  (e₁ · e₂)     ⋯ˢ σ = (e₁ ⋯ˢ σ) · (e₂ ⋯ˢ σ)
-  (e • t)       ⋯ˢ σ = (e ⋯ˢ σ) • (t ⋯ˢ σ)
-  (t₁ ⇒ t₂)     ⋯ˢ σ = (t₁ ⋯ˢ σ) ⇒ (t₂ ⋯ˢ σ)
-  ★             ⋯ˢ σ = ★
-
-  opaque
-    unfolding 
-      _→ᴷ_ _&_ _∙_ id wk _;ᴿᴷ_ id _;ˢᴿ_
-
-    _;ˢˢ_ :  S₁ →ˢ S₂ → S₂ →ˢ S₃ → S₁ →ˢ S₃
-    (σ₁ ;ˢˢ σ₂) x = (σ₁ x) ⋯ˢ σ₂
 
 --! Scoped {
 data Kind : Set where
@@ -424,7 +314,7 @@ opaque
   _→ᴿ_ : Scope → Scope → Set
   S₁ →ᴿ S₂ = ∀ {s} → S₁ ∋ s → S₂ ∋ s 
 
-  _&ᴿ_ : S₁ ∋ s → S₁ →ᴿ S₂ → S₂ ∋ s
+  _&ᴿ_ : S₁ ∋ s → (S₁ →ᴿ S₂) → S₂ ∋ s
   x &ᴿ ρ = ρ x
   
   idᴿ : S →ᴿ S 
@@ -433,18 +323,18 @@ opaque
   wk : S →ᴿ (s ∷ S)
   wk x = suc x
 
-  _∙ᴿ_ : S₂ ∋ s → S₁ →ᴿ S₂ → (s ∷ S₁) →ᴿ S₂
+  _∙ᴿ_ : S₂ ∋ s → (S₁ →ᴿ S₂) → ((s ∷ S₁) →ᴿ S₂)
   (x ∙ᴿ _) zero     = x
   (_ ∙ᴿ ρ) (suc x)  = ρ x
 
-  _;ᴿᴿ_ : S₁ →ᴿ S₂ → S₂ →ᴿ S₃ → S₁ →ᴿ S₃
+  _;ᴿᴿ_ : (S₁ →ᴿ S₂) → (S₂ →ᴿ S₃) → (S₁ →ᴿ S₃)
   (ρ₁ ;ᴿᴿ ρ₂) x = ρ₂ (ρ₁ x)
 -- opaque end
 
-_↑ᴿ_ : S₁ →ᴿ S₂ → ∀ s → (s ∷ S₁) →ᴿ (s ∷ S₂)
+_↑ᴿ_ : (S₁ →ᴿ S₂) → ∀ s → ((s ∷ S₁) →ᴿ (s ∷ S₂))
 ρ ↑ᴿ _ = zero ∙ᴿ (ρ ;ᴿᴿ wk)
 
-_⋯ᴿ_ : S₁ ⊢ s → S₁ →ᴿ S₂ → S₂ ⊢ s
+_⋯ᴿ_ : S₁ ⊢ s → (S₁ →ᴿ S₂) → S₂ ⊢ s
 -- Traversal Laws
 (` x)         ⋯ᴿ ρ = ` (x &ᴿ ρ)
 (λx e)        ⋯ᴿ ρ = λx (e ⋯ᴿ (ρ ↑ᴿ _))
@@ -464,27 +354,27 @@ opaque
   _→ˢ_ : Scope → Scope → Set
   S₁ →ˢ S₂ = ∀ {s} → S₁ ∋ s → S₂ ⊢ s
 
-  _&ˢ_ : S₁ ∋ s → S₁ →ˢ S₂ → S₂ ⊢ s
+  _&ˢ_ : S₁ ∋ s → (S₁ →ˢ S₂) → S₂ ⊢ s
   x &ˢ σ = σ x
 
   idˢ : S →ˢ S
   idˢ = `_
 
-  _∙ˢ_ : S₂ ⊢ s → S₁ →ˢ S₂ → (s ∷ S₁) →ˢ S₂
+  _∙ˢ_ : S₂ ⊢ s → (S₁ →ˢ S₂) → ((s ∷ S₁) →ˢ S₂)
   (t ∙ˢ _) zero     = t
   (_ ∙ˢ σ) (suc x)  = σ x
   
-  _;ᴿˢ_ : S₁ →ᴿ S₂ → S₂ →ˢ S₃ → S₁ →ˢ S₃
+  _;ᴿˢ_ : (S₁ →ᴿ S₂) → (S₂ →ˢ S₃) → (S₁ →ˢ S₃)
   (ρ₁ ;ᴿˢ σ₂) x = σ₂ (ρ₁ x)
 
-  _;ˢᴿ_ : S₁ →ˢ S₂ → S₂ →ᴿ S₃ → S₁ →ˢ S₃
+  _;ˢᴿ_ : (S₁ →ˢ S₂) → (S₂ →ᴿ S₃) → (S₁ →ˢ S₃)
   (σ₁ ;ˢᴿ ρ₂) x = (σ₁ x) ⋯ᴿ ρ₂
 -- opaque end  
 
-_↑ˢ_ : S₁ →ˢ S₂ → ∀ s → (s ∷ S₁) →ˢ (s ∷ S₂)
+_↑ˢ_ : (S₁ →ˢ S₂) → ∀ s → ((s ∷ S₁) →ˢ (s ∷ S₂))
 (σ ↑ˢ _) = (` zero) ∙ˢ (σ ;ˢᴿ wk)
 
-_⋯ˢ_ : S₁ ⊢ s → S₁ →ˢ S₂ → S₂ ⊢ s
+_⋯ˢ_ : S₁ ⊢ s → (S₁ →ˢ S₂) → S₂ ⊢ s
 -- Traversal Laws
 (` x)         ⋯ˢ σ = (x &ˢ σ)
 (λx e)        ⋯ˢ σ = λx (e ⋯ˢ (σ ↑ˢ _))
@@ -500,7 +390,7 @@ opaque
     _→ᴿ_ _&ᴿ_ idᴿ wk _∙ᴿ_ _;ᴿᴿ_ 
     _→ˢ_ _&ˢ_ idˢ _∙ˢ_ _;ᴿˢ_ _;ˢᴿ_
 
-  _;ˢˢ_ :  S₁ →ˢ S₂ → S₂ →ˢ S₃ → S₁ →ˢ S₃
+  _;ˢˢ_ :  (S₁ →ˢ S₂) → (S₂ →ˢ S₃) → (S₁ →ˢ S₃)
   (σ₁ ;ˢˢ σ₂) x = (σ₁ x) ⋯ˢ σ₂
 --! }
 

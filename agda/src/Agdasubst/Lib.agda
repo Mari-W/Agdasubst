@@ -166,7 +166,7 @@ module KitsWithSort (
       id[ K ] = Kit.id K 
       --! }
 
-      --!! OpenKit
+      --! OpenKit
       open Kit {{...}} 
       
         public hiding (wk)

@@ -7,8 +7,9 @@ open import Data.List using (List; _∷_; []) public
 
 --! A >
 
---!! ModeDef
-data Mode : Set where Vᴹ Tᴹ : Mode
+--! ModeDef
+data Mode : Set where 
+  Vᴹ Tᴹ : Mode
 
 module CommonWithSort (Sort : Set) where
   Scope = List Sort

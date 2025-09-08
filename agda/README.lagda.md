@@ -1,5 +1,7 @@
 # Agdasubst
 
+developed with Agda version 2.8.0 and standard-library version 2.1.1
+
 ```
 Agdasubst
 ├── Examples

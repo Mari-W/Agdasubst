@@ -11,8 +11,17 @@
 
 
 \input{agda-generated}
+\input{agda-generated-examples}
 \input{unicodeletters}
 \input{agdamacros}
+
+\definecolor{agdablue}{HTML}{0000CD}
+\definecolor{agdagreen}{HTML}{008B00}
+\DisableLigatures[-]{encoding=T1}
+\newcommand{\tdot}{\mkern2mu \textcolor{agdablue}{\cdotp} \mkern-2mu \textcolor{agdablue}{\cdotp} \mkern-2mu \textcolor{agdablue}{\cdotp} \mkern1mu}
+\newcommand{\Tdot}{\mkern2mu {\cdotp} \mkern-2mu  {\cdotp} \mkern-2mu {\cdotp} \mkern1mu}
+
+
 
 % Define University of Freiburg colors
 \definecolor{UFRBlue100}{RGB}{52, 74, 154}    % #344A9A
@@ -77,58 +86,238 @@
   \addtocounter{framenumber}{-1}% If you don't want them to affect the slide number
 }
 
-\title{Automated Reasoning over Syntaxes with Binding in Agda}
+\title{Automated and Mechanized Reasoning over Syntaxes with Binding}
 \author{Marius Weidner}
 \institute{University of Freiburg}
-\date{\today \ (Master Thesis Talk, Freiburg im Breisgau)}
+\date{\today \ (Kolloqium, Freiburg)}
 
 \begin{document}
 
 \begin{frame}{\null}
-  \titlepage 
+  \titlepage{}
 \end{frame}
+% 1) Syntaxes with Binding -> Programming Languages that support variables (and thus need substitutions)
+% 2) Mechanized -> we want all of the following to apply to proof assistants, even though we rarly mention them
+% 3) Automated -> solve between syntax and substitutions automatically
+%    Terms with binding and substitution are sometimes equal,
+%    but the proof assitant cannot conclude them to be. we want an automatic procedure, that enables the 
+%    proof assitant to see that two terms are equal, if they are.
 
 \begin{frame}[fragile]
-  \frametitle{Overview}
-  \tableofcontents
-\end{frame}
-
-\section{Intro}
-
-\begin{frame}[fragile]
-  \frametitle{Programming Languages and Substitution}
+  \frametitle{Substitution and Alpha Equivalence via de Bruijn}
   \begin{itemize}
-    \item ...
+    \item $\alpha$-equivalence via de Bruijn
+          \[
+            \lambda x. \lambda y.\,x \,y \quad\equiv\quad \lambda.\,\lambda.\,1\,0
+          \]
+
+    \item Parallel de Bruijn Substitutions
+          \begin{align*}
+            (\lambda x. \lambda y. M)\,N\,L \quad & \equiv\quad M[x := N][y := L]  \quad                      & \equiv\quad M[x := N, y := L]            \\
+            (\lambda.\, \lambda\, M)\,N\,L \quad  & \equiv\quad M \Tdot (N \cdot id) \Tdot (L \cdot id) \quad & \equiv\quad M \Tdot (N \cdot L \cdot id)
+          \end{align*}
+  \end{itemize}
+
+  \vspace{0.6em}
+  \begin{block}{Substitution Lemma [Barendgredt (1984)]}
+    For all terms $M, N, L$:
+    \[
+      M[x := N][y := L] \quad\equiv\quad M[y := L][x := N[y := L]].
+    \]
+  \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Explicit Substitution Calculi: Symbols of the Sigma Calculus}
+  \begin{minipage}[t]{0.48\textwidth}
+    \raggedright{}
+    \textbf{Variables} $x$
+    \begin{align*}
+      \text{innermost variable} \quad & \textcolor{agdagreen}{\mathsf{zero}}    \\
+      \text{outer variables} \quad    & \textcolor{agdagreen}{\mathsf{suc}}\; x
+    \end{align*}\\
+    \vspace{1em}
+    \textbf{Terms} $t$
+    \begin{align*}
+      \text{variable usage} \quad           & \textcolor{agdagreen}{\texttt{\`{}}}x \\
+      \text{abstraction} \quad              & \textcolor{agdagreen}{λ.}\, t         \\
+      \text{application} \quad              & t_1 \textcolor{agdagreen}{\cdot}t_2   \\
+      \text{substitution lookup} \quad      & x \textcolor{agdablue}{\;\&\;} σ      \\
+      \text{substitution application} \quad & t \tdot{} σ
+    \end{align*}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \raggedright{}
+    \textbf{Substitutions} $σ$
+    \begin{align*}
+      \text{identity} \quad    & \textcolor{agdablue}{\mathsf{id}}    \\
+      \text{weakening} \quad   & \textcolor{agdablue}{\mathsf{wk}}    \\
+      \text{extension} \quad   & t \textcolor{agdablue}{\cdot} σ      \\
+      \text{composition} \quad & σ_1 \ \textcolor{agdablue}{;} \  σ_2 \\
+    \end{align*}
+  \end{minipage}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Laws of the Sigma Calculus}
+  \textbf{Definitional Laws}
+  \begin{alignat*}{2}
+    \mathsf{id}      \quad          & x \textcolor{agdablue}{\;\&\;} \textcolor{agdablue}{\mathsf{id}}                                      &  & = \textcolor{agdagreen}{\texttt{\`{}}} x                                        \\
+    \mathsf{ext}_\mathsf{Z}  \quad  & \textcolor{agdagreen}{\mathsf{zero}} \textcolor{agdablue}{\;\&\;} (t \textcolor{agdablue}{\cdot} σ)   &  & = t                                                                             \\
+    \mathsf{ext}_\mathsf{S}   \quad & \textcolor{agdagreen}{\mathsf{suc}}\;x \textcolor{agdablue}{\;\&\;} (t \textcolor{agdablue}{\cdot} σ) &  & = x \textcolor{agdablue}{\;\&\;} σ                                              \\
+    \mathsf{comp}    \quad          & x \textcolor{agdablue}{\;\&\;} (σ_1 \ \textcolor{agdablue}{;} \  σ_2)                                 &  & = (x \textcolor{agdablue}{\;\&\;} σ_1) \tdot σ_2                                \\
+    \mathsf{wk}      \quad          & x \textcolor{agdablue}{\;\&\;} \textcolor{agdablue}{\mathsf{wk}}                                      &  & = \textcolor{agdagreen}{\texttt{\`{}}}(\textcolor{agdagreen}{\mathsf{suc}} \ x)
+  \end{alignat*}\\
+  \textbf{Traversal Laws}
+  \begin{alignat*}{2}
+    \mathsf{var} \quad & (\textcolor{agdagreen}{\texttt{\`{}}} x)                                                                                                                                                                          & \tdot σ
+                       & = x \textcolor{agdablue}{\;\&\;} σ                                                                                                                                                                                           \\
+    \mathsf{lam} \quad & (\textcolor{agdagreen}{λ.}\, t)                                                                                                                                                                                   & \tdot  σ
+                       & = \textcolor{agdagreen}{λ.} (t  \tdot (σ \textcolor{agdablue}{\uparrow})) \quad \text{where} \quad σ \textcolor{agdablue}{\uparrow} ≐ ((\textcolor{agdagreen}{\texttt{\`{}}}\textcolor{agdagreen}{\mathsf{zero}})
+    \textcolor{agdablue}{\cdot} (σ \ \textcolor{agdablue}{;} \
+    \textcolor{agdablue}{\mathsf{wk}}))                                                                                                                                                                                                               \\
+    \mathsf{app} \quad & (t_1 \textcolor{agdagreen}{\cdot} t_2)                                                                                                                                                                            & \tdot σ
+                       & = (t_1  \tdot σ) \textcolor{agdagreen}{\cdot} (t_2  \tdot σ)
+  \end{alignat*}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Laws of the Sigma Calculus (Cont.)}
+  \textbf{Interaction Laws (Excerpt)}
+  \begin{alignat*}{2}
+    \mathsf{comp\text{-}id}_\mathsf{L} \quad & \textcolor{agdablue}{\mathsf{id}} \ \textcolor{agdablue}{;} \  σ        &  & \equiv σ                                                                        \\
+    \mathsf{comp\text{-}id}_\mathsf{R} \quad & σ \ \textcolor{agdablue}{;} \  \textcolor{agdablue}{\mathsf{id}}        &  & \equiv σ                                                                        \\
+    \mathsf{associativity}          \quad    & (σ_1 \ \textcolor{agdablue}{;} \  σ_2) \ \textcolor{agdablue}{;} \  σ_3 &  & \equiv  σ_1 \ \textcolor{agdablue}{;} \  (σ_2 \ \textcolor{agdablue}{;} \  σ_3) \\
+  \end{alignat*}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{The Sigma Calculus: Discussion}
+  \begin{itemize}
+    \item Explicit syntactic symbols for variables, terms, and substitutions
+    \item Governed by reduction rules describing their interaction
+  \end{itemize}
+
+  \begin{theorem}
+    The laws of the $\sigma$-calculus yield a \textbf{terminating},
+    \textbf{confluent}, and \textbf{complete} decision procedure for equality:
+    two terms $M, N$ are equal iff their normal forms, obtained by exhaustively
+    applying the reduction rules, are equal.
+  \end{theorem}
+
+  \vspace{1em}
+  \textbf{Idea.}
+  \begin{enumerate}
+    \item Prove the $\sigma$-calculus laws for a given syntax and substitution model in
+          Agda
+    \item then register them as native reduction rules
+    \item and avoid the need to explicitly state and invoke, for example the Substitution
+          Lemma
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{A Model for our Algebra: Parallel Substitutions as Functions}
+  Substitutions are modeled as functions $(\text{Variable} \to \text{Term}) \ni  \sigma$
+  \noindent\begin{minipage}[t]{0.48\linewidth}
+    \raggedright{}
+    \EXLookUp{}
+    \EXId{}
+    \EXWk{}
+    \EXExt{}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[t]{0.48\linewidth}
+    \raggedright{}
+    \ESRFail{}
+    Problem: Termination checking fails..
+  \end{minipage}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{A Model for our Algebra: Parallel Substitutions as Functions (Cont.)}
+  Solution: We need to define \AgdaFunction{wk} in terms of renamings $(\text{Variable} \to \text{Variable})\ni \rho$!
+  \noindent\begin{minipage}[t]{0.48\linewidth}
+    \raggedright{}
+    \EYRLookUp{}
+    \EYRId{}
+    \EYRExt{}
+    \EYRWk{}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[t]{0.48\linewidth}
+    \raggedright{}
+    \EYSCompR{}
+    \EYSLift{}
+    \EYSTrav{}
+  \end{minipage}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{The Sigma Calculus Laws with First-Class Renamings}
+  Our new model demands additional laws
+  \EAssoc{}
+  and even a whole new category:
+  \ECoincidenceLaw{}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{The Sigma Calculus with First-Class Renamings: Discussion}
+  \begin{itemize}
+    \item The variant with first-class renamings can be modeled in Agda
+    \item We deliberately hide the underlying model of substitutions from Agda
+    \item and instruct Agda to reduce stuck terms by applying the $\sigma$-calculus laws
+    \item Drawbacks:
+          \begin{enumerate}
+            \item Completeness is lost
+            \item Many additional laws of similar shape
+            \item Results involving substitutions must be proved twice: once for renamings and
+                  then for substitutions
+          \end{enumerate}
+  \end{itemize}
+
+  \vspace{1em}
+  \textbf{Idea.}
+  Introduce new syntactic categories for
+  \begin{itemize}
+    \item Variables \emph{or} Terms: \textbf{Kits} $x/t$
+    \item Renamings \emph{or} Substitutions: \textbf{Maps} $\varphi$
   \end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Explicit Substitution Calculi}
-  \begin{itemize}
-    \item ...
-  \end{itemize}
+  \frametitle{The Laws Sigma Calculus with Kits and Maps: Definitional Laws}
+  Original extension laws for separate renamings and substitutions:
+  \EDefLaws{}
+  can be unified with Kits and Maps:
+  \EExtLaws{}
+  where  $K \in \{\AgdaFunction{V}, \AgdaFunction{T}\}$
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Problem 1: Multiple Variable Sorts}
-  \begin{itemize}
-    \item ...
-  \end{itemize}
+  \frametitle{The Laws Sigma Calculus with Kits and Maps: Associativity}
+  The Map based associativity law:
+  \EEAssoc{}
+  where $\sqcup$ refers to the join-semilattice on $\{\AgdaFunction{V},
+    \AgdaFunction{T}\}$ generated by $\AgdaFunction{V} <  \AgdaFunction{T}$:
+  \ETypeLevel{}
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Problem 2: Structually Recursive Substitution Definition}
-  \begin{itemize}
-    \item ...
-  \end{itemize}
+  \frametitle{Kit and Map Based Sigma Calculus: Discussion}
+  
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Nerd Time!}
-  \begin{center}
-    \includegraphics[height=0.9\textheight]{image.png}
-  \end{center}
+  \frametitle{The End and What We Have Not Discussed}
+  \begin{itemize}
+    \item A model for the Kit and Map based $\sigma$-calculus
+    \item .. and how to formulate the rules such that they are admissable for rewriting
+    \item Adaption to custom (multi-sorted and intrinsically scoped) syntaxes
+    \item Proves that actually use the presented laws
+    \item Comparison to related work
+  \end{itemize}
 \end{frame}
-
 
 \end{document}

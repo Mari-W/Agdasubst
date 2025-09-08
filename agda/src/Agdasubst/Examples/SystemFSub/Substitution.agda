@@ -75,8 +75,13 @@ module _ where
  
 opaque
   unfolding lib   
+  &/⋯–`ᵀ   :  {ϕ : S₁ –[ T ]→ S₂} → 
+    (`_ {s = s} x)  &/⋯ ϕ ≡ (x &/⋯ ϕ) ; &/⋯–`ᵀ  = refl
+  &/⋯–`ⱽ   : {ϕ : S₁ –[ V ]→ S₂} → 
+    (`_ {s = s} x)  &/⋯ ϕ ≡ ` (x &/⋯ ϕ) ;  &/⋯–`ⱽ  = refl
   &/⋯–`   : {{K : Kit M}}   {{C : ComposeKit K V K}}{ϕ : S₁ –[ K ]→ S₂} → 
     (`_ {s = s} x)  &/⋯ ϕ ≡ `/id (x &/⋯ ϕ)                     ; &/⋯–`  = refl
+
   &/⋯–λ   : {{K : Kit M}} {{C : ComposeKit K V K}} {ϕ : S₁ –[ K ]→ S₂} → 
     --!! LambdaExL
     (λx e) &/⋯ ϕ ≡ λx (e &/⋯ (ϕ ↑ expr))                
@@ -102,44 +107,19 @@ _⋯_ {{K}} = let instance _ = K ;ᴷ V in _&/⋯_
 
 {-# REWRITE 
   id`–def `id–def ;wk–def
-  idˢ–def  compₗ–idˢ–def compᵣ–idˢ–def 
+  idˢ–def  compₗ–idˢ–def compᵣ–idˢ–def
   wk–def   compₗ–wk–def 
   ext₀–def compₗ–ext₀–def 
   extₛ–def compₗ–extₛ–def
-  comp–def–safe
+  comp–def
 
   compᵣ–id compₗ–id 
   associativity distributivity interact
   η–id η–law
 
-  compositionality–safe
-  right–id
-  &/⋯–` &/⋯–λ &/⋯–· &/⋯–⇒ &/⋯–Λ &/⋯–∀ &/⋯–• &/⋯–tt &/⋯–`⊤ &/⋯–∶⊑ &/⋯–★ &/⋯–sat &/⋯–✰ 
   coincidence coincidence–foldᴷ coincidence–foldᵀ
-#-}  
 
--- {-# REWRITE  id`–def `id–def ;wk–def idˢ–def #-}
--- 
--- ex : ?
--- ex = 
---   --!! ExTerm
---   ((` zero) ∙ˢ ((t₁ ∙ˢ idˢ) ; wk)) ; (t₂ ∙ˢ idˢ)          
--- 
--- ≡⟨ distributivity (` zero) ((t₁ ∙ˢ idˢ) ; wk) (t₂ ∙ˢ idˢ) ⟩
---     (((` zero) ⋯ (t₂ ∙ˢ idˢ)) ∙ˢ (((t₁ ∙ˢ idˢ) ; wk) ; (t₂ ∙ˢ idˢ))) ≡⟨ cong (_ ∙ˢ_) (associativity (t₁ ∙ˢ idˢ) wk (t₂ ∙ˢ idˢ)) ⟩
---     (((` zero) ⋯ (t₂ ∙ˢ idˢ)) ∙ˢ ((t₁ ∙ˢ idˢ) ; (wk ; (t₂ ∙ˢ idˢ)))) ≡⟨ {! interact  !} ⟩
---     ((((` zero) ⋯ (t₂ ∙ˢ idˢ)) ∙ˢ ((t₁ ∙ˢ idˢ) ; idˢ)))              ≡⟨ {!   !} ⟩ 
---     {!   !}
---   ∎ 
--- 
--- {-# REWRITE 
---   id`–def `id–def ;wk–def
---   associativity distributivity interact
---   norm–idˢ
--- #-}  
--- 
--- foo : (e : (s ∷ S) ⊢ s) (t₂ : S ⊢ s) (t₁ : S ⊢ s) {{K : Kit M}} 
---     (ϕ : S₁ –[ K ]→ S₂) → {!   !} 
--- 
--- foo {s = s} e t₂ t₁ ϕ  = {! (⦅ t₁ ⦆ˢ ↑ s) ; ⦅ t₂ ⦆ˢ  !}
--- 
+  compositionality
+  right–id
+  &/⋯–`  &/⋯–λ &/⋯–· &/⋯–⇒ &/⋯–Λ &/⋯–∀ &/⋯–• &/⋯–tt &/⋯–`⊤ &/⋯–∶⊑ &/⋯–★ &/⋯–sat &/⋯–✰ 
+#-}  

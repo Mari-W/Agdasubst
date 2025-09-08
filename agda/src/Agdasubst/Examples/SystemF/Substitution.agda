@@ -96,23 +96,24 @@ _&_ = _&/⋯_
 
 --! TraversalSH
 _⋯_ : {{K : Kit M}} → S₁ ⊢ s → S₁ –[ K ]→ S₂ → S₂ ⊢ s
-_⋯_ {{K}} = let instance _ = K ;ᴷ V in _&/⋯_ 
-
+_⋯_ {{K}} = _&/⋯[ T ;ᴷ K ]_ 
+ 
 --! Laws
 {-# REWRITE 
   id`–def `id–def ;wk–def
-  idˢ–def  compₗ–idˢ–def compᵣ–idˢ–def 
+  idˢ–def  compₗ–idˢ–def compᵣ–idˢ–def
   wk–def   compₗ–wk–def 
   ext₀–def compₗ–ext₀–def 
   extₛ–def compₗ–extₛ–def
-  comp–def–safe
+  comp–def
 
   compᵣ–id compₗ–id 
   associativity distributivity interact
   η–id η–law
 
-  compositionality–safe
+  coincidence coincidence–foldᴷ coincidence–foldᵀ
+
+  compositionality
   right–id
   &/⋯–` &/⋯–λ &/⋯–· &/⋯–⇒ &/⋯–Λ &/⋯–∀ &/⋯–• &/⋯–★
-  coincidence coincidence–foldᴷ coincidence–foldᵀ
 #-}  

@@ -16,7 +16,7 @@
 
 \begin{document}
 
-\title{Agdasubst: Automated Reasoning over Syntaxes with Binding}
+\title{Automated Reasoning over Scoped Syntaxes with Binding in Agda}
 
 \author{Marius Weidner}
 \email{weidner@cs.uni-freiburg.de}
@@ -26,7 +26,7 @@
 \orcid{0009-0008-1152-165X} % chktex 8
 % TODO: remove for anonymous review
 \authornote{
-      This is a copy submitted as a Master’s thesis in Computer Science at the University of Freiburg.\\The first examiner is Prof. Dr. Peter Thiemann, and the second examiner is Prof. Dr. Andreas Podelski.\\My matriculation number is 4933008. The thesis was written between 2025-04-09 and 2025-09-08.\\\\
+      This is a copy submitted as my Master’s thesis in Computer Science at the University of Freiburg.\\The first examiner is Prof. Dr. Peter Thiemann, and the second examiner is Prof. Dr. Andreas Podelski.\\My matriculation number is 4933008. The thesis was written between 2025-04-09 and 2025-09-08.\\
       I hereby declare that I am the sole author and composer of my thesis and that
       no other sources or learning aids, other than those listed, have been used.\\
       Furthermore, I declare that I have acknowledged the work of others by providing
@@ -36,8 +36,8 @@
       \\
       \\
       \noindent\begin{tabular}{p{\textwidth/2} l}
-            Freiburg, XX.XX.2025       & yadda yadda                \\ % \includegraphics[width=0.1\textwidth]{signature.png} \\
-            \rule{\textwidth/3}{0.4pt} & \rule{\textwidth/3}{0.4pt} \\
+            Freiburg, 08.09.2025       & \includegraphics[width=0.15\textwidth]{signature.png} \\
+            \rule{\textwidth/3}{0.4pt} & \rule{\textwidth/3}{0.4pt}                            \\
             Place, Date                & Signature
       \end{tabular}
 }
@@ -47,31 +47,30 @@
       Mechanizing the metatheory of programming languages in proof assistants
       inevitably involves recurring challenges related to variable binding and
       substitution. Each formalization requires proving standard substitution lemmas,
-      which, for instance, establish the behavior of composition and moving
-      substitutions under binders.
+      such as those characterizing the behavior of composition and the interaction of
+      substitutions with binders.
 
       Historically, substitution has been treated as an meta-level operation. To
       formalize this, explicit substitution calculi were introduced to bring
-      substitutions down to a syntactic level. The $σ$-calculus provides a set of
-      syntactic reduction rules for terms and substitutions ensuring confluence and
-      strong normalization. This calculus allows equations between terms to be solved
-      by comparing their normal forms. By applying the reduction rules until a normal
+      substitutions down to a syntactic level. The $σ$-calculus provides syntactic
+      reduction rules for terms and substitutions, ensuring confluence and strong
+      normalization, thereby enabling equations between them to be solved by
+      comparing their normal forms. By applying the reduction rules until a normal
       form is reached, we obtain an automatic procedure that eliminates the need for
-      manually applying substitution lemmas.
+      manually choosing the correct substitution lemmas.
 
       To apply this automatic procedure within Agda proofs, the $σ$-calculus rules
       can be registered as native reduction rules using Agda’s rewrite mechanism.
-      This embedding is challenging because it requires precise control over the
-      reduction behavior of Agda definitions, substitutions must be defined
-      structurally in terms of renamings, and multiple variable sorts must be
-      supported. We address the latter by adapting the $σ$-calculus to intrinsically
-      scoped, multi-sorted syntax. We first treat renamings and substitutions
-      separately, and then present a uniform treatment that allows results about both
-      to be proven once, avoiding duplication. In both cases, thanks to the
-      $σ$-calculus laws embedded as rewrite rules, equations are resolved
-      % : is that true? are they definitional? (Cockx expresses that more carefully)
-      automatically by reduction, yielding definitional equalities in cases where
-      lemmas would otherwise need to be applied.
+      Embedding the $σ$-calculus rules as reduction rules in Agda is challenging
+      because it requires precise control over the reduction behavior of definitions,
+      substitutions must be defined structurally in terms of renamings, and multiple
+      variable sorts must be supported. We address the latter by adapting the
+      $σ$-calculus to intrinsically scoped and multi-sorted syntax. We first treat
+      renamings and substitutions separately, and then present a uniform treatment
+      that allows results about both to be proven once, avoiding duplication. In both
+      cases, thanks to the $σ$-calculus laws embedded as rewrite rules, equations are
+      solved automatically by reduction, yielding definitional equalities in cases
+      where substitution lemmas would otherwise need to be applied manually.
 \end{abstract}
 
 \maketitle
@@ -91,17 +90,17 @@ of reduction rules. With the $σ$-calculus, a terminating,
 confluent~\cite{10.1145/226643.226675} and
 complete~\cite{10.1145/2676724.2693163} rewrite system for $λ$-calculus terms
 with substitution has been discovered. Repeatedly applying the rules
-left-to-right yields a unique normal form, which can then be syntactically
-compared for equality.
+left-to-right yields a normal form, which can then be compared for equality.
 
 The $σ$-calculus laws can be generalized to custom syntaxes without much
 difficulty. Consequently, it is possible to use the $σ$-calculus laws in proof
-assistants to automatically solve equations between terms and substitutions by
-applying the laws from left to right. The creators of
+assistants to automatically generate proofs for equations in which only
+syntactic expressions and substitutions appear. The creators of
 \textsc{Autosubst}~\cite{schafer2015autosubst} were the first to realize this
-opportunity and provided a tactic that applies the $σ$-calculus rules in Rocq
-(formerly Coq). \textsc{Autosubst 2}~\cite{10.1145/3293880.3294101} improves on
-its predecessor by addressing three fundamental limitations.
+opportunity and provided a tactic that applies the $σ$-calculus rules to solve
+goals in Rocq (formerly Coq). \textsc{Autosubst
+      2}~\cite{10.1145/3293880.3294101} improves on its predecessor by addressing
+three fundamental limitations.
 
 First, \textsc{Autosubst} originally only supported unscoped syntax. In Rocq,
 it is possible define intrinsically scoped syntax, represented as a set of
@@ -113,7 +112,7 @@ Hence, every syntax tree built in this style is well-scoped by construction.
 Second, combining several syntactic categories that have variables can cause a
 combinatorial explosion of near-identical substitution definitions and lemmas.
 To address the combinatorial explosion problem, \textsc{Autosubst 2} introduces
-vector substitutions, which bundle substitutions for different variable sorts
+vector substitutions, which bundle substitutions over different variable sorts
 into a single structure.
 
 Third, in a proof assistant setting, it is necessary to distinguish between
@@ -129,7 +128,7 @@ to handle renamings independently.
 In Agda, there are several options for defining syntax: extrinsically scoped
 and typed syntax, intrinsically scoped but extrinsically typed syntax, and
 intrinsically scoped and typed syntax. We argue that the intrinsically scoped
-but extrinsically typed approach represents the sweet spot between these two
+but extrinsically typed approach represents the sweet spot between the two
 extremes. In contrast to intrinsically typed syntax, scoped syntax allows all
 syntactic categories to be combined into a single multi-sorted and scoped data
 type, indexed not only by its free variables, but also by the syntactic
@@ -138,39 +137,35 @@ explosion and the need for vector substitutions, as substitution can be defined
 uniformly across all sorts.
 
 Adapting the $σ$-calculus with first-class renamings to a setting with
-multi-sorted, scoped syntax and substitution is painless when done carefully,
-yet yields significant benefits. In particular, Agda’s rewrite
+multi-sorted, scoped syntax is straightforward. In particular, Agda’s rewrite
 mechanism~\cite{10.1145/3434341} allows the $σ$-calculus laws to be registered
-% : is that true? are they definitional? (Cockx expresses that more carefully)
 as native reduction rules, yielding definitional equalities where otherwise
 explicit application of substitution lemmas would be required.
 
-Unfortunately, renamings cause duplication. Lemmas, such as
+Unfortunately, the need for renamings causes duplication. Lemmas, such as
 substitution-preserves-typing, must be proven twice, once for renamings and
 once for substitutions, with the latter relying on the former. To mitigate the
 duplication issue, we build on the notion of Kits~\cite{ren-sub}, a structure
-that captures the behaviour common to both variables and terms, originally
+that captures the behavior common to both variables and terms, originally
 developed in an intrinsically typed setting and later extended to multi-sorted,
 scoped syntax~\cite{saffrich:LIPIcs.ITP.2024.32}. From Kits, we can define
 Maps, a uniform structure for renamings and substitutions. Our work adapts the
-$σ$-calculus laws to Kits and Maps over multi-sorted, scoped syntax, treating
-renamings and substitutions uniformly and shows how to embed them as reduction
-rules into Agda via its rewrite mechanism. The resulting framework constitutes
-the first version of the \textsc{Agdasubst} library, which allows reasoning
-about renamings and substitutions simultaneously while equations between terms
-are automatically solved using the $σ$-calculus rules.
+$σ$-calculus laws to Kits and Maps over multi-sorted and scoped syntax,
+treating renamings and substitutions uniformly and shows how to embed them as
+reduction rules into Agda via its rewrite mechanism. The resulting framework
+constitutes the first version of the \textsc{Agdasubst} library.
 
 \subsection*{Structure}
 The paper is organized into several sections.\ \cref{sec:pre} introduces the
 theoretical background and tools. In \cref{sec:rel}, we discusses closely
-related work and outline our contributions.\ \cref{sec:mis} presents an
-embedding of the $σ$-calculus into Agda for multi-sorted, scoped syntax,
-treating renamings and substitutions separately.\ \cref{sec:ags} explains the
-internals of the \textsc{Agdasubst} library, where renamings and substitutions
-can be handled uniformly.\ \cref{sec:ext} illustrates the use of the library
-through case studies. Finally, we ouline directions for future work in
-\cref{sec:wrk}, discuss related work in \cref{sec:rwk} and conclude the paper
-in \cref{sec:con}.
+related work and outline our contributions more precisely.\ \cref{sec:mis}
+presents an embedding of the $σ$-calculus as native reduction rules into Agda
+for multi-sorted, scoped syntax, treating renamings and substitutions
+separately.\ \cref{sec:ags} explains the internals of the \textsc{Agdasubst}
+library, where renamings and substitutions can be treated uniformly.\
+\cref{sec:ext} illustrates the use of the library through case studies.
+Finally, we outline directions for future work in \cref{sec:wrk}, discuss
+related work in \cref{sec:rwk} and conclude the paper in \cref{sec:con}.
 
 \subsection*{Contributions}
 The main contributions of this work are
@@ -178,11 +173,11 @@ The main contributions of this work are
       \item an embedding of the $σ$-calculus with first-class renamings into Agda, in a
             scoped and multi-sorted setting, using rewrite rules, exemplified with System~F
             (\cref{sec:mis});
-      \item a novel version of the $σ$-calculus, formulating the reduction rules in a Kit-
-            and Map-based setting and lifting the distinction between variables and terms,
-            as well as between renamings and substitutions, from the syntactic to the type
-            level. The new laws form the core of the \textsc{Agdasubst} library.
-            (\cref{sec:ags}).
+      \item a novel version of the $σ$-calculus, formulating the $σ$-calculus laws in a
+            Kit- and Map-based setting, where we effectively lift the distinction between
+            variables and terms, as well as between renamings and substitutions, from the
+            syntactic to the type level. The new laws form the core of the
+            \textsc{Agdasubst} library. (\cref{sec:ags}).
 \end{itemize}
 
 \noindent\textbf{The supplement contains the complete Agda code underlying this paper.}
@@ -206,35 +201,36 @@ Martin-Löf type theory~\cite{MARTINLOF197573}. It enables users to write
 programs and proofs in a functional programming language, verifying correctness
 through type checking.
 
-Proofs in Agda, in contrast to many other proof assistants, rely heavily on
-definitional equality. Two terms in Agda are definitionally equal if they
-reduce to syntactically identical weak head normal forms. An equality proof
-between two definitionally equal terms can be constructed using the
+Proofs in Agda become substantially easier when the relevant terms are
+definitionally equal. To decide whether two terms are definitionally equal,
+Agda computes their weak head normal forms. A propositional equality proof
+\AgdaBound{a} \AgdaDatatype{≡} \AgdaBound{b} between two definitionally equal
+terms \AgdaBound{a} and \AgdaBound{b} can then be established using the
 \AgdaInductiveConstructor{refl} constructor. If two terms are not
-definitionally equal, one must resort to manual equational reasoning and the
-application of lemmas. This is cumbersome, because Agda usually does not
-provide tactics that automatically apply lemmas. Consequently, substantial
-manual effort is often required. Increasing the number of definitional
+definitionally equal, the user must resort to manual equational reasoning,
+typically by pattern matching and explicit application of lemmas. This is
+cumbersome, as Agda usually lacks tactics that automatically discharge proof
+obligations using existing lemmas. Increasing the number of definitional
 equalities between terms therefore greatly simplifies proofs and reduces manual
-work.
+effort.
 
-In addition to its well-known features such as indexed and parameterized
-inductive data types, dependent (co-) pattern matching~\cite{10.1145/3236770},
+In addition to its well-known features such as parameterized and indexed
+inductive datatypes, dependent (co-) pattern matching~\cite{10.1145/3236770},
 implicit arguments and records, Agda supports three less commonly used but
 important features relevant to this work.
 
 \subsection*{Instance Arguments}
-Instance arguments, written using double braces \AgdaSymbol{\{\{\dots\}\}}, are
-resolved automatically via an instance search algorithm. When a function
+Instance arguments, written inside double braces \AgdaSymbol{\{\{\dots\}\}},
+are resolved automatically via an instance search algorithm. When a function
 expects an instance argument, Agda attempts to infer and insert it from values
 marked with the \AgdaKeyword{instance} keyword. This mechanism enables
 type-directed programming patterns similar to type classes in
 Haskell~\cite{10.1145/75277.75283}. As an example, consider the following
 definition of a record for types with a default value: \EDefault{}We can bring
-the \AgdaField{default} field into scope with the \AgdaKeyword{open} keyword
-and instruct Agda to resolve suitable record instances automatically through
-instance search using the \AgdaSymbol{\{\{\dots\}\}} syntax: \EDefFields{}We
-can now declare one instance for natural numbers and one for strings:
+the \AgdaField{default} field into scope using the \AgdaKeyword{open} \dots
+\AgdaSymbol{\{\{\dots\}\}} syntax and instruct Agda to automatically resolve
+suitable record instances for occurrences of this field via instance search:
+\EDefFields{}At this point, instances for different types may be declared:
 
 \noindent\begin{minipage}[t]{0.48\linewidth}
       \raggedright{}
@@ -256,19 +252,19 @@ can now declare one instance for natural numbers and one for strings:
       \EDefExS{}
 \end{minipage}
 
-\noindent Here, Agda infers from the type \AgdaDatatype{ℕ} of \AgdaNumber{0} that the
+\noindent On the left side, Agda infers from the type \AgdaDatatype{ℕ} of \AgdaNumber{0} that the
 instance \AgdaFunction{default–ℕ} applies for \AgdaFunction{default},
 automatically inserting it to conclude that the equation holds definitionally.
-The same reasoning applies to the equality involving the empty string.
+The same reasoning applies to the equality on the right side, involving the empty string.
 
 \subsection*{Rewrite Rules}
 In this work, the most important feature of Agda is user-defined rewrite
 rules~\cite{10.1145/3434341, cockx:LIPIcs.TYPES.2019.2}, which extend Agda's
-computation rules by integrating equalities as reduction rules directly into type
-checking. A function or constructor definition in Agda can be registered as a
-rewrite rule if it is of the form
+computation rules by integrating propositional equalities as reduction rules
+directly into type checking. A function definition in Agda can be registered as
+a rewrite rule if it is of the form
 \[
-      \AgdaFunction{eq} : (x_1 : A_1)\, \ldots\, (x_k : A_k) \to \AgdaFunction{f}\, p_1\, \ldots\, p_n = v
+      \AgdaFunction{eq} : (x_1 : A_1)\, \ldots\, (x_k : A_k) \to \AgdaFunction{f}\, p_1\, \ldots\, p_n \; \AgdaFunction{≡} \; v
 \]
 and satisfies the following three conditions:
 \begin{enumerate}
@@ -286,27 +282,28 @@ and satisfies the following three conditions:
 
 \noindent As an example, consider the right identity law for addition: \ERewrite{}The
 lemma satisfies the three required conditions. It is a defined function symbol
-that does not reduce and all bound variables occur on the left of the equation.
-We can now register it as a rewrite rule using the
-\AgdaKeyword{REWRITE} pragma: \ERewriteIt{}From this point on, Agda treats
-\AgdaBound{n} \AgdaFunction{+} \AgdaNumber{0} as definitionally equal to
-\AgdaBound{n}: \ERewriteEx{}To maintain consistency, Agda requires that all
-rewrite rules satisfy the three conditions stated above, and that the combined
-set of rules is both terminating and confluent. Termination is currently not
-checked by Agda, it is only observable indirectly when type checking fails to
-terminate. Confluence can be checked using the
-\texttt{--local-confluence-check} and \texttt{--confluence-check} flags, but
-both checks are necessarily conservative.
+that does not reduce, as addition is defined via structural induction on the
+left argument, and all bound variables occur on the left side of the equation. We
+can now register it as a rewrite rule using the rewrite pragma:
+\ERewriteIt{}From this point on, Agda treats \AgdaBound{n} \AgdaFunction{+}
+\AgdaNumber{0} as definitionally equal to \AgdaBound{n}: \ERewriteEx{}To
+maintain consistency, Agda requires that all rewrite rules satisfy the three
+conditions stated above, and that the combined set of rewrite rules is both terminating
+and confluent. Termination is currently not checked by Agda, it is only
+observable indirectly when type checking fails to terminate. Confluence can be
+checked using the \texttt{--local-confluence-check} and
+\texttt{--confluence-check} flags, but both checks are necessarily
+conservative.
 
 \subsection*{Opaque Blocks}
 Agda supports opaque definitions~\cite{gratzer2022controlling}, which treat
 selected parts of the code as non-unfolding symbols. Normally, Agda unfolds all
 definitions automatically to produce as many definitional equalities as
-possible. While this behavior is desirable in most cases, we require certain
-definitions to remain blocked, so that rewrite rules apply predictably to these
-symbols. In later opaque blocks, the type checker can selectively unfold
-previously blocked definitions, ensuring that their behavior remains accessible
-when needed.
+possible. While this behavior is desirable in most cases, we will require
+certain definitions to remain blocked, so that rewrite rules apply predictably
+to these symbols. In later opaque blocks, the type checker can be instructed to
+unfold previously blocked definitions, ensuring that their behavior remains
+accessible when needed.
 
 A block is marked as opaque by preceding it with the \AgdaKeyword{opaque}
 keyword. All definitions within the block become opaque, while their names and
@@ -347,11 +344,11 @@ the definition to \AgdaNumber{42} again, as expected: \EOpaqueExT{}
             \raggedright{}
             \textbf{Substitutions} $σ$
             \begin{align*}
-                  \text{identity} \quad    & \textcolor{agdablue}{\mathsf{id}}                                                                                \\
-                  \text{weakening} \quad   & \textcolor{agdablue}{\mathsf{wk}}                                                                                \\
-                  \text{extension} \quad   & t \textcolor{agdablue}{\cdot} σ                                                                                  \\
-                  \text{composition} \quad & σ_1 \ \textcolor{agdablue}{;} \  σ_2                                                                             \\
-                  \text{lifting} \quad     & \textcolor{agdablue}{\uparrow}σ \equiv ((\textcolor{agdablue}{\texttt{\`{}}}\textcolor{agdablue}{\mathsf{zero}})
+                  \text{identity} \quad    & \textcolor{agdablue}{\mathsf{id}}                                                                           \\
+                  \text{extension} \quad   & t \textcolor{agdablue}{\cdot} σ                                                                             \\
+                  \text{composition} \quad & σ_1 \ \textcolor{agdablue}{;} \  σ_2                                                                        \\
+                  \text{weakening} \quad   & \textcolor{agdablue}{\mathsf{wk}}                                                                           \\
+                  \text{lifting} \quad     & \textcolor{agdablue}{\uparrow}σ ≐ ((\textcolor{agdablue}{\texttt{\`{}}}\textcolor{agdablue}{\mathsf{zero}})
                   \textcolor{agdablue}{\cdot} (σ \ \textcolor{agdablue}{;} \
                   \textcolor{agdablue}{\mathsf{wk}}))
             \end{align*}
@@ -364,10 +361,10 @@ the definition to \AgdaNumber{42} again, as expected: \EOpaqueExT{}
             \textbf{Definitional Laws}
             \begin{alignat*}{2}
                   \mathsf{id}      \quad          & x \textcolor{agdablue}{\;\&\;} \textcolor{agdablue}{\mathsf{id}}                                     &  & = \textcolor{agdablue}{\texttt{\`{}}} x                                       \\
-                  \mathsf{wk}      \quad          & x \textcolor{agdablue}{\;\&\;} \textcolor{agdablue}{\mathsf{wk}}                                     &  & = \textcolor{agdablue}{\texttt{\`{}}}(\textcolor{agdablue}{\mathsf{suc}} \ x) \\
                   \mathsf{ext}_\mathsf{Z}  \quad  & \textcolor{agdablue}{\mathsf{zero}} \textcolor{agdablue}{\;\&\;} (t \textcolor{agdablue}{\cdot} σ)   &  & = t                                                                           \\
                   \mathsf{ext}_\mathsf{S}   \quad & \textcolor{agdablue}{\mathsf{suc}}\;x \textcolor{agdablue}{\;\&\;} (t \textcolor{agdablue}{\cdot} σ) &  & = x \textcolor{agdablue}{\;\&\;} σ                                            \\
-                  \mathsf{comp}    \quad          & x \textcolor{agdablue}{\;\&\;} (σ_1 \ \textcolor{agdablue}{;} \  σ_2)                                &  & = (x \textcolor{agdablue}{\;\&\;} σ_1) \tdot σ_2
+                  \mathsf{comp}    \quad          & x \textcolor{agdablue}{\;\&\;} (σ_1 \ \textcolor{agdablue}{;} \  σ_2)                                &  & = (x \textcolor{agdablue}{\;\&\;} σ_1) \tdot σ_2                              \\
+                  \mathsf{wk}      \quad          & x \textcolor{agdablue}{\;\&\;} \textcolor{agdablue}{\mathsf{wk}}                                     &  & = \textcolor{agdablue}{\texttt{\`{}}}(\textcolor{agdablue}{\mathsf{suc}} \ x)
             \end{alignat*}\\
             \vspace{1em}
             \textbf{Traversal Laws}
@@ -402,7 +399,7 @@ the definition to \AgdaNumber{42} again, as expected: \EOpaqueExT{}
                   \mathsf{compositionality}         \quad & (t  \tdot
                   σ_1)  \tdot
                   σ_2                                     &           & = t  \tdot
-                  (σ_1 ; σ_2)
+                  (σ_1 \textcolor{agdablue}{;} σ_2)
             \end{alignat*}
       \end{minipage}
       \caption{The three-sorted $σ$-calculus}\label{fig:pre-sig}
@@ -425,21 +422,23 @@ Our system closely follows the $σ_{SP}$-calculus. The syntax is sorted into
 de~Bruijn variables, terms, and parallel substitution primitives. We use
 de~Bruijn variables to obtain $α$-equivalence for free. Terms include the
 standard $λ$-calculus constructs, extended with the lookup in a substitution
-and application of a substitution to terms. The Substitution primitives allow
-the construction of parallel substitutions, which are maps from variables to
-terms, and support the composition of multiple such substitutions. We also
-include a shorthand for lifting, which allows a substitution to be pushed under
-a binder. A lifted substitution replaces the bound variable with itself,
-leaving all occurrences of the variable inside the body of the binding
-construct unchanged, while weakening all terms in the substitution so that they
-correctly refer to the variables outside the body of the binding construct.
+and application of a substitution to terms.
 
-Unlike most presentations in the literature, we include explicit syntax for
-variable usage within terms. Because of the syntax for variable usage within
-terms, we require a distinction between \bsym{\textsf{suc}} and
-\bsym{\textsf{wk}} to shift variables by one index, depending on whether they
-appear in the sort of variables or substitutions. Applying a weakening
-substitution to a term, shifts all variables inside the term by one index.
+The Substitution primitives allow the construction of parallel substitutions,
+which are maps from variables to terms, and support the composition of multiple
+such substitutions. Unlike most presentations in the literature, we include
+explicit syntax for variable usage within terms. Because of the syntax for
+variable usage within terms, we require a distinction between
+\bsym{\textsf{suc}} and \bsym{\textsf{wk}} to shift variables by one index,
+depending on whether they appear in the sort of variables or substitutions.
+Applying a weakening substitution to a term, shifts all variables inside the
+term by one index. We also include a shorthand for lifting, which enables a
+substitution to be pushed under a binder. A lifted substitution replaces the
+bound variable with itself, leaving all occurrences of the variable inside the
+body of the binding construct unchanged, while weakening all terms in the
+substitution so that they correctly refer to the variables outside the binding
+construct.
+
 Inspired by \citet{Stark:2020:Mechanising}, we group the reduction rules into
 four categories.
 \begin{itemize}
@@ -466,7 +465,7 @@ constructs~\cite{10.1145/3293880.3294101}. For this reason, we do not consider
 completeness a central property in this work. Still, we try to keep the space
 of solvable equations as large as possible.
 
-\subsection{Mutli-Sorted and Scoped Syntaxes in Agda}\label{sec:pre-syn}
+\subsection{Multi-Sorted and Scoped Syntaxes in Agda}\label{sec:pre-syn}
 \begin{figure}[t]
       \centering
       \begin{minipage}[t]{0.48\linewidth}
@@ -496,40 +495,38 @@ variables, and expressions are indexed by both the number of free type and
 expression variables. Variables are represented using de Bruijn indices of type
 \AgdaDatatype{Fin} \AgdaBound{n}, that is, natural numbers strictly less than
 the number of free variables. This representation ensures that only well-scoped
-terms can be constructed. Technically, the kind sort could be omitted, as all
-types, in the case of simple System~F, are well-formed and scoped by
-construction. When we later extend the system with subtyping, kinds are
-required as markers for well-formed types, because there not all types are
-guaranteed to be well-formed.
+terms can be constructed. Technically, the \AgdaDatatype{Kind} type could be
+omitted, as all types, in the case of simple System~F, are well-formed by
+construction.
 
 This approach is simple but has drawbacks. Types and expressions are separate
 datatypes, so we would need to define multiple substitution operations:
-type-in-type, expr-in-expr, and type-in-expr.
-
-To avoid the combinatorial explosion of substitution operations, we define a
-uniform, multi-sorted and scoped syntax on the right side of
-\cref{fig:pre-svm}. Terms form a single datatype indexed by a list of sorts,
-called \AgdaBound{Scope} and ranged over by \AgdaBound{S}, together with a
-target sort. A type \AgdaBound{S} \AgdaDatatype{⊢} \AgdaBound{s} describes a
-term of sort \AgdaBound{s} with free variables whose sorts are listed in
-\AgdaBound{S}. Variable positions are represented by \AgdaBound{S}
-\AgdaDatatype{∋} \AgdaBound{s}, a proof that a variable of sort \AgdaBound{s}
-appears in \AgdaBound{S}. The proof acts as the de Bruijn index. Using the
-unified syntax, we can define scoped and multi-sorted renamings and
-substitutions that operate uniformly across all sorts.
+type-in-type, expr-in-expr, and type-in-expr. To avoid the combinatorial
+explosion of substitution operations, we define a uniform, multi-sorted and
+scoped syntax on the right side of \cref{fig:pre-svm}. Terms form a single
+datatype indexed by a list of sorts, called \AgdaDatatype{Scope} and ranged
+over by \AgdaBound{S}, together with a target sort. A type \AgdaBound{S}
+\AgdaDatatype{⊢} \AgdaBound{s} describes a term of sort \AgdaBound{s} with free
+variables whose sorts are listed in \AgdaBound{S}. Variable positions are
+represented by \AgdaBound{S} \AgdaDatatype{∋} \AgdaBound{s}, a proof that a
+variable of sort \AgdaBound{s} appears in \AgdaBound{S}. The proof acts as the
+de Bruijn index. Using the unified syntax, we can later define scoped and
+multi-sorted renamings and substitutions that operate uniformly across all
+sorts.
 
 Due to the similarity in terminology, the above approach might be confused with
 Pure Type Systems~\cite{berardi1988towards, 10.1007/3-540-52592-0_53,
-      terlouw1989een}, which describe typed lambda calculi with sorts and
-dependencies. The key difference is that, in multi-sorted syntax, sorts
+      terlouw1989een}, which describe a class of typed lambda calculi parameterized
+over a set of sorts, dependencies between these sorts, and rules for permitted
+quantifications. The key difference is that, in multi-sorted syntax, sorts
 differentiate syntactic categories, keeping terms of different sorts distinct.
-In contrast, in Pure Type Systems, sorts act as universe types, and terms with
-different sorts may still belong to the same syntactic category.
+In contrast, in Pure Type Systems, sorts act as universe types, such as
+\AgdaDatatype{Set} in Agda, and terms of different sorts belong to a single
+syntactic category.
 
 \section{Closely Related Work}\label{sec:rel}
-Two works are so closely related to ours, that they deserve discussion upfront.
-In essence, our combines their approaches to produce a new Agda library for
-developing proofs about syntaxes with binders.
+Two works are particularly closely related to ours and warrant discussion
+upfront. Our work can essentially be seen as a combination of the two.
 
 \subsection{Autosubst}
 Most of this work is inspired by the theoretical foundations developed in the
@@ -540,10 +537,11 @@ Version~2~\cite{10.1145/3293880.3294101, Stark:2020:Mechanising} extends the
 original work with scoped syntax, first-class renamings and introduces new
 rules that connect renamings and substitutions. \textsc{Autosubst 2} uses
 vectors to bundle renamings and substitutions over multiple variable sorts and
-provides additional laws to support vector substitutions. Because Rocq is
-tactic-oriented, the library provides tactics to apply the $σ$-calculus laws.
-It further supports code generation of syntax-dependent definitions and laws
-from a Higher-Order Abstract Syntax (HOAS) specification.
+provides additional laws to support the interactions between vector
+substitutions. Because Rocq is tactic-oriented, the library provides tactics to
+apply the $σ$-calculus laws to proof obligations. It further supports code
+generation of syntax-dependent definitions and laws from a Higher-Order
+Abstract Syntax (HOAS) specification.
 
 \subsection{Kits and Maps}
 The idea of Kits, structures that abstract over variables and terms and allow
@@ -572,17 +570,16 @@ we present a version using System~F in \cref{sec:mis}. This version is later
 subsumed by the full \textsc{Agdasubst} library in \cref{sec:ags}, which
 supports custom syntaxes.
 
-In \textsc{Agdasubst}, we adopt the notions of Kits and Maps to formulate
-$σ$-calculus laws that apply in unified proofs about renamings and
-substitutions. Informally, these laws lift the distinction between variables
-and terms, as well as between renamings and substitutions, from the syntactic
-to the type level, allowing abstraction over both. For instance, the uniform
-Typing Kit-based substitution-preserves-typing lemma of
-\citet{saffrich:LIPIcs.ITP.2024.32} is substantially simplified, as our laws
-integrate seamlessly with this framework, eliminating the need for manual
-application of Map lemmas.
+In \textsc{Agdasubst}, we adopt the notions of Kits and Maps, and formulate
+$σ$-calculus laws in that setting. Informally, the adapted laws lift the
+distinction between variables and terms, as well as between renamings and
+substitutions, from the syntactic to the type level, allowing abstraction over
+both. For instance, the uniform Typing Kit-based substitution-preserves-typing
+lemma of \citet{saffrich:LIPIcs.ITP.2024.32} is substantially simplified, as
+our laws integrate seamlessly with this framework, eliminating the need for
+manual application of Map lemmas.
 
-\section{The Sigma Caclulus with Separate Renamings and Substitutions}\label{sec:mis}
+\section{The Sigma Calculus with Separate Renamings and Substitutions}\label{sec:mis}
 This section presents a direct embedding of the $σ$-calculus rules with
 first-class renamings, following the conceptual theory underlying
 \textsc{Autosubst 2}, as native reduction rules in Agda using its rewrite
@@ -619,21 +616,22 @@ variables to terms of the corresponding sort.
 We first define the renaming type and its primitive operations: identity
 (\AgdaFunction{idᴿ}), weakening (\AgdaFunction{wkᴿ}) and extension
 (\AgdaFunction{\_·ᴿ\_}). Substitution primitives mirror those for renamings,
-but use a superscript capital S instead of R, except for weakening, which is
-strictly a renaming. The order of definitions is chosen carefully to obtain a
-structurally recursive definition, we use the structurally smaller weakening
-renaming to define lifting of substitutions(\AgdaFunction{\_↑ˢ\_}).
+but use the superscript S instead of R, except for weakening, which is strictly
+a renaming. The order of definitions is chosen carefully to obtain a
+structurally recursive definition. We use the structurally smaller weakening
+renaming to define lifting of substitutions (\AgdaFunction{\_↑ˢ\_}).
 
 To support all composition combinations of renamings and substitutions, we
-provide four forward composition primitives: renaming composed with renaming,
-renaming with substitution\footnote{The first two composition operators can
-      technically be defined as a single definition together with composition of two
-      renamings. Both are simply forward function composition, but we choose to keep
-      them separated.}, substitution with renaming, and substitution with
-substitution.
+provide four forward composition primitives: renaming composed with renaming
+(\AgdaFunction{\_;ᴿᴿ\_}), renaming with substitution
+(\AgdaFunction{\_;ᴿˢ\_})\footnote{The first two composition operators can
+      technically be merged into a single definition. Both are simply forward
+      function composition, but we choose to keep them separated.}, substitution with
+renaming (\AgdaFunction{\_;ˢᴿ\_}), and substitution with substitution
+(\AgdaFunction{\_;ˢˢ\_}).
 
-The traversal functions, \AgdaFunction{\_⋯ᴿ\_} for renaming and
-\AgdaFunction{\_⋯ˢ\_} for substitution, are defined by structural induction on
+The traversal functions (\AgdaFunction{\_⋯ᴿ\_} for renaming and
+\AgdaFunction{\_⋯ˢ\_} for substitution) are defined by structural induction on
 the syntax. Each clause applies a renaming or substitution to a object language
 term, lifting the renaming or substitution, when going under a binder. The
 clauses in both definitions correspond directly to the traversal laws of the
@@ -661,7 +659,6 @@ allow rewriting on a renaming or substitution applied to a variable.
             \raggedright{}
             \EDefLaws{}
             \ERewriteSys{}
-            \ERewriteSysT{}
       \end{minipage}
       \hfill
       \begin{minipage}[t]{0.58\linewidth}
@@ -678,26 +675,34 @@ often useful to reason about renamings directly, for instance in the context
 morphism lemma~\cite{goguen1997candidates}. We therefore, similar to Autosubst,
 treat renamings as first-class constructs.\ \cref{fig:mis-sig} presents the
 $σ$-calculus laws with first-class renamings. They all satisfy the requirements
-from \cref{sec:pre-agd} to serve as rewrite rules.
+from \cref{sec:pre-agd} and qualify as rewrite rules.
 
 The \textbf{Definitional Laws} now involve primitives for both renamings and
 substitutions. The \textbf{Interaction Laws} likewise cover all operators. Many
-of these laws are similar in shape, e.g.\ we require eight associativity laws.
-Both Definitional and Interaction Laws can be proven independently of the
-concrete syntax. In contrast, the \textbf{Monad Laws} must be shown by
-induction over the syntax. The proofs for the \textbf{Monad Laws} vary for each
-object language definition and need to be proven the user. We highlight
-syntax-dependent laws in red throughout this work.
+of these laws are similar in shape. For instance, we require eight
+associativity laws. The \textbf{Traversal Laws} follow directly from the
+definition of traversal given in the previous section.
+
+Most of the laws can be proven independently of the concrete syntax. In
+contrast, the \textbf{Monad Laws} must be shown by induction over the syntax
+and vary for each object language definition. We highlight syntax-dependent
+laws in red throughout this work.
 
 \citet{10.1145/3293880.3294101} noticed that a further category emerges from the interaction between
 renamings and substitutions. The \textbf{Coincidence Laws} govern the case where
-substitutions are intertwinded with renamings, but the renamings can be
+substitutions are intertwined with renamings, but the renamings can be
 separated from them, and applied to a term separately.
 The coincidence and the coincidence-fold laws
 enable us to recover renamings from their embedding as substitutions via the
 identity substitution. Extracting arbitrary renamings from deeply nested substitutions would require a
 dedicated solving strategy, which we leave for future work but consider
 important for a more complete account.
+
+In her PhD thesis, \citet{Stark:2020:Mechanising} proves the
+\AgdaFunction{coincidence} law by induction over the syntax. The law is not
+syntax-dependent when composition between renamings and substitutions is
+included in the theory and the monad laws are available: \ECoincidenceProof{}
+The remaining coincidence laws follow analogously.
 
 The exact influence of coincidence laws on the metatheory of the rule set as a
 whole still needs to be examined in detail but it is believed their addition
@@ -708,7 +713,7 @@ in the spirit of the Knuth-Bendix completion algorithm~\cite{Knuth1983} would
 be required to split the rules into components that Agda can recognize as
 collectively confluent.
 
-To prove the $σ$-calculus laws presented from \cref{fig:mis-sig}, we need to
+To prove the $σ$-calculus laws presented in \cref{fig:mis-sig}, we need to
 unfold the definitions of the renamings and substitutions primitives. Laws
 colored blue can be proven syntax-independently, while laws colored in red need
 to be proven by structural induction over the syntax. Our implementation, found
@@ -725,20 +730,15 @@ laws themselves, the definitions can still unfold when needed, while externally
 they behave as uninterpreted symbols and are reduced only by the $σ$-calculus
 laws.
 
-When reasoning solely about renamings or substitutions, the laws suffice to
-solve all equations automatically. Only when crossing the boundary between
-renamings and substitutions, and thus relying on coincidence laws, additional
-manual effort might sometimes become necessary.
-
-The main drawback of the approach with seperated renamings and substitutions is
+The main drawback of the approach with separated renamings and substitutions is
 the unavoidable duplication of similar definitions and proofs. Associativity
 laws pose little difficulty as they can be stated independently of the syntax,
-but the definition of traversal, monad, and coincidence laws must be provided
-explicitly. These include two traversal definitions, two right-identity laws,
-and four compositionality laws, all similar in shape. Even if syntax-dependent
-definitions and laws could be derived automatically, every subsequent result
-about substitutions would still need to be proven twice, once for renamings and
-once for general substitutions.
+but the definition of traversal and monad laws must be provided explicitly.
+These include two traversal definitions, two right-identity laws, and four
+compositionality laws, all similar in shape. Even if syntax-dependent
+definitions and laws are derived automatically, every subsequent result about
+substitutions would still need to be proven twice, once for renamings and once
+for general substitutions.
 
 \section{The Agdasubst Library}\label{sec:ags}
 This section introduces the \textsc{Agdasubst} library. It builds on the ideas
@@ -756,7 +756,7 @@ relevant to the $σ$-calculus laws. For a complete account of Kits, Maps, and
 their extensions, we refer the reader to \citet{saffrich:LIPIcs.ITP.2024.32}.
 We then show how the $σ$-calculus laws can be formulated in the setting of Kits
 and Maps and discuss the challenges in doing so. In particular, it is
-challending to formulate the laws, such that they satisfy the requirements to
+challenging to formulate the laws, such that they satisfy the requirements to
 be registered as rewrite rules.
 
 The library, and the following chapter, abstracts over a set of sorts
@@ -785,8 +785,8 @@ a boolean-like structure \AgdaDatatype{Mode}. The \AgdaFunction{image} function 
 given a fixed \AgdaDatatype{Mode}, whether the Kit corresponds to a variable or
 term. The Kit record has multiple fields.
 \begin{itemize}
-      \item \AgdaField{K-id/‘} converts a variable into a veriable or term \AgdaBound{S} \AgdaBound{∋/⊢ᴷ} \AgdaBound{s}.
-            For the Varfiable Kit, \AgdaBound{\_∋/⊢ᴷ\_} is instantiated to \AgdaDatatype{\_∋\_}, so the operation needs to act as the identity.
+      \item \AgdaField{K-id/‘} converts a variable into a variable or term \AgdaBound{S} \AgdaBound{∋/⊢ᴷ} \AgdaBound{s}.
+            For the Variable Kit, \AgdaBound{\_∋/⊢ᴷ\_} is instantiated to \AgdaDatatype{\_∋\_}, so the operation needs to act as the identity.
             For the Term Kit, it is instantiated to \AgdaField{\_⊢\_}, so the operation corresponds to the variable constructor.
       \item \AgdaField{K-‘/id} converts an element of type \AgdaBound{S} \AgdaBound{∋/⊢ᴷ} \AgdaBound{s} into a term of type \AgdaBound{S} \AgdaField{⊢} \AgdaBound{s}, and works analogous to \AgdaField{K-id/‘}.
       \item \AgdaField{K-wk} shifts the de Bruijn indices in a variable or term.
@@ -800,17 +800,18 @@ its instantiation. We will not cover these axioms, because for both variables
 and reasonable syntaxes, all of them hold almost by definition.
 
 Because rewrite rules cannot mention record fields directly, we provide for
-each field a corresponding version without the \AgdaBound{K}-prefix. These are
-declared as opaque functions, so they can be used as symbols in rewrite rules,
-while still be selectively unfolded to the actual fields when needed. Going
-forwards, we assume all opaque defintions unfolding any time throughout this
-section. It is only outside the library, when we have the $σ$-calculus laws in
-place, when we want definitions to act as uninterpreted symbols.
+each field, except \AgdaField{K-wk}, a corresponding version without the
+\AgdaBound{K}-prefix. These are declared as opaque functions, so they can be
+used as symbols in rewrite rules, while still be selectively unfolded to the
+actual fields when needed. Going forwards, we assume all opaque definitions
+unfolding any time throughout this section. It is only outside the library,
+when we have the $σ$-calculus laws in place, when we want definitions to act as
+uninterpreted symbols.
 
 We can now define the usual operations for renamings and substitutions. The
-definitions are included directly in the \AgdaDatatype{Kit} record, so they are
-implicitly parameterized over a Kit \AgdaBound{K} with Mode \AgdaBound{M} and
-can be uniformly stated. All the primitves are marked \AgdaKeyword{opaque}.
+definitions are included directly inside the \AgdaDatatype{Kit} record, so they
+are implicitly parameterized over a Kit \AgdaBound{K} with Mode \AgdaBound{M}
+and can be uniformly stated. All the primitives are marked \AgdaKeyword{opaque}.
 
 \begin{minipage}[t]{0.48\linewidth}
       \raggedright{}
@@ -829,19 +830,37 @@ the type of variables and as a result the Map acts as renaming. Similarly, in
 the case that \AgdaBound{M} is equal to \AgdaInductiveConstructor{Tᴹ}, the Map
 corresponds to a substitution. The identity Map, as well as lookup and
 extension operations behave analogously in both the renaming and substitution
-cases. Because term traversal is not yet available, composition for arbitrary
-Maps cannot be defined when setting up the Kit primitives (traversal is
-required to compose with a substitution on the left). Instead, we introduce a
-generalized weakening operator \AgdaFunction{\_;wk}, which can later be
-rewritten as an actual composition with the weakening primitive. Similarly,
-once term traversal is available, the \AgdaFunction{id/‘} and
+cases.
+
+Term traversal is not yet available, because it requires Kits to be defined
+first, as traversal is formulated for Maps directly, parameterized by a Kit. At
+the same time, traversal is needed to define composition for Maps, because
+composing with a substitution on the right relies on traversal, and composition
+is in turn required to define lifting: \ALifting{}To break this dependency
+cycle, we introduce a generalized weakening operator \AgdaFunction{\_;wk},
+which can later be rewritten as an actual composition with the weakening
+primitive \AgdaFunction{wk}, which we also define in terms of the generalized
+version.
+
+Similarly, once term traversal is available, the \AgdaFunction{id/‘} and
 \AgdaFunction{‘/id} operators can be expressed entirely in terms of the
-primitive operations. We provide a shorthand for lifting a Map:\ALifting{}and
-for referring to a Kit explicitly in certain cases: \AKitExplicit{}To define
-the Term Kit instance, we need to know how a Map is applied to a term. The user
-has to provide a unified traversal function and a proof that applying the
-identity Map leaves a term unchanged: \ATraversal{}Equipped with the traversal
-function we can define the two intended instances for Kits:
+primitive operations. We also provide syntax to refer to Kits explicitly inside
+square brackets:
+
+\noindent\begin{minipage}[t]{0.48\linewidth}
+      \raggedright{}
+      \AKitExplicit{}
+\end{minipage}
+\begin{minipage}[t]{0.48\linewidth}
+      \raggedright{}
+      \AExpId{}
+\end{minipage}
+
+\noindent To define the Term Kit instance, we need to know how a Map is
+applied to a term. The user has to provide the Kit-based traversal function and
+a proof that applying the identity Map leaves a term unchanged by structural induction over their syntax:
+\ATraversal{}Equipped with the traversal function we can define the two
+intended instances for Kits:
 
 \noindent\begin{minipage}[t]{0.48\linewidth}
       \raggedright{}
@@ -861,15 +880,15 @@ We aim to abstract over the four composition options for renamings and
 substitutions, enabling unified composition lemmas, such as one associativity
 law, instead of separate laws for each of the eight valid combinations. To this
 end, we define the \AgdaDatatype{ComposeKit} record, parameterized over three
-Kits. Inside the record, we can define a single, more general composition of a
-\AgdaBound{K₁}-Map with a \AgdaBound{K₂}-Map, yielding a \AgdaBound{K₁⊔K₂}-Map:
-\AComposeKit{}The operation \AgdaField{C-\_\&/⋯\_} unifies lookup and
-traversal. It takes a variable or term \AgdaBound{x/t} (according to
-\AgdaBound{K₁}) and a renaming or substitution \AgdaBound{ϕ} (according to
-\AgdaBound{K₂}), and applies \AgdaBound{ϕ} to \AgdaBound{x/t}, yielding a
-variable or term (according to \AgdaBound{K₁⊔K₂}). From unified
+Kits. Inside the record, we can later define a single, more general composition
+of a \AgdaBound{K₁}-Map with a \AgdaBound{K₂}-Map, yielding a
+\AgdaBound{K₁⊔K₂}-Map. \AComposeKit{}The operation \AgdaField{C-\_\&/⋯\_}
+unifies lookup and traversal. It takes a variable or term \AgdaBound{x/t}
+(according to \AgdaBound{K₁}) and a renaming or substitution \AgdaBound{ϕ}
+(according to \AgdaBound{K₂}), and applies \AgdaBound{ϕ} to \AgdaBound{x/t},
+yielding a variable or term (according to \AgdaBound{K₁⊔K₂}). From unified
 lookup/traversal, for which we also provide an opaque function version without
-the $C$-prefix, we derive Maps composition: \ACompDef{}The Map combination
+the $C$-prefix, we derive Map composition: \ACompDef{}The Map composition
 operator, such as the unified lookup/traversal operator, is implicitly
 parameterized over a Compose Kit. It takes an renaming or substitution
 \AgdaBound{ϕ₁} (according to \AgdaBound{K₁}) and a renaming or substitution
@@ -915,7 +934,7 @@ necessary to define the $σ$-calculus rules so that they still adhere to
 restrictions on the shape of rewrite rules.
 
 \subsection{Structural Kit Order}\label{sec:ags-sko}
-We define a least upper bound operation on Modes that mirrors the behaviour of
+We define a least upper bound operation on Modes that mirrors the behavior of
 composing two Maps, indexed by Kits of these Modes, inside an opaque
 block:\AModeLub{}By case analysis, all the join-semilattice laws are easily
 verified: \AModeLubLaws{}All laws can be embedded as rewrite rules in Agda,
@@ -929,7 +948,7 @@ type, because \AgdaFunction{⨆-comm} for Modes could not be rewritten earlier.
 All other laws can be registered as rewrite rules to produce definitional
 equalities whenever applicable, enabling effective use of the least upper bound
 operator without the need to apply additional lemmas. The Kit least upper bound
-laws follow by case distinction on their Modes. Examining a proof in detail
+laws follow by case distinction on their Modes, but examining a proof in detail
 reveals a subtle issue. As an example, consider the proof for the
 \AgdaFunction{⊔-idem} law. The remaining laws follow analogously.
 \AKitLubExcerpt{}If we split on the Mode \AgdaBound{M} of the Kit
@@ -943,26 +962,26 @@ there is only one possible choice in both cases, \AgdaFunction{V} for
 in general, as external code might declare additional instances.
 
 Agda does not provide a notion of closed type classes, where instance
-declarations outside a module can be prohibited. In Haskell, such behaviour can
+declarations outside a module can be prohibited. In Haskell, such behavior can
 be encoded using closed type families~\cite{10.1145/2578855.2535856}. In Agda,
 closed type classes can be simulated, by requiring a field \ALockField{} of
 type \ALock\ in the construction of a record instance. Because
-\AgdaDatatype{Lock} is private, it can only be constructed within the library.
-Any attempt to declare an instance outside the library would fail, because the
-required field \AgdaField{K-lock} of type \AgdaDatatype{Lock} cannot be filled.
+\AgdaDatatype{Lock} is private, it can only be constructed from within the
+library. Any attempt to declare an instance outside the library would fail,
+because the required field \AgdaField{K-lock} of type \AgdaDatatype{Lock}
+cannot be filled.
 
 We can now postulate the uniqueness of Kits after manually verifying that only
 two instances exist and that we rely solely on Kits provided by instance
 resolution, never creating them locally: \AUniqueKits{}The postulates are
 declared private and cannot cause inconsistencies for users outside the
 library. There also exists a version \AgdaFunction{unique–K} that computes
-whether a given \AgdaBound{K} is \AgdaFunction{V} or \AgdaFunction{T}, based on
-its Mode.
+whether a given Kit is \AgdaFunction{V} or \AgdaFunction{T}, based on its Mode.
 
 \subsection{Computing Compose Kits}\label{sec:ags-cck}
 Our original goal was to compute the third parameter of a Compose Kit. To
 motivate this and, more generally, the computation of Compose Kits from Kits,
-we consider a first attempt of the defintion for the associativity law of the
+we consider a first attempt of the definition for the associativity law of the
 $σ$-calculus, which in our Kit-based setting corresponds to the associativity
 of Map composition:\AAssocTryO{}Here \AgdaBound{C₁} to \AgdaBound{C₄} denote
 the four Compose Kits that are required for the compositions. For clarity we
@@ -976,18 +995,18 @@ there, violating the condition that all arguments of a rewrite rule must occur
 on the left. Moreover, the law requires the instance argument \AgdaBound{K₆},
 used as the result of composing the \AgdaBound{K₂}-Map with that of
 \AgdaBound{K₄}, which is only used on the right. Because \AgdaBound{K₆} can be
-computed via the least upper bound operation we defined in the section before,
-the main difficulty is to compute \AgdaBound{C₃} and \AgdaBound{C₄}.
+computed via the least upper bound operation we defined before, the main
+difficulty is to compute \AgdaBound{C₃} and \AgdaBound{C₄}.
 
-We can try to define a function \ACompCKitSafe{} for this purpose, that
-evaluates to \AgdaFunction{Cᴿ}, if \AgdaBound{K₁} has Mode
-\AgdaInductiveConstructor{Vᴹ} and to \AgdaFunction{Cˢ}, if \AgdaBound{K₁} has
-Mode \AgdaInductiveConstructor{Tᴹ}. The function can be readily defined, but
-its correctness relies not only on the uniqueness of Kit instances, but also on
-the uniqueness of Compose Kit instances:\AUniqueCKits{}As before we reqiure a
-value of \AgdaDatatype{Lock} in the creation of Compose Kits. By manual
-inspection we confirm that \AgdaFunction{Cᴿ} and \AgdaFunction{Cˢ} are the only
-instances and that none are created locally.
+We can try to define a function \ACompCKitSafe{}, that evaluates to
+\AgdaFunction{Cᴿ}, if \AgdaBound{K₁} has Mode \AgdaInductiveConstructor{Vᴹ} and
+to \AgdaFunction{Cˢ}, if \AgdaBound{K₁} has Mode \AgdaInductiveConstructor{Tᴹ}.
+The function can be readily defined, but its correctness relies not only on the
+uniqueness of Kit instances, but also on the uniqueness of Compose Kit
+instances:\AUniqueCKits{}As before we require a value of \AgdaDatatype{Lock} in
+the creation of Compose Kits. By manual inspection we confirm that
+\AgdaFunction{Cᴿ} and \AgdaFunction{Cˢ} are the only instances and that none
+are created locally.
 
 Yet the function \AgdaFunction{\_;ᴷ\_} is insufficiently general. Computing
 \AgdaBound{C₄} from the associativity law yields $C_4 = K_2 \;
@@ -1007,29 +1026,29 @@ would increase instance resolution runtime dramatically. Additionally, Agda
 generally refused to infer such instances during higher-order pattern
 unification, performed when checking if a rewrite rule applies. A second
 approach, defining the least upper bound operation syntactically as a
-constructor in the \AgdaDatatype{Mode} type, fails because the
-\AgdaFunction{image} can no longer be computed for a Kit whose mode index
-involves least upper bounds. As a solution, we require an even more general,
-but also unsafe, function: \ACKitUnsafe{}Because it is declared non-covering,
-evaluation may get stuck, yielding a value for a Compose Kit that should not
-exist. For this reason, every use of the function requires manual verification.
-Computed Compose Kits are reduced to the actual instances, when applicable,
-using the rewrite rules \ACKitRenRed{} for \AgdaFunction{Cᴿ} and \ACKitSubRed{}
-for \AgdaFunction{Cˢ}. The unsafe function is only available from within the
-library, but we can define the safe version from before as a special case of
-the unsafe function: \ACompCKitSafeDef{}. We can now state a version of the
-associativity law eligible for rewriting: \AAssocTryT{}With the unsafe
-operator, we can connect $K_1$ \AgdaFunction{⊔} $ (K_2 $ \AgdaFunction{⊔}
-$K_4)$ with \AgdaBound{K₅} in the outer Compose Kit on the right side of the
-equation. It remains to check that whenever the incoming Compose Kits $C_1$ and
-$C_2$ are valid, the outgoing ones, computed using our unsafe function, are as
-well. By exhaustively checking all eight valid combinations of values for $C_1$
-and $C_2$, we confirm that in each case the outgoing Compose Kits are valid.
-Inside the associativity proof, the remaining cases must be refuted under the
-assumption of unique incoming Compose Kits and the non-existance of invalid
-Compose Kits: \AUnqiueCKitsImp{}As before, each use of these postulates
-requires manual verification to avoid inconsistencies, but cannot leak to the
-user, because it is declared \AgdaKeyword{private}.
+constructor in the \AgdaDatatype{Mode} type, fails because the lattice laws can
+no longer be stated and rewritten. As a solution, we require an even more
+general, but also unsafe, function: \ACKitUnsafe{}Because it is declared
+non-covering, evaluation may get stuck, yielding a value for a Compose Kit that
+should not exist. For this reason, every use of the function requires manual
+verification. Computed Compose Kits are reduced to the actual instances, when
+applicable, using the rewrite rules \ACKitRenRed{} for \AgdaFunction{Cᴿ} and
+\ACKitSubRed{} for \AgdaFunction{Cˢ}. The unsafe function is only available
+from within the library, but we can define the safe version from before as a
+special case of the unsafe function: \ACompCKitSafeDef{}. We can now state a
+version of the associativity law eligible for rewriting: \AAssocTryT{}With the
+unsafe operator, we can connect $K_1$ \AgdaFunction{⊔} $ (K_2 $
+\AgdaFunction{⊔} $K_4)$ with \AgdaBound{K₅} in the outer Compose Kit on the
+right side of the equation. It remains to check that whenever the incoming
+Compose Kits $C_1$ and $C_2$ are valid, the outgoing ones, computed using our
+unsafe function, are as well. By exhaustively checking all eight valid
+combinations of values for $C_1$ and $C_2$, we confirm that in each case the
+outgoing Compose Kits are valid. Inside the associativity proof, the remaining
+cases must be refuted under the assumption of valid and unique incoming Compose
+Kits, and the non-existence of invalid Compose Kits: \AUnqiueCKitsImp{}As
+before, each use of these postulates requires manual verification to avoid
+inconsistencies, but cannot leak to the user, because they are declared
+\AgdaKeyword{private}.
 
 All other $σ$-calculus laws, generalized to Maps, follow the same structure as
 the \AgdaFunction{associativity} law. On the left side of the equations we rely
@@ -1108,7 +1127,7 @@ proofs for renamings and substitutions.
             \vspace{0.5em}
             \EDefLaw{}\\
             \vspace{0.5em}
-            \textbf{Definitional Composition Specialization Laws}
+            \textbf{Specialization Laws}
             \ESpecialDefLaws{}
       \end{minipage}
       \hfill
@@ -1118,15 +1137,15 @@ proofs for renamings and substitutions.
             \textbf{Interaction Laws}\\
             \EInteraction{}\\
             \vspace{0.5em}
+            \textbf{Coincidence Laws}\\
+            \ECoincidence{}
+            \vspace{0.5em}
             \textbf{Traversal Laws}\\
             \ETravL{}\\
             \emph{..\ object language traversal\..}\\
             \vspace{0.5em}
             \textbf{Monad Laws}\\
             \EMonad{}\\
-            \vspace{0.5em}
-            \textbf{Coincidence Laws}\\
-            \ECoincidence{}
       \end{minipage}
       \caption{The Scoped and Multi-Sorted $σ$-Calculus with Kits and Maps}\label{fig:ags-fin}
 \end{figure}
@@ -1139,7 +1158,7 @@ type level by their Modes. Here we treat Kits as markers, which lets us elide
 the Mode lattice laws. Similarly, ComposeKits serve as markers for admissible
 compositions and are written explicitly for each operator in square brackets.
 
-The symbols are grouped into several categories. Sorts and Scopes provide
+The symbols are grouped into several categories. Sorts and scopes provide
 intrinsic scoping at the type level. Variables are supplied by the library,
 while terms are user-defined, subject only to the requirement of a variable
 constructor of the appropriate form. We define the type of Kits together with
@@ -1147,8 +1166,8 @@ the Variable Kit, the Term Kit, and the least upper bound operation. We then
 define the type of Maps and the four Map primitives, parameterized by Kits. The
 operator \AgdaFunction{wk} is specialized directly to a renaming to avoid
 duplication, as it can always be embedded as a substitution by composition with
-the identity substitution. When the Kit in the type of Maps is known to be
-\AgdaFunction{V} or \AgdaFunction{T}, we use the variables $ρ$ and $σ$
+the identity substitution. When the Kit in the type index of Maps is known to
+be \AgdaFunction{V} or \AgdaFunction{T}, we use the variables $ρ$ and $σ$
 respectively. From Kits we also obtain the combined type of variables and
 terms, together with the unified lookup/traversal operator. While there are
 distinct type definitions for variables, terms, and variables-or-terms, there
@@ -1167,12 +1186,7 @@ variables or the type of terms when the Kit index is known to be
 
 Next comes the definition of lookup on the identity substitution
 \AgdaFunction{idˢ}. It is given in terms of the unified lookup/traversal
-operator\footnote{We considered keeping the specialized operators, but this
-      would require duplicating many laws, once for the specialized operators and
-      once for the general one. There may be situations where such duplication could
-      be beneficial, but with the addition of the Definitional Composition
-      Specialization Laws, we could not identify any case in which it actually
-      contributes to progress.}. The laws \AgdaFunction{wk}, \AgdaFunction{ext₀}, and
+operator. The laws \AgdaFunction{wk}, \AgdaFunction{ext₀}, and
 \AgdaFunction{extₛ} are the direct generalizations of their familiar
 counterparts for renaming and substitution.
 
@@ -1181,8 +1195,8 @@ already subsumed by the generalized \AgdaField{right-id} from the \textbf{Monad
       Laws}. The \AgdaField{right-id} law accounts for both a term traversed by an
 identity substitution and a variable looked up in the identity renaming. This
 coincidence suggests a deeper connection between definitional laws and monad
-laws when there is a single unified lookup/traversal operator. We can confirm
-our suspicion when examining the \AgdaFunction{comp} and
+laws when there is only a single unified lookup/traversal operator. We can
+confirm our suspicion when examining the \AgdaFunction{comp} and
 \AgdaField{compositionality} law. There exists a fundamental symmetry between
 the definition of composition, given via the unified lookup/traversal operator,
 and the compositionality law in full generality:
@@ -1196,10 +1210,9 @@ and the compositionality law in full generality:
       \ECompoGeneral{}
 \end{minipage}
 
-\noindent Viewed side by side, these laws are exact duals. If both were admitted into the
-rewrite system, they would trigger infinite loops. This is no accident,
-intuitively, one law pushes variables into maps, while the other pushes maps
-into other maps, away from terms. To avoid non-termination, we adopt the following heuristic:
+\noindent Viewed side by side, these laws exhibit an inherent symmetry. If both were admitted into the
+rewrite system, they would trigger infinite loops. This symmetry is no accident, intuitively, one law pushes variables into maps, while the other pushes maps into other maps, away from terms. The unification of lookup and traversal into a single operator makes this symmetry explicit.
+To avoid non-termination, we adopt the following heuristic:
 \begin{itemize}
       \item In variable position ($K_5 = $ \AgdaFunction{V}) use the definition of
             composition. In this case all other indices $K_1,\dots,K_4$ are forced to
@@ -1218,9 +1231,9 @@ With the position heuristic the \AgdaFunction{comp} law is rather restricted.
 We now miss cases where we would make progress by applying the
 \AgdaFunction{comp} law, when $\varphi_1$ and $\varphi_2$ are not both
 renamings. Hence, we consider all situations where progress would be made
-directly after applying \AgdaFunction{comp}, by specializing on $\varphi_1$ or
-$\varphi_2$. These appear under the name \textbf{Definitional Composition
-      Specialization Laws}.
+directly after applying \AgdaFunction{comp}, by specializing on $\varphi_1$.
+The laws, where $\varphi_1$ or $\varphi_2$ is fixed to a primitive and progress
+can be inlined, appear under the name \textbf{Specialization Laws}.
 
 The \textbf{Interaction Laws} are the direct generalizations of their original
 $σ$-calculus counterparts to Kits. Next come the \textbf{Traversal Laws}.
@@ -1237,23 +1250,13 @@ needed to construct the Term Kit, would then include a clause \FSLambdaExT.
 However, the clause does not directly corresponds to a traversal law. It must
 first be lifted from the traversal operator to the unified lookup/traversal
 operator: \FSLambdaExL. The equation can be proven by reflexivity, when we
-unfold the definition of the unfied lookup/traversal operator. It can then be
+unfold the definition of the unified lookup/traversal operator. It can then be
 added to our equational theory.
 
 Finally, the \textbf{Coincidence Laws} generalize from renamings to Maps and
 enable Maps to be pulled out of substitutions when possible. As discussed
 earlier, these laws do not exhaustively describe every possible way in which
-Maps can be extracted from substitutions and must be established by the user
-through structural induction on the syntax. We can already rewrite all other
-$\sigma$-calculus laws so that they implicitly apply within the proofs. For
-binders, the coincidence laws then follow from the additional fact that a Map
-can be swapped with the identity substitution: \AgdaFunction{swap} :
-\ANormId{}. If the \AgdaFunction{swap} law were added to the equational theory,
-the three coincidence laws would already hold by definition. Unfortunately,
-even when treating renamings and substitutions separately, the swap law
-produces a non-terminating system when combined with the
-\AgdaFunction{associativity}, \AgdaFunction{distributivity}, and
-\AgdaFunction{interact} laws.
+Maps can be extracted from substitutions.
 
 \subsection{Discussion}
 The Kit-based version of the $σ$-calculus laws required unsafe computation and
@@ -1266,14 +1269,16 @@ readily derive the specialized laws from \cref{sec:mis} and rewrite them if we
 wish to reason about renamings and substitutions separately.
 
 The key difficulty in adapting the laws to the Kit-setting emerges from the
-duality between the general definition of composition \AgdaFunction{comp} and
+symmetry between the general definition of composition \AgdaFunction{comp} and
 the \AgdaField{compositionality} law. Our solution is a heuristic that resolves
 this conflict by restricting the laws to cases where the context is known to be
 variable or term position. When the position is unknown, the flow of the laws
-becomes ambiguous, and the user must resort to manual application. Compared to
-the laws from \cref{sec:mis}, the Kit-based formulation has the advantage that
-properties can be established directly for Maps, without requiring separate but
-structurally identical proofs for renamings and substitutions.
+becomes ambiguous, and the user must resort to manual application.
+
+Compared to the laws from \cref{sec:mis}, the Kit-based formulation has the
+advantage that properties can be established directly for Maps, without
+requiring separate but structurally identical proofs for renamings and
+substitutions.
 
 \section{Case Studies}\label{sec:ext}
 We present two examples illustrating the usage of the \textsc{Agdasubst}
@@ -1304,15 +1309,16 @@ Recall the multi-sorted and scoped syntax from the right side of
 laws from \cref{sec:mis-sig} and then using the \textsc{Agdasubst} library. The
 type system and semantics are the same in both cases and are presented once in
 \cref{fig:ext-tas}. In both settings, we use the functions \EWk{} and \ESubst{}
-to weaken a term and to substitute a term for variable 0 into another term.
-These functions can be defined directly from the primitives in both cases.
-Within the typing relation, we rely on the lookup relation \ELookup{} to
-retrieve the type of a variable from the typing context. The type of the lookup
-and typing relation is expressed using the operator \AgdaFunction{\_∶⊢\_}. This
-operator computes the sort of the third index of the relations based on the
-sort of the second. With the \AgdaFunction{\_∶⊢\_} operator, we can define a
-single lookup and typing relation for well-typed expressions and well-kinded
-types. For System F, it can be defined as follows:
+to increment all variable indices within a term and to substitute a term for
+the most recently bound variable in another term. These functions can be
+defined directly from the primitives in both cases. Within the typing relation,
+we rely on the lookup relation \ELookup{} to retrieve the type of a variable
+from the typing context. The type of the lookup and typing relation is
+expressed using the \AgdaFunction{\_∶⊢\_} operator. This operator computes the
+sort of the third index of the relations based on the sort of the second. With
+the \AgdaFunction{\_∶⊢\_} operator, we can define a single lookup and typing
+relation for well-typed expressions and well-kinded types. For System F, it can
+be defined as follows:
 
 \noindent\begin{minipage}[t]{0.48\linewidth}
       \raggedright{}
@@ -1339,11 +1345,13 @@ types. For System F, it can be defined as follows:
 
 We have already seen the instantiation of the $σ$-calculus for System F, where
 renamings and substitutions are treated separately, in \cref{sec:mis-sig}. To
-establish subject reduction, we first prove that renaming preserves typing
+establish subject reduction, we first prove that renaming and substitution
+preserves typing. The proofs for the preservation lemmas can be found in
+\cref{fig:ext-rst}. We prove renaming preserves typing
 (\AgdaFunction{\_⊢⋯ᴿ\_}), and then, using this result in the proof for the fact
-that lifiting of a substitution preserves typing (\AgdaFunction{⊢↑ˢ}), show
-that general substitution preserves typing (\AgdaFunction{\_⊢⋯ˢ\_}) as well.
-The proofs for the preservation lemmas can be found in \cref{fig:ext-rst}.
+that lifting of a substitution preserves typing (\AgdaFunction{⊢↑ˢ}, omitted),
+show that general substitution preserves typing (\AgdaFunction{\_⊢⋯ˢ\_}) as
+well.
 
 The types of both proofs rely on the types for well-typed renamings \EWTR{} and
 well-typed substitutions \EWTS{}, whose definitions are omitted here. In the
@@ -1380,11 +1388,14 @@ the monad laws:
 \noindent We omit the proofs, but they follow directly by structural induction because
 the library already provides and permits rewriting of the necessary laws.
 Specifically, for right identity under a binder, we rely on
-\AgdaFunction{id↑≡id}\;:\;\AIdLift{}, and for compositionality under a binder, we
-rely on \AgdaFunction{dist–↑–;}\;:\;\ADistLift{}. Both of these are already
-available in the library and can be applied automatically using rewrite rules.
-Both follow directly from the rules of the $σ$-calculus and do not cause any issues when admitted as rewrite rules.
-We omit the syntax-dependent laws needed to lift the traversal operator to the unified lookup/traversal operator, when traversing a term, as well as the proofs of the coincidence laws. To complete the instantiation, lookup and traversal are redefined using the unified lookup/traversal operator:
+\AgdaFunction{id↑≡id}\;:\;\AIdLift{}, and for compositionality under a binder,
+we rely on \AgdaFunction{dist–↑–;}\;:\;\ADistLift{}. Both additional laws
+follow directly from the rules of the $σ$-calculus and do not cause any issues
+when admitted as rewrite rules, in addition to the $σ$-calculus laws, rewritten
+later. We omit the syntax-dependent laws needed to lift the traversal operator
+to the unified lookup/traversal operator, when traversing a term. To complete
+the instantiation, lookup and traversal are redefined using the unified
+lookup/traversal operator:
 
 \noindent \begin{minipage}[t]{0.48\linewidth}
       \small
@@ -1404,31 +1415,31 @@ way analogous to how Maps abstract over renamings and substitutions based on
 a Kit. Within the library, they are instantiated exactly twice, once for the
 Variable Kit and once for Term Kit. For a
 more detailed description, we refer the reader to the already mentioned work.
-The unified proof that maps preserve typing mirrors the shape of the separate
-proofs: \SFSPT{}\textsc{Agdasubst} automatically solves all equations occuring
+The unified proof that Maps preserve typing mirrors the shape of the separate
+proofs: \SFSPT{}In the variable case, we need to convert a typed
+variable or term into a typed term. \textsc{Agdasubst} automatically solves all equations occurring
 from lifting. Compared with the proofs presented by
 \citet{saffrich:LIPIcs.ITP.2024.32} in Section 5.5\footnote{Additionally available online: \href{https://github.com/m0rphism/kitty/blob/bc86948c60f2d827593ad23e539197f9660178aa/src/Kitty/Examples/SystemF/SubjectReduction.agda\#L9}{Link to proof on GitHub}}, there is no need to
 manually move the Map under a weakening for binders or under a singleton
 substitution in the case of type application.
-In the variable case, we additionally need to convert a typed
-variable or term into a typed term. The proof of subject reduction is exactly the
-same as the one presented before. The only difference is that, instead of using
-the substitution preserves typing lemma, we use the more general lemma that
-Maps preserve typing in the cases of $β$-reductions: \SFSR{}
-Normally, we would additionally need to apply the interaction law manually in
-the case of \AgdaFunction{β-λ}\footnote{See the proof provided by
-      \citet{saffrich:LIPIcs.ITP.2024.32}:
+
+The proof of subject reduction is exactly the same as the one presented before.
+The only difference is that, instead of using the substitution preserves typing
+lemma, we use the more general lemma that Maps preserve typing in the cases of
+$β$-reductions: \SFSR{} Normally, we would additionally need to apply the
+interaction law manually in the case of \AgdaFunction{β-λ}\footnote{See the
+      proof provided by \citet{saffrich:LIPIcs.ITP.2024.32}:
       \href{https://github.com/m0rphism/kitty/blob/bc86948c60f2d827593ad23e539197f9660178aa/src/Kitty/Examples/SystemF/SubjectReduction.agda\#L32}{Link
             to proof on GitHub}}.
 
 \subsection*{Subtyping}
 When we extend System F with subtyping\cite{CARDELLI19944}, substitution does
 not generally preserve typing because type variables must respect subtyping
-bounds. To address the sutyping bound issue, we can encode a type variable
-binding $α < t$ as two bindings, $α : \star$ and a constraint $c : (α < t)$.
-This restricted, first-class-constraint–style encoding is isomorphic to the
-original formalization and makes substitution-preserves-typing hold again.
-Here, violating a bound simply yields a context with an unsatisfiable
+bounds. To formalize subtyping bounds, we can encode a type variable binding $α
+      < t$ as two bindings, $α : \star$ and a constraint $c : (α < t)$. This
+restricted, first-class-constraint–style encoding is isomorphic to the original
+formalization and makes substitution-preserves-typing hold again. Here,
+violating a bound simply yields a context with an unsatisfiable
 constraint~\cite{saffrich:LIPIcs.ITP.2024.32}.
 
 The extension with subtyping substantially complicates the proof of subject
@@ -1465,14 +1476,15 @@ language syntax using sums \AgdaInductiveConstructor{`σ}, products
 All laws required for instantiation of the \textsc{Agdasubst} library can be
 proven once and for all over the generic syntax. Users can define their own
 syntax directly from these building blocks without implementing traversals or
-reproving syntax-specific laws. The \AgdaInductiveConstructor{`X} constructor
-allows the addition of \AgdaBound{S′} many binders. In the current version,
-\textsc{Agdasubst} does not support variadic (unknown amount of newly bound
-variables) binders. The rewrite rules only apply correctly when \AgdaBound{S′}
-is fixed. For instance, the $σ$-calculus laws apply automatically to the
-following encoding of the lambda calculus, where the generic encoding has a
-single sort of expressions, \GSort{}, and two labels, one for abstraction and
-one for application, \GLabel{}:
+reproving syntax-specific laws. Albeit the \AgdaInductiveConstructor{`X}
+constructor permits the addition of \AgdaBound{S′} many binders, the current
+version of \textsc{Agdasubst} does not support variadic binders, that is,
+binders introducing an unknown number of newly bound variables. The rewrite
+rules only apply correctly when \AgdaBound{S′} is fixed. For instance, the
+$σ$-calculus laws apply automatically to the following encoding of the lambda
+calculus, where the generic encoding has a single sort of expressions,
+\GSort{}, and two labels, one for abstraction and one for application,
+\GLabel{}:
 
 \noindent\begin{minipage}[t]{0.48\linewidth}
       \raggedright{}
@@ -1493,13 +1505,13 @@ This section outlines possible directions for improving \textsc{Agdasubst} in
 the future.
 
 \subsection*{Reflection}
-In comparison to other libraries, users of \textsc{Agdasubst} still need to
-manually provide the definitions for traversal and the syntax-dependent proofs
-(Monad and Coincidence Laws). \citet{saffrich:LIPIcs.ITP.2024.32} has shown
-that definitions and proofs for scoped syntax can be derived automatically
-using Agda's reflection mechanism. There is no reason why the same approach
-could not be applied for the definitions and proofs required to instantiate
-\textsc{Agdasubst}.
+In contrast to most of the other substitution libraries, users of
+\textsc{Agdasubst} still need to manually provide the definition for traversal
+and the syntax-dependent proofs (Monad and Coincidence Laws).
+\citet{saffrich:LIPIcs.ITP.2024.32} has shown that definitions and proofs for
+scoped syntax can be derived automatically using Agda's reflection mechanism.
+There is no reason why the same approach could not be applied for the
+definitions and proofs required to instantiate \textsc{Agdasubst}.
 
 \subsection*{Sigma Calculus Extensions}
 \citet{Stark:2020:Mechanising} introduced several interesting extensions to the $σ$-calculus that could also be implemented in \textsc{Agdasubst}. One extension is support for variadic bindings (unknown number of variables bound), useful for languages with pattern matching. Another extension is support for lists of terms, allowing an unknown number of terms in the syntax tree. This would, for example, enable support for languages with $n$-ary application.
@@ -1544,35 +1556,39 @@ completeness and convergence are established through mechanized
 proofs~\cite{10.1145/2676724.2693163, Stark:2020:Mechanising}.
 
 \subsection*{Abstractions over Variables/Terms and Renamings/Substitutions}
-We also discussed the original work on Kits~\cite{ren-sub} and their adaptation
-to multi-sorted and scoped syntax~\cite{saffrich:LIPIcs.ITP.2024.32}.
+We already discussed the original work on Kits~\cite{ren-sub} and their
+adaptation to multi-sorted and scoped
+syntax~\cite{saffrich:LIPIcs.ITP.2024.32}.
 
-The intrinsically scoped version of this approach appears in recent work, for
-example in \citet{altenkirch2025substitution}, where a uniform treatment of
-renaming and substitution is explored in an intrinsically typed setting. They
-additionally unify variables and terms, which we deliberately do not do, as
-variables are library-defined while terms are user-supplied. A further
-application of the Kit approach is given by \citet{Wood_2021}, who use it to
-reason about metatheory in the context of linear languages.
+The intrinsically scoped version of this approach also appears in recent work,
+for example in a paper written by \citet{altenkirch2025substitution}, where a
+uniform treatment of renaming and substitution is explored in an intrinsically
+typed setting. They additionally unify variables and terms, which we
+deliberately do not do, as variables are library-defined while terms are
+user-supplied. A further application of the Kit approach is given by
+\citet{Wood_2021}, who use it to reason about metatheory in the context of
+linear languages.
 
 Another line of research concerns generic programming
 approaches~\cite{allais2021typescopesafeuniverse, 10.1145/3018610.3018613},
 which allow the construction of syntax trees from general building blocks
-supporting sums, products, and binder introduction. As shown
-in~\cref{sec:ext-uni}, the generic syntax approach can be adapted to a scoped
-and multi-sorted setting. Importantly, generic programming and the $σ$-calculus
-are orthogonal. The $σ$-calculus laws can be used to automatically solve
-equations for generic syntaxes.
+supporting sums, products, and binder introduction. The generic programming
+approach also allows for a generic structure that abstracts not only over
+renamings and substitutions, but also over semantics and other relevant
+language structures. The generic syntax approach can be adapted to a scoped and
+multi-sorted setting~\cite{saffrich:LIPIcs.ITP.2024.32}. Importantly, generic
+programming and the \textsc{Agdasubst} library are orthogonal, as shown
+in~\cref{sec:ext-uni}.
 
 \subsection*{Substitution Libraries in Proof Assistants}
 We have already discussed \textsc{Autosubst 2}~\cite{10.1145/3293880.3294101,
       schafer2015autosubst, Stark:2020:Mechanising} which forms the direct
 theoretical foundation of our work.
 
-There already exists another Agda library with a similar goal to
-\textsc{Agdasubst}, called \textsc{Abstract Binding Trees}, used for instance
-by \citet{siek2021parameterized}. It permits constructing an object language
-from a generic syntax, similar to the approach in \cref{sec:ext-uni}, but it
+There exists another Agda library with a similar goal to \textsc{Agdasubst},
+called \textsc{Abstract Binding Trees}, used for instance by
+\citet{siek2021parameterized}. It permits constructing an object language from
+a generic syntax, similar to the approach in \cref{sec:ext-uni}, but it
 supports only extrinsic scoping and single-sorted syntaxes. The library
 provides abstractions over arbitrary predicates about the object language,
 rather than focusing on specific relations such as
@@ -1607,9 +1623,10 @@ the current state of the \textsc{Agdasubst} library. To achieve our goal, we
 introduced the notions of Kits and Maps from prior work and adapted the
 $σ$-calculus laws to a Kit and Map setting.
 
-We demonstrated how \textsc{Agdasubst} can be applied to establish properties
-of formal languages, such as subject reduction for System F with subtyping and
-gave an instantiation of a scoped universe of sytnaxes with binding.
+We demonstrated how \textsc{Agdasubst} can be used to prove properties
+involving substitutions for formal languages, including subject reduction for
+System F with subtyping using a single substitution-preserves-typing lemma, and
+provided an instantiation of a scoped universe of syntaxes with binding.
 
 The \textsc{Agdasubst} library is not yet close to a stable release. We have
 outlined potential directions for future development and plan to continue

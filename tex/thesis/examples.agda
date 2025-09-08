@@ -104,14 +104,14 @@ record _a : Set₁ where
     -- {-# REWRITE ＋botᴿ ＋botₗ ＋topᴿ ＋topₗ ＋idem ＋assoc #-}
     postulate
       --! TypeLevel   
-      botᴿ   : K ⊔ V           ≡ K               
+      botᵣ   : K ⊔ V           ≡ K               
       botₗ   : V ⊔ K           ≡ K               
-      topᴿ   : K ⊔ T           ≡ T              
+      topᵣ   : K ⊔ T           ≡ T              
       topₗ   : T ⊔ K           ≡ T     
       idem   : K ⊔ K           ≡ K                        
       assoc  : (K₁ ⊔ K₂) ⊔ K₃  ≡ K₁ ⊔ (K₂ ⊔ K₃)  
 
-    {-# REWRITE botᴿ botₗ topᴿ topₗ idem assoc #-}
+    {-# REWRITE botᵣ botₗ topᵣ topₗ idem assoc #-}
     postulate
       --! DefLawTy
       imgⱽ : S ∋/⊢[ V ] s ≡ S ∋ s   
@@ -158,8 +158,8 @@ record _a : Set₁ where
                       x′ &/⋯[ V , K₃ , K₃ ] (ϕ₁ ;[ K₁ , K₂ , K₃ ] ϕ₂)
     
         --! Interaction
-        comp-idₗ        : id[ K ] ;[ K , K , K ] ϕ                                  ≡  ϕ
-        comp-idᵣ        : ϕ ;[ K , K , K ] id[ K ]                                  ≡ ϕ
+        comp-idₗ        : id[ K₁ ] ;[ K₁ , K₂ , K₂ ] ϕ                              ≡ ϕ
+        comp-idᵣ        : ϕ ;[ K₁ , K₂ , K₁ ] id[ K ]                               ≡ ϕ
         associativity   : (ϕ₁ ;[ K₁ , K₂ , K₃ ] ϕ₂) ;[ K₃ , K₄ , K₅ ] ϕ₄            ≡ 
                           ϕ₁ ;[ K₁ , (K₂ ⊔ K₄) , K₅ ] (ϕ₂ ;[ K₂ , K₄ , (K₂ ⊔ K₄) ] ϕ₄) 
         distributivity  : (x/t₁ ∙[ K₁ ] ϕ₁) ;[ K₁ , K₂ , K₃ ] ϕ₂                      ≡ 
@@ -167,6 +167,16 @@ record _a : Set₁ where
         interact        : wk ;[ V , K , K ] (x/t ∙[ K ] ϕ)                            ≡ ϕ 
         η–id            : zero ∙[ V ] wk                                            ≡ id[ V ]
         η–law           : (zero &/⋯[ V , K , K ] ϕ′) ∙[ K ] (wk ;[ V , K , K ] ϕ′)  ≡ ϕ′
+
+        --! Coincidence Laws
+        coincidence       : t &/⋯[ T , T , T ] (ϕ ;[ K , T , T ] id[ T ])  ≡ 
+                            t &/⋯[ T , K , T ] ϕ  
+        coincidence–foldᴷ : t &/⋯[ T , T , T ]  ((x/t &/⋯[ K , T , T ] id[ T ]) ∙[ T ] 
+                                                (ϕ ;[ K , T , T ] id[ T ]))             ≡ 
+                            (t &/⋯[ T , K , T ] (x/t ∙[ K ] ϕ))
+        coincidence–foldᵀ : t &/⋯[ T , T , T ]  ((t′ &/⋯[ T , K , T ] ϕ) ∙[ T ] 
+                                                (ϕ ;[ K , T , T ] id[ T ]))             ≡ 
+                            (t &/⋯[ T , T , T ] (t′ ∙[ T ] (id[ T ]))) &/⋯[ T , K , T ] ϕ
 
       record _c : Set₁ where
         field
@@ -179,16 +189,6 @@ record _a : Set₁ where
           compositionality–general  : 
             (x/t₁ &/⋯[ K₁ , K₂ , K₃ ] ϕ₁) &/⋯[ K₃ , K₄ , K₅ ] ϕ₄  ≡ 
             x/t₁ &/⋯[ K₁ , K₂ ⊔ K₄ , K₅ ] (ϕ₁ ;[ K₂ , K₄ , (K₂ ⊔ K₄) ] ϕ₂)
-
-          --! Coincidence Laws
-          coincidence       : t &/⋯[ T , T , T ] (ϕ ;[ K , T , T ] id[ T ])  ≡ 
-                              t &/⋯[ T , K , T ] ϕ  
-          coincidence–foldᴷ : t &/⋯[ T , T , T ]  ((x/t &/⋯[ K , T , T ] id[ T ]) ∙[ T ] 
-                                                  (ϕ ;[ K , T , T ] id[ T ]))             ≡ 
-                              (t &/⋯[ T , K , T ] (x/t ∙[ K ] ϕ))
-          coincidence–foldᵀ : t &/⋯[ T , T , T ]  ((t′ &/⋯[ T , K , T ] ϕ) ∙[ T ] 
-                                                  (ϕ ;[ K , T , T ] id[ T ]))             ≡ 
-                              (t &/⋯[ T , T , T ] (t′ ∙[ T ] (id[ T ]))) &/⋯[ T , K , T ] ϕ
           
 
     
@@ -348,8 +348,7 @@ _⋯ᴿ_ : S₁ ⊢ s → (S₁ →ᴿ S₂) → S₂ ⊢ s
 
 --! Sub {
 opaque
-  unfolding 
-    _→ᴿ_ _&ᴿ_ idᴿ wk _∙ᴿ_ _;ᴿᴿ_
+  unfolding _→ᴿ_ wk 
 
   _→ˢ_ : Scope → Scope → Set
   S₁ →ˢ S₂ = ∀ {s} → S₁ ∋ s → S₂ ⊢ s
@@ -386,10 +385,8 @@ _⋯ˢ_ : S₁ ⊢ s → (S₁ →ˢ S₂) → S₂ ⊢ s
 ★             ⋯ˢ σ = ★
 
 opaque
-  unfolding 
-    _→ᴿ_ _&ᴿ_ idᴿ wk _∙ᴿ_ _;ᴿᴿ_ 
-    _→ˢ_ _&ˢ_ idˢ _∙ˢ_ _;ᴿˢ_ _;ˢᴿ_
-
+  unfolding _→ˢ_ 
+  
   _;ˢˢ_ :  (S₁ →ˢ S₂) → (S₂ →ˢ S₃) → (S₁ →ˢ S₃)
   (σ₁ ;ˢˢ σ₂) x = (σ₁ x) ⋯ˢ σ₂
 --! }
@@ -410,11 +407,6 @@ module _B where
       ＋compositionalityᴿˢ  : (t ⋯ᴿ ρ₁) ⋯ˢ σ₂  ≡ t ⋯ˢ (ρ₁ ;ᴿˢ σ₂)
       ＋compositionalityˢᴿ  : (t ⋯ˢ σ₁) ⋯ᴿ ρ₂  ≡ t ⋯ˢ (σ₁ ;ˢᴿ ρ₂)
       ＋compositionalityˢˢ  : (t ⋯ˢ σ₁) ⋯ˢ σ₂  ≡ t ⋯ˢ (σ₁ ;ˢˢ σ₂)
-
-      -- Coincidence Laws
-      ＋coincidence        : t ⋯ˢ (ρ ;ᴿˢ idˢ)  ≡ t ⋯ᴿ ρ
-      ＋coincidence-foldⱽ  : t ⋯ˢ ((` x) ∙ˢ (ρ ;ᴿˢ idˢ)) ≡ t ⋯ᴿ (x ∙ᴿ ρ)
-      ＋coincidence-foldᵀ  : t ⋯ˢ ((t′ ⋯ᴿ ρ) ∙ˢ (ρ ;ᴿˢ idˢ)) ≡ (t ⋯ˢ (t′ ∙ˢ idˢ)) ⋯ᴿ ρ
       --! } 
   opaque 
     unfolding _→ᴿ_ _&ᴿ_ idᴿ wk _∙ᴿ_ _;ᴿᴿ_ _→ˢ_ _&ˢ_ idˢ _∙ˢ_ _;ᴿˢ_ _;ˢᴿ_ _;ˢˢ_
@@ -442,10 +434,7 @@ module _B where
     comp-idᵣᴿᴿ  : ρ ;ᴿᴿ idᴿ  ≡ ρ 
     comp-idᵣˢˢ  : σ ;ˢˢ idˢ  ≡ σ;    comp-idᵣˢᴿ  : σ ;ˢᴿ idᴿ  ≡ σ 
     comp-idₗˢˢ  : idˢ ;ˢˢ σ  ≡ σ
-
-    norm-id : (ρ : S₁ →ᴿ S₂) → idˢ ;ˢᴿ ρ ≡ ρ ;ᴿˢ idˢ 
-    norm-id _ = refl
-
+    
     associativityᴿᴿᴿ  : (ρ₁ ;ᴿᴿ ρ₂) ;ᴿᴿ ρ₃  ≡ ρ₁ ;ᴿᴿ (ρ₂ ;ᴿᴿ ρ₃)
     associativityᴿᴿˢ  : (ρ₁ ;ᴿᴿ ρ₂) ;ᴿˢ σ₃  ≡ ρ₁ ;ᴿˢ (ρ₂ ;ᴿˢ σ₃)
     associativityᴿˢᴿ  : (ρ₁ ;ᴿˢ σ₂) ;ˢᴿ ρ₃  ≡ ρ₁ ;ᴿˢ (σ₂ ;ˢᴿ ρ₃)
@@ -465,7 +454,11 @@ module _B where
     η-id    : zero {S = S} {s = s} ∙ᴿ wk  ≡ idᴿ
     η-lawᴿ  : (zero &ᴿ ρ) ∙ᴿ (wk ;ᴿᴿ ρ)   ≡ ρ
     η-lawˢ  : (zero &ˢ σ) ∙ˢ (wk ;ᴿˢ σ)   ≡ σ
-  
+
+    -- Coincidence Laws
+    coincidence        : t ⋯ˢ (ρ ;ᴿˢ idˢ)  ≡ t ⋯ᴿ ρ
+    coincidence-foldⱽ  : t ⋯ˢ ((` x) ∙ˢ (ρ ;ᴿˢ idˢ)) ≡ t ⋯ᴿ (x ∙ᴿ ρ)
+    coincidence-foldᵀ  : t ⋯ˢ ((t′ ⋯ᴿ ρ) ∙ˢ (ρ ;ᴿˢ idˢ)) ≡ (t ⋯ˢ (t′ ∙ˢ idˢ)) ⋯ᴿ ρ
     --! }
     η-idˢ  : (` (zero {S = S} {s = s})) ∙ˢ (wk ;ᴿˢ idˢ) ≡ idˢ
 
@@ -477,7 +470,7 @@ module _B where
     compositionalityᴿˢ  : (t : S₁ ⊢ s) → (t ⋯ᴿ ρ₁) ⋯ˢ σ₂  ≡ t ⋯ˢ (ρ₁ ;ᴿˢ σ₂)
     compositionalityˢᴿ  : (t : S₁ ⊢ s) → (t ⋯ˢ σ₁) ⋯ᴿ ρ₂  ≡ t ⋯ˢ (σ₁ ;ˢᴿ ρ₂)
     compositionalityˢˢ  : (t : S₁ ⊢ s) → (t ⋯ˢ σ₁) ⋯ˢ σ₂  ≡ t ⋯ˢ (σ₁ ;ˢˢ σ₂)
-
+    
     -- All proofs
     ＋idᴿ = refl 
     ＋wk = refl 
@@ -575,7 +568,27 @@ module _B where
     associativityˢˢᴿ {σ₁ = σ₁} = fun-exti (fun-ext λ x → compositionalityˢᴿ (x &ˢ σ₁))
     associativityˢˢˢ {σ₁ = σ₁} = fun-exti (fun-ext λ x → compositionalityˢˢ (x &ˢ σ₁))
 
-    --! RewriteSys {
+    -- Coincidence Laws
+    coincidence {t = t} {ρ = ρ} = 
+      --! CoincidenceProof
+      t ⋯ˢ (ρ ;ᴿˢ idˢ)  ≡⟨ sym (compositionalityᴿˢ t) ⟩ 
+      (t ⋯ᴿ ρ) ⋯ˢ idˢ   ≡⟨ right-idˢ (t  ⋯ᴿ ρ) ⟩ 
+      t ⋯ᴿ ρ            ∎
+
+    coincidence-foldⱽ {t = t} {x = x} {ρ = ρ} = 
+      t ⋯ˢ ((` x) ∙ˢ (ρ ;ᴿˢ idˢ)) ≡⟨ cong (_⋯ˢ_ t) (sym (distributivityᴿˢ {ρ₁ = ρ} {σ₂ = idˢ})) ⟩ 
+      t ⋯ˢ ((x ∙ᴿ ρ) ;ᴿˢ idˢ)     ≡⟨ sym (compositionalityˢᴿ t) ⟩ 
+      (t ⋯ˢ idˢ) ⋯ᴿ (x ∙ᴿ ρ)      ≡⟨ cong (_⋯ᴿ (x ∙ᴿ ρ)) (right-idˢ _) ⟩  
+      t ⋯ᴿ (x ∙ᴿ ρ)               ∎
+    
+    swap-id : (ρ : S₁ →ᴿ S₂) → ρ ;ᴿˢ idˢ ≡ idˢ ;ˢᴿ ρ 
+    swap-id _ = refl
+
+    coincidence-foldᵀ {t = t} {t′ = t′} {ρ = ρ} rewrite swap-id ρ = 
+      (t ⋯ˢ ((t′ ⋯ᴿ ρ) ∙ˢ (λ x → ` ρ x))) ≡⟨ cong (_⋯ˢ_ t) (sym (distributivityˢᴿ {σ₁ = idˢ} {ρ₂ = ρ})) ⟩ 
+      (t ⋯ˢ ((t′ ∙ˢ idˢ) ;ˢᴿ ρ))     ≡⟨ sym (compositionalityˢᴿ t) ⟩ 
+      ((t ⋯ˢ (t′ ∙ˢ idˢ)) ⋯ᴿ ρ)      ∎
+  --! RewriteSys {
   {-# REWRITE 
     ＋idᴿ ＋wk ext₀ᴿ extₛᴿ
     ＋idˢ ext₀ˢ extₛˢ
@@ -592,43 +605,15 @@ module _B where
     interactᴿ interactˢ
     η-id η-lawᴿ η-lawˢ
 
+    coincidence 
+    coincidence-foldⱽ coincidence-foldᵀ
+
     right-idᴿ right-idˢ
     compositionalityᴿᴿ compositionalityᴿˢ 
     compositionalityˢᴿ compositionalityˢˢ
+    
   #-}
   --! }
-
-
-  coincidence  : (ρ : S₁ →ᴿ S₂) (t : S₁ ⊢ s) → t ⋯ˢ (ρ ;ᴿˢ idˢ)  ≡ t ⋯ᴿ ρ
-  coincidence ρ (` x)        = refl
-  coincidence {S₂ = S₂} ρ (λx e) rewrite norm-id {S₁ = S₂} (wk {s = expr}) | norm-id ρ = cong λx_ (coincidence (ρ ↑ᴿ _) e)
-  coincidence {S₂ = S₂} ρ (Λα e)       rewrite norm-id {S₁ = S₂} (wk {s = type}) | norm-id ρ = cong Λα_ (coincidence (ρ ↑ᴿ _) e) --cong Λα_ (coincidence (ρ ↑ᴿ _) e)
-  coincidence {S₂ = S₂} ρ (∀[α∶ k ] t) rewrite norm-id {S₁ = S₂} (wk {s = type}) | norm-id ρ = cong₂ ∀[α∶_]_ (coincidence ρ k) (coincidence (ρ ↑ᴿ _) t) --cong₂ ∀[α∶_]_ (coincidence (ρ ↑ᴿ _) t)
-  coincidence ρ (e₁ · e₂)    = cong₂ _·_ (coincidence ρ e₁) (coincidence ρ e₂)  
-  coincidence ρ (e • t)      = cong₂ _•_ (coincidence ρ e) (coincidence ρ t)  
-  coincidence ρ (t₁ ⇒ t₂)    = cong₂ _⇒_ (coincidence ρ t₁) (coincidence ρ t₂)  
-  coincidence ρ ★            = refl
-  
-  coincidence-foldⱽ  : (ρ : S₁ →ᴿ S₂) (t : (s′ ∷ S₁) ⊢ s) → t ⋯ˢ ((` x) ∙ˢ (ρ ;ᴿˢ idˢ)) ≡ t ⋯ᴿ (x ∙ᴿ ρ)
-  coincidence-foldᵀ  : (ρ : S₁ →ᴿ S₂) (t′ : S₁ ⊢ s′) (t : (s′ ∷ S₁) ⊢ s) → t ⋯ˢ ((t′ ⋯ᴿ ρ) ∙ˢ (ρ ;ᴿˢ idˢ)) ≡ (t ⋯ˢ (t′ ∙ˢ idˢ)) ⋯ᴿ ρ
-
-  coincidence-foldⱽ ρ (` zero)     = refl
-  coincidence-foldⱽ ρ (` suc x)    = refl  
-  coincidence-foldⱽ {S₂ = S₂} ρ (λx e) rewrite norm-id {S₁ = S₂} (wk {s = expr}) | norm-id ρ = cong λx_ (coincidence-foldⱽ ((_ ∙ᴿ ρ) ;ᴿᴿ wk) e)
-  coincidence-foldⱽ {S₂ = S₂} ρ (Λα e) rewrite norm-id {S₁ = S₂} (wk {s = type}) | norm-id ρ = cong Λα_ (coincidence-foldⱽ ((_ ∙ᴿ ρ) ;ᴿᴿ wk) e)
-  coincidence-foldⱽ {S₂ = S₂} ρ (∀[α∶ k ] t) rewrite norm-id {S₁ = S₂} (wk {s = type}) | norm-id ρ = cong₂ ∀[α∶_]_ (coincidence-foldⱽ ρ k) (coincidence-foldⱽ ((_ ∙ᴿ ρ) ;ᴿᴿ wk) t)
-  coincidence-foldⱽ ρ (e₁ · e₂)    = cong₂ _·_ (coincidence-foldⱽ ρ e₁) (coincidence-foldⱽ ρ e₂)  
-  coincidence-foldⱽ ρ (e • t)      = cong₂ _•_ (coincidence-foldⱽ ρ e) (coincidence-foldⱽ ρ t)  
-  coincidence-foldⱽ ρ (t₁ ⇒ t₂)    = cong₂ _⇒_ (coincidence-foldⱽ ρ t₁) (coincidence-foldⱽ ρ t₂)  
-  coincidence-foldⱽ ρ ★            = refl
-    
-  coincidence-foldᵀ {S₂ = S₂} ρ t′ e rewrite norm-id {S₁ = S₂} (wk {s = expr}) | norm-id ρ = refl
-
-  --! RewriteSysT
-  {-# REWRITE 
-     coincidence 
-     coincidence-foldⱽ coincidence-foldᵀ
-  #-}
 
   -- Typing ----------------------------------------------------------------------
 
@@ -809,4 +794,4 @@ module _B where
   subject-reduction (⊢• {t = t} (⊢Λ ⊢e) ⊢t ⊢t') β-Λ             = _⊢⋯ˢ_ {σ = t ∙ˢ idˢ} (⊢[] ⊢t) ⊢e     
   subject-reduction (⊢· ⊢e₁ ⊢e₂)                (ξ-·₁ e₁↪e)     = ⊢· (subject-reduction ⊢e₁ e₁↪e) ⊢e₂
   subject-reduction (⊢· ⊢e₁ ⊢e₂)                (ξ-·₂ e₂↪e x)   = ⊢· ⊢e₁ (subject-reduction ⊢e₂ e₂↪e)          
-  subject-reduction (⊢• ⊢e ⊢t ⊢t')              (ξ-• e↪e')      = ⊢• (subject-reduction ⊢e e↪e') ⊢t ⊢t'   
+  subject-reduction (⊢• ⊢e ⊢t ⊢t')              (ξ-• e↪e')      = ⊢• (subject-reduction ⊢e e↪e') ⊢t ⊢t'  

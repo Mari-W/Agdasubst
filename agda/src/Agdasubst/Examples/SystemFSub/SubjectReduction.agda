@@ -5,7 +5,7 @@ module Agdasubst.Examples.SystemFSub.SubjectReduction where
 open import Agdasubst.Examples.SystemFSub.Definitions.Syntax
 open import Agdasubst.Examples.SystemFSub.Definitions.Typing
 open import Agdasubst.Examples.SystemFSub.Definitions.Semantics
-open import Agdasubst.Examples.SystemFSub.Substitution hiding (_,_,_)
+open import Agdasubst.Examples.SystemFSub.Substitution
 open import Agdasubst.Examples.SystemFSub.SubstitutionPreservesTyping
 open import Agdasubst.Examples.SystemFSub.Injectivity
 open import Agdasubst.Examples.SystemFSub.Inversion

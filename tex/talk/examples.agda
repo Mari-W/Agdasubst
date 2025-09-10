@@ -134,6 +134,7 @@ record _a : Set₁ where
 
         --! ExtLaws
         ext₀    : zero    & (x/t ∙[ K ] ϕ)     ≡ x/t
+
         extₛ    : suc x′  & (x/t ∙[ K ] ϕ)     ≡ x′ & ϕ
 
         comp    : x &/⋯[ V , V , V ] (ρ₁ ;[ V , V , V ] ρ₂)  ≡ 
@@ -400,7 +401,7 @@ opaque
   idᴿ : S →ᴿ S 
 
   --! YRId
-  idᴿ x = x 
+  idᴿ = λ x → x 
 
   wk : S →ᴿ (s ∷ S)
 
@@ -527,14 +528,17 @@ module _B where
     -- Definitional Laws 
     ＋idᴿ  : x &ᴿ idᴿ             ≡ x
     ＋wk   : x &ᴿ wk {s = s′}     ≡ suc x
-    --! DefLaws {
+    --! DefLawsA {
     ext₀ᴿ  : zero &ᴿ (x ∙ᴿ ρ)     ≡ x
-    extₛᴿ  : (suc x′) &ᴿ (x ∙ᴿ ρ) ≡ x′ &ᴿ ρ 
 
+    --! }
+    --! DefLawsB {
     ext₀ˢ  : zero &ˢ (t ∙ˢ σ)     ≡ t
-    extₛˢ  : (suc x) &ˢ (t ∙ˢ σ)  ≡ x &ˢ σ
     --! }
     ＋idˢ  : x &ˢ idˢ             ≡ ` x
+
+    extₛᴿ  : (suc x′) &ᴿ (x ∙ᴿ ρ) ≡ x′ &ᴿ ρ 
+    extₛˢ  : (suc x) &ˢ (t ∙ˢ σ)  ≡ x &ˢ σ
 
     compᴿᴿ  : x &ᴿ (ρ₁ ;ᴿᴿ ρ₂)  ≡ (x &ᴿ ρ₁) &ᴿ ρ₂
     compᴿˢ  : x &ˢ (ρ₁ ;ᴿˢ σ₂)  ≡ (x &ᴿ ρ₁) &ˢ σ₂

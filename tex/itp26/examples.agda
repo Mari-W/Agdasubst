@@ -209,7 +209,7 @@ open import Data.String using (String)
 +–idᵣ zero     = refl
 +–idᵣ (suc n)  = cong suc (+–idᵣ n)
 
---! RewriteIt
+--!! RewriteIt
 {-# REWRITE +–idᵣ #-}
 
 --! RewriteEx
@@ -220,7 +220,7 @@ _ = refl
 record Default (A : Set) : Set where
   field default : A
 
---! DefFields
+--!! DefFields
 open Default {{...}}
 
 --! DefInst
@@ -261,12 +261,10 @@ opaque
 --! Scoped {
 data Kind : Set where
   ★  : Kind
-
 data Type (n : ℕ) : Set where
   `_       : Fin n → Type n 
   ∀[α:_]_  : Type (suc n) → Type n
   _⇒_      : Type n → Type n → Type n
-
 data Expr (n m : ℕ) : Set where
   `_   : Fin m → Expr n m
   λx_  : Expr n (suc m) → Expr n m
@@ -284,14 +282,11 @@ variable
   s s′ : Sort 
   S S₁ S₂ S₃ S₄ : List Sort
 --! ]
-
 Scope = List Sort
 Scoped = Scope → Sort → Set
-
 data _∋_ : Scoped where
   zero  : ∀ {S s} → (s ∷ S) ∋ s
   suc   : ∀ {S s s′} → S ∋ s → (s′ ∷ S) ∋ s
-
 data _⊢_ : Scoped where 
   `_       : S ∋ s → S ⊢ s     
   λx_      : (expr ∷ S) ⊢ expr → S ⊢ expr
@@ -313,27 +308,20 @@ variable
 opaque
   _→ᴿ_ : Scope → Scope → Set
   S₁ →ᴿ S₂ = ∀ {s} → S₁ ∋ s → S₂ ∋ s 
-
   _&ᴿ_ : S₁ ∋ s → (S₁ →ᴿ S₂) → S₂ ∋ s
   x &ᴿ ρ = ρ x
-  
   idᴿ : S →ᴿ S 
   idᴿ x = x 
-
   wk : S →ᴿ (s ∷ S)
   wk x = suc x
-
   _∙ᴿ_ : S₂ ∋ s → (S₁ →ᴿ S₂) → ((s ∷ S₁) →ᴿ S₂)
   (x ∙ᴿ _) zero     = x
   (_ ∙ᴿ ρ) (suc x)  = ρ x
-
   _;ᴿᴿ_ : (S₁ →ᴿ S₂) → (S₂ →ᴿ S₃) → (S₁ →ᴿ S₃)
   (ρ₁ ;ᴿᴿ ρ₂) x = ρ₂ (ρ₁ x)
 -- opaque end
-
 _↑ᴿ_ : (S₁ →ᴿ S₂) → ∀ s → ((s ∷ S₁) →ᴿ (s ∷ S₂))
 ρ ↑ᴿ _ = zero ∙ᴿ (ρ ;ᴿᴿ wk)
-
 _⋯ᴿ_ : S₁ ⊢ s → (S₁ →ᴿ S₂) → S₂ ⊢ s
 -- Traversal Laws
 (` x)         ⋯ᴿ ρ = ` (x &ᴿ ρ)
@@ -349,30 +337,22 @@ _⋯ᴿ_ : S₁ ⊢ s → (S₁ →ᴿ S₂) → S₂ ⊢ s
 --! Sub {
 opaque
   unfolding _→ᴿ_ wk 
-
   _→ˢ_ : Scope → Scope → Set
   S₁ →ˢ S₂ = ∀ {s} → S₁ ∋ s → S₂ ⊢ s
-
   _&ˢ_ : S₁ ∋ s → (S₁ →ˢ S₂) → S₂ ⊢ s
   x &ˢ σ = σ x
-
   idˢ : S →ˢ S
   idˢ = `_
-
   _∙ˢ_ : S₂ ⊢ s → (S₁ →ˢ S₂) → ((s ∷ S₁) →ˢ S₂)
   (t ∙ˢ _) zero     = t
   (_ ∙ˢ σ) (suc x)  = σ x
-  
   _;ᴿˢ_ : (S₁ →ᴿ S₂) → (S₂ →ˢ S₃) → (S₁ →ˢ S₃)
   (ρ₁ ;ᴿˢ σ₂) x = σ₂ (ρ₁ x)
-
   _;ˢᴿ_ : (S₁ →ˢ S₂) → (S₂ →ᴿ S₃) → (S₁ →ˢ S₃)
   (σ₁ ;ˢᴿ ρ₂) x = (σ₁ x) ⋯ᴿ ρ₂
 -- opaque end  
-
 _↑ˢ_ : (S₁ →ˢ S₂) → ∀ s → ((s ∷ S₁) →ˢ (s ∷ S₂))
 (σ ↑ˢ _) = (` zero) ∙ˢ (σ ;ˢᴿ wk)
-
 _⋯ˢ_ : S₁ ⊢ s → (S₁ →ˢ S₂) → S₂ ⊢ s
 -- Traversal Laws
 (` x)         ⋯ˢ σ = (x &ˢ σ)
@@ -383,10 +363,8 @@ _⋯ˢ_ : S₁ ⊢ s → (S₁ →ˢ S₂) → S₂ ⊢ s
 (e • t)       ⋯ˢ σ = (e ⋯ˢ σ) • (t ⋯ˢ σ)
 (t₁ ⇒ t₂)     ⋯ˢ σ = (t₁ ⋯ˢ σ) ⇒ (t₂ ⋯ˢ σ)
 ★             ⋯ˢ σ = ★
-
 opaque
   unfolding _→ˢ_ 
-  
   _;ˢˢ_ :  (S₁ →ˢ S₂) → (S₂ →ˢ S₃) → (S₁ →ˢ S₃)
   (σ₁ ;ˢˢ σ₂) x = (σ₁ x) ⋯ˢ σ₂
 --! }

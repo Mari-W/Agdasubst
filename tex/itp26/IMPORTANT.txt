@@ -1,0 +1,2 @@
+difference: the kitty sigma calculus is an attempt to adapt to situations where we reason about
+var OR term, which the normal sigma calculus with f.c. renamings cannot handle (VGL. autosubst)

@@ -24,7 +24,7 @@ ren-pres-↪ {e = e} {e′ = e′} ρ e↪e′
 ... | ξ-λ e↪e′′  | refl | refl = ξ-λ (ren-pres-↪ (ρ ↑ _) e↪e′′)
 ... | ξ-Λ e↪e′′  | refl | refl = ξ-Λ (ren-pres-↪ (ρ ↑ _) e↪e′′)
 ... | ξ-·₁ e↪e′′ | refl | refl = ξ-·₁ (ren-pres-↪ ρ e↪e′′)
-... | ξ-·₂ e↪e′′ | refl | refl = ξ-·₂ (ren-pres-↪ ρ e↪e′′)
+... | ξ-·₂ e↪e′′ | refl | refl = ξ-·₂ (ren-pres-↪ ρw e↪e′′)
 ... | ξ-•₁ e↪e′′ | refl | refl = ξ-•₁ (ren-pres-↪ ρ e↪e′′)
 
 subject-reduction : 

@@ -238,7 +238,7 @@ as a rewrite rule if:
       \item The left side is neutral (it does not further reduce).
 \end{enumerate}
 
-\noindent For example, the right identity of addition satisfies these criteria: \ERewrite{} Once registered via \ERewriteIt{}, Agda treats \AgdaBound{n} \AgdaFunction{+} \AgdaNumber{0} as definitionally equal to \AgdaBound{n}: \ERewriteEx{} Users must ensure rules are terminating and confluent; while Agda provides conservative confluence checks via \texttt{--confluence-check}, termination is not verified.
+\noindent For example, the right identity of addition satisfies these criteria: \ERewrite{} Once registered via \ERewriteIt{}, Agda treats \AgdaBound{n} \AgdaFunction{+} \AgdaNumber{0} as definitionally equal to \AgdaBound{n}: \ERewriteEx{} Users must ensure rules are terminating and confluent to retain logical consistency. While Agda provides conservative confluence checks via \texttt{--confluence-check}, termination is not verified.
 
 \subsection*{Opaque Blocks}
 Opaque definitions~\cite{gratzer2022controlling} treat code as non-unfolding

@@ -3,12 +3,12 @@
 \usepackage{stmaryrd}
 \usepackage{xcolor}
 \usepackage{txfonts}
+\usepackage[capitalize,noabbrev]{cleveref}
 \usepackage[T1]{fontenc}
 \usepackage{microtype}
 \DisableLigatures[-]{encoding=T1}
 \usepackage{tikz}
 \usetikzlibrary{cd}
-
 
 \input{agda-generated}
 \input{agda-generated-examples}
@@ -186,7 +186,8 @@
 \begin{frame}[fragile]
   \frametitle{The Sigma Calculus: Discussion}
   \begin{itemize}
-    \item Explicit syntactic symbols for variables, terms, and substitutions
+    \item Explicit syntactic symbols for variables, terms, and
+          substitutions~\cite{10.1145/96709.96712}
     \item Governed by reduction rules describing their interaction
   \end{itemize}
 
@@ -194,7 +195,7 @@
     The laws of the $\sigma$-calculus yield a \textbf{terminating},
     \textbf{confluent}, and \textbf{complete} decision procedure for equality:
     two terms $M, N$ are equal iff their normal forms, obtained by exhaustively
-    applying the reduction rules, are equal.
+    applying the reduction rules, are equal~\cite{10.1145/2676724.2693163}.
   \end{theorem}
 
   \vspace{1em}
@@ -246,7 +247,7 @@
 
 \begin{frame}[fragile]
   \frametitle{The Sigma Calculus Laws with First-Class Renamings}
-  New symbols for renamings demand additional laws
+  New symbols for renamings demand additional laws~\cite{10.1145/3293880.3294101, Stark:2020:Mechanising})
   \EAssoc{}
   and even a whole new category of laws:
   \textbf{Coincidence Laws}
@@ -270,7 +271,7 @@
 
   \vspace{1em}
   \textbf{Idea.}
-  Introduce new syntactic categories for
+  Introduce new syntactic categories~\cite{ren-sub, saffrich:LIPIcs.ITP.2024.32} for
   \begin{itemize}
     \item Variables \emph{or} Terms: \textbf{Kits} $x/t$
     \item Renamings \emph{or} Substitutions: \textbf{Maps} $\varphi$
@@ -291,7 +292,7 @@
   \end{minipage}\\
   can be unified with Kits and Maps:
   \EExtLaws{}
-  where  $K \in \{\AgdaFunction{V}, \AgdaFunction{T}\}$
+  where $K \in \{\AgdaFunction{V}, \AgdaFunction{T}\}$
 \end{frame}
 
 \begin{frame}[fragile]
@@ -304,7 +305,7 @@
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Kit and Map Based Sigma Calculus: Discussion}
+  \frametitle{The Sigma Calculus with Kits and Maps: Discussion}
   \begin{itemize}
     \item Unified laws for variables/terms and renamings/substitutions
     \item Syntactic differences of the similar in shape symbols delegated to type level
@@ -322,6 +323,7 @@
           rewriting
     \item Adaption to custom syntaxes
     \item Proofs that actually use the presented lawse
+    
     \item Comparison to related work
   \end{itemize}
 \end{frame}
@@ -366,6 +368,12 @@
 \begin{frame}[fragile]
   \frametitle{[Bonus] A Model for our Algebra: General Final Associativity Law}
   \AAssocTryT{}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Sources}
+  \bibliographystyle{ACM-Reference-Format}
+  \bibliography{references}
 \end{frame}
 
 \end{document}

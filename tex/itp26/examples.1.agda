@@ -4,20 +4,205 @@ module examples where
 open import Data.List.Membership.Propositional  
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; subst; subst₂; trans; module ≡-Reasoning)
 open ≡-Reasoning
+{-# BUILTIN REWRITE _≡_ #-}
+
 
 open import Axiom.Extensionality.Propositional using (Extensionality; ExtensionalityImplicit)
 postulate
   fun-ext : ∀{ℓ₁ ℓ₂} → Extensionality ℓ₁ ℓ₂
   fun-exti : ∀{ℓ₁ ℓ₂} → ExtensionalityImplicit  ℓ₁ ℓ₂
+ 
+--! E >
+open import Agda.Builtin.Equality.Rewrite public
+
+record _a : Set₁ where
+  field 
+    --!! SortTy
+    Sort : Set
+
+
+  postulate
+    --!! ScopeDefTy 
+    Scope : Set
+    --! ScopeDef
+    []   : Scope 
+    _∷_  : Sort → Scope → Scope
+
+  Scoped = Scope → Sort → Set
+
+  variable 
+    S S₁ S₂ S₃ S₄ : Scope 
+    s s′ : Sort 
+  module _a where
+    postulate
+      --!! VarsTy
+      _∋_ : Scope → Sort → Set 
+
+  data _∋_ : Scope → Sort → Set where
+    --! Vars
+    zero  : (s ∷ S) ∋ s
+    suc   :  S ∋ s → (s′ ∷ S) ∋ s
+
+  record _b : Set₁ where
+    field
+      --!! TmC
+      _⊢_ : Scope → Sort → Set   
+
+      --! VarC
+      `_ : S ∋ s → S ⊢ s
+
+  
+    -- postulate
+    --   Mode : Set 
+    --   Vᴹ  : Mode
+    --   Tᴹ  : Mode
+    --   _⨆_ : Mode → Mode → Mode
+-- 
+    -- 
+    -- variable
+    --   M M₁ M₂ M₃ M₄ M₅ : Mode
+
+    postulate
+      --!! KitDefTy
+      Kit : Set 
+      --! KitDef
+      V    : Kit
+      T    : Kit
+      _⊔_  : Kit → Kit → Kit 
+
+    variable
+      K K₁ K₂ K₃ : Kit
+
+    postulate
+      --!! VarTrmTy
+      _∋/⊢[_]_ : Scope → Kit → Sort → Set
+
+      --!! PrimsTy
+      _–[_]→_  : Scope → Kit → Scope → Set
+      --! Prims
+      id   : S –[ K ]→ S
+      wk   : S –[ V ]→ (s ∷ S)
+      _∙_  : S₂ ∋/⊢[ K ] s → S₁ –[ K ]→ S₂ → (s ∷ S₁) –[ K ]→ S₂
+      _;_  : S₁ –[ K₁ ]→ S₂ → S₂ –[ K₂ ]→ S₃ → S₁ –[ K₃ ]→ S₃ 
+
+      --! VarTrmApp
+      _&/⋯_ : S₁ ∋/⊢[ K₁ ] s → S₁ –[ K₂ ]→ S₂ → S₂ ∋/⊢[ K₃ ] s
+
+      _;[_,_,_]_   : S₁ –[ K₁ ]→ S₂ → Kit → Kit → Kit → S₂ –[ K₂ ]→ S₃ → S₁ –[ K₃ ]→ S₃
+      _&/⋯[_,_,_]_ : S₁ ∋/⊢[ K₁ ] s → Kit → Kit → Kit → S₁ –[ K₂ ]→ S₂ → S₂ ∋/⊢[ K₃ ] s
+      id[_]   : Kit → S –[ K ]→ S
+      _∙[_]_  : S₂ ∋/⊢[ K ] s → Kit → S₁ –[ K ]→ S₂ → (s ∷ S₁) –[ K ]→ S₂
+
+      -- --! TypeLevelMode
+      -- ＋botᴿ   : M  ⨆ Vᴹ         ≡ M             
+      -- ＋botₗ   : Vᴹ ⨆ M          ≡ M              
+      -- ＋topᴿ   : M ⨆ Tᴹ          ≡ Tᴹ              
+      -- ＋topₗ   : Tᴹ ⨆ M          ≡ Tᴹ     
+      -- ＋idem   : M ⨆ M           ≡ M                      
+      -- ＋assoc  : (M₁ ⨆ M₂) ⨆ M₃  ≡ M₁ ⨆ (M₂ ⨆ M₃)  
+
+    -- {-# REWRITE ＋botᴿ ＋botₗ ＋topᴿ ＋topₗ ＋idem ＋assoc #-}
+    postulate
+      --! TypeLevel   
+      botᵣ   : K ⊔ V           ≡ K               
+      botₗ   : V ⊔ K           ≡ K               
+      topᵣ   : K ⊔ T           ≡ T              
+      topₗ   : T ⊔ K           ≡ T     
+      idem   : K ⊔ K           ≡ K                        
+      assoc  : (K₁ ⊔ K₂) ⊔ K₃  ≡ K₁ ⊔ (K₂ ⊔ K₃)  
+
+    {-# REWRITE botᵣ botₗ topᵣ topₗ idem assoc #-}
+    postulate
+      --! DefLawTy
+      imgⱽ : S ∋/⊢[ V ] s ≡ S ∋ s   
+      imgᵀ : S ∋/⊢[ T ] s ≡ S ⊢ s 
+
+    {-# REWRITE imgⱽ imgᵀ #-}
+    module foo
+       {{K₁ : Kit}} {{K₂ : Kit}} {{K₃ : Kit}} {{K₄ : Kit}} {{K₅ : Kit}}
+       (ρ : S₁ –[ V ]→ S₂) (ρ₁ : S₁ –[ V ]→ S₂) (ρ₂ : S₂ –[ V ]→ S₃) (ρ₄ : S₃ –[ V ]→ S₄)
+       (σ : S₁ –[ T ]→ S₂) (σ₁ : S₁ –[ T ]→ S₂) (σ₂ : S₂ –[ T ]→ S₃) (σ₄ : S₃ –[ T ]→ S₄)
+      (ϕ : S₁ –[ K₁ ]→ S₂) (ϕ₁ : S₁ –[ K₁ ]→ S₂) (ϕ₂ : S₂ –[ K₂ ]→ S₃) (ϕ₄ : S₃ –[ K₄ ]→ S₄)
+      (x/t : S₂ ∋/⊢[ K₁ ] s)   (x/t₁ : S₂ ∋/⊢[ K₁ ] s) (t : S₂ ⊢ s) (t′ : S₂ ⊢ s′) (x : S₁ ∋ s) (x′ : S₁ ∋ s′) (ϕ′ : (s ∷ S₁) –[ K₂ ]→ S₂) 
+      where 
+
+      postulate
+        --! DefLaw {
+        ＋idˢ   : x &/⋯[ V , T , T ] id[ T ]                 ≡ ` x
+        ＋wk    : x &/⋯[ V , V , V ] wk                      ≡ suc x
+        ext₀    : zero &/⋯[ V , K , K ] (x/t ∙[ K ] ϕ)       ≡ x/t
+        extₛ    : suc x′ &/⋯[ V , K , K ] (x/t ∙[ K ] ϕ)     ≡ 
+                 x′ &/⋯[ V , K , K ] ϕ
+        comp    : x &/⋯[ V , V , V ] (ρ₁ ;[ V , V , V ] ρ₂)  ≡ 
+                 (x &/⋯[ V , V , V ] ρ₁) &/⋯[ V , V , V ] ρ₂
+        --! }
+
+        --! CompGeneral 
+        comp–general : 
+          x/t &/⋯[ K₃ , K₄ , K₅ ] (ϕ₁ ;[ K₁ , K₂ , K₃ ] ϕ₂) ≡ 
+          (x/t &/⋯[ K₁ , K₂ , K₃ ] ϕ₁) &/⋯[ K₃ , K₄ , K₅ ] ϕ₂
+
+
+        --! SpecialDefLaws
+        compᵣ–idˢ   : x &/⋯[ V , T , T ] (ρ₁ ;[ V , T , T ] id[ T ])   ≡ 
+                      ` (x &/⋯[ V , V , V ] ρ₁)
+        compₗ–idˢ   : x &/⋯[ V , T , T ]  (id[ T ] ;[ T , V , T ] ρ₂)  ≡ 
+                      ` (x &/⋯[ V , V , V ] ρ₂)  
+        compₗ–wk    : x &/⋯[ V , K , K ] (wk ;[ V , K , K ] ϕ′)        ≡ 
+                      suc x &/⋯[ V , K , K ] ϕ′ 
+        compₗ–ext₀  : zero &/⋯[ V , K₃ , K₃ ] 
+                           ((x/t₁ ∙[ K₁ ] ϕ₁) ;[ K₁ , K₂ , K₃ ] ϕ₂)    ≡ 
+                      x/t &/⋯[ K₁ , K₂ , K₃ ] ϕ₂
+        compₗ–extₛ  : suc x′ &/⋯[ V , K₃ , K₃ ] 
+                             ((x/t₁ ∙[ K₁ ] ϕ₁) ;[ K₁ , K₂ , K₃ ] ϕ₂)  ≡ 
+                      x′ &/⋯[ V , K₃ , K₃ ] (ϕ₁ ;[ K₁ , K₂ , K₃ ] ϕ₂)
+    
+        --! Interaction
+        comp-idₗ        : id[ K₁ ] ;[ K₁ , K₂ , K₂ ] ϕ                              ≡ ϕ
+        comp-idᵣ        : ϕ ;[ K₁ , K₂ , K₁ ] id[ K ]                               ≡ ϕ
+        associativity   : (ϕ₁ ;[ K₁ , K₂ , K₃ ] ϕ₂) ;[ K₃ , K₄ , K₅ ] ϕ₄            ≡ 
+                          ϕ₁ ;[ K₁ , (K₂ ⊔ K₄) , K₅ ] (ϕ₂ ;[ K₂ , K₄ , (K₂ ⊔ K₄) ] ϕ₄) 
+        distributivity  : (x/t₁ ∙[ K₁ ] ϕ₁) ;[ K₁ , K₂ , K₃ ] ϕ₂                      ≡ 
+                          (x/t₁ &/⋯[ K₁ , K₂ , K₃ ] ϕ₂) ∙[ K₃ ] (ϕ₁ ;[ K₁ , K₂ , K₃ ] ϕ₂)
+        interact        : wk ;[ V , K , K ] (x/t ∙[ K ] ϕ)                            ≡ ϕ 
+        η–id            : zero ∙[ V ] wk                                            ≡ id[ V ]
+        η–law           : (zero &/⋯[ V , K , K ] ϕ′) ∙[ K ] (wk ;[ V , K , K ] ϕ′)  ≡ ϕ′
+
+        --! Coincidence Laws
+        coincidence       : t &/⋯[ T , T , T ] (ϕ ;[ K , T , T ] id[ T ])  ≡ 
+                            t &/⋯[ T , K , T ] ϕ  
+        coincidence–foldᴷ : t &/⋯[ T , T , T ]  ((x/t &/⋯[ K , T , T ] id[ T ]) ∙[ T ] 
+                                                (ϕ ;[ K , T , T ] id[ T ]))             ≡ 
+                            (t &/⋯[ T , K , T ] (x/t ∙[ K ] ϕ))
+        coincidence–foldᵀ : t &/⋯[ T , T , T ]  ((t′ &/⋯[ T , K , T ] ϕ) ∙[ T ] 
+                                                (ϕ ;[ K , T , T ] id[ T ]))             ≡ 
+                            (t &/⋯[ T , T , T ] (t′ ∙[ T ] (id[ T ]))) &/⋯[ T , K , T ] ϕ
+
+      record _c : Set₁ where
+        field
+          --! Monad
+          right-id          : x/t₁ &/⋯[ K₁ , K₂ , K₁ ] id[ K₂ ] ≡ x/t₁
+          compositionality  : (x/t₁ &/⋯[ K₁ , K₂ , K₃ ] ϕ₁) &/⋯[ K₃ , K₄ , T ] ϕ₄  ≡ 
+                              x/t₁ &/⋯[ K₁ , K₂ ⊔ K₄ , T ] (ϕ₁ ;[ K₂ , K₄ , (K₂ ⊔ K₄) ] ϕ₂)
+
+          --! CompoGeneral
+          compositionality–general  : 
+            (x/t₁ &/⋯[ K₁ , K₂ , K₃ ] ϕ₁) &/⋯[ K₃ , K₄ , K₅ ] ϕ₄  ≡ 
+            x/t₁ &/⋯[ K₁ , K₂ ⊔ K₄ , K₅ ] (ϕ₁ ;[ K₂ , K₄ , (K₂ ⊔ K₄) ] ϕ₂)
+          
+
+    
+      record _d : Set₁ where
+        field
+          --! TravL
+          var : (` x) &/⋯[  T , K , T ] ϕ ≡ 
+                (x &/⋯[ V , K , K ] ϕ) &/⋯[ K , T , T ] id[ T ]
+
 
 open import Data.List hiding ([_])
 open import Data.Nat hiding (_⊔_)
 open import Data.Fin using (Fin)
 open import Data.String using (String)
-
---! E >
-open import Agda.Builtin.Equality.Rewrite public
-
 
 --! Rewrite
 +–idᵣ : ∀ n → n + 0 ≡ n
@@ -123,22 +308,12 @@ variable
 opaque
   _→ᴿ_ : Scope → Scope → Set
   S₁ →ᴿ S₂ = ∀ {s} → S₁ ∋ s → S₂ ∋ s 
-
-  wk : S →ᴿ (s ∷ S)
-  wk x = suc x
-  -- ... idᴿ _&ᴿ_ _∙ᴿ_
-  -- _;ᴿᴿ_ _↑ᴿ_ _⋯ᴿ_ ...
-
--- opaque end 
---! }
-
   _&ᴿ_ : S₁ ∋ s → (S₁ →ᴿ S₂) → S₂ ∋ s
   x &ᴿ ρ = ρ x
-
-
   idᴿ : S →ᴿ S 
   idᴿ x = x 
-  
+  wk : S →ᴿ (s ∷ S)
+  wk x = suc x
   _∙ᴿ_ : S₂ ∋ s → (S₁ →ᴿ S₂) → ((s ∷ S₁) →ᴿ S₂)
   (x ∙ᴿ _) zero     = x
   (_ ∙ᴿ ρ) (suc x)  = ρ x
@@ -157,40 +332,29 @@ _⋯ᴿ_ : S₁ ⊢ s → (S₁ →ᴿ S₂) → S₂ ⊢ s
 (e • t)       ⋯ᴿ ρ = (e ⋯ᴿ ρ) • (t ⋯ᴿ ρ)
 (t₁ ⇒ t₂)     ⋯ᴿ ρ = (t₁ ⋯ᴿ ρ) ⇒ (t₂ ⋯ᴿ ρ)
 ★             ⋯ᴿ ρ = ★ 
+--! }
 
 --! Sub {
 opaque
   unfolding _→ᴿ_ wk 
   _→ˢ_ : Scope → Scope → Set
   S₁ →ˢ S₂ = ∀ {s} → S₁ ∋ s → S₂ ⊢ s
-
   _&ˢ_ : S₁ ∋ s → (S₁ →ˢ S₂) → S₂ ⊢ s
   x &ˢ σ = σ x
-
   idˢ : S →ˢ S
   idˢ = `_
-
-  _∙ˢ_ : S₂ ⊢ s → (S₁ →ˢ S₂) → 
-    (s ∷ S₁) →ˢ S₂
+  _∙ˢ_ : S₂ ⊢ s → (S₁ →ˢ S₂) → ((s ∷ S₁) →ˢ S₂)
   (t ∙ˢ _) zero     = t
   (_ ∙ˢ σ) (suc x)  = σ x
-  
-  -- ... _;ᴿˢ_ _;ˢᴿ_ ...
---! }
   _;ᴿˢ_ : (S₁ →ᴿ S₂) → (S₂ →ˢ S₃) → (S₁ →ˢ S₃)
   (ρ₁ ;ᴿˢ σ₂) x = σ₂ (ρ₁ x)
-
   _;ˢᴿ_ : (S₁ →ˢ S₂) → (S₂ →ᴿ S₃) → (S₁ →ˢ S₃)
   (σ₁ ;ˢᴿ ρ₂) x = (σ₁ x) ⋯ᴿ ρ₂
 -- opaque end  
-
---! SubInst {
-
 _↑ˢ_ : (S₁ →ˢ S₂) → ∀ s → ((s ∷ S₁) →ˢ (s ∷ S₂))
 (σ ↑ˢ _) = (` zero) ∙ˢ (σ ;ˢᴿ wk)
-
--- Traversal Laws (NOT opaque)
 _⋯ˢ_ : S₁ ⊢ s → (S₁ →ˢ S₂) → S₂ ⊢ s
+-- Traversal Laws
 (` x)         ⋯ˢ σ = (x &ˢ σ)
 (λx e)        ⋯ˢ σ = λx (e ⋯ˢ (σ ↑ˢ _))
 (Λα e)        ⋯ˢ σ = Λα (e ⋯ˢ (σ ↑ˢ _))
@@ -199,7 +363,6 @@ _⋯ˢ_ : S₁ ⊢ s → (S₁ →ˢ S₂) → S₂ ⊢ s
 (e • t)       ⋯ˢ σ = (e ⋯ˢ σ) • (t ⋯ˢ σ)
 (t₁ ⇒ t₂)     ⋯ˢ σ = (t₁ ⋯ˢ σ) ⇒ (t₂ ⋯ˢ σ)
 ★             ⋯ˢ σ = ★
-
 opaque
   unfolding _→ˢ_ 
   _;ˢˢ_ :  (S₁ →ˢ S₂) → (S₂ →ˢ S₃) → (S₁ →ˢ S₃)
@@ -489,7 +652,7 @@ module _B where
   variable 
     Γ Γ₁ Γ₂ Γ₃ Γ′ Γ₁′ Γ₂′ Γ₃′ : Ctx S
 
-  --! TypingR
+  --! Typing
   data _⊢_∶_ : Ctx S → S ⊢ s → S ∶⊢ s → Set where
     ⊢` : ∀ {x : S ∋ s} {t} → 
       Γ ∋ x ∶ t →
@@ -566,7 +729,7 @@ module _B where
   ⊢ρ ⊢⋯ᴿ (⊢· ⊢e₁ ⊢e₂)   = 
     ⊢· (⊢ρ ⊢⋯ᴿ ⊢e₁) (⊢ρ ⊢⋯ᴿ ⊢e₂)
   ⊢ρ ⊢⋯ᴿ (⊢• ⊢e ⊢t ⊢t') = 
-    ⊢• (⊢ρ ⊢⋯ᴿ ⊢e) (⊢ρ ⊢⋯ᴿ ⊢t) ((⊢↑ᴿ ⊢ρ _) ⊢⋯ᴿ ⊢t')
+    ⊢• (⊢ρ ⊢⋯ᴿ ⊢e) (⊢ρ ⊢⋯ᴿ ⊢t)((⊢↑ᴿ ⊢ρ _) ⊢⋯ᴿ ⊢t')
   ⊢ρ ⊢⋯ᴿ ⊢★             = 
     ⊢★
 

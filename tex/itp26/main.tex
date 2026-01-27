@@ -337,7 +337,7 @@ sorts). Variables are represented by membership proofs (\AgdaBound{S}
 structure enables renamings and substitutions to operate uniformly across all
 sorts.
 
-\section{The Sigma Calculus with Separate Renamings and Substitutions}\label{sec:mis}
+\section{The Sigma Calculus with First-Class Renamings in Agda}\label{sec:mis}
 This section presents a direct embedding of the $σ$-calculus rules with
 first-class renamings, following the conceptual theory underlying
 \textsc{Autosubst 2}, as native reduction rules in Agda using its rewrite
@@ -346,7 +346,7 @@ from~\cref{fig:pre-svm} as an example for any custom syntax. The approach
 described in this section directly translates to any multi-sorted and scoped
 syntax definition.
 
-\subsection{Scoped and Multi-Sorted Renamings and Substitutions}\label{sec:mis-sub}
+\subsection{Scoped and Multi-Sorted Renaming and Substitution}\label{sec:mis-sub}
 \begin{figure}[t]
       \centering
       \footnotesize % Consistent with previous small figures
@@ -361,7 +361,7 @@ syntax definition.
             \ESubInst{}
       \end{minipage}
       \vspace{-0.5em} % Tightens the gap between the code and the caption
-      \caption{Scoped and Multi-Sorted Renamings and Substitutions (excerpt)}\label{fig:mis-ras}
+      \caption{Scoped and Multi-Sorted Renaming and Substitution (excerpt)}\label{fig:mis-ras}
 \end{figure}
 
 We define renamings (\AgdaFunction{\_→ᴿ\_}) and substitutions

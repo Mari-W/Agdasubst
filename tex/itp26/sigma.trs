@@ -1,0 +1,90 @@
+(VAR x v e e1 e2 t t1 t2 k rho rho1 rho2 rho3 sigma sigma1 sigma2 sigma3)
+(RULES
+  liftR(rho) -> consR(zero, compRR(rho, wk))
+  liftS(sigma) -> consS(var(zero), compSR(sigma, wk))
+
+  ren(var(x), rho) -> var(lookupR(x, rho))
+  ren(lam(e), rho) -> lam(ren(e, liftR(rho)))
+  ren(Lam(e), rho) -> Lam(ren(e, liftR(rho)))
+  ren(forall(k, t), rho) -> forall(ren(k, rho), ren(t, liftR(rho)))
+  ren(app(e1, e2), rho) -> app(ren(e1, rho), ren(e2, rho))
+  ren(tapp(e, t), rho) -> tapp(ren(e, rho), ren(t, rho))
+  ren(arrow(t1, t2), rho) -> arrow(ren(t1, rho), ren(t2, rho))
+  ren(star, rho) -> star
+
+  sub(var(x), sigma) -> lookupS(x, sigma)
+  sub(lam(e), sigma) -> lam(sub(e, liftS(sigma)))
+  sub(Lam(e), sigma) -> Lam(sub(e, liftS(sigma)))
+  sub(forall(k, t), sigma) -> forall(sub(k, sigma), sub(t, liftS(sigma)))
+  sub(app(e1, e2), sigma) -> app(sub(e1, sigma), sub(e2, sigma))
+  sub(tapp(e, t), sigma) -> tapp(sub(e, sigma), sub(t, sigma))
+  sub(arrow(t1, t2), sigma) -> arrow(sub(t1, sigma), sub(t2, sigma))
+  sub(star, sigma) -> star
+
+  lookupR(x, idR) -> x
+  lookupR(x, wk) -> suc(x)
+  lookupR(zero, consR(v, rho)) -> v
+  lookupR(suc(x), consR(v, rho)) -> lookupR(x, rho)
+  
+  lookupS(x, idS) -> var(x)
+  lookupS(zero, consS(t, sigma)) -> t
+  lookupS(suc(x), consS(t, sigma)) -> lookupS(x, sigma)
+
+  lookupR(x, compRR(rho1, rho2)) -> lookupR(lookupR(x, rho1), rho2)
+  lookupS(x, compRS(rho1, sigma2)) -> lookupS(lookupR(x, rho1), sigma2)
+  lookupS(x, compSR(sigma1, rho2)) -> ren(lookupS(x, sigma1), rho2)
+  lookupS(x, compSS(sigma1, sigma2)) -> sub(lookupS(x, sigma1), sigma2)
+
+  compRR(compRR(rho1, rho2), rho3) -> compRR(rho1, compRR(rho2, rho3))
+  compRS(compRR(rho1, rho2), sigma3) -> compRS(rho1, compRS(rho2, sigma3))
+  compSR(compRS(rho1, sigma2), rho3) -> compRS(rho1, compSR(sigma2, rho3))
+  compSS(compRS(rho1, sigma2), sigma3) -> compRS(rho1, compSS(sigma2, sigma3))
+  compSR(compSR(sigma1, rho2), rho3) -> compSR(sigma1, compRR(rho2, rho3))
+  compSS(compSR(sigma1, rho2), sigma3) -> compSS(sigma1, compRS(rho2, sigma3))
+  compSR(compSS(sigma1, sigma2), rho3) -> compSS(sigma1, compSR(sigma2, rho3))
+  compSS(compSS(sigma1, sigma2), sigma3) -> compSS(sigma1, compSS(sigma2, sigma3))
+
+  compRR(idR, rho) -> rho
+  compRS(idR, sigma) -> sigma
+  compRR(rho, idR) -> rho
+  compSS(sigma, idS) -> sigma
+  compSR(sigma, idR) -> sigma
+  compSS(idS, sigma) -> sigma
+
+  compRR(consR(x, rho1), rho2) -> consR(lookupR(x, rho2), compRR(rho1, rho2))
+  compRS(consR(x, rho1), sigma2) -> consS(lookupS(x, sigma2), compRS(rho1, sigma2))
+  compSR(consS(t, sigma1), rho2) -> consS(ren(t, rho2), compSR(sigma1, rho2))
+  compSS(consS(t, sigma1), sigma2) -> consS(sub(t, sigma2), compSS(sigma1, sigma2))
+
+  compRR(wk, consR(x, rho)) -> rho
+  compRS(wk, consS(t, sigma)) -> sigma
+
+  consR(zero, wk) -> idR
+  consR(lookupR(zero, rho), compRR(wk, rho)) -> rho
+  consS(lookupS(zero, sigma), compRS(wk, sigma)) -> sigma
+  consS(var(zero), compRS(wk, idS)) -> idS
+
+  sub(t, compRS(rho, idS)) -> ren(t, rho)
+  sub(t, consS(var(x), compRS(rho, idS))) -> ren(t, consR(x, rho))
+  sub(t, consS(ren(t1, rho), compRS(rho, idS))) -> ren(sub(t, consS(t1, idS)), rho)
+
+  ren(t, idR) -> t
+  sub(t, idS) -> t
+
+  ren(ren(t, rho1), rho2) -> ren(t, compRR(rho1, rho2))
+  sub(ren(t, rho1), sigma2) -> sub(t, compRS(rho1, sigma2))
+  ren(sub(t, sigma1), rho2) -> sub(t, compSR(sigma1, rho2))
+  sub(sub(t, sigma1), sigma2) -> sub(t, compSS(sigma1, sigma2))
+
+  compRS(rho, idS) -> compSR(idS, rho)
+  compSS(sigma, compSR(idS, rho)) -> compSR(sigma, rho)
+  compSS(compSR(idS, rho), sigma) -> compRS(rho, sigma)
+  compRS(r1, compSR(idS, rho2)) -> compSR(idS, compR(r1, rho2))
+  sub(t, compSR(idS, rho)) -> ren(t, rho)
+
+  compRS(r, idS) -> compSR(idS, r)
+  compSS(s, compSR(idS, r)) -> compSR(s, r)
+  compSS(compSR(idS, r), s) -> compRS(r, s)
+  compRS(r1, compSR(idS, r2)) -> compSR(idS, compRR(r1, r2))
+  sub(t, compSR(idS, r)) -> ren(t, r)
+)

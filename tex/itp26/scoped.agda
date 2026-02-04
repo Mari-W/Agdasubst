@@ -19,10 +19,12 @@ open import Data.String using (String)
 --! Scoped {
 data Kind : Set where
   ★  : Kind
+
 data Type (n : ℕ) : Set where
   `_       : Fin n → Type n 
   ∀[α:_]_  : Type (suc n) → Type n
   _⇒_      : Type n → Type n → Type n
+
 data Expr (n m : ℕ) : Set where
   `_   : Fin m → Expr n m
   λx_  : Expr n (suc m) → Expr n m
@@ -40,11 +42,14 @@ variable
   s s′ : Sort 
   S S₁ S₂ S₃ S₄ : List Sort
 --! ]
+
 Scope = List Sort
 Scoped = Scope → Sort → Set
+
 data _∋_ : Scoped where
   zero  : ∀ {S s} → (s ∷ S) ∋ s
   suc   : ∀ {S s s′} → S ∋ s → (s′ ∷ S) ∋ s
+
 data _⊢_ : Scoped where 
   `_       : S ∋ s → S ⊢ s     
   λx_      : (expr ∷ S) ⊢ expr → S ⊢ expr
@@ -69,15 +74,12 @@ opaque
 
   wk : S →ᴿ (s ∷ S)
   wk x = suc x
-  -- ... idᴿ _&ᴿ_ _∙ᴿ_
-  -- _;ᴿᴿ_ _↑ᴿ_ _⋯ᴿ_ ...
-
--- opaque end 
+  -- omitted: idᴿ _&ᴿ_ _∙ᴿ_
+  --          _;ᴿᴿ_ _↑ᴿ_ _⋯ᴿ_ 
 --! }
 
   _&ᴿ_ : S₁ ∋ s → (S₁ →ᴿ S₂) → S₂ ∋ s
   x &ᴿ ρ = ρ x
-
 
   idᴿ : S →ᴿ S 
   idᴿ x = x 
@@ -87,9 +89,10 @@ opaque
   (_ ∙ᴿ ρ) (suc x)  = ρ x
   _;ᴿᴿ_ : (S₁ →ᴿ S₂) → (S₂ →ᴿ S₃) → (S₁ →ᴿ S₃)
   (ρ₁ ;ᴿᴿ ρ₂) x = ρ₂ (ρ₁ x)
--- opaque end
+
 _↑ᴿ_ : (S₁ →ᴿ S₂) → ∀ s → ((s ∷ S₁) →ᴿ (s ∷ S₂))
 ρ ↑ᴿ _ = zero ∙ᴿ (ρ ;ᴿᴿ wk)
+
 _⋯ᴿ_ : S₁ ⊢ s → (S₁ →ᴿ S₂) → S₂ ⊢ s
 -- Traversal Laws
 (` x)         ⋯ᴿ ρ = ` (x &ᴿ ρ)
@@ -101,9 +104,9 @@ _⋯ᴿ_ : S₁ ⊢ s → (S₁ →ᴿ S₂) → S₂ ⊢ s
 (t₁ ⇒ t₂)     ⋯ᴿ ρ = (t₁ ⋯ᴿ ρ) ⇒ (t₂ ⋯ᴿ ρ)
 ★             ⋯ᴿ ρ = ★ 
 
---! Sub {
 opaque
   unfolding _→ᴿ_ wk 
+--! Sub {
   _→ˢ_ : Scope → Scope → Set
   S₁ →ˢ S₂ = ∀ {s} → S₁ ∋ s → S₂ ⊢ s
 
@@ -117,8 +120,6 @@ opaque
     (s ∷ S₁) →ˢ S₂
   (t ∙ˢ _) zero     = t
   (_ ∙ˢ σ) (suc x)  = σ x
-  
-  -- ... _;ᴿˢ_ _;ˢᴿ_ ...
 --! }
   _;ᴿˢ_ : (S₁ →ᴿ S₂) → (S₂ →ˢ S₃) → (S₁ →ˢ S₃)
   (ρ₁ ;ᴿˢ σ₂) x = σ₂ (ρ₁ x)
@@ -128,7 +129,9 @@ opaque
 -- opaque end  
 
 --! SubInst {
+-- omitted: _;ᴿˢ_ _;ˢᴿ_ ...
 
+-- Lifting shorthand (not opaque)
 _↑ˢ_ : (S₁ →ˢ S₂) → ∀ s → ((s ∷ S₁) →ˢ (s ∷ S₂))
 (σ ↑ˢ _) = (` zero) ∙ˢ (σ ;ˢᴿ wk)
 
@@ -153,7 +156,9 @@ variable
   ρ ρ₁ ρ₂ ρ₃ : S₁ →ᴿ S₂ 
   σ σ₁ σ₂ σ₃ : S₁ →ˢ S₂ 
 
+
 module _B where
+  -- for coloring only!
   record _d : Set where
     field
       --! MonadLaws {
@@ -171,22 +176,21 @@ module _B where
 
     --! DefLaws {
     -- Definitional Laws 
-    ＋idᴿ  : x &ᴿ idᴿ             ≡ x
-    ＋wk   : x &ᴿ wk {s = s′}     ≡ suc x
-    ext₀ᴿ  : zero &ᴿ (x ∙ᴿ ρ)     ≡ x
-    extₛᴿ  : (suc x′) &ᴿ (x ∙ᴿ ρ) ≡ x′ &ᴿ ρ 
+    ＋idᴿ  : x &ᴿ idᴿ               ≡ x
+    ＋wk   : x &ᴿ wk {s = s′}       ≡ suc x
+    ext₀ᴿ  : zero &ᴿ (x ∙ᴿ ρ)      ≡ x
+    extₛᴿ  : (suc x′) &ᴿ (x ∙ᴿ ρ)  ≡ x′ &ᴿ ρ 
 
+    compᴿᴿ  : x &ᴿ (ρ₁ ;ᴿᴿ ρ₂)  ≡ (x &ᴿ ρ₁) &ᴿ ρ₂
+    compˢˢ  : x &ˢ (σ₁ ;ˢˢ σ₂)  ≡ (x &ˢ σ₁) ⋯ˢ σ₂
+    -- omitted: ＋idˢ ext₀ˢ extₛˢ
+    --          compᴿˢ compˢᴿ
+    --! }
     ＋idˢ  : x &ˢ idˢ             ≡ ` x
     ext₀ˢ  : zero &ˢ (t ∙ˢ σ)     ≡ t
     extₛˢ  : (suc x) &ˢ (t ∙ˢ σ)  ≡ x &ˢ σ
-
-    compᴿᴿ  : x &ᴿ (ρ₁ ;ᴿᴿ ρ₂)  ≡ (x &ᴿ ρ₁) &ᴿ ρ₂
     compᴿˢ  : x &ˢ (ρ₁ ;ᴿˢ σ₂)  ≡ (x &ᴿ ρ₁) &ˢ σ₂
     compˢᴿ  : x &ˢ (σ₁ ;ˢᴿ ρ₂)  ≡ (x &ˢ σ₁) ⋯ᴿ ρ₂
-    compˢˢ  : x &ˢ (σ₁ ;ˢˢ σ₂)  ≡ (x &ˢ σ₁) ⋯ˢ σ₂
-    --! }
-
-    --! InteractLaws {
     -- Interaction Laws
     comp-idₗᴿᴿ  : idᴿ ;ᴿᴿ ρ  ≡ ρ;    comp-idₗᴿˢ  : idᴿ ;ᴿˢ σ  ≡ σ
     comp-idᵣᴿᴿ  : ρ ;ᴿᴿ idᴿ  ≡ ρ 
@@ -209,16 +213,21 @@ module _B where
 
     interactᴿ : wk ;ᴿᴿ (x ∙ᴿ ρ) ≡ ρ;   interactˢ : wk ;ᴿˢ (t ∙ˢ σ) ≡ σ
 
-    η-id    : zero {S = S} {s = s} ∙ᴿ wk  ≡ idᴿ
+    η-idᴿ    : zero {S = S} {s = s} ∙ᴿ wk  ≡ idᴿ
+    η-idˢ  : (` (zero {S = S} {s = s})) ∙ˢ (wk ;ᴿˢ idˢ) ≡ idˢ
     η-lawᴿ  : (zero &ᴿ ρ) ∙ᴿ (wk ;ᴿᴿ ρ)   ≡ ρ
     η-lawˢ  : (zero &ˢ σ) ∙ˢ (wk ;ᴿˢ σ)   ≡ σ
-
+    --! InteractLaws {
     -- Coincidence Laws
     coincidence        : t ⋯ˢ (ρ ;ᴿˢ idˢ)  ≡ t ⋯ᴿ ρ
-    coincidence-foldⱽ  : t ⋯ˢ ((` x) ∙ˢ (ρ ;ᴿˢ idˢ)) ≡ t ⋯ᴿ (x ∙ᴿ ρ)
-    coincidence-foldᵀ  : t ⋯ˢ ((t′ ⋯ᴿ ρ) ∙ˢ (ρ ;ᴿˢ idˢ)) ≡ (t ⋯ˢ (t′ ∙ˢ idˢ)) ⋯ᴿ ρ
+    coincidence-foldⱽ  : t ⋯ˢ ((` x) ∙ˢ (ρ ;ᴿˢ idˢ)) ≡ 
+                         t ⋯ᴿ (x ∙ᴿ ρ)
+    coincidence-foldᵀ  : t ⋯ˢ ((t′ ⋯ᴿ ρ) ∙ˢ (ρ ;ᴿˢ idˢ)) ≡ 
+                         (t ⋯ˢ (t′ ∙ˢ idˢ)) ⋯ᴿ ρ
+    -- Interaction Laws 
+    -- omitted. 
+
     --! }
-    η-idˢ  : (` (zero {S = S} {s = s})) ∙ˢ (wk ;ᴿˢ idˢ) ≡ idˢ
 
  
     right-idᴿ  : (t : S ⊢ s) → t ⋯ᴿ idᴿ  ≡ t
@@ -246,7 +255,7 @@ module _B where
     interactᴿ = refl
     interactˢ = refl
 
-    η-id = fun-exti (fun-ext (λ { zero → refl ; (suc x) → refl }))
+    η-idᴿ = fun-exti (fun-ext (λ { zero → refl ; (suc x) → refl }))
     η-idˢ = fun-exti (fun-ext (λ { zero → refl ; (suc x) → refl }))
     η-lawᴿ = fun-exti (fun-ext (λ { zero → refl ; (suc x) → refl }))
     η-lawˢ = fun-exti (fun-ext (λ { zero → refl ; (suc x) → refl }))
@@ -264,9 +273,9 @@ module _B where
     comp-idᵣˢˢ {σ = σ} = fun-exti (fun-ext λ x → right-idˢ (x &ˢ σ))
 
     right-idᴿ (` x)        = refl
-    right-idᴿ (λx e)       = cong λx_ (trans (cong (_⋯ᴿ_ {S₂ = expr ∷ _} e) η-id) (right-idᴿ e))
-    right-idᴿ (Λα e)       = cong Λα_ (trans (cong (_⋯ᴿ_ {S₂ = type ∷ _} e) η-id) (right-idᴿ e))
-    right-idᴿ (∀[α∶ k ] t) = cong₂ ∀[α∶_]_ (right-idᴿ k) (trans (cong (_⋯ᴿ_ {S₂ = type ∷ _} t) η-id) (right-idᴿ t))
+    right-idᴿ (λx e)       = cong λx_ (trans (cong (_⋯ᴿ_ {S₂ = expr ∷ _} e) η-idᴿ) (right-idᴿ e))
+    right-idᴿ (Λα e)       = cong Λα_ (trans (cong (_⋯ᴿ_ {S₂ = type ∷ _} e) η-idᴿ) (right-idᴿ e))
+    right-idᴿ (∀[α∶ k ] t) = cong₂ ∀[α∶_]_ (right-idᴿ k) (trans (cong (_⋯ᴿ_ {S₂ = type ∷ _} t) η-idᴿ) (right-idᴿ t))
     right-idᴿ (e₁ · e₂)    = cong₂ _·_ (right-idᴿ e₁) (right-idᴿ e₂)
     right-idᴿ (e • t)      = cong₂ _•_ (right-idᴿ e) (right-idᴿ t)
     right-idᴿ (t₁ ⇒ t₂)    = cong₂ _⇒_ (right-idᴿ t₁) (right-idᴿ t₂)
@@ -346,6 +355,7 @@ module _B where
       (t ⋯ˢ ((t′ ⋯ᴿ ρ) ∙ˢ (λ x → ` ρ x))) ≡⟨ cong (_⋯ˢ_ t) (sym (distributivityˢᴿ {σ₁ = idˢ} {ρ₂ = ρ})) ⟩ 
       (t ⋯ˢ ((t′ ∙ˢ idˢ) ;ˢᴿ ρ))     ≡⟨ sym (compositionalityˢᴿ t) ⟩ 
       ((t ⋯ˢ (t′ ∙ˢ idˢ)) ⋯ᴿ ρ)      ∎
+
   --! RewriteSys {
   {-# REWRITE 
     ＋idᴿ ＋wk ext₀ᴿ extₛᴿ
@@ -361,18 +371,22 @@ module _B where
     distributivityᴿᴿ distributivityᴿˢ 
     distributivityˢᴿ distributivityˢˢ
     interactᴿ interactˢ
-    η-id η-lawᴿ η-lawˢ
-
+    η-idᴿ η-idˢ η-lawᴿ η-lawˢ
+    
     coincidence 
     coincidence-foldⱽ coincidence-foldᵀ
 
     right-idᴿ right-idˢ
     compositionalityᴿᴿ compositionalityᴿˢ 
     compositionalityˢᴿ compositionalityˢˢ
-    
   #-}
   --! }
-
+  abc : (x : (s′ ∷ S₁) ∋ s) → (σ₁ : S₁ →ˢ S₂) → (σ₂ : S₂ →ˢ S₃) (t : S₂ ⊢ s′) → 
+    x &ˢ ((t ∙ˢ σ₁)  ;ˢˢ  σ₂)  ≡  x &ˢ ((t ⋯ˢ σ₂) ∙ˢ (σ₁ ;ˢˢ σ₂))
+  abc x σ₁ σ₂ t = {!   !}
+  -- x &ˢ ((t ⋯ˢ σ₂) ∙ˢ (σ₁ ;ˢˢ σ₂)) 
+  -- 
+{-
   -- Typing ----------------------------------------------------------------------
 
   --! UpArrow
@@ -552,4 +566,4 @@ module _B where
   subject-reduction (⊢• {t = t} (⊢Λ ⊢e) ⊢t ⊢t') β-Λ             = _⊢⋯ˢ_ {σ = t ∙ˢ idˢ} (⊢[] ⊢t) ⊢e     
   subject-reduction (⊢· ⊢e₁ ⊢e₂)                (ξ-·₁ e₁↪e)     = ⊢· (subject-reduction ⊢e₁ e₁↪e) ⊢e₂
   subject-reduction (⊢· ⊢e₁ ⊢e₂)                (ξ-·₂ e₂↪e x)   = ⊢· ⊢e₁ (subject-reduction ⊢e₂ e₂↪e)          
-  subject-reduction (⊢• ⊢e ⊢t ⊢t')              (ξ-• e↪e')      = ⊢• (subject-reduction ⊢e e↪e') ⊢t ⊢t' 
+  subject-reduction (⊢• ⊢e ⊢t ⊢t')              (ξ-• e↪e')      = ⊢• (subject-reduction ⊢e e↪e') ⊢t ⊢t'  -}

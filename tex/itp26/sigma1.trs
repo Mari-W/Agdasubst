@@ -1,0 +1,24 @@
+(VAR x v t t1 t2 s s1 s2)
+(RULES
+  lookupR(zero, consR(v, s)) -> v
+  lookupR(suc(x), consR(v, s)) -> lookupR(x, s)
+  lookupS(zero, consS(t, s)) -> t
+  lookupS(suc(x), consS(t, s)) -> lookupS(x, s)
+
+  lookupR(x, idR) -> x
+  lookupS(x, idS) -> var(x)
+
+  lookupR(x, compRR(s1, s2)) -> lookupR(lookupR(x, s1), s2)
+  lookupS(x, compSS(s1, s2)) -> sub(lookupS(x, s1), s2)
+  
+
+  liftR(s) -> consR(zero, compRR(s, wk))
+  liftS(s) -> consS(var(zero), compSR(s, wk))
+
+  ren(var(x), s) -> var(lookupR(x, s))
+  ren(app(t1, t2), s) -> app(ren(t1, s), ren(t2, s))
+  ren(lam(t), s) -> lam(ren(t, liftR(s)))
+  sub(var(x), s) -> lookupS(x, s)
+  sub(app(t1, t2), s) -> app(sub(t1, s), sub(t2, s))
+  sub(lam(t), s) -> lam(sub(t, liftS(s)))
+)

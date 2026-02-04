@@ -1,0 +1,27 @@
+(VAR x e e1 e2 t t1 t2 k u rho rho1 rho2 rho3)
+(RULES
+  appR(zero, liftR(rho))          -> zero
+  appR(suc(x), liftR(rho))        -> suc(appR(x, rho))
+  appR(x, wk)                     -> suc(x)
+  appR(x, compR(rho1, rho2))      -> appR(appR(x, rho1), rho2)
+  appR(x, idR)                    -> x
+
+  compR(rho, idR)                 -> rho
+  compR(idR, rho)                 -> rho
+  compR(compR(rho1, rho2), rho3)  -> compR(rho1, compR(rho2, rho3))
+
+  liftR(idR)               -> idR 
+  liftR(compR(rho1, rho2)) -> compR(liftR(rho1), liftR(rho2))
+
+  ren(var(x), rho)       -> var(appR(x, rho))
+  ren(lam(e), rho)       -> lam(ren(e, liftR(rho)))
+  ren(Lam(e), rho)       -> Lam(ren(e, liftR(rho)))
+  ren(Pi(k, t), rho)     -> Pi(ren(k, rho), ren(t, liftR(rho)))
+  ren(app(e1, e2), rho)  -> app(ren(e1, rho), ren(e2, rho))
+  ren(tapp(e, t), rho)   -> tapp(ren(e, rho), ren(t, rho))
+  ren(arr(t1, t2), rho)  -> arr(ren(t1, rho), ren(t2, rho))
+  ren(star, rho)         -> star
+
+  ren(u, idR)              -> u
+  ren(ren(u, rho1), rho2)  -> ren(u, compR(rho1, rho2))
+)

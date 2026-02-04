@@ -1,0 +1,11 @@
+(VAR x y z)
+(THEORY (AC p) (AC m))
+(RULES
+p(x,zero) -> x
+p(i(x),x) -> zero
+m(zero,x) -> zero
+m(x,zero) -> zero
+m(one,x) -> x
+m(z,p(x,y)) -> p(m(z,x),m(z,y))
+)
+

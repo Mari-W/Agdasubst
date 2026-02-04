@@ -1,0 +1,27 @@
+(VAR a b s t u)
+(RULES
+  subst(app(a, b), s) -> app(subst(a, s), subst(b, s))
+  subst(lam(a), s) -> lam(subst(a, lift(s)))
+  
+  subst(subst(a, s), t) -> subst(a, comp(s, t))
+  
+  comp(comp(s, t), u) -> comp(s, comp(t, u))
+  comp(id, s) -> s
+  comp(s, id) -> s
+  comp(lift(s), lift(t)) -> lift(comp(s, t))
+  
+  comp(cons(a, s), t) -> cons(subst(a, t), comp(s, t))
+  comp(lift(s), cons(a, t)) -> cons(a, comp(s, t))
+  comp(lift(s), id) -> lift(s)
+  
+  subst(one, cons(a, s)) -> a
+  subst(one, lift(s)) -> one
+  subst(one, id) -> one
+  
+  comp(shift, cons(a, s)) -> s
+  comp(shift, lift(s)) -> comp(s, shift)
+  comp(shift, id) -> shift
+  
+  lift(id) -> id
+  cons(one, shift) -> id
+)

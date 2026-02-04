@@ -14,4 +14,8 @@ python3 ../../../agdatex/agdatex.py -v -f -e agda-generated.tex -r ../../agda/sr
 python3 ../../../agdatex/agdatex.py -v -f -e agda-generated-examples.tex -r . -x examples \
   examples.agda
 
+python3 ../../../agdatex/agdatex.py -v -f -e agda-generated-scoped.tex -r . -x scoped \
+  scoped.agda
 
+python3 ../../../agdatex/agdatex.py -v -f -e agda-generated-typed.tex -r . -x typed \
+  typed.agda

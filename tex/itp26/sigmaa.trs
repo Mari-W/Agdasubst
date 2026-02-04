@@ -1,0 +1,63 @@
+(VAR x e e1 e2 t t1 t2 r r1 r2 s s1 s2)
+(RULES
+  app(lam(e), t) -> sub(e, cons(t, idS))
+
+  ren(var(zero), liftR(r)) -> var(zero)
+  ren(var(suc(x)), liftR(r)) -> ren(var(x), compRR(r, wk))
+  ren(var(x), idR) -> var(x)
+  ren(var(x), wk) -> var(suc(x))
+  ren(var(x), compRR(r1, r2)) -> ren(ren(var(x), r1), r2)
+
+  ren(lam(e), r) -> lam(ren(e, liftR(r)))
+  ren(app(e1, e2), r) -> app(ren(e1, r), ren(e2, r))
+
+  sub(var(zero), cons(t, s)) -> t
+  sub(var(zero), liftS(s)) -> var(zero)
+  sub(var(suc(x)), cons(t, s)) -> sub(var(x), s)
+  sub(var(suc(x)), liftS(s)) -> ren(sub(var(x), s), wk)
+  
+  sub(lam(e), s) -> lam(sub(e, liftS(s)))
+  sub(app(e1, e2), s) -> app(sub(e1, s), sub(e2, s))
+  
+  sub(t, idS) -> t
+  sub(sub(t, s1), s2) -> sub(t, compSS(s1, s2))
+  sub(ren(t, r), s) -> sub(t, compRS(r, s))
+  ren(sub(t, s), r) -> sub(t, compSR(s, r))
+
+  compRR(compRR(r1, r2), r3) -> compRR(r1, compRR(r2, r3))
+  compSS(compSS(s1, s2), s3) -> compSS(s1, compSS(s2, s3))
+  
+
+  compRS(compRR(r1, r2), s) -> compRS(r1, compRS(r2, s))
+  compSR(compRS(r, s1), s2) -> compRS(r, compSS(s1, s2))n
+  compSR(compSR(s1, r1), r2) -> compSR(s1, compRR(r1, r2))
+  compSS(compSS(s1, s2), s3) -> compSS(s1, compSS(s2, s3))
+
+  compRR(idR, r) -> r
+  compRR(r, idR) -> r
+  compSS(idS, s) -> s
+  compSS(s, idS) -> s
+  
+  liftR(idR) -> idR
+  liftS(idS) -> idS
+
+  compRR(liftR(r1), liftR(r2)) -> liftR(compRR(r1, r2))
+  compSS(liftS(s1), liftS(s2)) -> liftS(compSS(s1, s2))
+  
+  compRS(liftR(r), liftS(s)) -> liftS(compRS(r, s))
+  compSR(liftS(s), liftR(r)) -> liftS(compSR(s, r))
+
+
+  compRR(wk, liftR(r)) -> compRR(r, wk)
+  compRS(wk, liftS(s)) -> compSR(s, wk)
+  
+  compRS(wk, cons(t, s)) -> s
+
+  compRR(wk, compRR(liftR(r1), r2)) -> compRR(r1, compRR(wk, r2))
+  compRS(wk, compSS(liftS(s1), s2)) -> compSS(s1, compRS(wk, s2))
+  compRS(wk, compRS(liftR(r1), s2)) -> compRS(r1, compRS(wk, s2))
+
+  compSS(liftS(s1), cons(t, s2)) -> cons(sub(t, s1), compSS(s1, s2))
+  compSR(cons(t, s), r) -> cons(ren(t, r), compSR(s, r))
+
+)

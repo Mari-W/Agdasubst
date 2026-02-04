@@ -35,7 +35,7 @@ module GenericsWithSort (Sort : Set) where
   ⟦ `■ s′ ⟧ X S s = s ≡ s′
   
   --! Tms
-  data Tm (d : Desc) : Scoped where
+  data Tm (d : Desc) : Scoped where 
     `var : S ∋ s → Tm d S s
     `con : ⟦ d ⟧ (Tm d) S s → Tm d S s
 
@@ -51,6 +51,7 @@ module GenericsWithSort (Sort : Set) where
 
       (`var x)  ⋯ ϕ = x `⋯ ϕ
       (`con e′) ⋯ ϕ = `con (e′ ⋯′ ϕ)
+      
       _⋯′_ {d′ = `σ A d′}     (a , D′) ϕ = a , D′ ⋯′ ϕ
       _⋯′_ {d′ = `X S′ M′ d′} (e , e′) ϕ = e ⋯ (ϕ ↑★ S′) , e′ ⋯′ ϕ
       _⋯′_ {d′ = `■ M′}       e        ϕ = e

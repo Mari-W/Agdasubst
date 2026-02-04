@@ -1,0 +1,99 @@
+(VAR x y z r r1 r2 r3 s s1 s2 s3 t t1 t2 tp k e)
+(RULES
+applyR(var(x), r) -> var(subR(x, r))
+applyR(lam(t), r) -> lam(applyR(t, liftR(r)))
+applyR(Lam(t), r) -> Lam(applyR(t, liftR(r)))
+applyR(all(k, t), r) -> all(applyR(k, r), applyR(t, liftR(r)))
+applyR(app(t1, t2), r) -> app(applyR(t1, r), applyR(t2, r))
+applyR(tapp(t1, t2), r) -> tapp(applyR(t1, r), applyR(t2, r))
+applyR(arr(t1, t2), r) -> arr(applyR(t1, r), applyR(t2, r))
+applyR(star, r) -> star
+applyS(var(x), s) -> subS(x, s)
+applyS(lam(t), s) -> lam(applyS(t, liftS(s)))
+applyS(Lam(t), s) -> Lam(applyS(t, liftS(s)))
+applyS(all(k, t), s) -> all(applyS(k, s), applyS(t, liftS(s)))
+applyS(app(t1, t2), s) -> app(applyS(t1, s), applyS(t2, s))
+applyS(tapp(t1, t2), s) -> tapp(applyS(t1, s), applyS(t2, s))
+applyS(arr(t1, t2), s) -> arr(applyS(t1, s), applyS(t2, s))
+applyS(star, s) -> star
+applyR(applyR(t, r1), r2) -> applyR(t, compRR(r1, r2))
+applyS(applyR(t, r1), s2) -> applyS(t, compRS(r1, s2))
+applyR(applyS(t, s1), r2) -> applyS(t, compSR(s1, r2))
+applyS(applyS(t, s1), s2) -> applyS(t, compSS(s1, s2))
+subR(x, wk) -> suc(x)
+subR(x, compRR(wk, r)) -> subR(suc(x), r)
+subS(x, compRS(wk, s)) -> subS(suc(x), s)
+subR(zero, consR(x, r)) -> x
+subS(zero, consS(t, s)) -> t
+subR(zero, liftR(r)) -> zero
+subS(zero, liftS(s)) -> var(zero)
+subR(zero, compRR(liftR(r1), r2)) -> subR(zero, r2)
+subS(zero, compRS(liftR(r1), s2)) -> subS(zero, s2)
+subS(zero, compSR(liftS(s1), r2)) -> var(subR(zero, r2))
+subS(zero, compSS(liftS(s1), s2)) -> subS(zero, s2)
+subR(suc(x), consR(y, r)) -> subR(x, r)
+subS(suc(x), consS(t, s)) -> subS(x, s)
+subR(suc(x), liftR(r)) -> subR(x, compRR(r, wk))
+subS(suc(x), liftS(s)) -> subS(x, compSR(s, wk))
+subR(suc(x), compRR(liftR(r1), r2)) -> subR(x, compRR(r1, compRR(wk, r2)))
+subS(suc(x), compRS(liftR(r1), s2)) -> subS(x, compRS(r1, compRS(wk, s2)))
+subS(suc(x), compSR(liftS(s1), r2)) -> subS(x, compSR(s1, compRR(wk, r2)))
+subS(suc(x), compSS(liftS(s1), s2)) -> subS(x, compSS(s1, compRS(wk, s2)))
+compRR(compRR(r1, r2), r3) -> compRR(r1, compRR(r2, r3))
+compRS(compRR(r1, r2), s3) -> compRS(r1, compRS(r2, s3))
+compSR(compRS(r1, s2), r3) -> compRS(r1, compSR(s2, r3))
+compSS(compRS(r1, s2), s3) -> compRS(r1, compSS(s2, s3))
+compSR(compSR(s1, r2), r3) -> compSR(s1, compRR(r2, r3))
+compSS(compSR(s1, r2), s3) -> compSS(s1, compRS(r2, s3))
+compSR(compSS(s1, s2), r3) -> compSS(s1, compSR(s2, r3))
+compSS(compSS(s1, s2), s3) -> compSS(s1, compSS(s2, s3))
+compRR(consR(x, r1), r2) -> consR(subR(x, r2), compRR(r1, r2))
+compRS(consR(x, r1), s2) -> consS(subS(x, s2), compRS(r1, s2))
+compSR(consS(t, s1), r2) -> consS(applyR(t, r2), compSR(s1, r2))
+compSS(consS(t, s1), s2) -> consS(applyS(t, s2), compSS(s1, s2))
+compRR(wk, consR(x, r)) -> r
+compRS(wk, consS(t, s)) -> s
+compRR(wk, liftR(r)) -> compRR(r, wk)
+compRS(wk, liftS(s)) -> compSR(s, wk)
+compRR(wk, compRR(liftR(r1), r2)) -> compRR(r1, compRR(wk, r2))
+compRS(wk, compRS(liftR(r1), s2)) -> compRS(r1, compRS(wk, s2))
+compSR(wk, compSR(liftS(s1), r2)) -> compSR(s1, compRR(wk, r2))
+compSS(wk, compSS(liftS(s1), s2)) -> compSS(s1, compRS(wk, s2))
+compRR(liftR(r1), liftR(r2)) -> liftR(compRR(r1, r2))
+compRS(liftR(r1), liftS(s2)) -> liftS(compRS(r1, s2))
+compSR(liftS(s1), liftR(r2)) -> liftS(compSR(s1, r2))
+compSS(liftS(s1), liftS(s2)) -> liftS(compSS(s1, s2))
+compRR(liftR(r1), compRR(liftR(r2), r3)) -> compRR(liftR(compRR(r1, r2)), r3)
+compSR(liftR(r1), compSR(liftS(s2), r3)) -> compSR(liftS(compRS(r1, s2)), r3)
+compSR(liftS(s1), compRR(liftR(r2), r3)) -> compSR(liftS(compSR(s1, r2)), r3)
+compSR(liftS(s1), compSR(liftS(s2), r3)) -> compSR(liftS(compSS(s1, s2)), r3)
+compRS(liftR(r1), compRS(liftR(r2), s3)) -> compRS(liftR(compRR(r1, r2)), s3)
+compSS(liftR(r1), compSS(liftS(s2), s3)) -> compSS(liftS(compRS(r1, s2)), s3)
+compSS(liftS(s1), compRS(liftR(r2), s3)) -> compSS(liftS(compSR(s1, r2)), s3)
+compSS(liftS(s1), compSS(liftS(s2), s3)) -> compSS(liftS(compSS(s1, s2)), s3)
+compRR(liftR(r1), consR(x, r2)) -> consR(x, compRR(r1, r2))
+compRS(liftR(r1), consS(t, s2)) -> consS(t, compRS(r1, s2))
+compSR(liftS(s1), consR(x, r2)) -> consS(var(x), compSR(s1, r2))
+compSS(liftS(s1), consS(t, s2)) -> consS(t, compSS(s1, s2))
+compRR(idR, r) -> r
+compRS(idR, s) -> s
+compRR(r, idR) -> r
+compSS(s, idS) -> s
+compSR(s, idR) -> s
+compSS(idS, s) -> s
+liftR(idR) -> idR
+liftS(idS) -> idS
+applyR(t, idR) -> t
+applyS(t, idS) -> t
+subR(x,idR()) -> x
+subS(x,idS()) -> var(x)
+
+compRS(r, idS) -> compSR(idS, r)
+compSS(s, compSR(idS, r)) -> compSR(s, r)
+compSS(compSR(idS, r), s) -> compRS(r, s)
+compRS(r1, compSR(idS, r2)) -> compSR(idS, compRR(r1, r2))
+applyS(t, compSR(idS, r)) -> applyR(t, r)
+
+applyS(t, consS(var(x), compRS(r, idS))) -> applyR(t, consR(x, r))
+applyS(t, consS(applyR(tp, r), compRS(r, idS))) -> applyR(applyS(t, consS(tp, idS)), r)
+)

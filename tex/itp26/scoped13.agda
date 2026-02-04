@@ -1,5 +1,5 @@
 {-# OPTIONS --rewriting --double-check --local-confluence-check #-}
-module scoped11 where
+module scoped13 where
 
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; subst; subst₂; trans; module ≡-Reasoning)
 open ≡-Reasoning
@@ -75,10 +75,26 @@ _⊔_ : Mode → Mode → Mode
 V ⊔ r  =  r
 T ⊔ r  =  T
 
-⊔⊔  : q ⊔ (r ⊔ u) ≡ (q ⊔ r) ⊔ u 
+⊑t   : q ⊑ T
+v⊑   : V ⊑ q
+⊑q⊔  : q ⊑ (q ⊔ r)
+⊑⊔r  : r ⊑ (q ⊔ r)
+
+⊔⊔  : q ⊔ (r ⊔ u) ≡ (q ⊔ r) ⊔ u
 ⊔v  : q ⊔ V ≡ q
 ⊔t  : q ⊔ T ≡ T
 
+⊑t {V} = v⊑t 
+⊑t {T} = rfl
+
+v⊑ {V} = rfl
+v⊑ {T} = v⊑t
+
+⊑q⊔ {V} = v⊑
+⊑q⊔ {T} = rfl
+
+⊑⊔r {q = V} = rfl
+⊑⊔r {q = T} = ⊑t
 
 ⊔⊔ {V} = refl
 ⊔⊔ {T} = refl
@@ -91,25 +107,14 @@ T ⊔ r  =  T
 
 {-# REWRITE ⊔⊔ ⊔v ⊔t #-}
 
-⊑t   : q ⊑ T
-v⊑   : V ⊑ q
-⊑q⊔  : q ⊑ (q ⊔ r)
-⊑⊔r  : r ⊑ (q ⊔ r)
-⊑t {V} = v⊑t
-⊑t {T} = rfl
-
-v⊑ {V} = rfl
-v⊑ {T} = v⊑t
-
-⊑q⊔ {V} = v⊑
-⊑q⊔ {T} = rfl
-
-⊑⊔r {q = V} = rfl
-⊑⊔r {q = T} = ⊑t
-
 tm⊑ : q ⊑ r → S ⊢[ q ] s → S ⊢[ r ] s
 tm⊑ rfl x  = x
 tm⊑ v⊑t i = ` i
+
+sub⊑ : q ⊑ r → S₁ ⊩[ q ] S₂ → S₁ ⊩[ r ] S₂
+sub⊑ rfl σ = σ
+sub⊑ v⊑t ε = ε
+sub⊑ v⊑t (σ , x) = sub⊑ v⊑t σ , (` x)
 
 -- [MW] behold: the main trick! hide dependence in instance resolution.
 record Suc (q : Mode) : Set where
@@ -162,74 +167,96 @@ _∘_ : S₁ ⊩[ q ] S₂ → S₂ ⊩[ r ] S₃ → S₁ ⊩[ q ⊔ r ] S₃
 
 _→ˢ_ : Scope → Scope → Set
 S₁ →ˢ S₂ = S₁ ⊩[ T ] S₂ 
-_→ᴿ_ : Scope → Scope → Set
-S₁ →ᴿ S₂ = S₁ ⊩[ V ] S₂ 
 
 
 variable
-  σ σ₁ σ₂ σ₃ : S ⊩[ q ] S
+  σ σ₁ σ₂ σ₃ : S₁ →ˢ S₂ 
+
+_→ᴿ_ : Scope → Scope → Set
+S₁ →ᴿ S₂ = S₁ ⊩[ V ] S₂ 
+
+variable
+  ρ ρ₁ ρ₂ ρ₃ : S₁ →ᴿ S₂ 
 
 opaque 
   _⋯ˢ_ : S₁ ⊢[ q ] s → S₁ ⊩[ r ] S₂ → S₂ ⊢[ q ⊔ r ] s
   _⋯ˢ_ = _[_] 
-  _;ˢˢ_ : S₁ ⊩[ q ] S₂ → S₂ ⊩[ r ] S₃ → S₁ ⊩[ q ⊔ r ] S₃
-  _;ˢˢ_ = _∘_
-  idˢ : S ⊩[ V ] S
-  idˢ = id-poly
+
+opaque 
+
+  _;ᴿᴿ_ : S₁ ⊩[ V ] S₂ → S₂ ⊩[ V ] S₃ → S₁ ⊩[ V ] S₃
+  _;ᴿᴿ_ = _∘_
+  idᴿ : S ⊩[ V ] S
+  idᴿ = id-poly
   wk : ∀ s → S ⊩[ V ] (s ∷ S)
   wk = _⁺_ id-poly
-  _∙ˢ_ : S₂ ⊢[ q ] s → S₁ ⊩[ r ] S₂ → (s ∷ S₁) ⊩[ q ⊔ r ] S₂  
+  _↑ᴿ_ : S₁ ⊩[ V ] S₂ → ∀ s → (s ∷ S₁) ⊩[ V ] (s ∷ S₂)
+  _↑ᴿ_ = _^_
+
+postulate
+  compositionalityᴿᴿ      : (x ⋯ˢ ρ₁) ⋯ˢ ρ₂ ≡ (x ⋯ˢ (ρ₁ ;ᴿᴿ ρ₂))                         -- closss
+  wk-betaᴿ                 : x ⋯ˢ (wk s)       ≡ suc x                                     -- varshift1
+  wk-beta-compᴿ           : x ⋯ˢ (wk s ;ᴿᴿ ρ) ≡ suc x ⋯ˢ ρ                               -- varshift2s
+  lift-beta-zeroᴿ         : zero ⋯ˢ (ρ ↑ᴿ s)           ≡ zero                          -- fvarlift2s
+  lift-beta-zero-compᴿᴿ   : zero ⋯ˢ ((ρ₁ ↑ᴿ s) ;ᴿᴿ ρ₂) ≡ zero ⋯ˢ ρ₂                      -- fvarlift2ss
+  
+  lift-beta-sucᴿ          : suc x ⋯ˢ (ρ ↑ᴿ s)  ≡ x ⋯ˢ (ρ ;ᴿᴿ wk s)                       -- rvarlift1s
+  lift-beta-suc-compᴿᴿ    : suc x ⋯ˢ ((ρ₁ ↑ᴿ s) ;ᴿᴿ ρ₂) ≡ x ⋯ˢ (ρ₁ ;ᴿᴿ (wk s ;ᴿᴿ ρ₂))    -- rvarlift2ss
+  comp-assocᴿᴿᴿ           : (ρ₁ ;ᴿᴿ ρ₂) ;ᴿᴿ ρ₃  ≡ ρ₁ ;ᴿᴿ (ρ₂ ;ᴿᴿ ρ₃)                     -- assenvsss
+  
+ 
+  wk-liftᴿ                : wk s ;ᴿᴿ (ρ ↑ᴿ s) ≡ ρ ;ᴿᴿ wk s                               -- shiftlift1s
+  wk-lift-compᴿᴿ          : wk s ;ᴿᴿ ((ρ₁ ↑ᴿ s) ;ᴿᴿ ρ₂) ≡ ρ₁ ;ᴿᴿ (wk s  ;ᴿᴿ ρ₂)          -- shiftlift2ss  
+  lift-dist-compᴿᴿ        : (ρ₁ ↑ᴿ s) ;ᴿᴿ (ρ₂ ↑ᴿ s) ≡ (ρ₁ ;ᴿᴿ ρ₂) ↑ᴿ s                   -- lift1ss
+  lift-dist-comp-compᴿᴿᴿ  : (ρ₁ ↑ᴿ s) ;ᴿᴿ ((ρ₂ ↑ᴿ s) ;ᴿᴿ ρ₃) ≡ ((ρ₁ ;ᴿᴿ ρ₂) ↑ᴿ s) ;ᴿᴿ ρ₃ -- lift2sss
+
+  comp-idᵣᴿᴿ              : ρ ;ᴿᴿ idᴿ  ≡ ρ                                               -- idrss
+  comp-idₗᴿᴿ              : idᴿ ;ᴿᴿ ρ  ≡ ρ                                               -- idlss
+  up-idᴿ                  : idᴿ {S = S} ↑ᴿ s ≡ idᴿ                                       -- liftids
+  right-idᴿ               : t ⋯ˢ idᴿ         ≡ t                                         -- ids
+  right-var-idᴿ           : x ⋯ˢ idᴿ         ≡  x                                       -- ids
+  trav-1ᴿ : (` x)        ⋯ˢ ρ ≡ ` (x ⋯ˢ ρ)
+  trav0ᴿ : (λx e)        ⋯ˢ ρ ≡ λx (e ⋯ˢ (ρ ↑ᴿ _))
+  trav1ᴿ : (Λα e)        ⋯ˢ ρ ≡ Λα (e ⋯ˢ (ρ ↑ᴿ _))
+  trav2ᴿ : (∀[α∶ k ] t)  ⋯ˢ ρ ≡ ∀[α∶ k ⋯ˢ ρ ] (t ⋯ˢ (ρ ↑ᴿ _))
+  trav3ᴿ : (e₁ · e₂)     ⋯ˢ ρ ≡ (e₁ ⋯ˢ ρ) · (e₂ ⋯ˢ ρ)
+  trav4ᴿ : (e • t)       ⋯ˢ ρ ≡ (e ⋯ˢ ρ) • (t ⋯ˢ ρ)
+  trav5ᴿ : (t₁ ⇒ t₂)     ⋯ˢ ρ ≡ (t₁ ⋯ˢ ρ) ⇒ (t₂ ⋯ˢ ρ)
+  trav6ᴿ : ★             ⋯ˢ ρ ≡ ★ 
+
+opaque
+  _;ˢˢ_ : S₁ ⊩[ T ] S₂ → S₂ ⊩[ T ] S₃ → S₁ ⊩[ T ] S₃
+  _;ˢˢ_ = _∘_
+  ⟦_⟧ : S₁ ⊩[ V ] S₂ → S₁ ⊩[ T ] S₂
+  ⟦_⟧ = sub⊑ v⊑t
+  _∙ˢ_ : S₂ ⊢[ T ] s → S₁ ⊩[ T ] S₂ → (s ∷ S₁) ⊩[ T ] S₂  
   xt ∙ˢ σ = σ , xt
-  _↑ˢ_ : S₁ ⊩[ q ] S₂ → ∀ s → (s ∷ S₁) ⊩[ q ] (s ∷ S₂)
+  _↑ˢ_ : S₁ ⊩[ T ] S₂ → ∀ s → (s ∷ S₁) ⊩[ T ] (s ∷ S₂)
   _↑ˢ_ = _^_
 
 postulate
-  compositionalityˢˢ      : {Q : S₁ ⊢[ u ] s} {σ₁ :  S₁ ⊩[ q ] S₂} → {σ₂ : S₂ ⊩[ r ] S₃} →
-    (Q ⋯ˢ σ₁) ⋯ˢ σ₂ ≡ (Q ⋯ˢ (σ₁ ;ˢˢ σ₂))                         -- closss
-  wk-beta                 : 
-    x ⋯ˢ (wk s)       ≡ suc x                                     -- varshift1
-  wk-beta-compˢ           : ∀ {σ :  (s ∷ S₁) ⊩[ q ] S₂} →
-    x ⋯ˢ (wk s ;ˢˢ σ) ≡ suc x ⋯ˢ σ                               -- varshift2s
-  ext-beta-zeroˢ          : 
-    zero ⋯ˢ (t ∙ˢ σ)           ≡ t                               -- fvarconss
-  lift-beta-zeroˢ         : 
-    zero ⋯ˢ (σ ↑ˢ s)           ≡ ` zero                          -- fvarlift2s
-  lift-beta-zeroˢᴿ         : 
-      zero ⋯ˢ (σ ↑ˢ s)           ≡ zero                          -- fvarlift2s
-  lift-beta-zero-compˢˢ   : ∀ {σ₁ :  S₁ ⊩[ q ] S₂} → {σ₂ : (s ∷ S₂) ⊩[ T ] S₃} →
-    zero ⋯ˢ ((σ₁ ↑ˢ s) ;ˢˢ σ₂) ≡ zero ⋯ˢ σ₂                      -- fvarlift2ss
-  lift-beta-zero-compˢᴿ   : ∀ {σ₁ :  S₁ ⊩[ T ] S₂} → {σ₂ : (s ∷ S₂) ⊩[ V ] S₃} →
-    zero ⋯ˢ ((σ₁ ↑ˢ s) ;ˢˢ σ₂) ≡ ` (zero ⋯ˢ σ₂)                      -- fvarlift2ss
-  ext-beta-sucˢ           : 
-    suc x ⋯ˢ (t ∙ˢ σ)  ≡ x ⋯ˢ σ                                  -- rvarconss 
-  lift-beta-sucˢ          :  ∀ {σ :  S₁ ⊩[ q ] S₂} →
-    suc x ⋯ˢ (σ ↑ˢ s)  ≡ x ⋯ˢ (σ ;ˢˢ wk s)                       -- rvarlift1s
-  lift-beta-suc-compˢˢ    :  ∀ {σ₁ :  S₁ ⊩[ q ] S₂} → {σ₂ : (s ∷ S₂) ⊩[ r ] S₃} →
-    suc x ⋯ˢ ((σ₁ ↑ˢ s) ;ˢˢ σ₂) ≡ x ⋯ˢ (σ₁ ;ˢˢ (wk s ;ˢˢ σ₂))    -- rvarlift2ss
-  comp-assocˢˢˢ           : ∀ {σ₁ :  S₁ ⊩[ q ] S₂} → {σ₂ : S₂ ⊩[ r ] S₃} → {σ₃ : S₃ ⊩[ u ] S₄} →
-    (σ₁ ;ˢˢ σ₂) ;ˢˢ σ₃  ≡ σ₁ ;ˢˢ (σ₂ ;ˢˢ σ₃)                     -- assenvsss
-  distributivityˢˢ        : 
-    (t ∙ˢ σ₁) ;ˢˢ σ₂  ≡ ((t ⋯ˢ σ₂) ∙ˢ (σ₁ ;ˢˢ σ₂))               -- mapenvss
-  interactˢ               : 
-    wk s ;ˢˢ (t ∙ˢ σ) ≡ σ                                        -- shiftconss
-  wk-liftˢ                :  ∀ {σ :  S₁ ⊩[ q ] S₂} →
-    wk s ;ˢˢ (σ ↑ˢ s) ≡ σ ;ˢˢ wk s                               -- shiftlift1s
-  wk-lift-compˢˢ          : ∀ {σ₁ :  S₁ ⊩[ q ] S₂} → {σ₂ : (s ∷ S₂) ⊩[ r ] S₃} →
-    wk s ;ˢˢ ((σ₁ ↑ˢ s) ;ˢˢ σ₂) ≡ σ₁ ;ˢˢ (wk s  ;ˢˢ σ₂)          -- shiftlift2ss  
-  lift-dist-compˢˢ        : 
-    (σ₁ ↑ˢ s) ;ˢˢ (σ₂ ↑ˢ s) ≡ (σ₁ ;ˢˢ σ₂) ↑ˢ s                   -- lift1ss
-  lift-dist-comp-compˢˢˢ  : 
-    (σ₁ ↑ˢ s) ;ˢˢ ((σ₂ ↑ˢ s) ;ˢˢ σ₃) ≡ ((σ₁ ;ˢˢ σ₂) ↑ˢ s) ;ˢˢ σ₃ -- lift2sss
-  lift-extˢˢ              : 
-    (σ₁ ↑ˢ s) ;ˢˢ (t ∙ˢ σ₂) ≡ t ∙ˢ (σ₁ ;ˢˢ σ₂)                   -- liftenvrr
-  comp-idᵣˢˢ              : 
-    σ ;ˢˢ idˢ  ≡ σ                                               -- idrss
-  comp-idₗˢˢ              : 
-    idˢ ;ˢˢ σ  ≡ σ                                               -- idlss
-  up-idˢ                  : 
-    idˢ {S = S} ↑ˢ s ≡ idˢ                                       -- liftids
-  right-idˢ               : 
-    Q ⋯ˢ idˢ         ≡ Q                                        -- ids
+  compositionalityˢˢ      : (Q ⋯ˢ σ₁) ⋯ˢ σ₂ ≡ (Q ⋯ˢ (σ₁ ;ˢˢ σ₂))                         -- closss
+  wk-beta                 : x ⋯ˢ (⟦ wk s ⟧)       ≡ ` suc x                                     -- varshift1
+  wk-beta-compˢ           : x ⋯ˢ (⟦ wk s ⟧ ;ˢˢ σ) ≡ suc x ⋯ˢ σ                               -- varshift2s
+  ext-beta-zeroˢ          : zero ⋯ˢ (t ∙ˢ σ)           ≡ t                               -- fvarconss
+  lift-beta-zeroˢ         : zero ⋯ˢ (σ ↑ˢ s)           ≡ ` zero                          -- fvarlift2s
+  lift-beta-zero-compˢˢ   : zero ⋯ˢ ((σ₁ ↑ˢ s) ;ˢˢ σ₂) ≡ zero ⋯ˢ σ₂                      -- fvarlift2ss
+  ext-beta-sucˢ           : suc x ⋯ˢ (t ∙ˢ σ)  ≡ x ⋯ˢ σ                                  -- rvarconss 
+  lift-beta-sucˢ          : suc x ⋯ˢ (σ ↑ˢ s)  ≡ x ⋯ˢ (σ ;ˢˢ ⟦ wk s ⟧)                       -- rvarlift1s
+  lift-beta-suc-compˢˢ    : suc x ⋯ˢ ((σ₁ ↑ˢ s) ;ˢˢ σ₂) ≡ x ⋯ˢ (σ₁ ;ˢˢ (⟦ wk s ⟧ ;ˢˢ σ₂))    -- rvarlift2ss
+  comp-assocˢˢˢ           : (σ₁ ;ˢˢ σ₂) ;ˢˢ σ₃  ≡ σ₁ ;ˢˢ (σ₂ ;ˢˢ σ₃)                     -- assenvsss
+  distributivityˢˢ        : (t ∙ˢ σ₁) ;ˢˢ σ₂  ≡ ((t ⋯ˢ σ₂) ∙ˢ (σ₁ ;ˢˢ σ₂))               -- mapenvss
+  interactˢ               : ⟦ wk s ⟧ ;ˢˢ (t ∙ˢ σ) ≡ σ                                        -- shiftconss
+  wk-liftˢ                : ⟦ wk s ⟧ ;ˢˢ (σ ↑ˢ s) ≡ σ ;ˢˢ ⟦ wk s ⟧                               -- shiftlift1s
+  wk-lift-compˢˢ          : ⟦ wk s ⟧ ;ˢˢ ((σ₁ ↑ˢ s) ;ˢˢ σ₂) ≡ σ₁ ;ˢˢ (⟦ wk s ⟧  ;ˢˢ σ₂)          -- shiftlift2ss  
+  lift-dist-compˢˢ        : (σ₁ ↑ˢ s) ;ˢˢ (σ₂ ↑ˢ s) ≡ (σ₁ ;ˢˢ σ₂) ↑ˢ s                   -- lift1ss
+  lift-dist-comp-compˢˢˢ  : (σ₁ ↑ˢ s) ;ˢˢ ((σ₂ ↑ˢ s) ;ˢˢ σ₃) ≡ ((σ₁ ;ˢˢ σ₂) ↑ˢ s) ;ˢˢ σ₃ -- lift2sss
+  lift-extˢˢ              : (σ₁ ↑ˢ s) ;ˢˢ (t ∙ˢ σ₂) ≡ t ∙ˢ (σ₁ ;ˢˢ σ₂)                   -- liftenvrr
+  comp-idᵣˢˢ              : σ ;ˢˢ ⟦ idᴿ ⟧  ≡ σ                                           -- idrss
+  comp-idₗˢˢ              : ⟦ idᴿ ⟧ ;ˢˢ σ  ≡ σ                                           -- idlss
+  up-idˢ                  : ⟦ idᴿ {S = S} ⟧  ↑ˢ s ≡ ⟦ idᴿ ⟧                               -- liftids
+  right-idˢ               : t ⋯ˢ ⟦ idᴿ ⟧         ≡ t                                     -- ids
+  right-var-idˢ           : x ⋯ˢ ⟦ idᴿ ⟧         ≡ ` x                                   -- ids
   trav-1 : (` x)        ⋯ˢ σ ≡ x ⋯ˢ σ
   trav0 : (λx e)        ⋯ˢ σ ≡ λx (e ⋯ˢ (σ ↑ˢ _))
   trav1 : (Λα e)        ⋯ˢ σ ≡ Λα (e ⋯ˢ (σ ↑ˢ _))
@@ -237,9 +264,14 @@ postulate
   trav3 : (e₁ · e₂)     ⋯ˢ σ ≡ (e₁ ⋯ˢ σ) · (e₂ ⋯ˢ σ)
   trav4 : (e • t)       ⋯ˢ σ ≡ (e ⋯ˢ σ) • (t ⋯ˢ σ)
   trav5 : (t₁ ⇒ t₂)     ⋯ˢ σ ≡ (t₁ ⋯ˢ σ) ⇒ (t₂ ⋯ˢ σ)
-  trav6 : ★             ⋯ˢ σ ≡ ★ 
-
+  trav6 : ★             ⋯ˢ σ ≡ ★
+  comp-down : ⟦ ρ₁ ⟧ ;ˢˢ ⟦ ρ₂ ⟧ ≡ ⟦ ρ₁ ;ᴿᴿ ρ₂ ⟧
+  id-down : ⟦ idᴿ ⟧ ≡ 
+  
 {-# REWRITE 
+
+  comp-down
+  comp-down₂
   compositionalityˢˢ   
   wk-beta                           
   wk-beta-compˢ                   
@@ -260,7 +292,10 @@ postulate
   comp-idᵣˢˢ              
   comp-idₗˢˢ              
   up-idˢ                       
-  right-idˢ             
+  right-idˢ 
+  comp-idᵣᴿᴿ
+  comp-idₗᴿᴿ
+  right-var-idᴿ   
   trav-1
   trav0
   trav1
@@ -269,11 +304,9 @@ postulate
   trav4
   trav5
   trav6
-
-  lift-beta-zeroˢᴿ
-  lift-beta-zero-compˢᴿ
 #-}
   
+
 
 -- Typing ----------------------------------------------------------------------
 
@@ -308,12 +341,12 @@ _∷ₜ_ : S ∶⊢ s → Ctx S → Ctx (s ∷ S)
 --!! Wk 
 weaken : S ⊢ s → (s′ ∷ S) ⊢ s
 
-weaken {s′ = s} t = t ⋯ˢ wk s
+weaken {s′ = s} t = t ⋯ˢ ⟦ wk s ⟧
 
 --!! Subst
 _⟨_⟩ : (s′ ∷ S) ⊢ s → S ⊢ s′ → S ⊢ s
 
-t ⟨ t′ ⟩ = t ⋯ˢ (t′ ∙ˢ {! idˢ  !}) 
+t ⟨ t′ ⟩ = t ⋯ˢ (t′ ∙ˢ ⟦ idᴿ ⟧) 
 
 wk-drop-∈ : (x : S ∋ s) → drop-∈ x S ⊢ s′ → S ⊢ s′
 wk-drop-∈ zero t = weaken t 
@@ -357,8 +390,7 @@ data _⊢_∶_ : Ctx S → S ⊢ s → S ∶⊢ s → Set where
 
 --!! WTR
 _∶_→ᴿ_ : S₁ →ᴿ S₂ → Ctx S₁ → Ctx S₂ → Set
-
-_∶_→ᴿ_ {S₁} {S₂} σ Γ₁ Γ₂ = ∀ (s : Sort) (x : S₁ ∋ s) (t : S₁ ∶⊢ s) → (Γ₁ ∋ x ∶ t) → Γ₂ ∋ (x ⋯ˢ σ) ∶ t ⋯ˢ σ 
+_∶_→ᴿ_ {S₁} {S₂} ρ Γ₁ Γ₂ = ∀ (s : Sort) (x : S₁ ∋ s) (t : S₁ ∶⊢ s) → (Γ₁ ∋ x ∶ t) → Γ₂ ∋ x ⋯ˢ ρ ∶ t ⋯ˢ ⟦ ρ ⟧ 
 
 --!! WTS
 _∶_→ˢ_ : S₁ →ˢ S₂ → Ctx S₁ → Ctx S₂ → Set
@@ -388,44 +420,44 @@ data _↪_ : S ⊢ expr → S ⊢ expr → Set where
     (e • t) ↪ (e′ • t)
 --! }
 
-
+-- postulate
 ⊢wkᴿ : ∀ (Γ : Ctx S) (x : S ∋ s) t (t′ : S ∶⊢ s′) → Γ ∋ x ∶ t → (t′ ∷ₜ Γ) ∋ (suc x) ∶ (weaken t) 
 ⊢wkᴿ _ _ _ _ refl = refl
 
-⊢↑ᴿ : σ ∶ Γ₁ →ᴿ Γ₂ → (t : S₁ ∶⊢ s) → (σ ↑ˢ s) ∶ (t ∷ₜ Γ₁) →ᴿ ((t ⋯ˢ σ) ∷ₜ Γ₂)
-⊢↑ᴿ {σ = σ} ⊢ρ _ _ (zero) _ refl = {!   !} -- refl
-⊢↑ᴿ {σ = σ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} ⊢ρ t _ (suc x) _ refl = {!   !} -- ⊢wkᴿ Γ₂ (x ⋯ˢ σ) (wk-drop-∈ x (Γ₁ _ x) ⋯ˢ σ) (t ⋯ˢ σ) (⊢ρ _ x _ refl)
+⊢↑ᴿ : ρ ∶ Γ₁ →ᴿ Γ₂ → (t : S₁ ∶⊢ s) → (ρ ↑ᴿ s) ∶ (t ∷ₜ Γ₁) →ᴿ ((t ⋯ˢ ⟦ ρ ⟧) ∷ₜ Γ₂)
+⊢↑ᴿ ⊢ρ _ _ (zero) _ refl = {!   !} -- refl
+⊢↑ᴿ {ρ = ρ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} ⊢ρ t _ (suc x) _ refl = {!   !} -- ⊢wkᴿ Γ₂ {! (x ⋯ˢ ρ) !} {! (wk-drop-∈ x (Γ₁ _ x) ⋯ˢ ρ) !} (t ⋯ˢ ⟦ ρ ⟧) (⊢ρ _ x _ refl)
 -- 
 --! RPT
--- _⊢⋯ᴿ_ : ∀ {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} →
---   σ ∶ Γ₁ →ᴿ Γ₂ →
+-- _⊢⋯ˢ_ : ∀ {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} →
+--   ρ ∶ Γ₁ →ᴿ Γ₂ →
 --   Γ₁ ⊢ e ∶ t →
---   Γ₂ ⊢ (e ⋯ᴿ σ) ∶ (t ⋯ᴿ σ)
--- ⊢ρ ⊢⋯ᴿ (⊢` ⊢x)    = 
+--   Γ₂ ⊢ (e ⋯ˢ ρ) ∶ (t ⋯ˢ ρ)
+-- ⊢ρ ⊢⋯ˢ (⊢` ⊢x)    = 
 --   ⊢` (⊢ρ _ _ _ ⊢x) 
--- ⊢ρ ⊢⋯ᴿ (⊢λ ⊢e)        = 
---   ⊢λ ((⊢↑ᴿ ⊢ρ _) ⊢⋯ᴿ ⊢e)
--- ⊢ρ ⊢⋯ᴿ (⊢Λ ⊢e)        =
---   ⊢Λ ((⊢↑ᴿ ⊢ρ _) ⊢⋯ᴿ ⊢e)
--- ⊢ρ ⊢⋯ᴿ (⊢· ⊢e₁ ⊢e₂)   = 
---   ⊢· (⊢ρ ⊢⋯ᴿ ⊢e₁) (⊢ρ ⊢⋯ᴿ ⊢e₂)
--- ⊢ρ ⊢⋯ᴿ (⊢• ⊢e ⊢t ⊢t') = 
---   {! ⊢• (⊢ρ ⊢⋯ᴿ ⊢e) (⊢ρ ⊢⋯ᴿ ⊢t) ((⊢↑ᴿ ⊢ρ _) ⊢⋯ᴿ ⊢t')  !}
--- ⊢ρ ⊢⋯ᴿ ⊢★             = 
+-- ⊢ρ ⊢⋯ˢ (⊢λ ⊢e)        = 
+--   ⊢λ ((⊢↑ᴿ ⊢ρ _) ⊢⋯ˢ ⊢e)
+-- ⊢ρ ⊢⋯ˢ (⊢Λ ⊢e)        =
+--   ⊢Λ ((⊢↑ᴿ ⊢ρ _) ⊢⋯ˢ ⊢e)
+-- ⊢ρ ⊢⋯ˢ (⊢· ⊢e₁ ⊢e₂)   = 
+--   ⊢· (⊢ρ ⊢⋯ˢ ⊢e₁) (⊢ρ ⊢⋯ˢ ⊢e₂)
+-- ⊢ρ ⊢⋯ˢ (⊢• ⊢e ⊢t ⊢t') = 
+--   {! ⊢• (⊢ρ ⊢⋯ˢ ⊢e) (⊢ρ ⊢⋯ˢ ⊢t) ((⊢↑ᴿ ⊢ρ _) ⊢⋯ˢ ⊢t')  !}
+-- ⊢ρ ⊢⋯ˢ ⊢★             = 
 --   ⊢★
 
-{- ⊢wkˢ : ∀ (Γ : Ctx S) (e : S ⊢ s) (t : S ∶⊢ s) (t′ : S ∶⊢ s′) → Γ ⊢ e ∶ t → (t′ ∷ₜ Γ) ⊢ weaken e ∶ weaken t 
-⊢wkˢ Γ _ _ t' ⊢t = {! ⊢t  !}
+⊢wkˢ : ∀ (Γ : Ctx S) (e : S ⊢ s) (t : S ∶⊢ s) (t′ : S ∶⊢ s′) → Γ ⊢ e ∶ t → (t′ ∷ₜ Γ) ⊢ weaken e ∶ weaken t 
+⊢wkˢ Γ e t t' ⊢t = {!   !}
 
 ⊢↑ˢ : σ ∶ Γ₁ →ˢ Γ₂ → (t : S ∶⊢ s) → (σ ↑ˢ s) ∶ t ∷ₜ Γ₁ →ˢ ((t ⋯ˢ σ) ∷ₜ Γ₂)
-⊢↑ˢ ⊢σ _ _ (zero) _ refl = ⊢` refl -- ⊢` ?
+⊢↑ˢ ⊢σ _ _ (zero) _ refl = ⊢` refl 
 ⊢↑ˢ {σ = σ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} ⊢σ t _ (suc x) _ refl = ⊢wkˢ Γ₂ (x ⋯ˢ σ) (wk-drop-∈ x (Γ₁ _ x) ⋯ˢ σ) (t ⋯ˢ σ) (⊢σ _ x _ refl)
 
---! SPT
 _⊢⋯ˢ_ : ∀ {σ : S₁ →ˢ S₂} {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} →
   σ ∶ Γ₁ →ˢ Γ₂ →
   Γ₁ ⊢ e ∶ t →
   Γ₂ ⊢ (e ⋯ˢ σ) ∶ (t ⋯ˢ σ)
+--! SPT
 ⊢σ ⊢⋯ˢ (⊢` ⊢x)                  = ⊢σ _ _ _ ⊢x 
 _⊢⋯ˢ_ {σ = σ} ⊢σ (⊢λ ⊢e)        = ⊢λ (_⊢⋯ˢ_ {σ = σ ↑ˢ _} (⊢↑ˢ {σ = σ} ⊢σ _) ⊢e) 
 _⊢⋯ˢ_ {σ = σ}  ⊢σ (⊢Λ ⊢e)       = ⊢Λ (_⊢⋯ˢ_ {σ = σ ↑ˢ _} (⊢↑ˢ {σ = σ} ⊢σ _) ⊢e)
@@ -437,7 +469,7 @@ _⊢⋯ˢ_ {σ = σ} ⊢σ (⊢• ⊢e ⊢t ⊢t') =
 _⊢⋯ˢ_ ⊢σ ⊢★             = 
   ⊢★
 
-⊢[] : ∀ {Γ : Ctx S} {e : S ⊢ s} {t : S ∶⊢ s} → Γ ⊢ e ∶ t → (e ∙ˢ idˢ) ∶ (t ∷ₜ Γ) →ˢ Γ
+⊢[] : ∀ {Γ : Ctx S} {e : S ⊢ s} {t : S ∶⊢ s} → Γ ⊢ e ∶ t → (e ∙ˢ ⟦ idᴿ ⟧) ∶ (t ∷ₜ Γ) →ˢ Γ
 ⊢[] ⊢t _ zero     _ refl = ⊢t
 ⊢[] ⊢t _ (suc x)  _ refl = ⊢` refl 
 
@@ -446,8 +478,8 @@ subject-reduction :
   Γ ⊢ e ∶ t →   
   e ↪ e′ → 
   Γ ⊢ e′ ∶ t 
-subject-reduction (⊢· {e₂ = e₂} (⊢λ ⊢e₁) ⊢e₂) (β-λ v₂)        = _⊢⋯ˢ_ {σ = e₂ ∙ˢ idˢ} (⊢[] ⊢e₂) ⊢e₁
-subject-reduction (⊢• {t = t} (⊢Λ ⊢e) ⊢t ⊢t') β-Λ             = _⊢⋯ˢ_ {σ = t ∙ˢ idˢ} (⊢[] ⊢t) ⊢e     
+subject-reduction (⊢· {e₂ = e₂} (⊢λ ⊢e₁) ⊢e₂) (β-λ v₂)        = _⊢⋯ˢ_ {σ = e₂ ∙ˢ ⟦ idᴿ ⟧} (⊢[] ⊢e₂) ⊢e₁
+subject-reduction (⊢• {t = t} (⊢Λ ⊢e) ⊢t ⊢t') β-Λ             = _⊢⋯ˢ_ {σ = t ∙ˢ ⟦ idᴿ ⟧} (⊢[] ⊢t) ⊢e     
 subject-reduction (⊢· ⊢e₁ ⊢e₂)                (ξ-·₁ e₁↪e)     = ⊢· (subject-reduction ⊢e₁ e₁↪e) ⊢e₂
 subject-reduction (⊢· ⊢e₁ ⊢e₂)                (ξ-·₂ e₂↪e x)   = ⊢· ⊢e₁ (subject-reduction ⊢e₂ e₂↪e)          
-subject-reduction (⊢• ⊢e ⊢t ⊢t')              (ξ-• e↪e')      = ⊢• (subject-reduction ⊢e e↪e') ⊢t ⊢t'   -}
+subject-reduction (⊢• ⊢e ⊢t ⊢t')              (ξ-• e↪e')      = ⊢• (subject-reduction ⊢e e↪e') ⊢t ⊢t'  

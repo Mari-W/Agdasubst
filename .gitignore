@@ -25,3 +25,5 @@ supplement.zip
 .mypy_cache
 _build
 signature.png
+target
+Cargo.lock

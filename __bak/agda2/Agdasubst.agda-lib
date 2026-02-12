@@ -1,0 +1,9 @@
+name: Agdasubst
+depend:
+  standard-library
+include:
+  src
+flags: 
+  --rewriting
+  --local-confluence-check 
+  --double-check

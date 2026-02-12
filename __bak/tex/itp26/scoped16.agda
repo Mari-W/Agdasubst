@@ -1,5 +1,5 @@
 {-# OPTIONS --rewriting --double-check --local-confluence-check #-}
-module scoped17 where
+module scoped16 where
 
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; subst; subst₂; trans; module ≡-Reasoning)
 open ≡-Reasoning
@@ -179,7 +179,7 @@ opaque
   _;ˢˢ_ = _∘_
   idˢ : S ⊩[ q ] S
   idˢ = id-poly
-  wk : ∀ s → S ⊩[ V ] (s ∷ S)
+  wk : ∀ s → S ⊩[ q ] (s ∷ S)
   wk = _⁺_ id-poly
   _∙ˢ_ : S₂ ⊢[ q ] s → S₁ ⊩[ q ] S₂ → (s ∷ S₁) ⊩[ q ] S₂  
   xt ∙ˢ σ = σ , xt
@@ -190,20 +190,20 @@ opaque
 postulate
   compositionalityˢˢ      : {Q : S₁ ⊢[ u ] s} →
     (Q ⋯ˢ σ₁) ⋯ˢ σ₂ ≡ (Q ⋯ˢ (σ₁ ;ˢˢ σ₂))                         -- closss  
-  wk-beta                 : x ⋯ˢ (wk s)       ≡  suc x                                     -- varshift1
-  wk-beta-compˢ           : x ⋯ˢ (wk s ;ˢˢ σ) ≡ suc x ⋯ˢ σ                               -- varshift2s
+  wk-beta                 : x ⋯ˢ (wk s)       ≡ ` suc x                                     -- varshift1
+  wk-beta-compˢ           : x ⋯ˢ (wk {q = T} s ;ˢˢ σ) ≡ suc x ⋯ˢ σ                               -- varshift2s
   ext-beta-zeroˢ          : zero ⋯ˢ (t ∙ˢ σ)           ≡ t                               -- fvarconss
   lift-beta-zeroˢ         : zero ⋯ˢ (σ ↑ˢ s)           ≡ ` zero                          -- fvarlift2s
   lift-beta-zero-compˢˢ   : zero ⋯ˢ ((σ₁ ↑ˢ s) ;ˢˢ σ₂) ≡ zero ⋯ˢ σ₂                      -- fvarlift2ss
   ext-beta-sucˢ           : suc x ⋯ˢ (t ∙ˢ σ)  ≡ x ⋯ˢ σ                                  -- rvarconss 
-  lift-beta-sucˢ          : suc x ⋯ˢ (σ ↑ˢ s)  ≡ x ⋯ˢ (σ ;ˢˢ wk  s)                       -- rvarlift1s
-  lift-beta-suc-compˢˢ    : suc x ⋯ˢ ((σ₁ ↑ˢ s) ;ˢˢ σ₂) ≡ x ⋯ˢ (σ₁ ;ˢˢ (wk s ;ˢˢ σ₂))    -- rvarlift2ss
+  lift-beta-sucˢ          : suc x ⋯ˢ (σ ↑ˢ s)  ≡ x ⋯ˢ (σ ;ˢˢ wk {q = T} s)                       -- rvarlift1s
+  lift-beta-suc-compˢˢ    : suc x ⋯ˢ ((σ₁ ↑ˢ s) ;ˢˢ σ₂) ≡ x ⋯ˢ (σ₁ ;ˢˢ (wk {q = T} s ;ˢˢ σ₂))    -- rvarlift2ss
   comp-assocˢˢˢ           : 
     (σ₁ ;ˢˢ σ₂) ;ˢˢ σ₃  ≡ σ₁ ;ˢˢ (σ₂ ;ˢˢ σ₃)                     -- assenvsss
   distributivityˢˢ        : (t ∙ˢ σ₁) ;ˢˢ σ₂  ≡ ((t ⋯ˢ σ₂) ∙ˢ (σ₁ ;ˢˢ σ₂))               -- mapenvss
-  interactˢ               : wk  s ;ˢˢ (t ∙ˢ σ) ≡ σ                                        -- shiftconss
-  wk-liftˢ                : wk  s ;ˢˢ (σ ↑ˢ s) ≡ σ ;ˢˢ wk  s                               -- shiftlift1s
-  wk-lift-compˢˢ          : wk  s ;ˢˢ ((σ₁ ↑ˢ s) ;ˢˢ σ₂) ≡ σ₁ ;ˢˢ (wk  s  ;ˢˢ σ₂)          -- shiftlift2ss  
+  interactˢ               : wk {q = T} s ;ˢˢ (t ∙ˢ σ) ≡ σ                                        -- shiftconss
+  wk-liftˢ                : wk {q = T} s ;ˢˢ (σ ↑ˢ s) ≡ σ ;ˢˢ wk {q = T} s                               -- shiftlift1s
+  wk-lift-compˢˢ          : wk {q = T} s ;ˢˢ ((σ₁ ↑ˢ s) ;ˢˢ σ₂) ≡ σ₁ ;ˢˢ (wk {q = T} s  ;ˢˢ σ₂)          -- shiftlift2ss  
   lift-dist-compˢˢ        : (σ₁ ↑ˢ s) ;ˢˢ (σ₂ ↑ˢ s) ≡ (σ₁ ;ˢˢ σ₂) ↑ˢ s                   -- lift1ss
   lift-dist-comp-compˢˢˢ  : (σ₁ ↑ˢ s) ;ˢˢ ((σ₂ ↑ˢ s) ;ˢˢ σ₃) ≡ ((σ₁ ;ˢˢ σ₂) ↑ˢ s) ;ˢˢ σ₃ -- lift2sss
   lift-extˢˢ              : (σ₁ ↑ˢ s) ;ˢˢ (t ∙ˢ σ₂) ≡ t ∙ˢ (σ₁ ;ˢˢ σ₂)                   -- liftenvrr
@@ -224,33 +224,17 @@ postulate
   -- compositionalityᴿˢ      : {Q : S₁ ⊢[ u ] s} →
   --   (Q ⋯ˢ ρ₁) ⋯ˢ σ₂ ≡ (Q ⋯ˢ (ρ₁ ;ˢˢ σ₂))                         -- closss
   -- compositionalityˢᴿ      : {Q : S₁ ⊢[ u ] s} →
-  --   (Q ⋯ˢ σ₁) ⋯ˢ ρ₂ ≡ (Q ⋯ˢ (σ₁ ;ˢˢ ρ₂))
+  --   (Q ⋯ˢ σ₁) ⋯ˢ ρ₂ ≡ (Q ⋯ˢ (σ₁ ;ˢˢ ρ₂)) 
 
   compositionalityᴿᴿ      : 
     (t ⋯ˢ ρ₁) ⋯ˢ ρ₂ ≡ (t ⋯ˢ (ρ₁ ;ˢˢ ρ₂)) 
-  comp-idᵣᴿᴿ              : ρ ;ˢˢ (idˢ )  ≡ ρ                                               -- idrss
-  comp-idₗᴿᴿ              : (idˢ ) ;ˢˢ ρ  ≡ ρ 
+  var-compᴿᴿ : (x ⋯ˢ ρ₁) ⋯ˢ ρ₂ ≡ x ⋯ˢ (ρ₁ ;ˢˢ ρ₂)
+  lem : (` (x ⋯ˢ (ρ₁ ;ˢˢ ρ₂))) ≡  ((` ((x ⋯ˢ ρ₁) ⋯ˢ ρ₂))) 
+
+  comp-idᵣᴿᴿ              : ρ ;ˢˢ (idˢ {q = V})  ≡ ρ                                               -- idrss
+  comp-idₗᴿᴿ              : (idˢ {q = V}) ;ˢˢ ρ  ≡ ρ 
   comp-assocᴿᴿᴿ           : 
-    ρ₁ ;ˢˢ (ρ₂ ;ˢˢ ρ₃)  ≡ (ρ₁ ;ˢˢ ρ₂) ;ˢˢ ρ₃   
-
-  wk-betaᴿ                 : x ⋯ˢ (wk s)       ≡ suc x                                     -- varshift1
-  -- wk-beta-compᴿ           : x ⋯ˢ (wk {q = V} s ;ˢˢ ρ) ≡ suc x ⋯ˢ ρ  
-  wk-beta-compᴿ₂           : x ⋯ˢ (ρ ;ˢˢ wk  s) ≡ suc (x ⋯ˢ ρ)  
-
-  
-
-  lift-beta-zeroᴿ         : zero ⋯ˢ (ρ ↑ˢ s)           ≡ zero                          -- fvarlift2s
-  lift-beta-zero-compᴿᴿ   : zero ⋯ˢ ((ρ₁ ↑ˢ s) ;ˢˢ ρ₂) ≡ zero ⋯ˢ ρ₂                      -- fvarlift2ss- rvarconss 
-  lift-beta-sucᴿ          : suc x ⋯ˢ (ρ ↑ˢ s)  ≡ x ⋯ˢ (ρ ;ˢˢ wk  s)                       -- rvarlift1s
-  
-  -- ??
-  -- lift-beta-suc-compᴿᴿ    : suc x ⋯ˢ (ρ₁ ;ˢˢ (ρ₂ ↑ˢ s)) ≡ x ⋯ˢ ((ρ₁ ;ˢˢ wk {q = V} s) ;ˢˢ ρ₂)    -- rvarlift2ss
-  
-  wk-liftᴿ                : wk s ;ˢˢ (ρ ↑ˢ s) ≡ ρ ;ˢˢ wk  s                               -- shiftlift1s
-  wk-lift-compᴿᴿ          : wk  s ;ˢˢ ((ρ₁ ↑ˢ s) ;ˢˢ ρ₂) ≡ ρ₁ ;ˢˢ (wk s  ;ˢˢ ρ₂)          -- shiftlift2ss  
-  
-  lift-dist-compᴿᴿ        : (ρ₁ ↑ˢ s) ;ˢˢ (ρ₂ ↑ˢ s) ≡ (ρ₁ ;ˢˢ ρ₂) ↑ˢ s                   -- lift1ss
-  lift-dist-comp-compᴿᴿᴿ  : (ρ₁ ↑ˢ s) ;ˢˢ ((ρ₂ ↑ˢ s) ;ˢˢ ρ₃) ≡ ((ρ₁ ;ˢˢ ρ₂) ↑ˢ s) ;ˢˢ ρ₃ -- lift2sss
+    (ρ₁ ;ˢˢ ρ₂) ;ˢˢ ρ₃  ≡ ρ₁ ;ˢˢ (ρ₂ ;ˢˢ ρ₃)                                                   -- idlss
 
   right-var-idᴿ           : x ⋯ˢ idˢ         ≡  x 
   trav-1ᴿ : (` x)        ⋯ˢ ρ ≡ ` (x ⋯ˢ ρ)
@@ -262,25 +246,29 @@ postulate
   trav5ᴿ : (t₁ ⇒ t₂)     ⋯ˢ ρ ≡ (t₁ ⋯ˢ ρ) ⇒ (t₂ ⋯ˢ ρ)
   trav6ᴿ : ★             ⋯ˢ ρ ≡ ★
 
+  distributivityᴿᴿ        : (x ∙ˢ ρ₁) ;ˢˢ ρ₂  ≡ ((x ⋯ˢ ρ₂) ∙ˢ (ρ₁ ;ˢˢ ρ₂))               -- mapenvss
+  interactᴿᴿ               : wk {q = V} s ;ˢˢ (x ∙ˢ ρ) ≡ ρ                                        -- 
+  wk-betaᴿ                 : x ⋯ˢ (wk s)       ≡ suc x                                     -- varshift1
+  wk-beta-compᴿ           : x ⋯ˢ (wk {q = V} s ;ˢˢ ρ) ≡ suc x ⋯ˢ ρ                               --
+  lift-beta-zeroᴿ         : zero ⋯ˢ (ρ ↑ˢ s)           ≡ zero                          -- fvarlift2s
+  lift-beta-zero-compᴿᴿ   : zero ⋯ˢ ((ρ₁ ↑ˢ s) ;ˢˢ ρ₂) ≡ zero ⋯ˢ ρ₂                      -- fvarlift2ss- rvarconss 
+  lift-beta-sucᴿ          : suc x ⋯ˢ (ρ ↑ˢ s)  ≡ x ⋯ˢ (ρ ;ˢˢ wk {q = V} s)                       -- rvarlift1s
+  lift-beta-suc-compᴿᴿ    : suc x ⋯ˢ ((ρ₁ ↑ˢ s) ;ˢˢ ρ₂) ≡ x ⋯ˢ (ρ₁ ;ˢˢ (wk {q = V} s ;ˢˢ ρ₂))    -- rvarlift2ss
+  wk-liftᴿ                : wk {q = V} s ;ˢˢ (ρ ↑ˢ s) ≡ ρ ;ˢˢ wk {q = V} s                               -- shiftlift1s
+  wk-lift-compᴿᴿ          : wk {q = V} s ;ˢˢ ((ρ₁ ↑ˢ s) ;ˢˢ ρ₂) ≡ ρ₁ ;ˢˢ (wk {q = V} s  ;ˢˢ ρ₂)          -- shiftlift2ss  
+  lift-dist-compᴿᴿ        : (ρ₁ ↑ˢ s) ;ˢˢ (ρ₂ ↑ˢ s) ≡ (ρ₁ ;ˢˢ ρ₂) ↑ˢ s                   -- lift1ss
+  lift-dist-comp-compᴿᴿᴿ  : (ρ₁ ↑ˢ s) ;ˢˢ ((ρ₂ ↑ˢ s) ;ˢˢ ρ₃) ≡ ((ρ₁ ;ˢˢ ρ₂) ↑ˢ s) ;ˢˢ ρ₃ -- lift2sss
+
+  lem₂ : (x ⋯ˢ ρ₁) ⋯ˢ ρ₂ ≡ x ⋯ˢ (ρ₁ ;ˢˢ ρ₂)  
+
 {-# REWRITE      
   compositionalityᴿᴿ 
   comp-assocᴿᴿᴿ 
   comp-idᵣᴿᴿ  
   comp-idₗᴿᴿ 
+  wk-betaᴿ
+  wk-beta-compᴿ
   right-var-idᴿ
-
-wk-beta-compᴿ₂
-wk-beta
-
-lift-beta-zeroᴿ        
-lift-beta-zero-compᴿᴿ  
-lift-beta-sucᴿ         
-
-wk-liftᴿ               
-wk-lift-compᴿᴿ         
-lift-dist-compᴿᴿ       
-lift-dist-comp-compᴿᴿᴿ 
-
   trav-1ᴿ
   trav0ᴿ 
   trav1ᴿ 
@@ -289,6 +277,14 @@ lift-dist-comp-compᴿᴿᴿ
   trav4ᴿ 
   trav5ᴿ 
   trav6ᴿ 
+  lift-beta-zeroᴿ       
+  lift-beta-zero-compᴿᴿ 
+  lift-beta-sucᴿ        
+  lift-beta-suc-compᴿᴿ  
+  wk-liftᴿ              
+  wk-lift-compᴿᴿ        
+  lift-dist-compᴿᴿ      
+  lift-dist-comp-compᴿᴿᴿ
 
 
   compositionalityˢˢ   
@@ -305,8 +301,6 @@ lift-dist-comp-compᴿᴿᴿ
   interactˢ                
   wk-liftˢ                
   wk-lift-compˢˢ          
-  wk-betaᴿ      
-  wk-beta-compᴿ 
   lift-dist-compˢˢ        
   lift-dist-comp-compˢˢˢ  
   lift-extˢˢ              
@@ -323,8 +317,8 @@ lift-dist-comp-compᴿᴿᴿ
   trav4
   trav5
   trav6
-#-} 
-
+#-}
+{- 
 -- Typing ----------------------------------------------------------------------
 
 --! UpArrow
@@ -358,7 +352,7 @@ _∷ₜ_ : S ∶⊢ s → Ctx S → Ctx (s ∷ S)
 --!! Wk 
 weaken : S ⊢ s → (s′ ∷ S) ⊢ s
 
-weaken {s′ = s} t = t ⋯ˢ (wk s)
+weaken {s′ = s} t = t ⋯ˢ (wk {q = V} s)
 
 --!! Subst
 _⟨_⟩ : (s′ ∷ S) ⊢ s → S ⊢ s′ → S ⊢ s
@@ -437,15 +431,15 @@ data _↪_ : S ⊢ expr → S ⊢ expr → Set where
 --! }
 
 -- postulate
-⊢wkᴿ : ∀ (Γ : Ctx S) (x : S ∋ s) t (t′ : S ∶⊢ s′) → Γ ∋ x ∶ t → (t′ ∷ₜ Γ) ∋ (x ⋯ˢ wk _) ∶ (weaken t) 
+⊢wkᴿ : ∀ (Γ : Ctx S) (x : S ∋ s) t (t′ : S ∶⊢ s′) → Γ ∋ x ∶ t → (t′ ∷ₜ Γ) ∋ (suc x) ∶ (weaken t) 
 ⊢wkᴿ _ _ _ _ refl = refl
 
 ⊢↑ᴿ : ρ ∶ Γ₁ →ᴿ Γ₂ → (t : S₁ ∶⊢ s) → (ρ ↑ˢ s) ∶ (t ∷ₜ Γ₁) →ᴿ ((t ⋯ˢ ρ) ∷ₜ Γ₂)
 ⊢↑ᴿ ⊢ρ _ _ (zero) _ refl = refl -- refl
-⊢↑ᴿ {ρ = ρ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} ⊢ρ t _ (suc x) _ refl =
-   {!   !} -- ⊢wkᴿ Γ₂ (x ⋯ˢ ρ) (wk-drop-∈ x (Γ₁ _ x) ⋯ˢ ρ) (t ⋯ˢ ρ) (⊢ρ _ x _ refl)
+⊢↑ᴿ {ρ = ρ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} ⊢ρ t _ (suc x) _ refl = {! 
+  ⊢wkᴿ Γ₂ (x ⋯ˢ ρ) (wk-drop-∈ x (Γ₁ _ x) ⋯ˢ ρ) (t ⋯ˢ ρ) (⊢ρ _ x _ refl)  !}
   -- ⊢wkᴿ Γ₂ (x ⋯ˢ ρ) (wk-drop-∈ x (Γ₁ _ x) ⋯ˢ ρ) (t ⋯ˢ ρ) (⊢ρ _ x _ refl)
- 
+-- 
 --! RPT
 _⊢⋯ᴿ_ : ∀ {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} →
   ρ ∶ Γ₁ →ᴿ Γ₂ →
@@ -463,7 +457,7 @@ _⊢⋯ᴿ_ : ∀ {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} →
   {! ⊢• (⊢ρ ⊢⋯ᴿ ⊢e) (⊢ρ ⊢⋯ᴿ ⊢t) ((⊢↑ᴿ ⊢ρ _) ⊢⋯ᴿ ⊢t')  !}
 ⊢ρ ⊢⋯ᴿ ⊢★             = 
   ⊢★
-{- 
+
 ⊢wkˢ : ∀ (Γ : Ctx S) (e : S ⊢ s) (t : S ∶⊢ s) (t′ : S ∶⊢ s′) → Γ ⊢ e ∶ t → (t′ ∷ₜ Γ) ⊢ weaken e ∶ weaken t 
 ⊢wkˢ Γ e t t' ⊢t = {!   !}
 

@@ -71,10 +71,11 @@ data _⊑_ : Mode → Mode → Set where
   rfl  : q ⊑ q
   v⊑t  : V ⊑ T
 
-_⊔_ : Mode → Mode → Mode
-V ⊔ r  =  r
-T ⊔ r  =  T
 opaque
+  _⊔_ : Mode → Mode → Mode
+  V ⊔ r  =  r
+  T ⊔ r  =  T
+
   v⊑′ :  V ⊔ r  ≡ r
   v⊑′ = refl
   t⊑′ :  T ⊔ r  ≡ T
@@ -110,7 +111,7 @@ opaque
   ⊔t {V} = refl
   ⊔t {T} = refl
 
-{-# REWRITE ⊔⊔ ⊔v ⊔t #-}
+{-# REWRITE v⊑′ t⊑′ ⊔⊔ ⊔v ⊔t #-}
 
 tm⊑ : q ⊑ r → S ⊢[ q ] s → S ⊢[ r ] s
 tm⊑ rfl x  = x
@@ -169,16 +170,19 @@ _→ˢ_ : Scope → Scope → Set
 S₁ →ˢ S₂ = S₁ ⊩[ T ] S₂ 
 {-# INLINE _→ˢ_ #-}
 
+_→ᴿ_ : Scope → Scope → Set
+S₁ →ᴿ S₂ = S₁ ⊩[ V ] S₂ 
+{-# INLINE _→ᴿ_ #-}
+
 variable
   σ σ₁ σ₂ σ₃ : S₁ ⊩[ q ] S₂ 
 
 opaque 
   _⋯_ : S₁ ⊢[ q ] s → S₁ ⊩[ r ] S₂ → S₂ ⊢[ q ⊔ r ] s
-  _⋯_ = _[_] 
+  _⋯_ = _[_]
   
   _;ˢˢ_ : S₁ ⊩[ q ] S₂ → S₂ ⊩[ r ] S₃ → S₁ ⊩[ q ⊔ r ] S₃
   _;ˢˢ_ = _∘_
-
 
   idˢ : S ⊩[ V ] S
   idˢ = id-poly
@@ -195,15 +199,16 @@ opaque
 postulate
   compositionalityˢˢ : ∀ {Q : S₁ ⊢[ u ] s} {σ₁ :  S₁ ⊩[ q ] S₂} → {σ₂ : S₂ ⊩[ r ] S₃} →
     (Q ⋯ σ₁) ⋯ σ₂ ≡ (Q ⋯ (σ₁ ;ˢˢ σ₂))                                                 -- closss
-  wk-beta                 : x ⋯ (wk s)       ≡ suc x                                     -- varshift1
-  wk-beta-compˢ           : x ⋯ (wk s ;ˢˢ σ) ≡ suc x ⋯ σ                               -- varshift2s
-  ext-beta-zeroˢ          : zero ⋯ (t ∙ˢ σ)           ≡ t                               -- fvarconss
-  lift-beta-zeroˢ         : zero ⋯ (σ ↑ˢ s)           ≡ ` zero                          -- fvarlift2s
-  lift-beta-zero-compˢˢ   :  ∀ {σ₁ :  S₁ ⊩[ q ] S₂} → {σ₂ : (s ∷ S₂) ⊩[ T ] S₃} →
-    zero ⋯ ((σ₁ ↑ˢ s) ;ˢˢ σ₂) ≡ zero ⋯ σ₂                      -- fvarlift2ss
+  wk-beta                 : x ⋯ (wk s)       ≡ {!   !}                                    -- varshift1
+  wk-beta-compˢ           : ∀ {σ : (s ∷ S₁) ⊩[ q ] S₂} →
+    x ⋯ (wk s ;ˢˢ σ) ≡ suc x ⋯ σ                               -- varshift2s
+  ext-beta-zeroˢ          : zero ⋯ (Q ∙ˢ σ)           ≡ Q                               -- fvarconss
+  lift-beta-zeroˢ         : zero ⋯ (σ ↑ˢ s)           ≡ {!   !}                          -- fvarlift2s
+  lift-beta-zero-compˢˢ   :  ∀ {σ₁ :  S₁ ⊩[ q ] S₂} → {σ₂ : (s ∷ S₂) ⊩[ r ] S₃} →
+    zero ⋯ ((σ₁ ↑ˢ s) ;ˢˢ σ₂) ≡ {!   !} --(zero ⋯ {!  σ₂ !})                      -- fvarlift2ss
   -- lift-beta-zero-compˢˢNEW   :  ∀ {σ₁ :  S₁ ⊩[ T ] S₂} → {σ₂ : (s ∷ S₂) ⊩[ V ] S₃} →
   --   zero ⋯ ((σ₁ ↑ˢ s) ;ˢˢ σ₂) ≡ ` (zero ⋯ σ₂)                      -- fvarlift2ss
-  ext-beta-sucˢ           : suc x ⋯ (t ∙ˢ σ)  ≡ x ⋯ σ                                  -- rvarconss 
+  ext-beta-sucˢ           : suc x ⋯ (Q ∙ˢ σ)  ≡ x ⋯ σ                                  -- rvarconss 
   lift-beta-sucˢ          : 
     ∀ {σ :  S₁ ⊩[ q ] S₂} →
     suc x ⋯ (σ ↑ˢ s)  ≡ x ⋯ (σ ;ˢˢ wk s)                       -- rvarlift1s
@@ -234,7 +239,7 @@ postulate
   right-idˢ               : Q ⋯ idˢ         ≡ Q                                         -- ids
   -- right-var-idˢ           : x ⋯ idˢ         ≡ x                                       -- ids
   trav-1 : (` x)        ⋯ σ ≡ x ⋯ σ
-  trav-1ᴿ : (` x)       ⋯ σ ≡ ` (x ⋯ σ)
+  trav-1ᴿ : (` x)       ⋯ σ ≡ (x ⋯ σ)
   trav0 : (λx e)        ⋯ σ ≡ λx (e ⋯ (σ ↑ˢ _))
   trav1 : (Λα e)        ⋯ σ ≡ Λα (e ⋯ (σ ↑ˢ _))
   trav2 : (∀[α∶ k ] t)  ⋯ σ ≡ ∀[α∶ k ⋯ σ ] (t ⋯ (σ ↑ˢ _))

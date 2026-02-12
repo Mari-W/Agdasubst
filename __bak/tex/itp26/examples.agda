@@ -1,4 +1,4 @@
-{-# OPTIONS --rewriting --experimental-lazy-instances --allow-unsolved-metas #-}
+{-# OPTIONS --rewriting --local-confluence-check --double-check --allow-unsolved-metas #-}
 module examples where
 
 open import Data.List.Membership.Propositional  

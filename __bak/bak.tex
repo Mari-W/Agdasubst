@@ -1,0 +1,180 @@
+ 
+ % ----
+      Mechanizing the metatheory of programming languages with variable binding has
+      evolved into a standard practice where variables appear as de Bruijn indices
+      and substitutions appear in parallel as functions from variables to terms. This
+      representation resolves many issues associated with the transfer of pen and
+      paper proofs to proof assistants but it still requires the precise application
+      of standard and often unintuitive lemmas regarding substitution composition and
+      the interaction of substitutions with binders.
+
+      The $\sigma$-calculus handles parallel substitutions in a de Bruijn setting via
+      a set of primitive substitution operations and offers a terminating, confluent
+      and complete rewrite system that reduces terms involving parallel substitution
+      to normal forms. Previous work extensively studied the use of these rules to
+      implement decision procedures in proof assistants but these tools traditionally
+      produce propositional equalities in tactic based environments.
+
+      The recent emergence of user defined rewrite rules allows users to register
+      propositional equalities as definitional ones and raises the question of
+      whether strictify the equations from the $\sigma$-calculus. This approach
+      presents two main challenges. We must strictly adhere to the restrictions on
+      rewrite rules imposed by the proof assistant. Furthermore we aim to maintain
+      logical consistency and instantiate the rewrite system with proofs derived from
+      an underlying model.
+
+      We demonstrate in this work how to register the $\sigma$-calculus rules as
+      rewrite rules to produce definitional equalities in Agda. Our approach differs
+      from previous attempts because it completely preserves both the full
+      computational behavior of substitutions and the logical consistency of the
+      system.
+ % % ----
+      % Over the years Mechanizing the metatheory of programming languages with
+      % variable evolved to a standard praxis where variables are represented as de
+      % Bruijn indices ands ubstitutions are represented in parallel, usally as
+      % function from variables to terms. While already solving a lot of the issues
+      % with transfering paper and pen proofs to proofs assitants, This representation
+      % requires the precise application of standard and often unintuitive lemmas
+      % regarding substitution composition and the interaction of substitutions with
+      % binders.
+% 
+      % The sigma calculus handles parellel substitutions by restricting itself to a
+      % small selection of building blocks for parallel substitution. The calculus
+      % offers a terminating and confluent and complete rewrite system that ensures
+      % that terms involving parallel substitution reduce to normal forms.
+% 
+      % Previous work extensively studied the use of these rules to implement decision
+      % procedures in proof assistants but these tools traditionally produce
+      % propositional equalities in tactic based environments. The recent emergence of
+      % user defined rewrite rules allows users to register propositional equalities as
+      % definitional ones and raises the question of whether we can use the sigma
+      % calculus to produce definitional equalities.
+% 
+      % This approach presents two main challenges. We must strictly adhere to the
+      % restrictions on rewrite rules imposed by the proof assistant. Furthermore we
+      % aim to maintain logical consistency and instantiate the rewrite system with
+      % proofs derived from an underlying model.
+% 
+      % We demonstrate in this work how to register the sigma calculus rules as rewrite
+      % rules to produce definitional equalities in Agda. Our approach differs from
+      % previous attempts in that it compleletly preserves both the full computational
+      % behavior of substitutions and the logical consistency of the system.
+% 
+      % %--------
+      % Mechanizing the metatheory of programming languages with variables, binders and
+      % substition requires the precise application of standard, unintuitive lemmas
+      % regarding substitution composition and interaction of substitutions with
+      % binders. To get $α$-equivalence for free programmers usually resort to de
+      % Bruijn notation of variables and formalize parallel subsitution in the form of
+      % function that map vairables to terms.
+% 
+      % The $\sigma_{SP}$-calculus, a member of the family of explicit substitution
+      % calculi, reifys the operations of parallels subsitution otherwise usually seen
+      % as meta operations into the object language and offers a rewrite system that is
+      % terminating, confluent and complete. thereby ensuring that de Bruijn terms
+      % involving parallel subsitution reduce to normal forms.
+% 
+      % Previous work extensively studied the use of these rules to implement decision
+      % procedures in proof assistants but these tools traditionally produce
+      % propositional equalities in tactic based environments. The recent emergence of
+      % user defined rewrite rules allows users to register propositional equalities as
+      % definitional ones and raises the question of whether we can use the
+      % $\sigma_{SP}$-calculus to produce definitional equalities.
+% 
+      % This approach presents two main challenges. We must strictly adhere to the
+      % restrictions on rewrite rules imposed by the proof assistant. Furthermore we
+      % aim to maintain logical consistency and instantiate the rewrite system with
+      % proofs derived from an underlying model.
+% 
+      % We demonstrate in this work how to register the $\sigma_{SP}$-calculus rules as
+      % rewrite rules to produce definitional equalities for intrinsically scoped
+      % syntax in Agda. Our approach differs from previous attempts and preserves the
+      % computational behavior of substitutions while it also guarantees the logical
+      % consistency of the system.
+      % % ---------------- 
+% 
+      % Mechanizing the metatheory of programming languages with variable binding
+      % requires proving and correctly applying standard substitution lemmas regarding
+      % composition and interaction with binders.
+% 
+      % Historically researches treated substitution as a meta level operation but
+      % explicit substitution calculi, original proposed in the form of the
+      % $σ$-calculus, reify these operations within the object language. The
+      % $\sigma_{SP}$-calculus, a variant of the original, offers a rewrite system that
+      % is complete and terminating and confluent and ensures that all expressions
+      % involving substitutions reduce to normal forms.
+% 
+      % Previous work extensively studied the use of these rules to implement decision
+      % procedures for terms involving substitutions in proof assistants but these
+      % tools traditionally produce propositional equalities in tactic based
+      % environments. The recent emergence of user defined rewrite rules allows users
+      % to register propositional equalities as definitional ones and raises the
+      % question of whether we can use the $\sigma_{SP}$-calculus to produce
+      % definitional equalities.
+% 
+      % This approach presents two main challenges. We must strictly adhere to the
+      % restrictions on rewrite rules imposed by the proof assistant. Furthermore we
+      % aim to maintain logical consistency and instantiate the rewrite system with
+      % proofs derived from an underlying model rather than merely postulating the
+      % laws.
+% 
+      % We demonstrate in this work how to register the $\sigma_{SP}$-calculus rules as
+      % rewrite rules to produce definitional equalities for intrinsically scoped
+      % syntax in Agda. In constrast to previous attempts, our approach preserves both
+      % the complete computational behaviour of substitutions and the logical
+      % consistency of the system as a whole.
+      % % ------------------
+      % Mechanizing the metatheory of programming languages with variable binding in
+      % proof assistants requires proving and correctly applying standard lemmas about
+      % substitutions such as those describing composition and interaction with
+      % binders.
+      % % TODO: SOMEHOW CONNECT THE TWO PARAGRAPHS WITH THE FACT THAT BOTH USE DEBRUIJN INDICES AND PARALLEL SUBSITUTIONS
+      % Historically researchers treated substitution as a meta level operation but
+      % explicit substitution calculi, such as the $σ_{SP}$-calculus, reify these
+      % operations. The $σ_{SP}$-calculus provides a complete, terminating and
+      % confluence rewrite system so that all expressions involving substitutions can
+      % be reduced to normal forms.
+      % % TODO DONT MENTION  $σ_{SP}$-calculus TWICE (in the above paragraph)
+      % As a result, using the $σ_{SP}$-calculus rules to implement a decision
+      % procedure for terms involving substitutions inside proof assistants has been
+      % extensively studied. Until now these tools only produced \emph{propositional}
+      % equalities in tactic based environments, but with the rise of user defined
+      % rewrite rules, that allow users to register propositional equalities as
+      % definitional ones, the question must be asked, if we can use the
+      % $σ_{SP}$-calculus rules to produce \emph{definitional} equalites.
+      % % I DONT REALLY LIKE THE PARAGRAPH STYLE WISE; NEEDS REPHRASING.
+      % Doing this opens up two main challenges. Fist we need to adhere to the
+      % restriction on rewrite rules and second, tO maintain logical consistency, not
+      % only do we want to postulate the laws to rewrite them, we also want to
+      % Instantiate the rewrite system with proofs using an underlying model.
+% 
+      % In this work we demonstrate how to register the $σ_{SP}$-caculus rules as
+      % rewrite rules to produce definitional equalities for Intriniscally scoped
+      % syntax while completely preserving the logical consistency of the system.
+
+% \begin{abstract}
+%       % more direct? 
+%       % mention de bruijn 
+%       Mechanizing the metatheory of programming languages in proof assistants is
+%       difficult because of recurring challenges with variable binding. Every
+%       formalization requires proving and correctly applying standard lemmas about
+%       substitutions such as those describing composition and interaction with
+%       binders.
+% 
+%       % reify?
+%       Historically researchers treated substitution as a meta level operation but
+%       explicit substitution calculi bring these operations down to a syntactic level.
+%       The $σ_{SP}$-calculus provides complete, terminating and confluence reduction
+%       rules so that every expression involving substitutions can be reduced to a normal forms.
+%       % mention explicit substitutions are syntacitc -> 
+%       % we provide an underlying model to prove the laws and 
+%       % preserve consistency
+% 
+%       \textsc{Autosubst 2} provide this procedure via tactics to produce
+%       \emph{propositional} equalities in the Rocq proof assistant. We instead show how
+%       to register the $σ_{SP}$-calculus rules as computational assumptions in Agda using
+%       \AgdaPragma{REWRITE} rules to produce \emph{definitional} equalities.
+%       It requires precise control over
+%       reduction behavior, care to maintain the logical consistency of Agda,
+%       and we must adhere to the technical restriction of rewrite rules.
+% \end{abstract}

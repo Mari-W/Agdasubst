@@ -24,7 +24,7 @@
 
 \begin{document}
 
-\title{Intrinisically Typed Syntax without the Transfer Hell}
+\title{Intrinisically Typed Syntax That Works (Functional Pearl)}
 
 \author{Peter Thiemann}
 \email{thiemann@acm.org}
@@ -44,6 +44,25 @@
 
 \maketitle
 \keywords{Intrinisically Typed Syntax, Strictification, Agda}
+
+\section{Introduction}
+\label{sec:introduction}
+
+When formalizing the metatheory of a programming language in a proof
+assistant based on dependent type theory, variable binders are often
+represented by de Bruijn indices. In some proof assistants, notably in
+Agda, it can be convenient to go an extra step and use intrinsically
+typed syntax. This idea goes back to Curry style vs.\ Church style
+formalizations of lambda calculus: the former style has an untyped
+semantics and typing is externally imposed; in the latter style, it is
+impossible to construct untyped terms and semantics is only assigned
+to typed terms. Thus, untyped syntax gives rise to a Curry-style
+presentation, whereas intrinsically typed syntax results in a
+Church-style presentation.
+
+The simply-typed lambda calculus provides an appealing example where
+intrinsically typed syntax works exceptionally well.
+
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}

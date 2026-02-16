@@ -153,10 +153,10 @@ opaque
   (σ₁ ⨟ σ₂) _ x = (σ₁ _ x) ⋯ˢ σ₂
 
   lift-id            : idᴿ {S = S} ↑ᴿ s ≡ idᴿ 
-
-  ext-zero           : zero ⋯ˢ (t ∙ σ)   ≡ t                             
-  ext-suc            : suc x ⋯ˢ (t ∙ σ)  ≡ x ⋯ˢ σ 
-  lift               : σ ↑ˢ s            ≡ (var zero) ∙ (σ ⨟ wkˢ _)
+  def-∙-zero           : zero ⋯ˢ (t ∙ σ)   ≡ t                             
+  def-∙-suc            : suc x ⋯ˢ (t ∙ σ)  ≡ x ⋯ˢ σ 
+  def-↑ˢ               : σ ↑ˢ s ≡ (var zero) ∙ (σ ⨟ wkˢ _)
+  def-⨟ : (x ⋯ˢ (σ₁ ⨟ σ₂)) ≡ ((x ⋯ˢ σ₁) ⋯ˢ σ₂)
 
   associativity           : (σ₁ ⨟ σ₂) ⨟ σ₃                      ≡ σ₁ ⨟ (σ₂ ⨟ σ₃)                     
   distributivityˢ         : (t ∙ σ₁) ⨟ σ₂                       ≡ ((t ⋯ˢ σ₂) ∙ (σ₁ ⨟ σ₂)) 
@@ -169,10 +169,10 @@ opaque
   η-lawᴿ                  : (zero ⋯ᴿ ρ) ∙ ((wkˢ _ ⨟ ⟨ ρ ⟩))     ≡ ⟨ ρ ⟩
 
   right-id                : ∀ (t : S ⊢ s) → t ⋯ᴿ idᴿ                   ≡ t   
-  compositionalityᴿˢ      : ∀ (x/t : S ⊢[ m ] s) → (x/t ⋯ᴿ ρ₁) ⋯ˢ σ₂   ≡ x/t ⋯ˢ (⟨ ρ₁ ⟩ ⨟ σ₂)                    
-  compositionalityᴿᴿ      : ∀ (x/t : S ⊢[ m ] s) → (x/t ⋯ᴿ ρ₁) ⋯ᴿ ρ₂   ≡ x/t ⋯ᴿ (ρ₁ ∘ ρ₂)                     
-  compositionalityˢᴿ      : ∀ (x/t : S ⊢[ m ] s) → (x/t ⋯ˢ σ₁) ⋯ᴿ ρ₂   ≡ x/t ⋯ˢ (σ₁ ⨟ ⟨ ρ₂ ⟩)                         
-  compositionalityˢˢ      : ∀ (x/t : S ⊢[ m ] s) → (x/t ⋯ˢ σ₁) ⋯ˢ σ₂   ≡ x/t ⋯ˢ (σ₁ ⨟ σ₂)
+  compositionalityᴿᴿ      : ∀ (t : S ⊢ s) → (t ⋯ᴿ ρ₁) ⋯ᴿ ρ₂   ≡ t ⋯ᴿ (ρ₁ ∘ ρ₂)     
+  compositionalityᴿˢ      : ∀ (t : S ⊢ s) → (t ⋯ᴿ ρ₁) ⋯ˢ σ₂   ≡ t ⋯ˢ (⟨ ρ₁ ⟩ ⨟ σ₂)                                    
+  compositionalityˢᴿ      : ∀ (t : S ⊢ s) → (t ⋯ˢ σ₁) ⋯ᴿ ρ₂   ≡ t ⋯ˢ (σ₁ ⨟ ⟨ ρ₂ ⟩)                         
+  compositionalityˢˢ      : ∀ (t : S ⊢ s) → (t ⋯ˢ σ₁) ⋯ˢ σ₂   ≡ t ⋯ˢ (σ₁ ⨟ σ₂)
 
 
   traversal-var           : (var x)         ⋯ˢ σ  ≡ x ⋯ˢ σ
@@ -193,15 +193,16 @@ opaque
   traversal-tlam : (tlam tm0) ⋯ˢ σ     ≡ tlam (tm0 ⋯ˢ (σ ↑ˢ* (ty ∷ [])))
   traversal-tlam = refl
 
-  coincidence              : x/t ⋯ˢ ⟨ ρ ⟩                                  ≡ x/t ⋯ᴿ ρ
+  coincidence              : {x/t : S ⊢[ m ] s} → x/t ⋯ˢ ⟨ ρ ⟩ ≡ x/t ⋯ᴿ ρ
   coincidence-fold         : x/t ⋯ˢ (⟨ ρ ↑ᴿ s ⟩ ⨟ ((x/t′ ⋯ᴿ ρ) ∙ idˢ))  ≡ x/t ⋯ˢ ((x/t′ ⋯ᴿ ρ) ∙ ⟨ ρ ⟩)
 
 
   lift-id = ext λ { zero → refl; (suc x) → refl }
 
-  ext-zero = refl
-  ext-suc  = refl
-  lift     = cong1 ((var zero) ∙_) (sym (ext λ x → coincidence))
+  def-∙-zero = refl
+  def-∙-suc  = refl
+  def-↑ˢ     = cong1 ((var zero) ∙_) (sym (ext λ x → coincidence))
+  def-⨟      = refl
 
   lift-idˢ* : ∀ S → (idˢ {S = S₁} ↑ˢ* S) ≡ idˢ 
   lift-idˢ* []    = refl
@@ -248,7 +249,6 @@ opaque
   lift-dist-comp*ᴿᴿ []      = refl 
   lift-dist-comp*ᴿᴿ (_ ∷ S) = trans lift-dist-compᴿᴿ (cong1 (_↑ᴿ _) (lift-dist-comp*ᴿᴿ S))
 
-  compositionalityᴿᴿ {m = V} x  = refl
   compositionalityᴿᴿ (var x)  = refl
   compositionalityᴿᴿ (arr ty0 ty1)  = cong2 arr (compositionalityᴿᴿ ty0) (compositionalityᴿᴿ ty1)
   compositionalityᴿᴿ (all ty0)      = cong1 all (trans (compositionalityᴿᴿ ty0) (cong1 (ty0 ⋯ᴿ_) (lift-dist-comp*ᴿᴿ (ty ∷ []))))
@@ -264,7 +264,6 @@ opaque
   lift-dist-comp*ᴿˢ []      = refl 
   lift-dist-comp*ᴿˢ (_ ∷ S) = trans lift-dist-compᴿˢ (cong1 (_↑ˢ _) (lift-dist-comp*ᴿˢ S))
 
-  compositionalityᴿˢ {m = V} x  = refl
   compositionalityᴿˢ (var x)  = refl
   compositionalityᴿˢ (arr ty0 ty1)  = cong2 arr (compositionalityᴿˢ ty0) (compositionalityᴿˢ ty1)
   compositionalityᴿˢ (all ty0)      = cong1 all (trans (compositionalityᴿˢ ty0) (cong1 (ty0 ⋯ˢ_) (lift-dist-comp*ᴿˢ (ty ∷ []))))
@@ -286,7 +285,6 @@ opaque
   lift-dist-comp*ˢᴿ []      = refl 
   lift-dist-comp*ˢᴿ (_ ∷ S) =  trans lift-dist-compˢᴿ (cong1 (_↑ˢ _) (lift-dist-comp*ˢᴿ S))
  
-  compositionalityˢᴿ {m = V} x  = sym coincidence
   compositionalityˢᴿ (var x)  = sym coincidence
   compositionalityˢᴿ (arr ty0 ty1)  = cong2 arr (compositionalityˢᴿ ty0) (compositionalityˢᴿ ty1)
   compositionalityˢᴿ (all ty0)      = cong1 all (trans (compositionalityˢᴿ ty0) (cong1 (ty0 ⋯ˢ_) (lift-dist-comp*ˢᴿ (ty ∷ []))))
@@ -308,7 +306,6 @@ opaque
   lift-dist-comp*ˢˢ []      = refl 
   lift-dist-comp*ˢˢ (_ ∷ S) =  trans lift-dist-compˢˢ (cong1 (_↑ˢ _) (lift-dist-comp*ˢˢ S))
 
-  compositionalityˢˢ {m = V} x  = refl
   compositionalityˢˢ (var x)  = refl
   compositionalityˢˢ (arr ty0 ty1)  = cong2 arr (compositionalityˢˢ ty0) (compositionalityˢˢ ty1)
   compositionalityˢˢ (all ty0)      = cong1 all (trans (compositionalityˢˢ ty0) (cong1 (ty0 ⋯ˢ_) (lift-dist-comp*ˢˢ (ty ∷ []))))
@@ -317,7 +314,8 @@ opaque
   compositionalityˢˢ (vt vl0)       = cong1 vt (compositionalityˢˢ vl0)
   compositionalityˢˢ (lam ty0 tm0)  = cong2 lam (compositionalityˢˢ ty0) (trans (compositionalityˢˢ tm0) (cong1 (tm0 ⋯ˢ_) (lift-dist-comp*ˢˢ (vl ∷ []))))
   compositionalityˢˢ (tlam tm0)     = cong1 tlam (trans (compositionalityˢˢ tm0) (cong1 (tm0 ⋯ˢ_) (lift-dist-comp*ˢˢ (ty ∷ []))))
-  coincidence {x/t = x/t} {ρ = ρ} = 
+  coincidence {m = V} = refl
+  coincidence {m = T} {ρ = ρ} {x/t = x/t} = 
     x/t ⋯ˢ (⟨ ρ ⟩ ⨟ idˢ) ≡⟨ sym (compositionalityᴿˢ x/t) ⟩ 
     (x/t ⋯ᴿ ρ) ⋯ˢ idˢ    ≡⟨ right-idˢ _ ⟩ 
     x/t ⋯ᴿ ρ             ∎
@@ -327,7 +325,7 @@ opaque
     (x/t ⋯ˢ ((x/t′ ⋯ᴿ ρ) ∙ ⟨ ρ ⟩))              ∎
 
 {-# REWRITE
-  lift-id ext-zero ext-suc lift
+  lift-id def-∙-zero def-∙-suc def-↑ˢ def-⨟
   associativity distributivityˢ distributivityᴿ interact
   comp-idᵣ comp-idₗ η-id η-lawˢ η-lawᴿ
   traversal-var traversal-arr traversal-all traversal-app traversal-tapp traversal-vt traversal-lam traversal-tlam

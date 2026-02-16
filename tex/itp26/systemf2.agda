@@ -191,7 +191,7 @@ postulate
  lift-id 
  
  associativity dist interact       
- comp-idᵣ comp-idₗ η-id η-lawˢ η-lawᴿ
+ comp-idᵣ comp-idₗ η-id η-lawˢ
  
  right-id         
  compositionalityᴿˢ compositionalityᴿᴿ
@@ -200,9 +200,9 @@ postulate
  def-⨟ 
  
  coincidence coincidence-fold 
- #-}
+#-}
 
-_ : (((` zero) ⋯ˢ σ₂) ∙ ((λ s z → ` suc z) ⨟ σ₂)) ≡ σ₂
+_ : ((σ _ zero) ∙ ((λ s z → ` suc z) ⨟ σ)) ≡ σ
 _ = {! η-lawˢ  !}
 --! }
 

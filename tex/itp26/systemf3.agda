@@ -1,5 +1,5 @@
 {-# OPTIONS --rewriting --double-check --local-confluence-check #-}
-module systemf where
+module systemf3 where
 
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; trans; module ≡-Reasoning)
 open ≡-Reasoning
@@ -15,34 +15,43 @@ ext f = fun-ext λ _ → fun-ext λ x → f x
 
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.List using (List; []; _∷_; drop)
+open import Data.Product using (∃-syntax; proj₂; _,_)
 
 --! E >
+data Bind : Set where Var NoVar : Bind 
 
 --! MultiSorted {
-data Sort : Set where expr type kind : Sort 
+data Sort : Bind → Set where 
+  expr type : Sort Var
+  kind : Sort NoVar
 --! [
 
 variable 
-  s s₁ s₂ s′ : Sort 
-  S S₁ S₂ S₃ S₄ : List Sort
+  b : Bind 
+  s s₁ s₂ s′ : Sort b
+  S S₁ S₂ S₃ S₄ : List (Sort Var)
 --! ]
-Scope = List Sort
+Scope = List (Sort Var)
 
-data Mode : Set where  V T : Mode
+data Mode : Set where V T : Mode
 --! [
 variable
   m  : Mode
 
 --! ]
 
-data _⊢[_]_ : Scope → Mode → Sort → Set 
+data _⊢[_]_ : Scope → Mode → Sort b → Set 
 
-_⊢_ = _⊢[ T ]_; _∋_ = _⊢[ V ]_
+_⊢_ :  Scope → Sort b → Set 
+_⊢_ = _⊢[ T ]_
+
+_∋_ :  Scope → Sort b → Set 
+_∋_ = _⊢[ V ]_
 
 data _⊢[_]_ where 
   zero     : (s ∷ S) ∋ s
   suc      : S ∋ s → (s′ ∷ S) ∋ s
-  `_       : S ∋ s → S ⊢ s 
+  `_       : S ∋ s → S ⊢ s
   λx_      : (expr ∷ S) ⊢ expr → S ⊢ expr
   Λα_      : (type ∷ S) ⊢ expr → S ⊢ expr
   ∀[α∶_]_  : S ⊢ kind → (type ∷ S) ⊢ type → S ⊢ type
@@ -319,27 +328,6 @@ opaque
     (x/t ⋯ˢ (⟨ ρ ↑ᴿ _ ⟩ ⨟ ((x/t′ ⋯ᴿ ρ) ∙ idˢ))) ≡⟨ cong (x/t ⋯ˢ_) (ext λ { zero → refl; (suc x) → refl }) ⟩ 
     (x/t ⋯ˢ ((x/t′ ⋯ᴿ ρ) ∙ ⟨ ρ ⟩))              ∎
 
-
-opaque
-  unfolding _⨟_ 
-  demo : σ ⨟ idˢ ≡ σ
-  demo {σ = σ} = 
-      --!! IdLaw 
-      σ ⨟ idˢ
-
-        ≡⟨⟩ 
-      --!! IdLawUnfolded
-      (λ _ x → σ _ x ⋯ˢ (λ _ → `_))
-
-        ≡⟨ comp-idᵣ ⟩
-      σ
-      ∎ 
-  demo1 : 
-    --!! FunAppInterp
-    ((σ₁ ⨟ σ₂) _ x) ≡ ((x ⋯ˢ σ₁) ⋯ˢ σ₂)
-    
-  demo1 = refl
-
 --! RewriteSys {
 {-# REWRITE 
 lift-id def-∙-zero def-∙-suc def-↑ˢ def-⨟   
@@ -359,13 +347,13 @@ coincidence coincidence-fold
 #-}
 --! }
 
-↑ᵗ_ : Sort → Sort 
-↑ᵗ expr = type
-↑ᵗ type = kind
-↑ᵗ kind = kind
+↑ᵗ_ : Sort b → ∃[ b ] Sort b 
+↑ᵗ expr = _ , type
+↑ᵗ type = _ , kind
+↑ᵗ kind = _ , kind
 
-_∶⊢_ : Scope → Sort → Set
-S ∶⊢ s = S ⊢ (↑ᵗ s)
+_∶⊢_ : Scope → Sort b → Set
+S ∶⊢ s = S ⊢ (proj₂ (↑ᵗ s))
   
 depth : S ∋ s → ℕ
 depth zero     = zero
@@ -375,7 +363,7 @@ drop-∈ : S ∋ s → Scope → Scope
 drop-∈ e xs = drop (suc (depth e)) xs
 
 Ctx : Scope → Set
-Ctx S = ∀ s → (x : S ∋ s) → drop-∈ x S ∶⊢ s
+Ctx S = ∀ (s : Sort Var) → (x : S ∋ s) → drop-∈ x S ∶⊢ s
 
 []ₜ : Ctx []
 []ₜ _ ()
@@ -426,13 +414,13 @@ data _⊢_∶_ : Ctx S → S ⊢ s → S ∶⊢ s → Set where
     Γ ⊢ t ∶ *
 
 _∶_→ᴿ_ : S₁ →ᴿ S₂ → Ctx S₁ → Ctx S₂ → Set
-_∶_→ᴿ_ {S₁} {S₂} ρ Γ₁ Γ₂ = ∀ (s : Sort) (x : S₁ ∋ s) (t : S₁ ∶⊢ s) → 
+_∶_→ᴿ_ {S₁} {S₂} ρ Γ₁ Γ₂ = ∀ (s : Sort Var) (x : S₁ ∋ s) (t : S₁ ∶⊢ s) → 
   (Γ₁ ∋ x ∶ t) → Γ₂ ∋ (ρ _ x) ∶ (t ⋯ᴿ ρ)
 
 --!! WTS
 _∶_→ˢ_ : S₁ →ˢ S₂ → Ctx S₁ → Ctx S₂ → Set
 
-_∶_→ˢ_ {S₁} {S₂} σ Γ₁ Γ₂ = ∀ (s : Sort) (x : S₁ ∋ s) (t : S₁ ∶⊢ s) → 
+_∶_→ˢ_ {S₁} {S₂} σ Γ₁ Γ₂ = ∀ (s : Sort Var) (x : S₁ ∋ s) (t : S₁ ∶⊢ s) → 
   (Γ₁ ∋ x ∶ t) → Γ₂ ⊢ (x ⋯ˢ σ) ∶ (t ⋯ˢ σ) 
 
 data Val : S ⊢ expr → Set where
@@ -522,4 +510,4 @@ sr (⊢· ⊢e₁ ⊢e₂) (ξ-·₂ e₂↪e x) =
   ⊢· ⊢e₁ (sr ⊢e₂ e₂↪e)          
 sr (⊢• ⊢e ⊢t ⊢t') (ξ-• e↪e') = 
   ⊢• (sr ⊢e e↪e') ⊢t ⊢t'
---! } 
+--! }  

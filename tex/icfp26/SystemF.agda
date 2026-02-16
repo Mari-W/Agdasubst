@@ -1,6 +1,6 @@
 -- rewriting safe, when rewrites terminate, double checked by kernel
 {-# OPTIONS --rewriting --local-confluence-check --double-check #-}
-module systemf where
+module SystemF where
 open import Agda.Builtin.Equality.Rewrite public
 
 -- standard eq reasoning
@@ -78,13 +78,6 @@ opaque
   _∙_ : Type n₂ → n₁ →ˢ n₂ → suc n₁ →ˢ n₂    
   (t ∙ σ) zero = t
   (t ∙ σ) (suc x) = σ x 
-
-  -- instantiation is defined on both terms and 
-  -- variables at the same time, this is important 
-  -- so we can rewrite on variable lookup
-  -- (introducing an extra lookup operator would 
-  -- i guess be possible, but also introduces noise 
-  -- in the laws)
 
   -- blocking alias for lookup
   _&ˢ_ : Fin n₁ → n₁ →ˢ n₂ → Type n₂

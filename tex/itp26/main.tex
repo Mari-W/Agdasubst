@@ -5,7 +5,7 @@
 \usepackage{stmaryrd}
 \nolinenumbers{}
 
-\usepackage{agda}
+\usepackage{Agda}
 
 \input{unicodeletters}
 \input{agdamacros}
@@ -16,7 +16,7 @@
 \newcommand{\tdot}{\mkern2mu \textcolor{agdablue}{\cdotp} \mkern-2mu \textcolor{agdablue}{\cdotp} \mkern-2mu \textcolor{agdablue}{\cdotp} \mkern1mu}
 
 \bibliographystyle{plainurl}
-\title{Strictifying the Sigma Calculus}
+\title{Rewriting the Sigma Calculus}
 
 \author{Marius Weidner}{University of Freiburg, Germany}{weidner@cs.uni-freiburg.de}{0009-0008-1152-165X}{}
 \authorrunning{Marius Weidner}
@@ -27,7 +27,6 @@
 \ccsdesc[300]{Theory of computation~Equational logic and rewriting}
 
 \begin{document}
-\AgdaNoSpaceAroundCode{}
 
 \input{systemf}
 \input{examples}
@@ -37,16 +36,16 @@
 \begin{abstract}
 
       Choosing a representation of variable bindings and substitutions is a central
-      challenge in mechanizing programming language metatheory. De Bruijn indices
+      challenge in mechanizing programming language metatheory. De~Bruijn indices
       provide a canonical representation, but developments based on them require
       numerous lemmas about substitution composition and interaction with binders,
       leading to significant proof overhead.
 
-      The $\sigma$-calculus treats parallel substitutions as first class objects
-      equipped with primitive operations and a terminating and confluent rewrite
-      system that normalizes substitution expressions. While previous work has
-      exploited these rewriting rules to implement decision procedures, the resulting
-      equalities remain propositional.
+      The $σ$-calculus treats parallel substitutions as first-class objects equipped
+      with primitive operations and a terminating and confluent rewrite system that
+      normalizes substitution expressions. While previous work has exploited these
+      rewrite rules to implement decision procedures, the resulting equalities remain
+      propositional.
 
       Recent support for user-defined rewrite rules in mainstream proof assistants
       enables the promotion of propositional equalities to definitional ones. To
@@ -56,78 +55,75 @@
       restrictions on rewrite rules.
 
       In the context of the proof assistant Agda, we embed the rules of the
-      $\sigma$-calculus such that they satisfy the criteria for rewrite rules while
+      $σ$-calculus such that they satisfy the criteria for rewrite rules while
       retaining their provability. This approach yields built-in normalization of
       substitutions while preserving logical consistency and full computational
       behavior.
 
       Our development is reusable: from an Autosubst specification, we automatically
-      generate the required $\sigma$-calculus infrastructure and rewrite rules. To
-      our knowledge, this is the first safe integration of the full $\sigma$-calculus
-      by definitional rewriting in a proof assistant.
+      generate the required $σ$-calculus infrastructure and rewrite rules. To our
+      knowledge, this is the first safe integration of the full $σ$-calculus by
+      definitional rewriting in a proof assistant.
 \end{abstract}
 
 \section{Introduction}\label{sec:introduction}
 
 Choosing a representation of variable bindings and substitutions is a central
-challenge in mechanizing programming language metatheory. De Bruijn indices
+challenge in mechanizing programming language metatheory. De~Bruijn indices
 provide a canonical representation, but developments based on them require
 numerous lemmas about substitution composition and interaction with binders,
 leading to significant proof overhead.
 
-On paper substitution often is an operation that replaces just a single
+On paper, substitution is often an operation that replaces just a single
 variable. However, in proof assistants we commonly use parallel substitutions,
-which are maps from variables to terms and replace multiple variables
-simultaneously.
-
-% example?
-% how do parallel substitutions need to interact with binders?
+which map variables to terms and replace multiple variables simultaneously when
+a term is instantiated with them.
 
 \subsection{The Sigma Calculus in \textsc{Autosubst}}
 
-The $\sigma$-calculus~\cite{10.1145/96709.96712} treats parallel substitutions
-as first class objects equipped with primitive operations and a terminating,
-confluent~\cite{Stark:2020:Mechanising}, rewrite system that normalizes
-substitution expressions. The $\sigma_{SP}$~\cite{10.1145/226643.226675}
-variant completes the original to a complete~\cite{10.1145/2676724.2693163}
-procedure. We refer to the $SP$ variant simply as the $\sigma$-calculus
-throughout this work.
+The $σ$-calculus~\cite{10.1145/96709.96712} treats parallel substitutions as
+first-class objects equipped with primitive operations and a terminating and
+confluent~\cite{Stark:2020:Mechanising} rewrite system that normalizes
+substitution expressions. The $σ_{SP}$~\cite{10.1145/226643.226675} variant
+complements the original to a complete~\cite{10.1145/2676724.2693163}
+procedure. We refer to the $SP$ variant simply as the $σ$-calculus throughout
+this work.
 
-The de Bruijn algebra, where we model parallel substitutins with functions
-constitutes a semantic model of the $\sigma$-calculus. With a semantic model
-for the substitution operations, the $\sigma$-calculus rules become provable,
-and therefore qualify for equational reasoning in proof
+The de~Bruijn algebra, where parallel substitutions are modeled as functions,
+constitutes a semantic model of the $σ$-calculus. With a semantic model for the
+substitution operations, the $σ$-calculus rules become provable, and therefore
+qualify for equational reasoning in proof
 assistants~\cite{schafer2015autosubst}.
 
-While previous work has exploited these equations to implement decision
+While previous work has exploited these equations to implement normalization
 procedures, the resulting equalities remain propositional. The creators of
 \textsc{Autosubst}~\cite{schafer2015autosubst} were the first to provide a
-normalization tactic using the $\sigma$-calculus rules for unscoped syntax
-definitions inside the Rocq proof assistant. To normalize terms that include
-parallel substitution one needs to apply the tactic inside a proof goal.
+normalization procedure using the $σ$-calculus rules for unscoped syntax
+definitions inside the Rocq proof assistant. To normalize terms with parallel
+substitutions one needs to apply a tactic inside a proof goal.
 
 The successor \textsc{Autosubst 2}~\cite{10.1145/3293880.3294101} is now
-regarded the gold standard for libraries that handle substitution in proof
+regarded as the gold standard for libraries that handle substitution in proof
 assistants. \textsc{Autosubst 2} supports intrinsically scoped syntax where the
 syntax data type is indexed over the number of free variables and variable
-usage is restricted to the variables in scope, by construction. Furthermore,
-\textsc{Autosubst 2} generates proofs for the syntax dependent
-$\sigma$-calculus rules from higher-order abstract syntax descriptions and
-enables reasoning about syntaxes with multiple, mutually dependent sorts, by
-packageing parallel substitutions over different sorts into vectors.
+usage is restricted to the variables in scope by construction. Furthermore,
+\textsc{Autosubst 2} generates proofs for $σ$-calculus rules that follow by
+induction over the syntax from higher-order abstract syntax descriptions. It
+also enables reasoning about syntaxes with multiple, mutually dependent, sorts
+by packaging parallel substitutions over different sorts into vectors.
 
-\textsc{Autosubst 2} also includes support for first class
-renamings, a special case of substitutions that map
-variables to variables. Idependently of first class support in the equational theory,
-they are required in proof assistants to model
-substitutions in a structurally recursive manner that the termination checker
-accepts~\cite{10.1007/11617990_1}.
-The creators of \textsc{Autosubst 2} extended the equational theory of
-the $\sigma$-calculus with additional rules that handle renamings although they lose completeness of the normalization procedure in
-the process. The authors conjecture the extended system preserves confluence but never
-formally proved so~\cite{Stark:2020:Mechanising}.
+Most importantly, \textsc{Autosubst 2}, in constrast to the first version,
+includes first-class support for renamings, a special case of substitutions
+that map variables to variables. Independently of first-class support in the
+equational theory, they are required in proof assistants to model substitutions
+in a structurally recursive manner that the termination checker
+accepts~\cite{10.1007/11617990_1}. The creators of \textsc{Autosubst 2}
+extended the equational theory of the $σ$-calculus with additional rules that
+handle renamings. The resulting system is not complete anymore, but the authors
+conjecture the extended system preserves
+confluence~\cite{Stark:2020:Mechanising}.
 
-\subsection{The Problem with Rewrite Rules}
+\subsection{Definitional Equalities for Substitutions using Rewrite Rules}
 
 Recent support for user-defined rewrite rules in mainstream proof assistants,
 such as Agda~\cite{cockx:LIPIcs.TYPES.2019.2, 10.1145/3434341} and
@@ -138,51 +134,49 @@ proofs~\cite{10.1145/3434341}. However, obtaining these proofs requires
 modeling substitutions as functions, which in turn leads to violations of the
 syntactic restrictions on rewrite rules.
 
-More specifically, Agda and other proof assistants performs higher-order
-pattern unification~\cite{10.1007/978-3-642-21691-6_5} to detect if a
-registered rewrite rule can be applied to a stuck term. To do so, Agda
-requires, that the left hand side is a stuck term on a defined symbol.
+Agda and other proof assistants perform higher-order pattern
+unification~\cite{10.1007/978-3-642-21691-6_5} to detect if a registered
+rewrite rule can be applied to a stuck term. To do so, Agda requires that the
+left-hand side is a stuck term on a defined symbol. To model parallel
+substitution in proof assistants, we have essentially two choices: data types
+or functions. When we model substitution as functions, some primitive
+operations of the $σ$-calculus generate stuck lambdas, thereby violating the
+syntactic restriction that the left-hand side must be a stuck symbol and not a
+lambda.
 
-To model parallel substitution in proof assistants, we have essentially two
-choices: data types or functions. When we model substitution as functions, some
-primitive operations of the $\sigma$-calculus generate stuck lambdas, thereby
-violating the syntactic restriction that the LHS must be a stuck symbol and not
-a lambda. Others tried to model substitution via constructors, but then we miss
-the computational behavior of substitutions required to instantiate the full
-rule set of the $\sigma$-calculus with proofs and in turn preservation of
-logical consistency. In other words: vectors do not constitute a semantic model
-of the $\sigma$-calculus.
+Others tried to model substitution with constructors, but then we miss the
+computational behavior of substitutions required to instantiate the full rule
+set of the $σ$-calculus with proofs and in turn preservation of logical
+consistency. Modeling substitutions as vectors does not constitute a complete
+semantic model of the $σ$-calculus.
 
-The solve our problem, we require more control over the reduction behavior of
-symbols. Fortunately, Agda supports opaque
-definitions~\cite{gratzer2022controlling}, that allow to selectively block and
-later unfold the implementation of function definitions. With opaque
+If we wish to rewrite all $σ$-calculus rules, we require more control over the
+reduction behavior of symbols. Fortunately, Agda supports opaque
+definitions~\cite{gratzer2022controlling}, that allow us to selectively block
+and later unfold the implementation of function definitions. With opaque
 definitions we can have the best of both worlds: we can treat function
 definitions as blocking symbols, such that we can apply rewrite rules, but also
-unfold their definitions to prove the rules using their underlying function
-model.
+unfold their definitions to prove the rules using their underlying model.
 
 \subsection{Content of this Paper}
 
 \subsection*{Contributions}
-We show how to rewrite the $σ$-calculus rules, with support for first class
-renamings, for multi-sorted and scoped syntax in Agda. We do this while
+We show how to rewrite the $σ$-calculus rules, with support for first-class
+renamings, in a multi-sorted and scoped syntax setting, in Agda. We do so while
 preserving the logical consistency of the system.
 
-As a side effect we prove the extension with first class renamings confluent
-via Agdas built-in confluence checker. We also show that this approach
-translates to any scoped syntax by implementation of a code generation script
-for Autosubst higher-order abstract syntax descriptions.
+As a side effect we support the claim that the extension of the $σ$-calculus
+rules with first-class renamings is confluent, via Agda's built-in confluence
+checker. We also show that this approach translates to any scoped syntax by
+implementing a code generation script for higher-order abstract syntax
+descriptions.
 
 \subsection*{Structure}
 
-\Cref{sec:pre} introduces the required background for the $\sigma$-calculus
-and Agda. \Cref{sec:mis} demonstrates how to register the $\sigma$-calculus rules
-with first class renamings as rewrite rules for multi-sorted and scoped syntax
-exemplified by System F. We discuss related and future work in \cref{sec:rwk}
+\Cref{sec:pre} introduces the required background in Agda and for the
+$σ$-calculus. \Cref{sec:mis} demonstrates how to register the $σ$-calculus rules
+exemplified by System~F. We discuss future and related work in \cref{sec:rwk}
 and conclude the paper in \cref{sec:con}.
-
-\noindent\textbf{The supplement contains the complete Agda code underlying this paper.}
 
 \section{Preliminaries}\label{sec:pre}
 We begin with a review of material from the literature. We summarize
@@ -190,43 +184,43 @@ We begin with a review of material from the literature. We summarize
       \item Agda and language features relevant to our work: rewrite rules and opaque
             blocks;
       \item multi-sorted and scoped syntax in Agda and
-      \item the $\sigma$-calculus modeled via the de Bruijn algebra.
+      \item the $σ$-calculus modeled via the de~Bruijn algebra.
 \end{itemize}
+
+\noindent\textbf{All Agda code presented in this paper can be found in the supplement.}
 
 \subsection{Agda and Relevant Language Features}\label{sec:pre-agd}
 Agda is a dependently typed functional language and proof assistant based on
-Martin-Löf type theory~\cite{MARTINLOF197573}, where proofs are verified via
+Martin-Löf type theory~\cite{MARTINLOF197573}, where proofs are verified by
 type checking. Proofs are significantly easier when terms are
-\textit{definitionally equal} (i.e.\ reduce to the same term). When terms are
+\textit{definitionally equal} (i.e.,\ reduce to the same term). When terms are
 not definitionally equal, users must resort to manual equational reasoning
 using propositional equality, which is a cumbersome process as Agda lacks
 automated proof-discharge tactics. Maximizing definitional equalities thus
-directly reduces manual effort (and allows for more complex intrinsic
-constructions that avoid `transfer hell').
+directly reduces manual effort.
 
 Beyond standard features such as indexed inductive types and dependent pattern
-matching~\cite{10.1145/3236770}, this work is based on two more language
-features.
+matching~\cite{10.1145/3236770}, this work is based on two more advanced
+language features.
 
 \subsection*{Rewrite Rules}
 User-defined rewrite rules~\cite{10.1145/3434341, cockx:LIPIcs.TYPES.2019.2}
-extend Agda’s computation by treating propositional equalities as reduction
-rules. A function $\AgdaFunction{eq} : (x_1 : A_1) \ldots \to
-      \AgdaFunction{f}\, p_1 \ldots p_n \, \AgdaFunction{≡} \, v$ can be registered
-as a rewrite rule if:
+extend Agda’s normalization-by-evaluation approach for definitional equalities
+by treating propositional equalities as reduction rules.
+
+A function is eligible for rewriting if it is of the following form:
+\[
+      \AgdaFunction{eq} : (x_1 : A_1) \ldots \to \AgdaFunction{f}\, p_1 \ldots p_n
+      \, \AgdaFunction{≡} \, v
+\]
+In addition it needs to satisfy the following conditions:
 \begin{enumerate}
       \item The head \AgdaFunction{f} is a postulate, defined function, or constructor with
             distinct variable type parameters.
       \item Every variable $x_i$ appears in a pattern position among $p_1, \ldots,
                   p_n$\footnote{The Agda documentation includes a definition for pattern
                   positions:
-                  \url{https://agda.readthedocs.io/en/latest/language/rewriting.html}}.
-            % \begin{enumerate}
-            %       \item $x \, y_1 \ldots y_n$, where $x$ is a pattern variable and $y_1, \ldots, y_n$ are distinct variables that are bound locally in the pattern.
-            %       \item $\AgdaFunction{f} \, p_1 \ldots p_n$, where $f$ is a postulate, a defined function, a constructor, or a data/record type, and $p_1, \ldots, p_n$ are again patterns.
-            %       \item $\lambda \, x \to p$, where $p$ is again a pattern.
-            %       \item $y \, p_1 \ldots p_n$, where $y$ is a variable bound locally  and $p_1, \ldots, p_n$ are again patterns.
-            % \end{enumerate}
+                  \url{https://Agda.readthedocs.io/en/latest/language/rewriting.html}}.
       \item The left side is neutral (it does not further reduce).
 \end{enumerate}
 
@@ -234,29 +228,33 @@ as a rewrite rule if:
 \ERewrite{} Once registered via \ERewriteIt{}, Agda treats \AgdaBound{n}
 \AgdaFunction{+} \AgdaNumber{0} as definitionally equal to \AgdaBound{n}: \ERewriteEx{}
 
-Users must ensure that the rewrite rule set as a whole is terminating and
-confluent to retain logical consistency. Agda provides confluence checks via
-\texttt{--confluence-check} and \texttt{--local-confluence-check}. Termination
-is not verified, but also not a critical property~\cite{10.1145/3434341}. Given
-the rules we rewrite are supported by proofs and the rewrite system is
-terminating, local confluence preserves consistency, otherwise full confluence
-is required~\cite{10.1145/3434341}.
+In addition to the syntactic restrictions, users must ensure that the rewrite
+rule set as a whole is terminating and confluent to retain logical consistency.
+
+Termination is not verified, but also not a critical
+property~\cite{10.1145/3434341}. Agda provides confluence checks via
+\texttt{--confluence-check} and \texttt{--local-confluence-check}. Given that
+the rewritten rules are supported by proofs, the rewrite system is terminating,
+and the rule set is locally confluent, their registration as rewrite rules
+preserves consistency~\cite{10.1145/3434341}.
 
 \subsection*{Opaque Blocks}
 Opaque definitions~\cite{gratzer2022controlling} let the user treat code as
-non-unfolding symbols. Definitions within an \AgdaKeyword{opaque} block are
-visible but treated abstractly during type checking: \EOpaque{} Outside this
-block, \AgdaFunction{forty-two} does not reduce to \AgdaNumber{42}:
-\EOpaqueExO{} However, the \AgdaKeyword{unfolding} keyword can be used to
-expose the computational behavior of the underlying definition when needed:
-\EOpaqueExT{}
+non-unfolding symbols. This feature is usually used to improve type checking
+times, because normally we want all definitions to unfold, to produce as many
+definitional equalities as possible. Their use case in this work will be to
+declare some definitions opaque, such that the blocked symbols qualify for
+rewriting.
+
+Definitions within an \AgdaKeyword{opaque} block are visible but treated
+abstractly during type checking: \EOpaque{} Outside this block,
+\AgdaFunction{forty-two} does not reduce to \AgdaNumber{42}: \EOpaqueExO{}
+However, the \AgdaKeyword{unfolding} keyword can be used to expose the
+computational behavior of a symbol when needed: \EOpaqueExT{}
 
 \subsection{Multi-Sorted and Scoped Syntax}\label{sec:pre-syn}
 \begin{figure}[t]
-      \footnotesize
-      \setlength{\mathindent}{0pt}
-      \setlength{\AgdaEmptySkip}{\smallskipamount}
-      \begin{minipage}[t]{0.43\linewidth}
+      \begin{minipage}[t]{0.45\linewidth}
             \raggedright{}
             \EScoped{}
       \end{minipage}
@@ -265,44 +263,51 @@ expose the computational behavior of the underlying definition when needed:
             \raggedright{}
             \EMultiSorted{}
       \end{minipage}
-      \caption{Classically vs. Multi-Sorted and Scoped Syntax}\label{fig:pre-svm}
+      \caption{Classically Scoped vs. Multi-Sorted Scoped Syntax}\label{fig:pre-svm}
 \end{figure}
 
-Many languages feature multiple syntactic categories. For instance
-System~F~\cite{girard1972, 10.1007/3-540-06859-7_148} has three syntacitc
+Many programming languages feature multiple syntactic categories. For instance
+System~F~\cite{girard1972, 10.1007/3-540-06859-7_148} has three syntactic
 sorts: expressions, types, and kinds. To prevent scoping errors, we use
-\textit{intrinsically scoped syntax} to represent the three syntactic
-categories. \Cref{fig:pre-svm} (left) shows a standard implementation: types
-are indexed by the amount of type variables, and expressions by both type and
-expression variable counts. Variables use de Bruijn indices of type
-\AgdaDatatype{Fin} \AgdaBound{n}, that is, natural numbers strictly less than
-the number of free variables. This representation restricts the set of terms to
-only well-scoped terms. Unfortunately this standard representation would
-require us to define many substitution operations (e.g., type-in-type,
-type-in-expr, expr-in-expr). This representation is chosen by \textsc{Autosubst
-      2}, and exactly the many different substitution operations over different
-sorts, lead to the need for vector substitutions.
+\textit{intrinsically scoped syntax} to represent the syntax.
+\Cref{fig:pre-svm} (left) shows a standard implementation: types are indexed by
+the amount of type variables, and expressions by both the amount of type and
+expression variable. Variables use de~Bruijn indices of type \AgdaDatatype{Fin}
+\AgdaBound{n}, that is, natural numbers strictly less than the number of free
+variables. This representation restricts the set of terms to only well-scoped
+terms.
 
-To avoid this combinatorial explosion, we instead unify the syntax in two
-orthogonal dimensions, presented also in \cref{fig:pre-svm} (right). Variables
-and terms form a single datatype \AgdaBound{S} \AgdaDatatype{⊢[} \AgdaBound{m}
-\AgdaDatatype{]} \AgdaBound{s} indexed by a \AgdaDatatype{Mode} \AgdaBound{m},
-a target \AgdaDatatype{Sort} \AgdaBound{s} and a \AgdaDatatype{Scope}
-\AgdaBound{S}. Modes distinguish constructors for variables and terms.
-Variables are represented across multiple sorts simultaneously by natural
-numbers of type \AgdaBound{S} \AgdaDatatype{∋} \AgdaBound{s} and act as de
-Bruijn indices. The position of \AgdaBound{s} in \AgdaBound{S} directly
-corresponds to the debruijn index of the variable. Using the syntax unified
-over sorts, we can later define renamings and substitutions that operate
-uniformly across all sorts, thereby avoiding vector substitutions. We unify
-over modes, because this allows us to state some $\sigma$-calculus laws
+We see scoped syntax as the optimal balance between fully extrinsic syntax and
+intrinsically typed syntax, in which case the expression syntax is indexed
+directly over contexts and types. It is powerful enough to detect scoping
+related errors, but one does not need to commit to full blown intrinsic typing,
+which can be difficult to work with for more complex systems.
+
+Alas, the standard representation requires us to define many substitution
+operations across the different sorts (e.g., type-in-type, type-in-expr,
+expr-in-expr). This representation is chosen by \textsc{Autosubst 2}, and
+explains why they need vector substitutions, that bundle substitutions over the
+different sorts alongside additional normalization rules.
+
+To avoid the combinatorial explosion of substitutions over different syntactic
+sorts, we unify the syntax in two orthogonal dimensions, presented also in
+\cref{fig:pre-svm} (right). Variables and terms form a single datatype
+\AgdaBound{S} \AgdaDatatype{⊢[} \AgdaBound{m} \AgdaDatatype{]} \AgdaBound{s}
+indexed by a \AgdaDatatype{Mode} \AgdaBound{m}, a target \AgdaDatatype{Sort}
+\AgdaBound{s} and a \AgdaDatatype{Scope} \AgdaBound{S}. Modes distinguish
+constructors for variables and terms. Variables are represented across multiple
+sorts simultaneously by natural numbers of type \AgdaBound{S} \AgdaDatatype{∋}
+\AgdaBound{s} and act as de~Bruijn indices. The position of \AgdaBound{s} in
+\AgdaBound{S} directly corresponds to the de~Bruijn index of the variable.
+Using the syntax unified over sorts, we can later define renamings and
+substitutions that operate uniformly across all sorts, thereby avoiding vector
+substitutions. Unifying over modes, allows us to state some $σ$-calculus laws
 parametric over the mode.
 
-\subsection{The Sigma Calculus modeled via the de Bruijn Algebra}\label{sec:pre-sig}
+\subsection{The Sigma Calculus modeled via the de~Bruijn Algebra}\label{sec:pre-sig}
 \begin{figure}[t]
       \centering
-      \footnotesize
-      \begin{minipage}[t]{0.44\textwidth}
+      \begin{minipage}[t]{0.40\textwidth}
             \raggedright
             \textbf{Traversal Rules}
             \begin{alignat*}{2}
@@ -313,88 +318,91 @@ parametric over the mode.
             \end{alignat*}
             \textbf{Monad Rules}
             \begin{alignat*}{2}
-                  \mathsf{right\text{-}id} \quad  & t \tdot \textcolor{agdablue}{\mathsf{id}} &  & = t                                         \\
-                  \mathsf{compositionality} \quad & (t \tdot σ_1) \tdot σ_2                   &  & = t \tdot (σ_1 \textcolor{agdablue}{;} σ_2)
+                  \mathsf{right\text{-}id} \quad & t \tdot \textcolor{agdablue}{\mathsf{id}} &  & = t                                         \\
+                  \mathsf{comp} \quad            & (t \tdot σ_1) \tdot σ_2                   &  & = t \tdot (σ_1 \textcolor{agdablue}{;} σ_2)
             \end{alignat*}
       \end{minipage}
       \hfill
-      \begin{minipage}[t]{0.48\textwidth}
+      \begin{minipage}[t]{0.40\textwidth}
             \raggedright{}
             \textbf{Interaction Rules}
             \begin{alignat*}{2}
-                  \mathsf{id}_\mathsf{L} \quad   & \textcolor{agdablue}{\mathsf{id}} \ \textcolor{agdablue}{;} \ σ                                                                             &  & = σ                                                                               \\
-                  \mathsf{id}_\mathsf{R} \quad   & σ \ \textcolor{agdablue}{;} \ \textcolor{agdablue}{\mathsf{id}}                                                                             &  & = σ                                                                               \\
-                  \mathsf{associativity} \quad   & (σ_1 \ \textcolor{agdablue}{;} \ σ_2) \ \textcolor{agdablue}{;} \ σ_3                                                                       &  & = σ_1 \ \textcolor{agdablue}{;} \ (σ_2 \ \textcolor{agdablue}{;} \ σ_3)           \\
-                  \mathsf{distributivity} \quad  & (t \textcolor{agdablue}{\cdot} σ_1) \ \textcolor{agdablue}{;} \ σ_2                                                                         &  & = (t \tdot σ_2) \textcolor{agdablue}{\cdot} (σ_1 \ \textcolor{agdablue}{;} \ σ_2) \\
-                  \mathsf{interaction} \quad     & \textcolor{agdablue}{\mathsf{wk}} \ \textcolor{agdablue}{;} \ (t \textcolor{agdablue}{\cdot} σ)                                             &  & = σ                                                                               \\
-                  \eta\mathsf{\text{-}id} \quad  & (\textcolor{agdablue}{\mathsf{zero}}) \textcolor{agdablue}{\cdot} \textcolor{agdablue}{\mathsf{wk}}                                         &  & = \textcolor{agdablue}{\mathsf{id}}                                               \\
-                  \eta\mathsf{\text{-}law} \quad & (\textcolor{agdablue}{\mathsf{zero}} \tdot σ) \textcolor{agdablue}{\cdot} (\textcolor{agdablue}{\mathsf{wk}} \ \textcolor{agdablue}{;} \ σ) &  & = σ
+                  \mathsf{id}_\mathsf{L} \quad & \textcolor{agdablue}{\mathsf{id}} \ \textcolor{agdablue}{;} \ σ                                                                             &  & = σ                                                                               \\
+                  \mathsf{id}_\mathsf{R} \quad & σ \ \textcolor{agdablue}{;} \ \textcolor{agdablue}{\mathsf{id}}                                                                             &  & = σ                                                                               \\
+                  \mathsf{assoc} \quad         & (σ_1 \ \textcolor{agdablue}{;} \ σ_2) \ \textcolor{agdablue}{;} \ σ_3                                                                       &  & = σ_1 \ \textcolor{agdablue}{;} \ (σ_2 \ \textcolor{agdablue}{;} \ σ_3)           \\
+                  \mathsf{dist} \quad          & (t \textcolor{agdablue}{\cdot} σ_1) \ \textcolor{agdablue}{;} \ σ_2                                                                         &  & = (t \tdot σ_2) \textcolor{agdablue}{\cdot} (σ_1 \ \textcolor{agdablue}{;} \ σ_2) \\
+                  \mathsf{interaction} \quad   & \textcolor{agdablue}{\mathsf{wk}} \ \textcolor{agdablue}{;} \ (t \textcolor{agdablue}{\cdot} σ)                                             &  & = σ                                                                               \\
+                  η\mathsf{\text{-}id} \quad   & (\textcolor{agdablue}{\mathsf{zero}}) \textcolor{agdablue}{\cdot} \textcolor{agdablue}{\mathsf{wk}}                                         &  & = \textcolor{agdablue}{\mathsf{id}}                                               \\
+                  η\mathsf{\text{-}law} \quad  & (\textcolor{agdablue}{\mathsf{zero}} \tdot σ) \textcolor{agdablue}{\cdot} (\textcolor{agdablue}{\mathsf{wk}} \ \textcolor{agdablue}{;} \ σ) &  & = σ
             \end{alignat*}
       \end{minipage}
       \caption{The Sigma Calculus Rules}\label{fig:pre-sig}
 \end{figure}
-We review the variant of the $\sigma$-calculus modeled via the de Bruijn algebra which also appears in the
-first version of \textsc{Autosubst}~\cite{schafer2015autosubst}, without first class renamings. Variables $x$
+We review the variant of the $σ$-calculus modeled via the de~Bruijn algebra which also appears in the
+first version of \textsc{Autosubst}~\cite{schafer2015autosubst}, without first-class renamings. Variables $x$
 represent natural numbers and terms $t := x \,|\, \textcolor{agdablue}{λ.}\, t
       \,|\, t₁ \, t₂ $ include the standard lambda calculus constructors as an
 example for any single sorted, unscoped syntax with binding.
-A substitution $\sigma$ maps
+A substitution $σ$ maps
 variables to terms. It helps to view a substitution as a stream $(t_0,
-      t_1, \dots)$, where the index of the term in the map directly corresponds to the de~Bruijn variable it replaces. Binders makes things complicated and require support for a shift operation to increment de~Bruijn indices, when substitutions containing variables are pushed unter binders. This perspective
+      t_1, \dots)$, where the index of the term in the map directly corresponds to the de~Bruijn variable it replaces. Binders make things complicated and require support for a shift operation to increment de~Bruijn indices, when substitutions containing variables are pushed under binders. This perspective
 motivates the semantic definitions for the extension operation $t
-      \textcolor{agdablue}{\cdot} \sigma$, the identity
-$\textcolor{agdablue}{\mathsf{id}}$ and the weakening substitution
-$\textcolor{agdablue}{\mathsf{wk}}$, treating substitutions as functions:
+      \textcolor{agdablue}{\cdot} σ$, the identity
+$\textcolor{agdablue}{\mathsf{id}}$ and the weakening
+$\textcolor{agdablue}{\mathsf{wk}}$ primitives, treating substitutions as functions:
 \begin{align*}
-      (t \textcolor{agdablue}{\cdot} \sigma)(\textcolor{agdablue}{\mathsf{zero}})    & := t         & \textcolor{agdablue}{\mathsf{id}}(x) & := x                                      \\
-      (t \textcolor{agdablue}{\cdot} \sigma)(\textcolor{agdablue}{\mathsf{suc}}\, x) & := \sigma(x) & \textcolor{agdablue}{\mathsf{wk}}(x) & := \textcolor{agdablue}{\mathsf{suc}}\, x
+      (t \textcolor{agdablue}{\cdot} σ)(\textcolor{agdablue}{\mathsf{zero}})    & := t    & \textcolor{agdablue}{\mathsf{id}}(x) & := x                                      \\
+      (t \textcolor{agdablue}{\cdot} σ)(\textcolor{agdablue}{\mathsf{suc}}\, x) & := σ(x) & \textcolor{agdablue}{\mathsf{wk}}(x) & := \textcolor{agdablue}{\mathsf{suc}}\, x
 \end{align*}
-We then define the application of a substitution to a term $\tdot$, referred to
+We then define the application of a substitution to a term $\tdot$, which we refer to
 as instantiation, mutually recursively with composition and the
 lifiting operator which pushes substitutions under binders using shifting:
 \begin{align*}
       (\textcolor{agdablue}{λ.}\, t)  \, \tdot \, σ
-                                             & = \textcolor{agdablue}{λ.} (t \tdot (\textcolor{agdablue}{\uparrow}σ)) & (\sigma_1 \
-      \textcolor{agdablue}{⨟} \ \sigma_2)(x) & = \sigma_1(x) \tdot \sigma_2                                                                                                                           \\
+                                        & = \textcolor{agdablue}{λ.} (t \tdot (\textcolor{agdablue}{\uparrow}σ)) & (σ_1 \
+      \textcolor{agdablue}{⨟} \ σ_2)(x) & = σ_1(x) \tdot σ_2                                                                                                                                \\
       (t_1 \ t_2)                            \, \tdot \, σ
-                                             & = (t_1 \tdot σ) \ (t_2 \tdot σ)                                        & \textcolor{agdablue}{\uparrow}\sigma & := \textcolor{agdablue}{\mathsf{zero}}
-      \textcolor{agdablue}{\cdot} (\sigma \ \textcolor{agdablue}{⨟} \
+                                        & = (t_1 \tdot σ) \ (t_2 \tdot σ)                                        & \textcolor{agdablue}{\uparrow}σ & := \textcolor{agdablue}{\mathsf{zero}}
+      \textcolor{agdablue}{\cdot} (σ \ \textcolor{agdablue}{⨟} \
       \textcolor{agdablue}{\mathsf{wk}})
 \end{align*}
 Lifting
 preserves the bound variable while it weakens the terms of the substitution to
-maintain correct scoping and composition first retrieves the term from the first substitution and then instatitates the resulting term with the second. Instantiation traverses the term homomorphically
-to push the substitution to the leafs.
+maintain correct scoping. Composition retrieves the term from the first substitution and then instantiates the resulting term with the second. Instantiation traverses the term homomorphically
+to push the substitution to the leaves.
 
 \Cref{fig:pre-sig} presents the accompanying rewrite system. It traditionally also includes the
-definition of the instantiation function.
-We follow Stark~\cite{Stark:2020:Mechanising} and categorize the reduction rules into three groups.
+clauses of the instantiation function.
+We follow Stark~\cite{Stark:2020:Mechanising} and categorize the rules into three groups.
 \begin{itemize}
-      \item \textbf{Traversal} rules govern propagation through terms and under binders.
+      \item \textbf{Traversal rules} govern propagation through terms and under binders.
       \item \textbf{Monad rules} define the behavior of substitutions applied to terms.
       \item \textbf{Interaction rules} describe equalities between substitution expressions.
 \end{itemize}
 
-We refer the reader to the original $\sigma_{SP}$-calculus
+We refer the reader to the original $σ_{SP}$-calculus
 paper~\cite{10.1145/2676724.2693163} for a detailed description of the rule set
-selection.
+selection, and to Schäfer et al~\cite{10.1145/2676724.2693163} for the reason
+these rules suffice to normalize all substitution expressions.
 
-\section{Strictifying the Sigma Calculus}\label{sec:mis}
+\section{Rewriting the Sigma Calculus}\label{sec:mis}
 
-The definition of instantiation via mutual recursion with composition
-complicates termination. Agda specifically cannot determine that this
-definition is structurally recursive. Because of that we follow
-Adams~\cite{10.1007/11617990_1} to resolve this issue and first define
+The definition of instantiation by mutual recursion with composition
+complicates termination. Agda cannot determine that this definition is
+structurally recursive (and also lacks mechanisms to justify termination by
+well-founded recursion). Because of that we follow
+Adams~\cite{10.1007/11617990_1} to resolve the issue by first defining
 instantiation for renamings. We then extend the equational theory to handle
-first class renamings and to connect substitutions with renamings with the
+first-class renamings and to connect substitutions with renamings with the
 rules from Autosubst 2~\cite{10.1145/3293880.3294101}. We use the multi-sorted
-and scoped version of System F from \Cref{fig:pre-svm} as an example for any
+and scoped version of System~F from \Cref{fig:pre-svm} as an example for any
 scoped syntax. The approach described in this section directly translates to
-any multi-sorted and scoped syntax and simple intrinsically typed syntax where
-the type index of the syntax has type \AgdaDatatype{Set}.
+any multi-sorted and scoped syntax as well as simple intrinsically typed syntax
+where the type index of the syntax has type \AgdaDatatype{Set}.
 
 \subsection{Renaming and Substitution}\label{sec:mis-sub}
 \begin{figure}[t]
+      \AgdaNoSpaceAroundCode{}
       \setlength{\mathindent}{0pt}
       \setlength{\AgdaEmptySkip}{\smallskipamount}
       \begin{minipage}[t]{0.33\linewidth}
@@ -412,59 +420,58 @@ the type index of the syntax has type \AgdaDatatype{Set}.
 The definitions for renaming and substitution is presented in
 \Cref{fig:mis-ras}.
 
-We begin with the definition of renamings \AgdaFunction{\_→ᴿ\_} which map
-variables of sort \AgdaBound{s} from scope \AgdaBound{S₁} to variables of the
-same sort in scope \AgdaBound{S₂}. We then define the renaming primitives
-identity \AgdaFunction{id}, weakening \AgdaFunction{wk} and forward composition
-\AgdaFunction{\_∘\_}. The identity renaming is just the identity function, that
-ignores the explicit sort argument, which we unfortunately cannot leave
-implicit because Agda fails to infer it most of the time, complicating proofs
+We begin with the type alias for renamings \AgdaFunction{\_→ᴿ\_}: renamings are
+functions that map variables of sort \AgdaBound{s} from scope \AgdaBound{S₁} to
+variables of the same sort in scope \AgdaBound{S₂}. We then define the renaming
+primitives identity \AgdaFunction{id}, weakening \AgdaFunction{wk} and forward
+composition \AgdaFunction{\_∘\_}. The identity renaming is just the identity
+function, that ignores the explicit sort argument, which we could not leave
+implicit, because Agda fails to infer it most of the time, complicating proofs
 unnecessarily. Weakening applies the \AgdaInductiveConstructor{suc} constructor
 to all variables of a renaming and composition of two renamings is defined as
-forward function composition.
+forward function composition. Lifting \AgdaFunction{\_↑ᴿ\_} is defined directly
+to avoid a definition for the extension of renamings, which is unnecessary
+because renamings merely need to shift variables. The traversal operation
+\AgdaFunction{\_⋯ᴿ\_} propagates the renaming through the nodes to the leaves
+and applies lifting when it passes under binders. We define instantiation
+across both modes to match the definition of substitution instantiation later.
+The computational behavior of renamings follows the behavior of functions
+almost entirely. We require only a few additional \AgdaKeyword{REWRITE} rules
+later to extend the definitional equalities of renamings.
 
-Lifting \AgdaFunction{\_↑ᴿ\_} is defined directly to avoid a definition for the
-extension of renamings, which is unnecessary because renamings merely need to
-shift variables. The traversal operation \AgdaFunction{\_⋯ᴿ\_} propagates the
-renaming through the syntax to the variables and applies lifting when it passes
-under binders. We define instantiation across both modes to match the
-definition of substitution instantiation later. The computational behavior of
-renamings follows the behavior of functions almost entirely. We require only a
-few additional \AgdaKeyword{REWRITE} rules later to extend the definitional
-equalities of renamings.
-
-Substitutions map variables to terms rather than variables. The operator
-\AgdaFunction{⟨\_⟩} embeds any renaming into a substitution by wrapping the
-resulting variable inside the variable constructor. We can define the identity
-substitution \AgdaFunction{idˢ} and weakening substitution \AgdaFunction{wkˢ}
-directly from renamings. To prevent Agda from rejecting rewrite rules due to
-reductions on the left hand side, we \AgdaKeyword{INLINE} these symbols.
+Substitutions are functions from variables to terms instead of variables. The
+operator \AgdaFunction{⟨\_⟩} embeds any renaming into a substitution by
+wrapping all variables with the variable constructor. With the embedding
+operator we define the identity substitution \AgdaFunction{idˢ} and weakening
+substitution \AgdaFunction{wkˢ} directly from renamings. To prevent Agda from
+rejecting rewrite rules due to reductions on the left-hand side, we
+\AgdaKeyword{INLINE} these symbols.
 
 Extension \AgdaFunction{\_∙\_} is defined by case analysis on the incoming
 variable and maps the term we extend with to variable
-\AgdaInductiveConstructor{zero}. We use renaming with a weakening to define the
-lifting of substitutions \AgdaFunction{\_↑ˢ\_}, thereby satisfying the
-requirements of structural recursion.
-
-Instantiation with a substitution \AgdaFunction{\_⋯ˢ\_} works analogous to the
-case of renamings and we also design it to work for variables and terms
-simultaneously. Finally we define the forward composition of substitutions
-\AgdaFunction{\_⨟\_} via instantiation.
+\AgdaInductiveConstructor{zero}. We use instantiation with the weakening
+renaming to define the lifting of substitutions \AgdaFunction{\_↑ˢ\_}, thereby
+satisfying the requirements of structural recursion. Instantiation with a
+substitution \AgdaFunction{\_⋯ˢ\_} works analogous to the case of renamings and
+we also design it to work for variables and terms simultaneously, for reasons
+that become clear shortly. Finally we define the forward composition of
+substitutions \AgdaFunction{\_⨟\_} via instantiation.
 
 We declare all substitution primitives as \AgdaKeyword{opaque} to block their
 reduction. This hides the computational behavior of the primitives. Blocking
-their reduction allows us to rewrite the $\sigma$-calculus rules on the
-blocking symbols. For instance, composition would reduce to a lambda function,
-which would make most of the $\sigma$-calculus rules not admissable for
-rewriting. The definition of instantiation over both modes, allows us to do
-lookup of a variable in a substitution also by usage of the blocking symbol for
-instantiation, instead of function application\footnote{We could have chosen to
-      introduce a separate symbol for lookup (and also to split the data type for
-      variables and terms), but this representation allows us to unify some laws
-      later}. \Cref{sec:mis-ex} details this discrepancy.
+their reduction allows us to rewrite the $σ$-calculus rules on the blocking
+symbols. For example, the current definition for composition without blocked
+reduction would reduce to a lambda function, which would render most of the
+\textbf{Interaction rules} not admissable for rewriting. The definition of
+instantiation over both modes, allows us to do lookup of a variable in a
+substitution also by usage of the blocking symbol for instantiation, instead of
+function application. We will state the equations we wish to rewrite later only
+in terms of blocking symbols, without using lambdas or function application. We
+go into more detail in \Cref{sec:mis-ex}.
 
 \subsection{The Sigma Calculus Rules}\label{sec:mis-sig}
 \begin{figure}[t]
+      \AgdaNoSpaceAroundCode{}
       \setlength{\mathindent}{0pt}
       \begin{minipage}[t]{0.48\linewidth}
             \raggedright{}
@@ -479,56 +486,63 @@ instantiation, instead of function application\footnote{We could have chosen to
             \ETraversalLaws{}
             \EMonadLaws{}
       \end{minipage}
-      \caption{The Rewrite System for the Sigma Calculus with First Class Renamings}\label{fig:mis-sig}
+      \caption{The Rewrite System~For the Sigma Calculus with first-class Renamings}\label{fig:mis-sig}
 \end{figure}
 
-\Cref{fig:mis-sig} presents the $\sigma$-calculus rules with first class renamings
-as Agda equalities that we add as rewrite rules.
+\Cref{fig:mis-sig} presents the $σ$-calculus rules with first-class renamings
+as Agda equalities admissable for rewriting.
 Agda accepts the rule set as confluent which is important for safety.
-Before rewriting we \emph{prove} all the rules to guarantee logical consistency~\cite{10.1145/3434341}.
-We now discuss the changes to the standard $\sigma$-calculus variant from \Cref{sec:pre-sig}.
+We are also able to prove all the rules before rewriting them, to guarantee consistency.
+first-class renamings introduce three new categories. We now discuss the
+changes to the standard $σ$-calculus variant from \Cref{sec:pre-sig}.
 
-First class renamings introduce three new categories specifically First Class
-Renaming rules and Definitional rules and Coincidence rules.
+The \textbf{first-class Renamings rules} include a single rule which states
+that the lifting the identity renaming remains the identity. This property does
+not hold definitionally because lifting of renamings is defined via a case
+split on the incoming variable. However, to preserve confluence with respect to
+the Monad rules, this equality is required to hold definitionally. All other
+properties we expect of renamings such as associativity hold definitionally
+already.
 
-The \textbf{First Class Renamings rules} include a single rule which states
-that the lifting of the identity renaming remains the identity. This property
-does not hold definitionally because the lifting of renamings is defined via a
-case split on the incoming variable but also it is strictly required for a
-confluent account. All other properties we expect of renamings such as
-associativity hold definitionally.
-
-The \textbf{Definitional rules} include definitions we blocked earlier in a
-slightly modified form. We include the clauses from the definition of extension
-but the instantiation operator handles the lookup of variables in a
-substitution instead of function application. Lookup in composed substitutions
-and lifiting of substitutions (via composition) is also defined in terms of the
-instantiation operator for variable lookup in substitutions.
+The \textbf{Definitional rules} include definitions we blocked earlier in
+modified form. We include the clauses from the definition of extension but use
+the instantiation operator to handle lookup of variables in substitutions
+instead of function application. Similarly, lookup in composed substitutions is
+defined in terms of the instantiation operator. We rewrite the lifting operator
+in terms of composition with the weakening substitution, which is not possible
+to define directly, due to the aforementioned termination issues. This change
+us to draw on the complete theory of the $σ$-calculus, when solely reasoning
+about substitutions. We can normalize every expression, only involving
+substitutions and no renamings, into a normal form suitable for syntactic
+comparison.
 
 The \textbf{Interaction rules} include a minor change. Since instantiation with
-renamings is available as a first class construct we must add a version of the
-$\eta$-law for renamings where instantiation appears as a blocking symbol.
+renamings is available as a first-class construct we must add a version of the
+$η$-law for renamings where instantiation appears as a blocking symbol.
 
 The \textbf{Coincidence rules} emerge from the interaction between renamings
-and substitutions~\cite{10.1145/3293880.3294101} and allow us to recover
+and substitutions~\cite{10.1145/3293880.3294101}. They allow us to recover
 renamings from their embedding as substitutions. We state them uniformly for
-variables and terms \AgdaBound{x/t} traversed by a substitution because we also
-want to coerce variable lookup in substitutions to variable lookup in
-renamings. The extraction of arbitrary renamings from deeply nested
-substitutions requires a dedicated solving strategy which we leave for future
-work. However we require a specific coincidence variant called
-\AgdaFunction{coincidence-fold} for the proof of subject reduction of System F.
-Every proof might require more coincidence lemmas and we are currently trying
-to figure out the patterns. For instance subject reduction might require the
-inclusion of lemmas in the style of \AgdaFunction{coincidence-fold} with $n$
-extensions where $n$ is the maximum arity of binders in the object language.
+variables and terms \AgdaBound{x/t} instantiated with substitutions, because we
+also want to coerce variable lookup in substitutions to variable lookup in
+renamings.
 
-\textbf{Traversal rules} mirror the clauses from the instantiation
-definitions in the previous section directly.
-We include all clauses except the one for variables.
-This exclusion is important because we wanted the term
-\AgdaBound{x} \AgdaFunction{⋯ˢ} \AgdaBound{σ} to remain stuck
-and not reduce to function application.
+The extraction of renamings from deeply nested substitutions in general
+requires a dedicated solving strategy~\cite{10.1145/3293880.3294101}. In
+addition to the obvious \AgdaFunction{coincidence} rule, we require a specific
+coincidence variant called \AgdaFunction{coincidence-fold} for the proof of
+subject reduction of System~F. Every proof might require more coincidence
+lemmas and we are currently trying to figure out the patterns. For instance,
+proving subject reduction might require the inclusion of lemmas in the style of
+\AgdaFunction{coincidence-fold} with $n$ extensions where $n$ is the maximum
+arity of binders in the object language. The inclusion of more coincidence
+lemmas usually does not affect confluence.
+
+The \textbf{Traversal rules} mirror the clauses from the definitions of
+instantiation in the previous section directly. We include all clauses except
+the one for variables. This exclusion is important because we wanted the term
+\AgdaBound{x} \AgdaFunction{⋯ˢ} \AgdaBound{σ} to remain stuck, so we can apply
+rewrite rules where instantiation of variables is the head symbol.
 
 We extend the \textbf{Monad rules} to handle all four combinations of
 instantiation with renamings and substitutions. We state the right identity law
@@ -544,9 +558,9 @@ extensionality can be avoided by proving that if two substitutions are
 extensionally equal, then their instantiation to the same term are
 intensionally equal.
 
-\subsection{An Example Proof with the Strictified Sigma Calculus}
-% TODO: add definition of typed substitutins / renamings
+\subsection{An Example Proof with the Rewritten Sigma Calculus}
 \begin{figure}[!t]
+      \AgdaNoSpaceAroundCode{}
       \setlength{\mathindent}{0pt}
       \begin{minipage}[t]{0.48\linewidth}
             \raggedright{}
@@ -556,116 +570,112 @@ intensionally equal.
             \raggedright{}
             \ESR{}
       \end{minipage}
-      \caption{Subject Reduction for System F}\label{fig:ext-rst}
+      \caption{Subject Reduction for System~F}\label{fig:ext-rst}
 \end{figure}
-The rewritten equations of the $\sigma$ calculus apply automatically throughout
-the subsequent code. We demonstrate this with a proof of subject reduction
-which proceeds where we never need to explicitly manage substitutions. We
-outline a subject reduction for a standard logical type system for System F
+The rules of the $σ$-calculus apply automatically throughout
+the subsequent code. We briefly demonstrates this with a proof of subject reduction
+where we never need to explicitly manage substitutions. The
+proof is carried out for a standard logical type system
 \AgdaDatatype{\_⊢\_:\_} and call-by-value semantics \AgdaDatatype{\_↪\_}. We
-refer to the supplement for the full example and all definitions.
+refer to the supplement for the definitions of both.
 
 To establish subject reduction, we first prove that renaming and substitution
 preserve typing. The left side of \cref{fig:ext-rst} displays the proofs for
 the substitution-preserves-typing lemma \AgdaFunction{\_⊢⋯ˢ\_}. We omit the
-analogous proof for renamings \AgdaFunction{\_⊢⋯ᴿ\_}. The result for renamings
-is used to prove that the lifting of a substitution preserves typing
-\AgdaFunction{⊢↑ˢ} and subsequently show that general substitution preserves
-typing \AgdaFunction{\_⊢⋯ˢ\_}. The proof relies on the predicate of well typed
-substitutions \EWTS{}. The variable cases require a lookup of the well typed
-variable in the well typed substitution. We apply the preservation lemma for
-the lifted substitutions when we pass under a binder. The proofs follow without
-any manipulation of substitutions. In particular we do not need to manually
-move the substitution under a weakening inside the caes for binders or under a
-singleton substitution in the case of type application which is normally
-required in standard proofs.
+analogous proof for renamings.
+
+The signature of the proof relies on the definition for well typed
+substitutions: \EWTS{} Contexts \AgdaDatatype{Ctx} \AgdaBound{S} are maps from
+scoped variables to scoped types. Well typed substitutions are then defined as
+functions from variables \AgdaBound{x} typed in \AgdaBound{Γ₁} to terms
+\AgdaBound{x} \AgdaFunction{⋯ˢ} \AgdaBound{σ} typed in \AgdaBound{Γ₂}.
+
+The preservation result for renamings is used to prove that the lifting of a
+substitution preserves typing \AgdaFunction{⊢↑ˢ} and subsequently used inside
+the substitution-preserves-typing proof, again respecting the termination
+constraints. The variable cases require a lookup of the well typed variable
+inside the well typed substitution. We apply the preservation lemma for lifting
+substitutions when we pass under a binder. All cases follow without any
+manipulation of substitutions. In particular we do not need to manually move
+the substitution under a weakening inside the cases
+\AgdaInductiveConstructor{λx\_} and \AgdaInductiveConstructor{Λα\_} or under a
+singleton substitution in the case of type application
+\AgdaInductiveConstructor{\_•\_} which is normally required in standard proofs.
 
 Subject reduction \AgdaFunction{sr} directly follows from the substitution
-preserves typing lemma, shown on the right of \cref{fig:ext-rst}. The rewrite
-rules automatically handle the otherwise required application of interaction
-rules in the cases of $β$-reductions. Here \AgdaFunction{⊢[]} is the well typed
-single substitution which can be derived directly from the substitution
-preserves typing lemma.
-
-This example demonstrates the applicability on a small scale. We also applied
-our approach to the $π$-calculus in an unrelated project to construct a logical
-relation. In that setting we also avoided manual reasoning over substitutions
-entirely.
+preserves typing lemma, shown on the right of \cref{fig:ext-rst}. Inside the
+$β$-reduction cases \AgdaFunction{⊢[]} denotes the well typed single
+substitution which can be derived directly from the substitution preserves
+typing lemma. The rewrite rules automatically handle the otherwise required
+application of interaction rules in the cases of $β$-reductions.
 
 \subsection{An Examination of the Issue with Unfolding Definitions}\label{sec:mis-ex}
-Blocking the reduction behavior of substitution primitives allows us to
-successfully rewrite the $\sigma$-calculus rules. We now outline why this
-approach works, and more specifically why other attempts did not work.
+Blocking the reduction behavior of substitution primitives allowed us to
+successfully rewrite all $σ$-calculus rules. We now explain why this approach
+works, and more specifically why other attempts did not work.
 
-\subsection*{Using Functions}
-The main issue is the unfolding of composition to a lambda function. If we
-inline the definition for the composition operator, then for instance the left
-hand side of \AgdaFunction{comp-idₗ} rule would reduce to~\EIdLawUnfolded{}~and
-not constitute a valid rewrite rule, violating the constraint that rewrite
-rules must be blocking symbols. When we block the reduction of composition, we
-still need to include reductions for the case, when variables are looked up
-inside two composed substitutions.
+The primary issue is that composition unfolds to a lambda abstraction. If we
+unfold the definition for the composition operator, then for instance the left
+hand side of \AgdaFunction{comp-idₗ} rule would reduce to~\EIdLawUnfolded{}~,
+violating the constraint that rewrite rules must have blocking symbols on the
+left. However, when we block the reduction of composition, we still need to be
+able to describe how variables are looked up inside two composed substitutions.
 
-We cannot use function application anymore to describe this operation, that is
-rewriting: \EFunAppInterp{}, because this would effectively re-add the clause
-from the definition of the composition operator to the reduction rules, which
-in turn leads to the same problems~\footnote{In this case, the problems are
-      becoming apparent differently. Agda still allows rewriting on the composition
-      symbol, but it fails to do higher-order unification for the $\eta$-law. We
-      believe this is due to Agda's unification up to
-      $\eta$-equality~\cite{cockx:LIPIcs.TYPES.2019.2}.}.
+We tried to keep using function application to describe variable lookup, that
+is, rewriting the following: \EFunAppInterp{}. This equation effectively
+re-establishes the computational behavior of composition, but leads to problems
+with higher-order unification. To our suprise, Agda accepts this rule together
+with the interaction rules, such as \AgdaFunction{comp-idₗ}, but it fails to
+perform higher-order pattern unification correctly afterwards. More
+specifically, it does not apply the $η$-laws anymore, even though manual
+application using propositional equality reasoning works. We argue Agda should
+probably reject such a construction.
 
 Instead we use the instantiation operator to perform variable lookup. Doing so
 requires us to propagate this change through all the rules, using instantiation
-every time we would want to use function application.
+every time we would want to use function application for variable lookup.
 
-While we are still able to use function application or build substitutions
-using lambdas, we then obtain fewer definitional equalities. Thus, we recommend
-using only instantiation for variable lookup and only the two already defined
-composition operators.
+We note that, while we are still able to use function application or build
+substitutions using lambdas, we then obtain fewer definitional equalities. As a
+consequence, we recommend using only instantiation for variable lookup and only
+the two already defined composition operators.
 
-It is interesting by doing so we go a step back: The original $\sigma$-calculus
-treats the symbols purely syntactic, also describing the behavior of lookup
-with use of the instantiation operator. Then the de Bruijn algebra provided a
-semantic model for the $\sigma$-calculus, enabling proofs for the
-$\sigma$-calculus rules and applicability for propositional equality chains.
-Now, in this work we do both: Using the semantic model to prove the laws but
-also treating the symbols syntactically to predicably apply rewrite rules.
+\subsection*{Using Vectors instead of Functions}
 
-\subsection*{Using Constructors}
-We considered an alternative representation for substitutions based on a
-vector-like data type. This data type would at least need to include an
-extension \AgdaInductiveConstructor{\_·\_} constructor, to fill the vector with
-terms.
+We also considered an alternative representation for substitutions based on a
+vector-structured data type. This data type would at least need to include an
+extension constructor, to fill the vector with terms. Because composition is
+then defined via case distinction on the vector, it correctly behaves as a
+blocking symbol suitable for rewriting. However with extension as constructor
+the $η$-law is not instantiatable with a proof, because this would require that
+the extension constructor has computational behavior.
 
-Because composition is then defined via case distinction on the vector, it
-correctly behaves as a blocking symbol suitable for rewriting. However with
-extension as constructor the $\eta$-law is not instantiatable with a proof,
-because this would require that the extension constructor has computational
-behavior.
-
-Removing the $\eta$-law from the equational theory would preserve confluence,
-but would already prevent us to produce the subject reduction proof from the
-previous section. To be precise, it is required to prove the type application
-case for substitution preserves typing.
+Removing the $η$-law from the equational theory preserves confluence, but
+misses important definitional equalities. Although preventing some definitional
+equalities, the vector representation could maybe be useful for an attempt at
+type-theory-in-type-theory~\cite{10.1145/2914770.2837638}, where a
+representation of substitutions as functions is not possible.
 
 \subsection{Discussion}\label{sec:mis-dis}
 The rules presented in \cref{sec:mis-sig} are an extension of the classic
-$\sigma$-calculus rules to a setting with renamings, closely following the work
-done by the \textsc{Autosubst 2} authors. After careful construction, marking
-the relevant symbols opaque, they fulfill the requirements to be registered as
+$σ$-calculus rules to a setting with renamings, closely following the work done
+by the \textsc{Autosubst 2} authors. After careful construction, marking the
+relevant symbols opaque, they fulfill the requirements to be registered as
 rewrite rules. Moreover Agda can see that the rule set preserves confluence.
 
-Inside the proofs of the rules themselves, the definitions can still unfold
-when needed, while externally they behave as uninterpreted symbols and are
-reduced only by the $σ$-calculus rules. In our case we needed a blocking symbol
-for composition and variables instantiated to substitutions, for which native
-lambdas and function application are not suitable, due to the restrictions on
-rewrite rules.
+The original $σ$-calculus treats the symbols purely syntactic, also describing
+the behavior of lookup with use of the instantiation operator. Then the
+de~Bruijn algebra provided a semantic model for the $σ$-calculus, enabling
+proofs for the $σ$-calculus rules and applicability for propositional equality
+chains. In this work we do both: Using the semantic model to prove the laws but
+also treating the symbols syntactically to predicably apply rewrite rules.
 
-This construction reveals a broader concept that could serve as a general
-recipe for integrating algebraic laws over different structures into proof
-assistants:
+\section{Future and Related Work}\label{sec:fwk}
+\subsection{Opaque Definitions for Rewriting}
+The construction from the previous section reveals a broader concept that could
+serve as a general recipe for integrating normalization for suitable algebraic
+structures into proof assistants:
+
 \begin{itemize}
       \item Define symbols for the structure.
       \item Establish a corresponding confluent rewrite system.
@@ -675,42 +685,36 @@ assistants:
             equations.
 \end{itemize}
 
-For instance, when reasoning over mathematical sets in Agda, users usually
-resort to work with lists up to permutation and a uniqueness predicate, which
-is rather tedious to work with. The characteristic function for sets makes it
-possible to translate statements about sets to statements about functions. We
-shortly outline how our approach could be adopted to provide built-in
-normalization for mathematical sets using their characteristic function as
-their model. In this szenario we define sets as follows: \ESetProp\, where
-$\mathcal{A}$ : \AgdaDatatype{Set} \AgdaBound{ℓ}. Using this model we can
+To illustrate this, consider the example of set-theoretic sets. When reasoning
+over sets in Agda, users usually resort to work with lists up to permutation
+and a uniqueness predicate, which is tedious to work with and requires lots of
+uninteresting code. This overhead is usually not an issue in tactic-based
+provers, that feature dedicated solvers for this work.
+
+The characteristic function for sets makes it possible to translate statements
+about sets to statements about functions. We shortly outline how our approach
+could be adopted to provide built-in normalization for sets using their
+characteristic function as the underlying model.
+
+Following the idea above, the type of sets would be defined as: \ESetProp\, for
+some $\mathcal{A}$ : \AgdaDatatype{Set} \AgdaBound{ℓ}. Using this model we can
 define set operations as opaque functions: \ESetOps{} Although this model is
-even worse to work with than lists plus predicates, we can define all set
-operations and also \emph{prove} relevant laws, for instance right identity:
-\ESetLawEx{}.
+probably even worse to work with than lists up to permutation, we can define
+all set operations and also instantiate a suitable rewrite system with proofs.
+This rewrite system might include for example a right identity law of the form:
+\ESetLawEx{}. Due to the opaquely defined operations, this equation qualifies
+as rewrite rule.
 
 A good starting point for a suitable rewrite system is given by the boolean
 ring interpretation of sets~\cite{HSIANG1985255}. This system however, requires
-rewriting modulo AC (associativity and commutativity). We argue that to this
-end, Agda would greatly benefit from an extension with rewriting modulo AC to
-support more confluent and complete rewrite systems for common algeraic
-structures.
-
-\section{Related and Future Work}\label{sec:rwk}
-
-\subsection{Sigma Calculus}
-There exist a variety of explicit substitution calculi starting with the
-original $\sigma$-calculus~\cite{10.1145/96709.96712} which includes primitives
-for identity and extension and shifting and composition. The
-$\sigma_{SP}$-calculus~\cite{10.1145/2676724.2693163} adds further reductions
-to ensure confluence. Only the $\sigma_{SP}$-calculus is both sound and
-complete which enables the derivation of all equations between terms via
-reduction. Mechanized proofs establish both completeness and confluence plus
-termination~\cite{10.1145/2676724.2693163, Stark:2020:Mechanising}. The
-extension with first class renamings has not yet been formally verified to be
-confluent but Stark~\cite{Stark:2020:Mechanising} conjectured that their
-addition preserves confluence. Our implementation confirms this conjecture.
-
-\subsection{Autosubst and Code Generation}
+rewriting modulo AC (associativity and commutativity). Other provers, such as
+Dedukti~\cite{assaf2023deduktilogicalframeworkbased}, which is purely based on
+rewrite rules, already support AC rewriting and we argue that Agda would also
+greatly benefit from an extension with rewriting modulo AC. Safe built-in
+normalization for common algebraic structures would improve the user experience
+of Agda and might allow it to close the gap to tactic-based provers regarding
+automation of such proofs.
+\subsection{Code Generation}
 \begin{figure}[!t]
       \begin{minipage}[t]{0.48\linewidth}
             \begin{verbatim}
@@ -735,131 +739,155 @@ tapp : expr -> type -> expr
 tlam : kind -> (type -> expr) -> expr
       \end{verbatim}
       \end{minipage}
-      \caption{Higher-order abstract  syntax specification for System F}\label{fig:rel-hoa}
+      \caption{Higher-order abstract  syntax specification for System~F}\label{fig:rel-hoa}
 \end{figure}
 
-We already discussed \textsc{Autosubst} and related
-research~\cite{10.1145/3293880.3294101, schafer2015autosubst,
-      Stark:2020:Mechanising} extensively throughout this work. Most notably their
-rewrite system with first class renamings forms the theoretical foundation of
-our work. \textsc{Autosubst 2} features external code generation to generate
-the boilerplate from a higher-order abstract syntax (HOAS) description. More
-specifically, they generate the scoped syntax data types and all
-syntax-dependent substitution lemmas.
+In addition to the theoretical work, \textsc{Autosubst 2} also features
+external code generation from higher-order abstract syntax (HOAS) descriptions.
+To be precise, they generate the scoped syntax data types and all substitution
+lemmas that require induction over the syntax for the Rocq proof assistant.
 
-To showcase our applicability to arbitrary custom syntax descriptions, we also
-provide a code-generation script that translates HOAS descriptions to code
-based on the presented Agda code in \Cref{sec:mis}. The corresponding HOAS
+To showcase our applicability to custom syntax descriptions, we also provide a
+code generation script that translates HOAS descriptions to Agda code, which
+includes the $σ$-calculus rules ready for rewriting. The corresponding HOAS
 description for our SystemF example can be found in \Cref{fig:rel-hoa}. We are
-able to support nearly the full feature set of \text{Autosubst 2}:
+already able to support some of the features that \text{Autosubst 2} supports:
 \begin{itemize}
       \item Vector substitutions: unnecessary due to mutli-sorted syntax
       \item Mutual recursive syntax definitions: works out of the box with multi-sorted
             syntax
-      \item Distinction between sorts with binders and those without: modeled with an
-            additional binary index to the \AgdaDatatype{Sort} data type, that separates
-            sorts of the two categories.
+      \item Inline Agda code (e.g.\ lists or products of terms): can already be encoded
+            using additional sorts, but one loses the support for lemmas from the standard
+            library.
+      \item Distinction between sorts with binders and those without: not yet supported,
+            but could be modeled with an additional binary index to the \AgdaDatatype{Sort}
+            data type, that separates sorts of the two categories.
       \item Variadic syntax: not yet supported, but could be encoded in the future using
             arguments to the sort constructors~\cite{saffrich:LIPIcs.ITP.2024.32}
-      \item Inline agda code (e.g.\ lists or products of terms): not yet supported, but
-            only a question of effort.
 \end{itemize}
-Our script can be found in the supplement, but represents merely a proof of concept for a standalone library. We also include a dozen generated Agda files which we
-generated from \texttt{.sig} example files found in the \textsc{Autosubst 2} git repository.
 
-\subsection{Rewriting and Abstractions over Substitution}
+Our code generation script\footnote{We used GenAI in the process of writing
+      this script.} can be found in the supplement, but represents merely a proof of
+concept for a standalone library. The script includes a parser for HOAS
+descriptions and ad-hoc code generation. It is written in Python with strict
+type-checking enabled and includes all the boilerplate Agda code, so it can
+serve as a single-file standalone tool for others to try. We include a dozen
+Agda files which we generated from HOAS descriptions found in the examples
+directory of the \textsc{Autosubst 2} git repository.
+
+\subsection{Implications for Intriniscally Typed Syntax}
+Complex interinsically typed syntax, where substitution already appears as an
+operation on the type index of the syntax, complicates proofs significantly
+because of so-called `transfer hell' (or `transport hell'). Because
+substitutions without rewriting enjoy few definitional equalities, we need to
+apply general properties of the transfer lemma (\AgdaFunction{subst} in Agda)
+every time we manipulate proofs over expressions that involve type
+substitution.
+
+The `transfer hell' issue for intrinsically typed syntax is long standing
+issue~\cite{article}. An elaborate example close to our work in Agda is given
+by the construction of a binary logical relation for intrinsically typed
+System~F~\cite{10.1145/3678000.3678201}, where the authors spend thousands of
+lines reasoning about uninteresting manipulation of transfers. More
+specifically, while reasoning over type substitutions is still easy in this
+scenario, proving lemmas over type-in-expression substitution is complicated
+immensely, because type substitution also affects the index of the expression
+that is substituted in. After rewriting the $σ$-calculus rules for type
+substitutions, their problems in the proofs for expression substitutions should
+effectively be gone completely.
+
+Rewriting the $σ$-calculus rules on the syntax for the typing index should
+easily generalize to other intrinsically typed syntaxes and render explicit
+transfers unnecessary, as long we do not attempt to formalize type theory in
+type theory~\cite{10.1145/3779031.3779090, 10.1145/3747535}.
+
+\subsection{Mechanizing Substitutions}\label{sec:rwk}
 In their recent work on local rewrite rules~\cite{10.1145/3776704}, the authors
-also rewrite the rules of the $\sigma$-calculus with first class renamings in
-Rocq similar to our approach. They provide a model for renamings and
-substitutions as functions as we do, but they are unable to rewrite all laws
-given the underlying model, because in their case the instantiation for the set
-of equations must hold definitionally already and cannot be propositional to
-maintain consistency in the presence of local rewrite rules.
+also rewrite rules of the $σ$-calculus with first-class renamings in Rocq
+similar to our approach. They also provide a model for renamings and
+substitutions as functions, but they are unable to rewrite all laws given the
+underlying model. This is because in their case the instantiation for the set
+of equations must hold definitionally and cannot be propositional to maintain
+consistency in the presence of local rewrite rules. Rocq also allows for global
+rewrite rules, but lacks the ability to instatitate the rules with proofs to
+maintain consistency~\cite{leray_et_al:LIPIcs.ITP.2024.26}.
 
 Another line of research concerns generic programming
-approaches~\cite{allais2021typescopesafeuniverse, 10.1145/3018610.3018613}
-which allow the construction of syntax trees from general building blocks that
-support sums and products and binder introduction. This approach also allows
-for a generic structure that abstracts over renamings and substitutions. The
-generic syntax approach translates to a scoped and multi-sorted
+approaches~\cite{allais2021typescopesafeuniverse, 10.1145/3018610.3018613},
+that allow the construction of syntax from general building blocks that support
+sums, products and binder introduction. This allows for a generic structure
+that abstracts over renamings and substitutions. The generic syntax approach
+translates to a scoped and multi-sorted
 setting~\cite{saffrich:LIPIcs.ITP.2024.32}. Importantly, we believe generic
-programming and the rewriting of $\sigma$ rules are orthogonal and our
-rewriting approach could be applied to the universe of syntaxes with binding,
-thereby avoiding external code generation.
+programming and rewriting the $σ$-calculus rules are orthogonal and our rewrite
+system could be applied to the universe of syntaxes with binding, thereby
+avoiding external code generation.
 
-The \textsc{Abstract Binding Trees} library shares a similar goal with
+The \textsc{Abstract Binding Trees} library for Agda shares a similar goal with
 \textsc{Autosubst} and is used for instance in Siek's
 work~\cite{siek2021parameterized}. It permits the construction of an object
-language from a generic syntax similar to the universe of syntaxes with binding
-approach~\cite{allais2021typescopesafeuniverse, 10.1145/3018610.3018613} but it
-supports only extrinsic scoping and single sorted syntaxes. The library mainly
-focuses on generic theorems about substitution and abstractions over arbitrary
-predicates over the object language. The library also offers incomplete
-experimental support for rewriting using $\sigma$-calculus laws but misses
-rules of the $\sigma$-calculus and thus does not pass the confluence check.
+language from a generic syntax similar to the universe of syntaxes with
+binding, but it only supports extrinsic scoping and single sorted syntaxes. The
+library mainly focuses on generic theorems about substitution and abstractions
+for arbitrary predicates over the object language. Interestingly, the library
+also offers incomplete experimental support for rewriting using $σ$-calculus
+laws but misses rules of the $σ$-calculus and thus does not pass the confluence
+check.
 
 Wadler experiments with explicit substitutions and implements weakening as a
 constructor in the syntax~\cite{Wadler_2024}, thereby successfully avoiding
 renamings. He rewrites some of the sigma calculus laws but cannot pass the
-confluence checker. A more severe issue is that he would never be able to get
-his rewrite system confluent, because weakening is a constrcutor and proving
-for instance the $\eta$-law in this case is impossible. For the same reason,
-variables in his representation can be represented by multiple terms that are
-not definitionally equal which results in the loss of more definitional
-equalities.
+confluence checker. Because weakening is a constructor, variables in his
+representation can be represented by multiple terms that are not definitionally
+equal which results in the loss of definitional equalities. Furthermore, he
+represents substitutions using vectors, and thus would not be able to support
+the full $σ$-calculus rule set with proofs.
 
 Wadler and colleagues also investigate the uniform treatment of renamings and
 substitutions in a simply typed setting~\cite{altenkirch2025substitution} which
 originates from work by McBride~\cite{ren-sub}. This approach unifies repeated
 similar lemmas, such as merging all four compositionality lemmas into one. They
-hide the structural dependence of renamings and substitutions in a
-uniform,\AgdaDatatype{Mode}-indexed definition (where
-\AgdaInductiveConstructor{V} is the index for renamings and
-\AgdaInductiveConstructor{T} is the index for substitutions) and use
-termination checking directly to make Agda see this dependence, when it
-matters. Saffrich~\cite{saffrich:LIPIcs.ITP.2024.32} adopts a different
-approach and hides the structural dependence behind instance resolution in a
-scoped syntax setting. On top he provides reflection-based code generation for
-the syntax-dependent $\sigma$-calculus lemmas, which could be directly applied
-to our setting, again to avoid external code generation.
+hide the structural dependence of renamings and substitutions in a uniform,
+\AgdaDatatype{Mode}-indexed vector (where \AgdaInductiveConstructor{V} is the
+index for renamings and \AgdaInductiveConstructor{T} is the index for
+substitutions) and use termination checking directly to make Agda see the
+structural dependence, of renamings on substitutions, when it matters.
+
+Saffrich~\cite{saffrich:LIPIcs.ITP.2024.32} adopts a different approach and
+hides the structural dependence behind instance resolution. They work in a
+scoped syntax setting and represent the uniform structure for renamings and
+substitutions as functions, similar to the setting in this work. On top he
+provides reflection-based code generation for the syntax-dependent $σ$-calculus
+lemmas, which could maybe adopted to our setting, again to avoid external code
+generation.
 
 Adapting our approach with safe rewrite rules to a setting where renamings and
-substitutions can be threated uniformely would be a logical next step. But for
-this to be useful the equational theory has to be extended in non-obvious ways.
+substitutions can be treated uniformely would be a logical next step. However,
+for this to be useful in practice, the equational theory has to be extended in
+non-obvious ways, to support uniform proofs over renamings and substitutions.
 Furthermore, in this case we need a two-level rewrite system, one on the type
-level for normalizing expressions in the lattic of \AgdaDatatype{Mode}s
+level for normalizing expressions in the lattic of \AgdaDatatype{Mode}s,
 generated by \AgdaInductiveConstructor{V} $\sqsubseteq$
 \AgdaInductiveConstructor{T}~\cite{altenkirch2025substitution} and one for the
-adapted $\sigma$-calculus. The interaction of the two layers makes preservation
-of confluence harder. To this end, we note again that Agda would greatly
-benefit from rewriting modulo commutativity.
-
-% The \textsc{Nominal 2} Isabelle package~\cite{Nominal2-AFP} is more distantly
-% related. It addresses the $\alpha$-equivalence problem using nominal datatypes
-% and freshness conditions rather than de Bruijn indices. Their approach is
-% closer to the intuitive notion of variables but the tool does not provide any
-% strategy for solving equations involving terms and substitutions.
-
-% STRICTIFICATION PAPER AND 1LAB?
+adapted $σ$-calculus. When expreimenting with this approach, we found that the
+interaction of the two layers makes preservation of confluence difficult.
 
 \section{Conclusion}\label{sec:con}
-We have shown how to use the decision procedure of the $\sigma$-calculus to
-generate definitional equalities in Agda. To this end we closely followed the
-underlying equational theory of \text{Autosubst 2}, which provides the decision
-procedure for Coq to produce propositional equalities. We discovered that, to
-maintain logical consistency, we want two contrary things: the fully
-computational behavior via a representation with function, for instantiation of
-the equational theory with proofs, but also symbolic behavior to make the
-theory eligible for rewrite rules and higher-order unification. We believe that
-exactly this conflict lead to all the attempts that failed to preserve logical
-consistency. We show that our approach is reusable for custom syntaxes.
+We have shown how to use the normalization procedure of the $σ$-calculus to
+generate definitional equalities in Agda. To this end, we closely followed the
+underlying equational theory of \text{Autosubst 2}, which provides the
+normalization procedure for Rocq to produce propositional equalities. We
+discovered that, to rewrite the full equational theory and maintain logical
+consistency, we want two contrary things: the full computational behavior by a
+modeling substitutions as functions, to instantiate of the equational theory
+with proofs, but also symbolic behavior to make the rules eligible for rewrite
+rules and higher-order unification.
 
-Successfully strictifying the $\sigma$-calculus rules safely also allows to
-persue interesting new ventures: More complex interinically typed
-representations for syntax that do not end up in transfer hell, the question of
-wether this approach can be applied to a uniform threatment of renamings and
-substitutions, and if we can safely strictify more algebraic structures this
-way.
+Successfully rewriting the $σ$-calculus rules safely also allows to pursue
+interesting new ventures: More complex intrinsically typed representations for
+syntax that do not end up in transfer hell, the question of whether this
+approach can be applied to a uniform treatment of renamings and substitutions,
+and if we can safely rewrite more algebraic structures this way.
 
 \bibliography{references}
 

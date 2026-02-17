@@ -1,10 +1,14 @@
-{-# OPTIONS --rewriting #-}
+{-# OPTIONS --rewriting --local-confluence-check #-}
 module STLC-rewrite where
 
 open import Agda.Builtin.Equality
 open import Agda.Builtin.Equality.Rewrite
 
 open import STLC
+
+{-# BUILTIN REWRITE _⟶_ #-}
+{-# REWRITE ⟶β #-}
+
 
 postulate
   _·_ : Expr Γ (T ⇒ U) → Expr Γ T → Expr Γ U
@@ -23,7 +27,7 @@ e₀ = lam con
 _ : app (var here) con [ e₀ ] ≡ app (lam con) con
 _ = refl
 
-{-# REWRITE ·[] β≡ #-}
+-- {-# REWRITE ·[] β≡ #-}
 
 _ : lam (var here · con) · e₀ ≡ con
-_ = refl
+_ = {!   !}

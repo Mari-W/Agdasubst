@@ -39,9 +39,12 @@ data _∋*_ : Ctx* → Kind → Set where
 data Type Φ : Kind → Set where
   `_   : Φ ∋* K → Type Φ K
   λα_  : Type (Φ ,* J) K → Type Φ (J ⇒ K)
-  _·_  : Type Φ (J ⇒ K) → Type Φ J → Type Φ K
+  -- _$_  : Type Φ (J ⇒ K) → Type Φ J → Type Φ K
   ∀α_  : Type (Φ ,* J) ∗ → Type Φ ∗
   _⇒_  : Type Φ ∗ → Type Φ ∗ → Type Φ ∗
+
+postulate
+  _$_  : Type Φ (J ⇒ K) → Type Φ J → Type Φ K
 
 variable
   n n′ n₁ n₂ n₃ : Nat
@@ -73,9 +76,14 @@ _∘_ : Φ →ᴿ Ψ → Ψ →ᴿ Θ → Φ →ᴿ Θ
 _⋯ᴿ_ : Type Φ K → Φ →ᴿ Ψ → Type Ψ K
 (` x) ⋯ᴿ ρ = ` ρ x
 (λα T) ⋯ᴿ ρ = λα (T ⋯ᴿ ↑ᴿ ρ)
-(T₁ · T₂) ⋯ᴿ ρ = (T₁ ⋯ᴿ ρ) · (T₂ ⋯ᴿ ρ)
+-- (T₁ $ T₂) ⋯ᴿ ρ = (T₁ ⋯ᴿ ρ) $ (T₂ ⋯ᴿ ρ)
 (∀α T) ⋯ᴿ ρ = ∀α (T ⋯ᴿ ↑ᴿ ρ)
 (T₁ ⇒ T₂) ⋯ᴿ ρ = (T₁ ⋯ᴿ ρ) ⇒ (T₂ ⋯ᴿ ρ)
+
+postulate
+  traverseᴿ-$ : (T₁ $ T₂) ⋯ᴿ ρ ≡ (T₁ ⋯ᴿ ρ) $ (T₂ ⋯ᴿ ρ)
+
+{-# REWRITE traverseᴿ-$ #-}
 
 _→ˢ_ : Ctx* → Ctx* → Set
 Φ →ˢ Ψ = ∀ {K} → Φ ∋* K → Type Ψ K
@@ -113,7 +121,7 @@ opaque
 
   (` x) ⋯ˢ σ = σ x
   (λα T) ⋯ˢ σ = λα (T ⋯ˢ ↑ˢ σ)
-  (T₁ · T₂) ⋯ˢ σ = (T₁ ⋯ˢ σ) · (T₂ ⋯ˢ σ)
+  -- (T₁ $ T₂) ⋯ˢ σ = (T₁ ⋯ˢ σ) $ (T₂ ⋯ˢ σ)
   (∀α T) ⋯ˢ σ = ∀α (T ⋯ˢ ↑ˢ σ)
   (T₁ ⇒ T₂) ⋯ˢ σ = (T₁ ⋯ˢ σ) ⇒ (T₂ ⋯ˢ σ)
 
@@ -168,7 +176,7 @@ postulate
   -- traversal laws
   traversal-x             : (` α)         ⋯ˢ σ  ≡ α &ˢ σ
   traversal-λ             : (λα T)        ⋯ˢ σ  ≡ λα (T ⋯ˢ (↑ˢ σ))
-  traversal-·             : (T₁ · T₂)     ⋯ˢ σ  ≡ (T₁ ⋯ˢ σ) · (T₂ ⋯ˢ σ)
+  traversal-$             : (T₁ $ T₂)     ⋯ˢ σ  ≡ (T₁ ⋯ˢ σ) $ (T₂ ⋯ˢ σ)
   traversal-∀             : (∀α T)        ⋯ˢ σ  ≡ ∀α (T ⋯ˢ (↑ˢ σ))
   traversal-⇒             : (T₁ ⇒ T₂)     ⋯ˢ σ  ≡ (T₁ ⋯ˢ σ) ⇒ (T₂ ⋯ˢ σ)
 
@@ -212,71 +220,145 @@ postulate
   coincidence-fold
 #-}
 
-weaken : Type Φ K → Type (Φ ,* J) K
-weaken t = t ⋯ᴿ S
+weaken* : Type Φ K → Type (Φ ,* J) K
+weaken* t = t ⋯ᴿ S
 
-_[_] : Type (Φ ,* J) K → Type Φ J → Type Φ K
-t [ t′ ] = t ⋯ˢ (t′ ∙ ⟨ id ⟩)
+_[_]* : Type (Φ ,* J) K → Type Φ J → Type Φ K
+t [ t′ ]* = t ⋯ˢ (t′ ∙ ⟨ id ⟩)
 
--- expressions
+-- type equality
 
--- data Ctx : Nat → Set where
---   ∅    : Ctx zero
---   _,_  : Ctx n → Type n → Ctx n          
---   _,*  : Ctx n → Ctx (suc n) 
-
--- variable
---   Γ Γ′ Γ₁ Γ₂ Γ₃ : Ctx n
-
--- data _∈_ : Type n → Ctx n → Set where
---   zero  : T ∈ (Γ , T)
---   suc   : T ∈ Γ → T ∈ (Γ , T′)
---   suc*  : T ∈ Γ → (weaken T) ∈ (Γ ,*)
-
--- data Expr : Ctx n → Type n → Set where
---   `_    : T ∈ Γ → 
---           Expr Γ T
---   λx_   : Expr (Γ , T₁) T₂ → 
---           Expr Γ (T₁ ⇒ T₂) 
---   Λα_   : Expr (Γ ,*) T → 
---           Expr Γ (∀α T)
---   _·_   : Expr Γ (T₁ ⇒ T₂) → 
---           Expr Γ T₁ → 
---           Expr Γ T₂
---   _•_   : Expr Γ (∀α T) →
---           (T' : Type n) → 
---           Expr Γ (T [ T' ]) 
-
--- _→ᴿ[_]_ : Ctx n₁ → (n₁ →ᴿ n₂) → Ctx n₂ → Set
--- Γ₁ →ᴿ[ ρ ] Γ₂ = ∀ T → T ∈ Γ₁ → (T ⋯ᴿ ρ) ∈ Γ₂
-
--- _⊚_ : (Γ₁ →ᴿ[ ρ₁ ] Γ₂) → (Γ₂ →ᴿ[ ρ₂ ] Γ₃) → (Γ₁ →ᴿ[ ρ₁ ∘ ρ₂ ] Γ₃)
--- (ρ₁ ⊚ ρ₂) _ x = ρ₂ _ (ρ₁ _ x)
-
--- Wk : Γ →ᴿ[ id ] (Γ , T) 
--- Wk _ = suc
-
--- wk* : Γ →ᴿ[ suc ] (Γ ,*) 
--- wk* _ x = suc* x 
-
--- _⇑ᴿ_ : (Γ₁ →ᴿ[ ρ ] Γ₂) → ∀ T → (Γ₁ , T) →ᴿ[ ρ ] (Γ₂ , (T ⋯ᴿ ρ))
--- (ρ ⇑ᴿ _) _ zero    = zero
--- (ρ ⇑ᴿ _) _ (suc x) = suc (ρ _ x)
-
--- ↑ᴿ* : (Γ₁ →ᴿ[ ρ ] Γ₂) → (Γ₁ ,*) →ᴿ[ ↑ᴿ ρ ] (Γ₂ ,*)
--- ↑ᴿ* ρ _ (suc* x) = suc* (ρ _ x)
-
--- _⋯ᴿ[_]_ : {T : Type n₁} {Γ₂ : Ctx n₂} → 
---   Expr Γ₁ T → (ρ* : n₁ →ᴿ n₂) → (Γ₁ →ᴿ[ ρ* ] Γ₂) → Expr Γ₂ (T ⋯ᴿ ρ*)
--- (` x)      ⋯ᴿ[ ρ* ] ρ = ` (ρ _ x)
--- (λx e)     ⋯ᴿ[ ρ* ] ρ = λx (e ⋯ᴿ[ ρ* ] (ρ ⇑ᴿ _))
--- (Λα e)     ⋯ᴿ[ ρ* ] ρ = Λα (e ⋯ᴿ[ ↑ᴿ ρ* ] (↑ᴿ* ρ))
--- (e₁ · e₂)  ⋯ᴿ[ ρ* ] ρ = (e₁ ⋯ᴿ[ ρ* ] ρ) · (e₂ ⋯ᴿ[ ρ* ] ρ)
--- (e • t′)   ⋯ᴿ[ ρ* ] ρ = (e ⋯ᴿ[ ρ* ] ρ) • (t′ ⋯ᴿ ρ*)
-
--- Weaken : Expr Γ T → Expr (Γ , T′) T
--- Weaken e = e ⋯ᴿ[ id ] Wk
+postulate
+  β≡* : (λα T₁) $ T₂ ≡ T₁ [ T₂ ]*
   
--- weaken* : Expr Γ T → Expr (Γ ,*) (weaken T)
--- weaken* e = e ⋯ᴿ[ suc ] wk*
+{-# REWRITE β≡* #-}
 
+-- term contexts
+
+data Ctx : Ctx* → Set where
+  ∅    : Ctx ∅
+  _,*  : Ctx Φ → Ctx (Φ ,* J) 
+  _,_  : Ctx Φ → Type Φ ∗ → Ctx Φ
+
+variable
+  Γ Γ′ Γ₁ Γ₂ Γ₃ : Ctx Φ
+  Δ Δ′ : Ctx Ψ
+
+-- term variables
+
+data _∋_ : Ctx Φ → Type Φ ∗ → Set where
+  Z   : (Γ , T) ∋ T
+  S   : Γ ∋ T → (Γ , T′) ∋ T
+  S*  : Γ ∋ T → (Γ ,*) ∋ weaken* {J = J} T
+
+data Expr {Φ} Γ : Type Φ ∗ → Set where
+  `_    : Γ ∋ T → 
+          Expr Γ T
+  λx_   : Expr (Γ , T₁) T₂ → 
+          Expr Γ (T₁ ⇒ T₂) 
+  Λα_   : Expr (Γ ,*) T → 
+          Expr Γ (∀α T)
+  _·_   : Expr Γ (T₁ ⇒ T₂) → 
+          Expr Γ T₁ → 
+          Expr Γ T₂
+  _•_   : Expr Γ (∀α T) →
+          (T′ : Type Φ K) → 
+          Expr Γ (T [ T′ ]*) 
+
+variable
+  e e′ e₁ e₂ e₃ e₁′ e₂′ e₃′ : Expr Γ T
+
+-- term renamings
+
+_→ᴿ[_]_ : Ctx Φ → (Φ →ᴿ Ψ) → Ctx Ψ → Set
+Γ →ᴿ[ ρ ] Δ = ∀ T → Γ ∋ T  → Δ ∋ (T ⋯ᴿ ρ)
+
+_⊚ᴿ_ : (Γ₁ →ᴿ[ ρ₁ ] Γ₂) → (Γ₂ →ᴿ[ ρ₂ ] Γ₃) → (Γ₁ →ᴿ[ ρ₁ ∘ ρ₂ ] Γ₃)
+(ρ₁ ⊚ᴿ ρ₂) _ x = ρ₂ _ (ρ₁ _ x)
+
+Wk : Γ →ᴿ[ id ] (Γ , T) 
+Wk _ = S
+
+wk* : Γ →ᴿ[ S {J = J} ] (Γ ,*) 
+wk* _ x = S* x 
+
+_⇑ᴿ_ : (Γ₁ →ᴿ[ ρ ] Γ₂) → ∀ T → (Γ₁ , T) →ᴿ[ ρ ] (Γ₂ , (T ⋯ᴿ ρ))
+(ρ ⇑ᴿ _) _ Z    = Z
+(ρ ⇑ᴿ _) _ (S x) = S (ρ _ x)
+
+↑ᴿ* : (Γ₁ →ᴿ[ ρ ] Γ₂) → (Γ₁ ,*) →ᴿ[ ↑ᴿ {J = J} ρ ] (Γ₂ ,*)
+↑ᴿ* ρ _ (S* x) = S* (ρ _ x)
+
+_⋯ᴿ[_]_ : {T : Type Φ ∗} {Γ₂ : Ctx Ψ} → 
+  Expr Γ₁ T → (ρ* : Φ →ᴿ Ψ) → (Γ₁ →ᴿ[ ρ* ] Γ₂) → Expr Γ₂ (T ⋯ᴿ ρ*)
+(` x)      ⋯ᴿ[ ρ* ] ρ = ` (ρ _ x)
+(λx e)     ⋯ᴿ[ ρ* ] ρ = λx (e ⋯ᴿ[ ρ* ] (ρ ⇑ᴿ _))
+(Λα e)     ⋯ᴿ[ ρ* ] ρ = Λα (e ⋯ᴿ[ ↑ᴿ ρ* ] (↑ᴿ* ρ))
+(e₁ · e₂)  ⋯ᴿ[ ρ* ] ρ = (e₁ ⋯ᴿ[ ρ* ] ρ) · (e₂ ⋯ᴿ[ ρ* ] ρ)
+(e • t′)   ⋯ᴿ[ ρ* ] ρ = (e ⋯ᴿ[ ρ* ] ρ) • (t′ ⋯ᴿ ρ*)
+
+Weaken : Expr Γ T → Expr (Γ , T′) T
+Weaken e = e ⋯ᴿ[ id ] Wk
+  
+weaken** : Expr Γ T → Expr (Γ ,*) (weaken* {J = J} T)
+weaken** e = e ⋯ᴿ[ S ] wk*
+
+-- term substitution
+
+_→ˢ[_]_ : Ctx Φ → (Φ →ˢ Ψ) → Ctx Ψ → Set
+Γ →ˢ[ σ* ] Δ = ∀ T → Γ ∋ T  → Expr Δ (T ⋯ˢ σ*)
+
+idˢ : Γ →ˢ[ ⟨ id ⟩ ] Γ
+idˢ _ x = ` x
+
+⇑ˢ    : {σ* : Φ →ˢ Ψ} → Γ₁ →ˢ[ σ* ] Γ₂ → (Γ₁ , T) →ˢ[ σ* ] (Γ₂ , (T ⋯ˢ σ*))
+⇑ˢ σ T Z = ` Z
+⇑ˢ σ T (S x) = Weaken (σ _ x)
+
+⇑ˢ*   : {σ* : Φ →ˢ Ψ} → (σ : Γ₁ →ˢ[ σ* ] Γ₂) → (Γ₁ ,*) →ˢ[ ↑ˢ {J = J} σ* ] (Γ₂ ,*)
+⇑ˢ* σ T (S* x) = weaken** (σ _ x)
+
+_⋯s[_]_ : Expr Γ T → (σ* : Φ →ˢ Ψ) → Γ →ˢ[ σ* ] Δ → Expr Δ (T ⋯ˢ σ*)
+(` x)      ⋯s[ σ* ] σ  = σ _ x
+(λx e)     ⋯s[ σ* ] σ  = λx (e ⋯s[ σ* ] ⇑ˢ {σ* = σ*} σ)
+(Λα e)     ⋯s[ σ* ] σ  = Λα (e ⋯s[ ↑ˢ σ* ] ⇑ˢ* {σ* = σ*} σ)
+(e₁ · e₂)  ⋯s[ σ* ] σ  = (e₁ ⋯s[ σ* ] σ) · (e₂ ⋯s[ σ* ] σ)
+(e • T′)   ⋯s[ σ* ] σ  = (e ⋯s[ σ* ] σ) • (T′ ⋯ˢ σ*)
+
+_[_] : Expr (Γ , T′) T → Expr Γ T′ → Expr Γ T
+e₁ [ e₂ ] = e₁ ⋯s[ ⟨ id ⟩ ] σ₀ e₂
+  where σ₀ : Expr Γ T′ → (Γ , T′) →ˢ[ ⟨ id ⟩ ] Γ
+        σ₀ e T Z = e
+        σ₀ e T (S x) = ` x
+
+extˢ : {σ* : Φ →ˢ Ψ}{T′ : Type Ψ J} → (Γ₁ →ˢ[ σ* ] Γ₂) → ((Γ₁ ,*) →ˢ[ T′ ∙ σ* ] Γ₂)
+extˢ σ T (S* x) = σ _ x
+
+_[_]** : {Γ : Ctx Φ} → Expr (Γ ,*) T → (T′ : Type Φ J) → Expr Γ (T [ T′ ]*)
+e [ T′ ]** = e ⋯s[ T′ ∙ ⟨ id ⟩ ] (extˢ {T′ = T′}) idˢ
+
+-- term reduction
+
+data _⟶_ {Γ : Ctx Φ} : ∀ {T} → Expr Γ T → Expr Γ T → Set where
+  β-λ : ((λx e₁) · e₂) ⟶ (e₁ [ e₂ ])
+  β-Λ : ∀ {T′ : Type Φ J} → -- ∀ {T : Type (Φ ,* J) ∗} → -- {e : Expr (Γ ,*) {!!}} →
+       ((Λα_ e) • T′) ⟶ (e [ T′ ]**)
+
+  ξ-· : e₁ ⟶ e₁′ → (e₁ · e₂) ⟶ (e₁′ · e₂)
+  ξ-Λ : e ⟶ e′ → (Λα e) ⟶ (Λα e′)
+  ξ-• : e ⟶ e′ → (e • T) ⟶ (e′ • T)
+
+-- progress
+
+data Value {Γ : Ctx Φ} : ∀ {T : Type Φ ∗} → Expr Γ T → Set where
+  λx : (e : Expr (Γ , T₁) T₂) → Value (λx e)
+  Λα : Value e → Value (Λα e)
+
+data Progress (Γ : Ctx Φ) {T : Type Φ ∗} : Expr Γ T → Set where
+  done : {e : Expr Γ T} → Value e → Progress Γ e
+  step : e ⟶ e′ → Progress Γ e
+
+-- composition of term substitutions
+
+_⊚ˢ_ : (Γ₁ →ˢ[ σ₁ ] Γ₂) → (Γ₂ →ˢ[ σ₂ ] Γ₃) → (Γ₁ →ˢ[ σ₁ ⨟ σ₂ ] Γ₃)
+(σ₁ ⊚ˢ σ₂) _ x = σ₁ _ x ⋯s[ _ ] σ₂

@@ -20,6 +20,7 @@
 
 \input{examples}
 \input{SystemF}
+\input{STLC}
 \input{unicodeletters}
 
 \begin{document}
@@ -60,9 +61,38 @@ to typed terms. Thus, untyped syntax gives rise to a Curry-style
 presentation, whereas intrinsically typed syntax results in a
 Church-style presentation.
 
+\begin{figure}[tp]
+  \begin{minipage}[t]{0.49\linewidth}
+  \STLCTypeCtx
+  \end{minipage}
+  ~
+  \begin{minipage}[t]{0.49\linewidth}
+  \STLCVar
+  \STLCExpr 
+  \end{minipage}
+  \caption{Simply-typed lambda calculus}
+  \label{fig:simply-typed-syntax}
+\end{figure}
 The simply-typed lambda calculus provides an appealing example where
-intrinsically typed syntax works exceptionally well.
+intrinsically typed syntax works exceptionally
+well. \Cref{fig:simply-typed-syntax} shows typical definitions of the
+syntax of types, type contexts, variables, and expressions, which are
+indexed by contexts and types. Building on these definitions it is
+straightforward to define denotational or operational
+semantics. Proving type safety for a small-step operational semantics
+is also easy as subject reduction holds by definition and progress
+follows by a simple inductive proof.
 
+However, managing intrinsically typed syntax can become significantly
+more demanding. For example, \citet{10.1007/978-3-030-33636-3_10}
+present a formalization of System $F_\omega$, which is inspired by
+prior work by \citet{DBLP:conf/csl/AltenkirchR99},
+\citet{DBLP:phd/ethos/Chapman09}, and
+\citet{DBLP:conf/cpp/Allais0MM17}. Their work first defines kinds,
+kind contexts, type variables, and type expressions, which are
+isomorphic to the simply-typed lambda calculus, followed by the
+development of type renamings and simultaneous type substitutions
+\cite{DBLP:journals/jar/BentonHKM12}. 
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}

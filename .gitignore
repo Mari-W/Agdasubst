@@ -27,3 +27,4 @@ _build
 signature.png
 target
 Cargo.lock
+.DS_Store

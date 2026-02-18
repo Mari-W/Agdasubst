@@ -14,10 +14,6 @@ open import Axiom.Extensionality.Propositional using (Extensionality; Extensiona
 postulate
   fun-ext : ∀{ℓ₁ ℓ₂} → Extensionality ℓ₁ ℓ₂
 
-open import Agda.Builtin.Nat using (Nat; zero; suc)
-open import Data.Fin using (Fin; zero; suc) 
-open import Data.List using (List; []; _∷_)
-
 data Kind : Set where
   ∗ : Kind
   _⇒_ : Kind → Kind → Kind
@@ -38,16 +34,15 @@ data _∋*_ : Ctx* → Kind → Set where
 
 data Type Φ : Kind → Set where
   `_   : Φ ∋* K → Type Φ K
-  λα_  : Type (Φ ,* J) K → Type Φ (J ⇒ K)
+  λα  : Type (Φ ,* J) K → Type Φ (J ⇒ K)
   -- _$_  : Type Φ (J ⇒ K) → Type Φ J → Type Φ K
-  ∀α_  : Type (Φ ,* J) ∗ → Type Φ ∗
+  ∀α  : Type (Φ ,* J) ∗ → Type Φ ∗
   _⇒_  : Type Φ ∗ → Type Φ ∗ → Type Φ ∗
 
 postulate
   _$_  : Type Φ (J ⇒ K) → Type Φ J → Type Φ K
 
 variable
-  n n′ n₁ n₂ n₃ : Nat
   α α′ α₁ α₂ α₃ : Φ ∋* K
   T T′ T₁ T₂ T₃ : Type Φ K
 
@@ -214,7 +209,9 @@ postulate
 
   traversal-x 
   traversal-∀ 
-  traversal-⇒ 
+  traversal-⇒
+  traversal-λ
+  traversal-$
 
   coincidence
   coincidence-fold
@@ -231,8 +228,6 @@ t [ t′ ]* = t ⋯ˢ (t′ ∙ ⟨ id ⟩)
 postulate
   β≡* : (λα T₁) $ T₂ ≡ T₁ [ T₂ ]*
   
-{-# REWRITE β≡* #-}
-
 -- term contexts
 
 data Ctx : Ctx* → Set where
@@ -254,9 +249,9 @@ data _∋_ : Ctx Φ → Type Φ ∗ → Set where
 data Expr {Φ} Γ : Type Φ ∗ → Set where
   `_    : Γ ∋ T → 
           Expr Γ T
-  λx_   : Expr (Γ , T₁) T₂ → 
+  λx   : Expr (Γ , T₁) T₂ → 
           Expr Γ (T₁ ⇒ T₂) 
-  Λα_   : Expr (Γ ,*) T → 
+  Λα   : Expr (Γ ,*) T → 
           Expr Γ (∀α T)
   _·_   : Expr Γ (T₁ ⇒ T₂) → 
           Expr Γ T₁ → 
@@ -342,7 +337,7 @@ e [ T′ ]** = e ⋯s[ T′ ∙ ⟨ id ⟩ ] (extˢ {T′ = T′}) idˢ
 data _⟶_ {Γ : Ctx Φ} : ∀ {T} → Expr Γ T → Expr Γ T → Set where
   β-λ : ((λx e₁) · e₂) ⟶ (e₁ [ e₂ ])
   β-Λ : ∀ {T′ : Type Φ J} → -- ∀ {T : Type (Φ ,* J) ∗} → -- {e : Expr (Γ ,*) {!!}} →
-       ((Λα_ e) • T′) ⟶ (e [ T′ ]**)
+       ((Λα e) • T′) ⟶ (e [ T′ ]**)
 
   ξ-· : e₁ ⟶ e₁′ → (e₁ · e₂) ⟶ (e₁′ · e₂)
   ξ-Λ : e ⟶ e′ → (Λα e) ⟶ (Λα e′)
@@ -350,15 +345,88 @@ data _⟶_ {Γ : Ctx Φ} : ∀ {T} → Expr Γ T → Expr Γ T → Set where
 
 -- progress
 
+open import Data.Empty using (⊥; ⊥-elim)
+open import Relation.Nullary using (¬_; contradiction)
+
 data Value {Γ : Ctx Φ} : ∀ {T : Type Φ ∗} → Expr Γ T → Set where
   λx : (e : Expr (Γ , T₁) T₂) → Value (λx e)
   Λα : Value e → Value (Λα e)
 
-data Progress (Γ : Ctx Φ) {T : Type Φ ∗} : Expr Γ T → Set where
-  done : {e : Expr Γ T} → Value e → Progress Γ e
-  step : e ⟶ e′ → Progress Γ e
+data Progress {Γ : Ctx Φ} {T : Type Φ ∗} : Expr Γ T → Set where
+  done : {e : Expr Γ T} → (v : Value e) → Progress e
+  step : (e⟶e′ : e ⟶ e′) → Progress e
+
+data NoVar : Ctx Φ → Set where
+  ∅ : NoVar ∅
+  _,* : NoVar Γ → NoVar {Φ ,* J} (Γ ,*)
+
+noVar : NoVar Γ → ¬ (Γ ∋ T)
+noVar (nv ,*) (S* x) = noVar nv x
+
+progress : NoVar Γ → (e : Expr Γ T) → Progress e
+progress nv (` x) = ⊥-elim (noVar nv x)
+progress nv (λx e) = done (λx e)
+progress nv (Λα e)
+  with progress (nv ,*) e
+... | done v = done (Λα v)
+... | step e⟶e′ = step (ξ-Λ e⟶e′)
+progress nv (e · e′)
+  with progress nv e
+... | step e⟶e′ = step (ξ-· e⟶e′)
+... | done (λx e₁) = step β-λ
+progress nv (e • T′)
+  with progress nv e
+... | step e⟶e′ = step (ξ-• e⟶e′)
+... | done (Λα v) = step β-Λ
 
 -- composition of term substitutions
 
 _⊚ˢ_ : (Γ₁ →ˢ[ σ₁ ] Γ₂) → (Γ₂ →ˢ[ σ₂ ] Γ₃) → (Γ₁ →ˢ[ σ₁ ⨟ σ₂ ] Γ₃)
 (σ₁ ⊚ˢ σ₂) _ x = σ₁ _ x ⋯s[ _ ] σ₂
+
+-- execution
+
+open import Data.Nat using (ℕ; zero; suc)
+open import Data.Maybe using (Maybe; nothing; just)
+open import Data.Product using (Σ; ∃-syntax; _,_; _×_)
+
+data _⟶*_ {Γ : Ctx Φ} : ∀ {T} → Expr Γ T → Expr Γ T → Set where
+  ⟶refl   : e ⟶* e
+  ⟶trans  : e₁ ⟶ e₂ → e₂ ⟶* e₃ → e₁ ⟶* e₃
+
+run : {T : Type ∅ ∗} → ℕ → (e : Expr ∅ T) → ∃[ e′ ] e ⟶* e′ × Maybe (Value e′)
+run zero e = e , ⟶refl , nothing
+run (suc n) e
+  with progress ∅ e
+... | done v = e , ⟶refl , just v
+... | step {e′ = e′} e⟶e′
+  with run n e′
+... | e″ , e′⟶e″ , mve″ = e″ , ⟶trans e⟶e′ e′⟶e″ , mve″
+
+-- examples
+
+-- Church numerals
+
+-- ∀ α (α→α) → α→α
+
+ℕᶜ : Type ∅ ∗
+ℕᶜ = ∀α (((` Z) ⇒ (` Z)) ⇒ ((` Z) ⇒ (` Z)))
+
+zeroᶜ : Expr ∅ ℕᶜ
+zeroᶜ = Λα (λx (λx (` Z)))
+
+oneᶜ : Expr ∅ ℕᶜ
+oneᶜ = Λα (λx (λx ((` S Z) · (` Z))))
+
+succᶜ : Expr ∅ (ℕᶜ ⇒ ℕᶜ)
+succᶜ = λx (Λα (λx (λx ((` S Z) · ((((` (S (S (S* Z)))) • (` Z)) · (` S Z)) · (` Z))))))
+
+twoᶜ : Expr ∅ ℕᶜ
+twoᶜ = succᶜ · (succᶜ · zeroᶜ)
+
+fourᶜ : Expr ∅ ℕᶜ
+fourᶜ = succᶜ · (succᶜ · (succᶜ · (succᶜ · zeroᶜ)))
+
+two+twoᶜ : Expr ∅ ℕᶜ
+two+twoᶜ = ((twoᶜ • ℕᶜ) · succᶜ)  · twoᶜ
+

@@ -82,7 +82,7 @@ opaque
   ⟨ ρ ⟩ α = ` (α &ᴿ ρ)
 
   -- push new type
-  _∙ˢ__ : Type n₂ → n₁ →ˢ n₂ → suc n₁ →ˢ n₂
+  _∙ˢ_ : Type n₂ → n₁ →ˢ n₂ → suc n₁ →ˢ n₂
   (T ∙ˢ σ) zero = T
   (T ∙ˢ σ) (suc α) = σ α
 
@@ -150,20 +150,20 @@ postulate
 
   --! SubstitutionBeta {
   -- substitutions
-  beta-ext-zero           : zero  &ˢ (T ∙ˢ σ)               ≡ T
-  beta-ext-suc            : suc α &ˢ (T ∙ˢ σ)               ≡ α &ˢ σ
-  beta-rename             : α &ˢ ⟨ ρ ⟩                      ≡ ` (α  &ᴿ ρ)
-  beta-comp               : α &ˢ (σ₁ ⨟ σ₂)                  ≡ (α &ˢ σ₁) ⋯ˢ σ₂
-  beta-lift               : σ ↑ˢ                            ≡ (` zero) ∙ˢ (σ ⨟ ⟨ wk ⟩)
+  beta-ext-zero           : zero  &ˢ (T ∙ˢ σ)                ≡ T
+  beta-ext-suc            : suc α &ˢ (T ∙ˢ σ)                ≡ α &ˢ σ
+  beta-rename             : α &ˢ ⟨ ρ ⟩                       ≡ ` (α  &ᴿ ρ)
+  beta-comp               : α &ˢ (σ₁ ⨟ σ₂)                   ≡ (α &ˢ σ₁) ⋯ˢ σ₂
+  beta-lift               : σ ↑ˢ                             ≡ (` zero) ∙ˢ (σ ⨟ ⟨ wk ⟩)
   --
-  associativity           : (σ₁ ⨟ σ₂) ⨟ σ₃                  ≡ σ₁ ⨟ (σ₂ ⨟ σ₃)
-  distributivity          : (T ∙ˢ σ₁) ⨟ σ₂                  ≡ (T ⋯ˢ σ₂) ∙ˢ (σ₁ ⨟ σ₂)
-  distributivityᴿ         : (T ∙ˢ σ₁) ⨟ ⟨ ρ₂ ⟩              ≡ (T ⋯ᴿ ρ₂) ∙ˢ (σ₁ ⨟ ⟨ ρ₂ ⟩)
-  interact                : ⟨ wk ⟩ ⨟ (T ∙ˢ σ)               ≡ σ
-  comp-idᵣ                : σ ⨟ ⟨ idᴿ ⟩                     ≡ σ
-  comp-idₗ                : ⟨ idᴿ ⟩ ⨟ σ                     ≡ σ
-  η-id                    : _∙_ {n₁ = n₁} (` zero)  ⟨ wk ⟩  ≡ ⟨ idᴿ ⟩
-  η-lawˢ                  : (zero &ˢ σ) ∙ˢ (⟨ wk ⟩ ⨟ σ)     ≡ σ
+  associativity           : (σ₁ ⨟ σ₂) ⨟ σ₃                   ≡ σ₁ ⨟ (σ₂ ⨟ σ₃)
+  distributivity          : (T ∙ˢ σ₁) ⨟ σ₂                   ≡ (T ⋯ˢ σ₂) ∙ˢ (σ₁ ⨟ σ₂)
+  distributivityᴿ         : (T ∙ˢ σ₁) ⨟ ⟨ ρ₂ ⟩               ≡ (T ⋯ᴿ ρ₂) ∙ˢ (σ₁ ⨟ ⟨ ρ₂ ⟩)
+  interact                : ⟨ wk ⟩ ⨟ (T ∙ˢ σ)                ≡ σ
+  comp-idᵣ                : σ ⨟ ⟨ idᴿ ⟩                      ≡ σ
+  comp-idₗ                : ⟨ idᴿ ⟩ ⨟ σ                      ≡ σ
+  η-id                    : _∙ˢ_ {n₁ = n₁} (` zero)  ⟨ wk ⟩  ≡ ⟨ idᴿ ⟩
+  η-lawˢ                  : (zero &ˢ σ) ∙ˢ (⟨ wk ⟩ ⨟ σ)      ≡ σ
   --! }
   -- η-lawᴿ                  : (` (zero &ᴿ ρ)) ∙ˢ (⟨ wk ⟩ ⨟ ⟨ ρ ⟩)   ≡ ⟨ ρ ⟩
 
@@ -187,11 +187,11 @@ postulate
   -- coincidence laws
   --! Coincidence
   coincidence              : T ⋯ˢ ⟨ ρ ⟩                                 ≡ T  ⋯ᴿ ρ
-  coincidence-fold         : T ⋯ˢ (⟨ ρ ↑ᴿ ⟩ ⨟ ((T′ ⋯ᴿ ρ) ∙ ⟨ idᴿ ⟩))    ≡ T ⋯ˢ ((T′ ⋯ᴿ ρ) ∙ ⟨ ρ ⟩)
-  coincidence-foldx        : α &ˢ (⟨ ρ ↑ᴿ ⟩ ⨟ ((T′ ⋯ᴿ ρ) ∙ ⟨ idᴿ ⟩))    ≡ α &ˢ ((T′ ⋯ᴿ ρ) ∙ ⟨ ρ ⟩)
+  coincidence-fold         : T ⋯ˢ (⟨ ρ ↑ᴿ ⟩ ⨟ ((T′ ⋯ᴿ ρ) ∙ˢ ⟨ idᴿ ⟩))   ≡ T ⋯ˢ ((T′ ⋯ᴿ ρ) ∙ˢ ⟨ ρ ⟩)
+  coincidence-foldx        : α &ˢ (⟨ ρ ↑ᴿ ⟩ ⨟ ((T′ ⋯ᴿ ρ) ∙ˢ ⟨ idᴿ ⟩))   ≡ α &ˢ ((T′ ⋯ᴿ ρ) ∙ˢ ⟨ ρ ⟩)
   coincidence-comp         : ⟨ ρ₁ ⟩ ⨟ ⟨ ρ₂ ⟩                            ≡ ⟨ ρ₂ ∘ ρ₂ ⟩
   coincidence-comp-fold    : ⟨  zero ∙ᴿ (ρ₁ ∘ (ρ₂ ∘ wk)) ⟩ ⨟
-                             ((T ⋯ᴿ (ρ₁ ∘ ρ₂)) ∙ ⟨ idᴿ ⟩)               ≡ (T ⋯ᴿ (ρ₁ ∘ ρ₂)) ∙ (⟨ ρ₁ ⟩ ⨟ ⟨ ρ₂ ⟩)
+                             ((T ⋯ᴿ (ρ₁ ∘ ρ₂)) ∙ˢ ⟨ idᴿ ⟩)              ≡ (T ⋯ᴿ (ρ₁ ∘ ρ₂)) ∙ˢ (⟨ ρ₁ ⟩ ⨟ ⟨ ρ₂ ⟩)
 
   -- proofs
 

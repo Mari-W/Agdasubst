@@ -12,7 +12,8 @@ Python: [v3.12.12](https://www.python.org/downloads/release/python-31212/)
 ```
 ├── agda
 │   ├── examples.agda  -- contains the code from section 2 and 4
-│   └── systemf.agda   -- contains the code from section 3
+│   ├── systemf.agda   -- contains the code from section 3
+│   └── systemf.sig    -- contains the hoas description from section 4
 ├── generated
 │   ├── signatures
 │   │   └── *.sig      -- example signatures from autosubst repo 

@@ -377,7 +377,7 @@ NoVar (Γ ,*) = NoVar Γ
 NoVar (Γ , x) = ⊥
 
 lemma : NoVar Γ → Γ ∋ T → ⊥
-lemma NV (S* x) = lemma NV x
+lemma NV (S* x) = lemma NV x 
 
 progress : (e : Expr Γ T) → NoVar Γ → Progress Γ e
 progress (` x) NV = ⊥-elim (lemma NV x)

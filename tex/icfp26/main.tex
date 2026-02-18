@@ -2,6 +2,7 @@
 \usepackage[capitalize,noabbrev]{cleveref}
 
 \usepackage{agda}
+\usepackage{stmaryrd}
 
 \AtBeginDocument{%
   \providecommand\BibTeX{{%
@@ -19,7 +20,7 @@
 \acmMonth{8}
 
 \input{examples}
-\input{SystemF}
+\input{SystemF1}
 \input{STLC}
 \input{unicodeletters}
 
@@ -135,7 +136,9 @@ definitional (for type substitutions). The tricky part of this injection is to
 obtain a confluent and terminating rewrite system in connection with
 the existing definitional equalities.
 
-We first exercise this program for plain System-F in \cref{sec:system-f}
+We first exercise this program for plain System-F in
+\cref{sec:system-f}, radically simplifying the transfer-ridden approach used by
+\citet{10.1145/3678000.3678201}, 
 and then apply the same techniques to System-F$\omega$ in
 \cref{sec:system-fomega}. In the latter, the main difference to
 previous work \cite{10.1007/978-3-030-33636-3_10} lies in our
@@ -148,6 +151,98 @@ simplifications.
 
 \subsection{Types}
 \label{sec:types}
+
+\begin{figure}[tp]
+  \begin{minipage}[t]{0.49\linewidth}
+    \SFTypeRenaming
+    \SFTypeRenamingOpaque
+  \end{minipage}
+  \begin{minipage}[t]{0.49\linewidth}
+    \SFTypeSubstitution
+    \SFTypeSubstitutionOpaque
+  \end{minipage}
+  \caption{Renamings and substitutions on types}
+  \label{fig:system-f-ren-sub}
+\end{figure}
+
+The syntax of System-F types uses the standard de Bruijn encoding of
+variables by natural numbers. The index $n$ stands for the number of
+type variables in scope. Variables are drawn from the type $Fin n$, i.e.,
+the set $\{0,\dots, n-1\}$. The $\forall$-binder introduces a new type
+variable, and $\Rightarrow$ is the infix function type constructor.
+\SFTypeDefinition
+
+\Cref{fig:system-f-ren-sub} contains the first step in defining
+type renamings (left column) and substitutions (right column).
+A type renaming maps variables from one scope $n_1$ to
+another $n_2$. We write the type of type renamings as $n_1 \to^R n_2$.
+The definitions comprise (in order) weakening, the identity renaming,
+pushing a new mapping for variable
+\AgdaInductiveConstructor{zero} on a renaming, applying a renaming to a variable,
+composing two renamings, extending a renaming (to move under a
+binder), and applying a renaming to a type.
+
+A this point, the astute reader may wonder about the use of
+\AgdaKeyword{opaque} in the definitions. The function symbols defined in an
+\AgdaKeyword{opaque} block are usable from outside, but their
+computational behavior is hidden. Thus, the only normal definition is
+$\uparrow^R$ for extending a renaming. This selective hiding is
+essential for our approach because we want to establish new definitional
+equalities (i.e., the laws of the sigma calculus with first-class
+renamigns) on top of the thus defined symbols. These new equalities 
+interfere in a bad way with the standard definitional equalities, thus
+we hide the latter. To prove these equalities, we open the opaque
+definitions locally and proceed as usual.
+
+For substitutions (right column of \cref{fig:system-f-ren-sub}) we
+proceed analogously. A type substitution maps variables from scope
+$n_1$ to types defined over scope $n_2$. We write the type of type
+substitutions as $n_1 \to^S n_2$. The definitions (in order)
+comprise
+lifting a renaming to a substitution, pushing a new mapping on a
+substitution, applying a substitution to variable, extending a
+substitution (to move under a binder), applying a substitution to a
+type, and composing two substitutions.
+
+\begin{figure}[tp]
+  \begin{flushleft}
+    \SFTypeRenamingBeta
+    \SFTypeSubstitutionBeta
+    \SFTypeMonad
+    \SFTypeCoincidence
+  \end{flushleft}
+  \caption{Equational laws of the sigma calculus with first class
+    renamings}
+  \label{fig:system-f-sigma-calculus}
+\end{figure}
+
+\Cref{fig:system-f-sigma-calculus} gives the equational laws of the
+sigma calculus with first-class renamings \cite{schafer2015autosubst}.
+All of these equalities are supported by proofs using the definitions from
+\cref{fig:system-f-ren-sub}, but the proofs are not included because
+they are standard.
+
+The first group gives computation rules for renamings, in particular,
+how to apply the different forms of renamings to a variable. The
+second group presents interaction laws for renamings. Most of them
+deal with composition.
+
+The third group presents computation rules for substitutions starting
+with the application of a substitution to a variable. There is one
+equation for each possible form of a substitution: pushed
+substitution, lifted renaming, and composition of substitutions. The
+final equation in this group characterizes lifting in terms of push,
+weakening, and composition.
+
+The fourth group contains laws about composition of substitutions,
+which are mostly analogous to the corresponding laws for renamings.
+
+The fifth group presents laws that govern the composition of different
+kinds of term traversal. All four combinations of applying renamings
+and substitutions to a type are covered.
+
+The final group covers laws that provide shortcuts and cover critical
+pairs that arise from the preceding laws.
 
 \subsection{Expressions}
 \label{sec:expressions}

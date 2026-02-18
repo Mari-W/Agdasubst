@@ -125,7 +125,7 @@ else:
 if args.verbose:
     print(f"VERBOSE: {old_hashes=}")
 
-current_hashes = dict()
+current_hashes = old_hashes.copy()
 for src_path in src_paths:
     with open (root / src_path, "rb") as fp:
         current_hashes[str(src_path)] = hashlib.file_digest(fp, "sha256").hexdigest()

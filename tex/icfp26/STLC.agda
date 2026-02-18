@@ -114,8 +114,7 @@ opaque
 
 --! SmallStep {
 data _⟶_ {Γ} {T} : Γ ⊢ T → Γ ⊢ T → Set where
-  β-lam : ∀ {e₁ : (Γ ▷ U) ⊢ T} {e₂ : Γ ⊢ U} →  
-    app {Γ = Γ} (lam e₁) e₂ ⟶ (e₁ [ e₂ ])
+  β-lam  : app {Γ = Γ} (lam e₁) e₂ ⟶ (e₁ [ e₂ ])
   ξ-app  : e₁ ⟶ e₁′ → app e₁ e₂ ⟶ app e₁′ e₂
 --! }
 

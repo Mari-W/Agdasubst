@@ -148,7 +148,7 @@ opaque
 --! }
 variable
   σ σ₁ σ₂ σ₃ : S₁ →ˢ S₂ 
-  
+
 opaque
   unfolding idᴿ _⋯ᴿ_ _∙ˢ_ ⟨_⟩ 
   -- σₛ­ₚ calculus with first class renamings
@@ -235,9 +235,8 @@ opaque
   -- coincidence rules
   coincidence : ∀ (t : S ⊢ s) →
     t ⋯ˢ ⟨ ρ ⟩ ≡ (t ⋯ᴿ ρ)
-  coincidence-fold : ∀ (t : (s ∷ S) ⊢ s) →
-    t ⋯ˢ (⟨ ρ ↑ᴿ s ⟩ ⨟ ((t′ ⋯ᴿ ρ) ∙ˢ idˢ))  ≡ 
-    t ⋯ˢ ((t′ ⋯ᴿ ρ) ∙ˢ ⟨ ρ ⟩)
+  coincidence-fold : (
+    ⟨ ρ ↑ᴿ s ⟩ ⨟ ((t ⋯ᴿ ρ) ∙ˢ idˢ))  ≡ (t ⋯ᴿ ρ) ∙ˢ ⟨ ρ ⟩
   --! }
   coincidence-var : 
     x ⋯ˢ ⟨ ρ ⟩ ≡ ` (x ⋯ᴿ ρ)
@@ -295,30 +294,30 @@ opaque
   right-idˢ (t₁ ⇒ t₂)    = cong₂ _⇒_ (right-idˢ t₁) (right-idˢ t₂)
   right-idˢ *            = refl
 
-  list-dist-compᴿᴿ : ((ρ₁ ↑ᴿ s) ∘ (ρ₂ ↑ᴿ s)) ≡ ((ρ₁ ∘ ρ₂) ↑ᴿ s)
-  list-dist-compᴿᴿ = ext λ { zero → refl; (suc x) → refl }
+  lift-dist-compᴿᴿ : ((ρ₁ ↑ᴿ s) ∘ (ρ₂ ↑ᴿ s)) ≡ ((ρ₁ ∘ ρ₂) ↑ᴿ s)
+  lift-dist-compᴿᴿ = ext λ { zero → refl; (suc x) → refl }
   compositionalityᴿᴿ {ρ₁ = ρ₁} {ρ₂ = ρ₂} (` x)        = refl
-  compositionalityᴿᴿ {ρ₁ = ρ₁} {ρ₂ = ρ₂} (λx e)       = cong λx_ (trans (compositionalityᴿᴿ e) (cong (e ⋯ᴿ_) list-dist-compᴿᴿ))
-  compositionalityᴿᴿ {ρ₁ = ρ₁} {ρ₂ = ρ₂} (Λα e)       = cong Λα_ (trans (compositionalityᴿᴿ e) (cong (e ⋯ᴿ_) list-dist-compᴿᴿ))
-  compositionalityᴿᴿ {ρ₁ = ρ₁} {ρ₂ = ρ₂} (∀[α∶ k ] t) = cong₂ ∀[α∶_]_ (compositionalityᴿᴿ k) (trans (compositionalityᴿᴿ t) (cong (t ⋯ᴿ_) list-dist-compᴿᴿ))
+  compositionalityᴿᴿ {ρ₁ = ρ₁} {ρ₂ = ρ₂} (λx e)       = cong λx_ (trans (compositionalityᴿᴿ e) (cong (e ⋯ᴿ_) lift-dist-compᴿᴿ))
+  compositionalityᴿᴿ {ρ₁ = ρ₁} {ρ₂ = ρ₂} (Λα e)       = cong Λα_ (trans (compositionalityᴿᴿ e) (cong (e ⋯ᴿ_) lift-dist-compᴿᴿ))
+  compositionalityᴿᴿ {ρ₁ = ρ₁} {ρ₂ = ρ₂} (∀[α∶ k ] t) = cong₂ ∀[α∶_]_ (compositionalityᴿᴿ k) (trans (compositionalityᴿᴿ t) (cong (t ⋯ᴿ_) lift-dist-compᴿᴿ))
   compositionalityᴿᴿ {ρ₁ = ρ₁} {ρ₂ = ρ₂} (e₁ · e₂)    = cong₂ _·_ (compositionalityᴿᴿ e₁) (compositionalityᴿᴿ e₂)
   compositionalityᴿᴿ {ρ₁ = ρ₁} {ρ₂ = ρ₂} (e • t)      = cong₂ _•_ (compositionalityᴿᴿ e) (compositionalityᴿᴿ t)
   compositionalityᴿᴿ {ρ₁ = ρ₁} {ρ₂ = ρ₂} (t₁ ⇒ t₂)    = cong₂ _⇒_ (compositionalityᴿᴿ t₁) (compositionalityᴿᴿ t₂)
   compositionalityᴿᴿ {ρ₁ = ρ₁} {ρ₂ = ρ₂} *            = refl
 
-  list-dist-compᴿˢ : (⟨ ρ₁ ↑ᴿ s ⟩ ⨟ (σ₂ ↑ˢ s)) ≡ ((⟨ ρ₁ ⟩ ⨟ σ₂) ↑ˢ s)
-  list-dist-compᴿˢ = ext λ { zero → refl; (suc x) → refl }
+  lift-dist-compᴿˢ : (⟨ ρ₁ ↑ᴿ s ⟩ ⨟ (σ₂ ↑ˢ s)) ≡ ((⟨ ρ₁ ⟩ ⨟ σ₂) ↑ˢ s)
+  lift-dist-compᴿˢ = ext λ { zero → refl; (suc x) → refl }
   compositionalityᴿˢ {ρ₁ = ρ₁}  {σ₂ = σ₂} (` x)        = refl
-  compositionalityᴿˢ {ρ₁ = ρ₁}  {σ₂ = σ₂} (λx e)       = cong λx_ (trans (compositionalityᴿˢ e) (cong (e ⋯ˢ_) (list-dist-compᴿˢ {σ₂ = σ₂})))
-  compositionalityᴿˢ {ρ₁ = ρ₁}  {σ₂ = σ₂} (Λα e)       = cong Λα_ (trans (compositionalityᴿˢ e) (cong (e ⋯ˢ_) (list-dist-compᴿˢ {σ₂ = σ₂})))
-  compositionalityᴿˢ {ρ₁ = ρ₁}  {σ₂ = σ₂} (∀[α∶ k ] t) = cong₂ ∀[α∶_]_ (compositionalityᴿˢ k) (trans (compositionalityᴿˢ t) (cong (t ⋯ˢ_) (list-dist-compᴿˢ {σ₂ = σ₂})))
+  compositionalityᴿˢ {ρ₁ = ρ₁}  {σ₂ = σ₂} (λx e)       = cong λx_ (trans (compositionalityᴿˢ e) (cong (e ⋯ˢ_) (lift-dist-compᴿˢ {σ₂ = σ₂})))
+  compositionalityᴿˢ {ρ₁ = ρ₁}  {σ₂ = σ₂} (Λα e)       = cong Λα_ (trans (compositionalityᴿˢ e) (cong (e ⋯ˢ_) (lift-dist-compᴿˢ {σ₂ = σ₂})))
+  compositionalityᴿˢ {ρ₁ = ρ₁}  {σ₂ = σ₂} (∀[α∶ k ] t) = cong₂ ∀[α∶_]_ (compositionalityᴿˢ k) (trans (compositionalityᴿˢ t) (cong (t ⋯ˢ_) (lift-dist-compᴿˢ {σ₂ = σ₂})))
   compositionalityᴿˢ {ρ₁ = ρ₁}  {σ₂ = σ₂} (e₁ · e₂)    = cong₂ _·_ (compositionalityᴿˢ e₁) (compositionalityᴿˢ e₂)
   compositionalityᴿˢ {ρ₁ = ρ₁}  {σ₂ = σ₂} (e • t)      = cong₂ _•_ (compositionalityᴿˢ e) (compositionalityᴿˢ t)
   compositionalityᴿˢ {ρ₁ = ρ₁}  {σ₂ = σ₂} (t₁ ⇒ t₂)    = cong₂ _⇒_ (compositionalityᴿˢ t₁) (compositionalityᴿˢ t₂)
   compositionalityᴿˢ {ρ₁ = ρ₁}  {σ₂ = σ₂} *            = refl
 
-  list-dist-compˢᴿ : ((σ₁ ↑ˢ s) ⨟ ⟨ ρ₂ ↑ᴿ s ⟩) ≡ ((σ₁ ⨟ ⟨ ρ₂ ⟩) ↑ˢ s)
-  list-dist-compˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} = ext λ { zero → refl; (suc x) → 
+  lift-dist-compˢᴿ : ((σ₁ ↑ˢ s) ⨟ ⟨ ρ₂ ↑ᴿ s ⟩) ≡ ((σ₁ ⨟ ⟨ ρ₂ ⟩) ↑ˢ s)
+  lift-dist-compˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} = ext λ { zero → refl; (suc x) → 
     let t = σ₁ _ x in
     (t ⋯ᴿ (wkᴿ _)) ⋯ˢ ⟨ ρ₂ ↑ᴿ _ ⟩ ≡⟨ (coincidence (t ⋯ᴿ (wkᴿ _))) ⟩ 
     (t ⋯ᴿ (wkᴿ _)) ⋯ᴿ (ρ₂ ↑ᴿ _)   ≡⟨ compositionalityᴿᴿ t ⟩ 
@@ -326,16 +325,16 @@ opaque
     (t ⋯ᴿ ρ₂) ⋯ᴿ wkᴿ _          ≡⟨ cong (_⋯ᴿ (wkᴿ _)) (sym (coincidence t)) ⟩ 
     (t ⋯ˢ ⟨ ρ₂ ⟩) ⋯ᴿ wkᴿ _      ∎ }
   compositionalityˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} (` x)         = sym (coincidence (σ₁ _ x))
-  compositionalityˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} (λx e)        = cong λx_ (trans (compositionalityˢᴿ e) (cong (e ⋯ˢ_) (list-dist-compˢᴿ {σ₁ = σ₁})))
-  compositionalityˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} (Λα e)        = cong Λα_ (trans (compositionalityˢᴿ e) (cong (e ⋯ˢ_) (list-dist-compˢᴿ {σ₁ = σ₁})))
-  compositionalityˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} (∀[α∶ k ] t)  = cong₂ ∀[α∶_]_ (compositionalityˢᴿ k) (trans (compositionalityˢᴿ t) (cong (t ⋯ˢ_) (list-dist-compˢᴿ {σ₁ = σ₁})))
+  compositionalityˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} (λx e)        = cong λx_ (trans (compositionalityˢᴿ e) (cong (e ⋯ˢ_) (lift-dist-compˢᴿ {σ₁ = σ₁})))
+  compositionalityˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} (Λα e)        = cong Λα_ (trans (compositionalityˢᴿ e) (cong (e ⋯ˢ_) (lift-dist-compˢᴿ {σ₁ = σ₁})))
+  compositionalityˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} (∀[α∶ k ] t)  = cong₂ ∀[α∶_]_ (compositionalityˢᴿ k) (trans (compositionalityˢᴿ t) (cong (t ⋯ˢ_) (lift-dist-compˢᴿ {σ₁ = σ₁})))
   compositionalityˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} (e₁ · e₂)     = cong₂ _·_ (compositionalityˢᴿ e₁) (compositionalityˢᴿ e₂)
   compositionalityˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} (e • t)       = cong₂ _•_ (compositionalityˢᴿ e) (compositionalityˢᴿ t)
   compositionalityˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} (t₁ ⇒ t₂)     = cong₂ _⇒_ (compositionalityˢᴿ t₁) (compositionalityˢᴿ t₂)
   compositionalityˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} *             = refl
 
-  list-dist-compˢˢ : ((σ₁ ↑ˢ s) ⨟ (σ₂ ↑ˢ s)) ≡ ((σ₁ ⨟ σ₂) ↑ˢ s)
-  list-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂} = ext λ { zero → refl; (suc x) → 
+  lift-dist-compˢˢ : ((σ₁ ↑ˢ s) ⨟ (σ₂ ↑ˢ s)) ≡ ((σ₁ ⨟ σ₂) ↑ˢ s)
+  lift-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂} = ext λ { zero → refl; (suc x) → 
     let t = σ₁ _ x in
     begin
     (t ⋯ᴿ (wkᴿ _)) ⋯ˢ (σ₂ ↑ˢ _)    ≡⟨ compositionalityᴿˢ t ⟩ 
@@ -343,9 +342,9 @@ opaque
     t ⋯ˢ (σ₂ ⨟ ⟨ (wkᴿ _) ⟩)        ≡⟨ sym (compositionalityˢᴿ t) ⟩ 
     (t ⋯ˢ σ₂) ⋯ᴿ (wkᴿ _)           ∎ }
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (` x)        = refl
-  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (λx e)       = cong λx_ (trans (compositionalityˢˢ e) (cong (e ⋯ˢ_) (list-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂})))
-  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (Λα e)       = cong Λα_ (trans (compositionalityˢˢ e) (cong (e ⋯ˢ_) (list-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂})))
-  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (∀[α∶ k ] t) = cong₂ ∀[α∶_]_ (compositionalityˢˢ k) (trans (compositionalityˢˢ t) (cong (t ⋯ˢ_) (list-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂})))
+  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (λx e)       = cong λx_ (trans (compositionalityˢˢ e) (cong (e ⋯ˢ_) (lift-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂})))
+  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (Λα e)       = cong Λα_ (trans (compositionalityˢˢ e) (cong (e ⋯ˢ_) (lift-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂})))
+  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (∀[α∶ k ] t) = cong₂ ∀[α∶_]_ (compositionalityˢˢ k) (trans (compositionalityˢˢ t) (cong (t ⋯ˢ_) (lift-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂})))
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (e₁ · e₂)    = cong₂ _·_ (compositionalityˢˢ e₁) (compositionalityˢˢ e₂)
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (e • t)      = cong₂ _•_ (compositionalityˢˢ e) (compositionalityˢˢ t)
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (t₁ ⇒ t₂)    = cong₂ _⇒_ (compositionalityˢˢ t₁) (compositionalityˢˢ t₂)
@@ -375,9 +374,8 @@ opaque
     (t ⋯ᴿ ρ) ⋯ˢ idˢ    ≡⟨ right-idˢ _ ⟩ 
     t ⋯ᴿ ρ             ∎
 
-  coincidence-fold {ρ = ρ} {t′ = t′} t = 
-    (t ⋯ˢ (⟨ ρ ↑ᴿ _ ⟩ ⨟ ((t′ ⋯ᴿ ρ) ∙ˢ idˢ))) ≡⟨ cong (t ⋯ˢ_) (ext λ { zero → refl; (suc x) → refl }) ⟩ 
-    (t ⋯ˢ ((t′ ⋯ᴿ ρ) ∙ˢ ⟨ ρ ⟩))              ∎
+  coincidence-fold = (ext λ { zero → refl; (suc x) → refl })
+
 
   coincidence-var = refl
   

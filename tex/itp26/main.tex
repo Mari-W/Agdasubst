@@ -244,7 +244,7 @@ Opaque definitions~\cite{gratzer2022controlling} let the user treat code as
 non-unfolding symbols. This feature is typically used to improve type checking
 times, because normally we want all definitions to unfold, to produce as many
 definitional equalities as possible. Their use case in this work will be to
-declare some definitions opaque, such that the stuck symbols qualify for
+declare relevant definitions opaque, such that the stuck symbols qualify for
 rewriting.
 
 Definitions within an \AgdaKeyword{opaque} block are visible but treated
@@ -392,34 +392,37 @@ The definition of instantiation by mutual recursion with composition
 complicates termination. Agda cannot determine that this definition is
 structurally recursive (and also lacks mechanisms to justify termination by
 well-founded recursion), so we follow Adams~\cite{10.1007/11617990_1} to
-resolve the issue by first defining instantiation for renamings. We then extend
-the equational theory to handle first-class renamings and to connect
-substitutions with renamings with the rules from Autosubst
-2~\cite{10.1145/3293880.3294101}. We use the multi-sorted and scoped version of
-System~F from \Cref{fig:pre-svm} as an example for any scoped syntax. The
-approach described in this section directly translates to any multi-sorted and
-scoped syntax as well as simple intrinsically typed syntax where the type index
-of the syntax has type \AgdaDatatype{Set}.
+resolve the issue by first defining instantiation with renamings. We then
+extend the equational theory to handle first-class renamings and to connect
+substitutions with renamings with the rules from \textsc{Autosubst 2}. We use
+the multi-sorted and scoped version of System~F from \Cref{fig:pre-svm} as an
+example for any scoped syntax. The approach described in this section directly
+translates to any multi-sorted and scoped syntax as well as simple
+intrinsically typed syntax where the type index of the syntax has type
+\AgdaDatatype{Set}.
 
 \subsection{Renaming and Substitution}\label{sec:mis-sub}
 \begin{figure}[t]
       \AgdaNoSpaceAroundCode{}
       \setlength{\mathindent}{0pt}
       \setlength{\AgdaEmptySkip}{\smallskipamount}
-      \begin{minipage}[t]{0.33\linewidth}
+      \begin{minipage}[t]{0.35\linewidth}
             \raggedright{}
             \ERen{}
       \end{minipage}
       \hfill
-      \begin{minipage}[t]{0.55\linewidth}
+      \begin{minipage}[t]{0.53\linewidth}
             \raggedright{}
             \ESub{}
+            \ESubT{}
       \end{minipage}
-      \caption{The Primitives for Renaming and substitution}\label{fig:mis-ras}
+      \caption{The Primitives for Renaming and Substitution}\label{fig:mis-ras}
 \end{figure}
 
-The definitions for renaming and substitution is presented in
-\Cref{fig:mis-ras}.
+The definitions for renaming and substitution are presented in
+\Cref{fig:mis-ras}. The definitions are mostly standard, but we will mark
+nearly all symbols for primitives \AgdaKeyword{opaque}, and describe their
+behavior later through rewrite rules.
 
 We begin with the type alias for renamings \AgdaFunction{\_→ᴿ\_}: renamings are
 functions that map variables of sort \AgdaBound{s} from scope \AgdaBound{S₁} to
@@ -430,45 +433,42 @@ function, that ignores the explicit sort argument, which we could not leave
 implicit, because Agda fails to infer it most of the time, complicating proofs
 unnecessarily. Weakening applies the \AgdaInductiveConstructor{suc} constructor
 to all variables of a renaming and composition of two renamings is defined as
-forward function composition. Lifting \AgdaFunction{\_↑ᴿ\_} is defined directly
-to avoid a definition for the extension of renamings, which is unnecessary
-because renamings merely need to shift variables. The traversal operation
+forward function composition. Extension \AgdaFunction{\_∙ᴿ\_} inserts the
+respective variable for de Bruijn index \AgdaInductiveConstructor{zero} into
+the renaming. Lifting \AgdaFunction{\_↑ᴿ\_} is defined in terms of extension
+with variable \AgdaInductiveConstructor{zero} and composition with the
+weakening renaming. We do not mark lifting opaque, because it is merely a alias
+for a term constructed from the primitives. The traversal operation
 \AgdaFunction{\_⋯ᴿ\_} propagates the renaming through the nodes to the leaves
 and applies lifting when it passes under binders. We define instantiation
-across both modes to match the definition of substitution instantiation later.
-The computational behavior of renamings follows the behavior of functions
-almost entirely. We require only a few additional \AgdaKeyword{REWRITE} rules
-later to extend the definitional equalities of renamings.
+across both modes for reasons explained later.
 
 Substitutions are functions from variables to terms instead of variables. The
 operator \AgdaFunction{⟨\_⟩} embeds any renaming into a substitution by
 wrapping all variables with the variable constructor. With the embedding
-operator we define the identity substitution \AgdaFunction{idˢ} and weakening
-substitution \AgdaFunction{wkˢ} directly from renamings. To prevent Agda from
-rejecting rewrite rules due to reductions on the left-hand side, we
-\AgdaKeyword{INLINE} these symbols.
+operator we define aliases for the identity substitution \AgdaFunction{idˢ} and
+weakening substitution \AgdaFunction{wkˢ} directly from renamings. To prevent
+Agda from rejecting rewrite rules due to reductions on the left-hand side of
+equations, we \AgdaKeyword{INLINE} these symbols.
 
-Extension \AgdaFunction{\_∙\_} is defined by case analysis on the incoming
+Extension \AgdaFunction{\_∙ˢ\_} is defined by case analysis on the incoming
 variable and maps the term we extend with to variable
 \AgdaInductiveConstructor{zero}. We use instantiation with the weakening
 renaming to define the lifting of substitutions \AgdaFunction{\_↑ˢ\_}, thereby
-satisfying the requirements of structural recursion. Instantiation with a
+satisfying the requirements of structural recursion. In constrast to the
+lifting operator for renamings, we keep it's computational behavior hidden, and
+later rewrite it in terms of substitution composition. Instantiation with a
 substitution \AgdaFunction{\_⋯ˢ\_} works analogous to the case of renamings and
 we also design it to work for variables and terms simultaneously, for reasons
 that become clear shortly. Finally we define the forward composition of
 substitutions \AgdaFunction{\_⨟\_} via instantiation.
 
-We declare all substitution primitives as \AgdaKeyword{opaque} to block their
-reduction. This hides the computational behavior of the primitives. Blocking
-their reduction allows us to rewrite the $σ$-calculus rules on the stuck
-symbols. For example, the current definition for composition without blocked
-reduction would reduce to a lambda function, which would render most of the
-\textbf{Interaction rules} not admissable for rewriting. The definition of
-instantiation over both modes, allows us to do lookup of a variable in a
-substitution also by usage of the stuck symbol for instantiation, instead of
-function application. We will state the equations we wish to rewrite later only
-in terms of stuck symbols, without using lambdas or function application. We go
-into more detail in \Cref{sec:mis-ex}.
+The definitions of instantiation over both modes, allows us to do lookup of a
+variable in a substitution (or renaming) also by usage of the stuck symbol for
+instantiation, instead of function application. Because we need to state the
+equations we wish to rewrite later only in terms of stuck symbols, without
+using lambdas or function application, we require the one for variable lookup.
+We go into more detail in \Cref{sec:mis-ex}.
 
 \subsection{The Sigma Calculus Rules}\label{sec:mis-sig}
 \begin{figure}[t]
@@ -490,51 +490,37 @@ into more detail in \Cref{sec:mis-ex}.
       \caption{The Rewrite System~For the Sigma Calculus with First-Class Renamings}\label{fig:mis-sig}
 \end{figure}
 
-\Cref{fig:mis-sig} presents the $σ$-calculus rules with f
-irst-class renamings
+\Cref{fig:mis-sig} presents the part of $σ$-calculus rules with first-class renamings
 as Agda equalities admissable for rewriting.
 Agda accepts the rule set as confluent which is important for safety.
 We are also able to prove all the rules before rewriting them, to guarantee consistency.
 first-class renamings introduce three new categories. We now discuss the
 changes to the standard $σ$-calculus variant from \Cref{sec:pre-sig}.
 
-The \textbf{First-Class Renamings rules} include a single rule which states
-that lifting the identity renaming remains the identity. This property does not
-hold definitionally because lifting of renamings is defined via a case split on
-the incoming variable. However, to preserve confluence with respect to the
-Monad rules, this equality is required to hold definitionally. All other
-properties we expect of renamings such as associativity hold definitionally
-already.
-
 The \textbf{Definitional rules} include definitions we blocked earlier in
 modified form. We include the clauses from the definition of extension but use
 the instantiation operator to handle lookup of variables in substitutions
 instead of function application. Similarly, lookup in composed substitutions is
 defined in terms of the instantiation operator. We rewrite the lifting operator
-in terms of composition with the weakening substitution, which is not possible
-to define directly, due to the aforementioned termination issues. This change
+in terms of composition with the weakening substitution, which was not possible
+to define earlier, due to the aforementioned termination issues. This change
 allows us to draw on the complete theory of the $σ$-calculus, when solely
-reasoning about substitutions. We can normalize every expression, only
-involving substitutions and no renamings, into a normal form suitable for
-syntactic comparison.
+reasoning about substitutions. To save space, we have omitted the definitional
+rules for renamings, but they follow analogously.
 
-The \textbf{Interaction rules} include a minor change. Since instantiation with
-renamings is available as a first-class construct we must add a version of the
-$η$-law for renamings where instantiation appears as a stuck symbol.
+The \textbf{Interaction rules} are exactly those presented in
+\Cref{sec:pre-sig}. In the figure we have omitted a copy of the interaction
+rules for renamings, which we also include in the rewrite system.
 
 The \textbf{Coincidence rules} emerge from the interaction between renamings
-and substitutions~\cite{10.1145/3293880.3294101}. They allow us to recover
-renamings from their embedding as substitutions. We state them uniformly for
-variables and terms \AgdaBound{x/t} instantiated with substitutions, because we
-also want to coerce variable lookup in substitutions to variable lookup in
-renamings.
-
-The extraction of renamings from deeply nested substitutions in general
-requires a dedicated solving strategy~\cite{10.1145/3293880.3294101}. In
-addition to the obvious \AgdaFunction{coincidence} rule, we require a specific
-coincidence variant called \AgdaFunction{coincidence-fold} for the proof of
-subject reduction of System~F. Every proof might require more coincidence
-lemmas. For instance, proving subject reduction requires the inclusion of
+and substitutions~\cite{10.1145/3293880.3294101}. They allow us to recover some
+renamings from their embedding as substitutions. The extraction of renamings
+from deeply nested substitutions in general requires a dedicated solving
+strategy~\cite{10.1145/3293880.3294101}. In addition to the obvious
+\AgdaFunction{coincidence} rule, we require a specific coincidence variant
+called \AgdaFunction{coincidence-fold} for the proof of subject reduction for
+System~F later. However, others proofs might require more coincidence lemmas.
+For instance, proving subject reduction in general requires the inclusion of
 lemmas in the style of \AgdaFunction{coincidence-fold} with $n$ extensions
 where $n$ is the maximum arity of binders in the object language. The inclusion
 of more coincidence lemmas usually does not affect confluence.
@@ -543,7 +529,8 @@ The \textbf{Traversal rules} mirror the clauses from the definitions of
 instantiation in the previous section directly. We include all clauses except
 the one for variables. This exclusion is important because we wanted the term
 \AgdaBound{x} \AgdaFunction{⋯ˢ} \AgdaBound{σ} to remain stuck, so we can apply
-rewrite rules where instantiation of variables is the head symbol.
+rewrite rules where instantiation of variables is the head symbol. We have
+omitted the analogous traversal rules for renamings.
 
 We extend the \textbf{Monad rules} to handle all four combinations of
 instantiation with renamings and substitutions. We state the right identity law
@@ -554,10 +541,7 @@ reduces to instantiation with the identity renaming via
 The proofs of the rules are standard, and we refer the interested reader to the
 supplement. Within the proofs we unfold the opaque definitions and make use of
 function extensionality which is conservative over the theory underlying
-Agda~\cite{Hofmann1997}. It is known that with a little more effort functional
-extensionality can be avoided by proving that if two substitutions are
-extensionally equal, then their instantiation to the same term are
-intensionally equal.
+Agda~\cite{Hofmann1997}.
 
 \subsection{An Example Proof with the Rewritten Sigma Calculus}
 \begin{figure}[!t]
@@ -612,11 +596,11 @@ typing lemma. The rewrite rules automatically handle the otherwise required
 application of interaction rules in the cases of $β$-reductions.
 
 \subsection{An Examination of the Issue with Unfolding Definitions}\label{sec:mis-ex}
-Blocking the reduction behavior of substitution primitives allowed us to
-successfully rewrite all $σ$-calculus rules. We now explain why this approach
-works, and more specifically why other attempts did not work.
+Blocking the reduction behavior of renaming and substitution primitives allowed
+us to successfully rewrite all $σ$-calculus rules. We now explain why this
+approach works, and more specifically why other attempts did not work.
 
-The primary issue is that composition unfolds to a lambda abstraction. If we
+The primary issue is that composition unfolds to lambda abstractions. If we
 unfold the definition for the composition operator, then for instance the left
 hand side of \AgdaFunction{comp-idₗ} rule would reduce to~\EIdLawUnfolded{}~,
 violating the constraint that rewrite rules must have stuck symbols on the
@@ -633,27 +617,27 @@ $η$-laws anymore, even though manual application using propositional equality
 reasoning works. We argue Agda should reject such a construction.
 
 Instead we use the instantiation operator to perform variable lookup. Doing so
-requires us to propagate this change through all the rules, using instantiation
+requires us to propagate this change through all rules, using instantiation
 every time we would want to use function application for variable lookup.
 
 We note that, while we are still able to use function application or build
-substitutions using lambdas, we then obtain fewer definitional equalities. As a
-consequence, we recommend using only instantiation for variable lookup and only
-the two already defined composition operators.
+renamings and substitutions using lambdas, we then obtain fewer definitional
+equalities. We thus recommend only to use the instantiation operator for
+variable lookup and only the two already defined composition operators.
 
 \subsection*{Using Vectors instead of Functions}
 
 We also considered an alternative representation for substitutions based on a
-vector-structured data type. This data type would at least need to include an
+vector-like data type. This data type would at least need to include an
 extension constructor, to fill the vector with terms. Because composition is
 then defined via case distinction on the vector, it correctly behaves as a
-stuck symbol suitable for rewriting. However with extension as constructor the
+stuck symbol suitable for rewriting. However, with extension as constructor the
 $η$-law is not instantiatable with a proof, because this would require that the
 extension constructor has computational behavior.
 
 Removing the $η$-law from the equational theory preserves confluence, but
-misses important definitional equalities. Although preventing some definitional
-equalities, the vector representation could maybe be useful for an attempt at
+removes important definitional equalities. However, the vector representation
+could maybe still be useful for an attempt at
 type-theory-in-type-theory~\cite{10.1145/2914770.2837638}, where a
 representation of substitutions as functions is not possible.
 
@@ -668,8 +652,8 @@ The original $σ$-calculus treats the symbols purely syntactic, also describing
 the behavior of lookup with use of the instantiation operator. Then the
 de~Bruijn algebra provided a semantic model for the $σ$-calculus, enabling
 proofs for the $σ$-calculus rules and applicability for propositional equality
-chains. In this work we do both: Using the semantic model to prove the laws but
-also treating the symbols syntactically to predicably apply rewrite rules.
+reasoning. In this work we do both: Using the semantic model to prove the laws
+but also treating the symbols syntactically to predicably apply rewrite rules.
 
 \section{Ongoing and Future Work}\label{sec:fwk}
 \subsection{Code Generation}

@@ -374,9 +374,7 @@ opaque
     (t ⋯ᴿ ρ) ⋯ˢ idˢ    ≡⟨ right-idˢ _ ⟩ 
     t ⋯ᴿ ρ             ∎
 
-  coincidence-fold = (ext λ { zero → refl; (suc x) → refl })
-
-
+  coincidence-fold = ext λ { zero → refl; (suc x) → refl }
   coincidence-var = refl
   
   demo1 : σ ⨟ idˢ ≡ σ

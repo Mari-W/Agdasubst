@@ -158,7 +158,6 @@ postulate
   --
   associativity           : (σ₁ ⨟ σ₂) ⨟ σ₃                   ≡ σ₁ ⨟ (σ₂ ⨟ σ₃)
   distributivity          : (T ∙ˢ σ₁) ⨟ σ₂                   ≡ (T ⋯ˢ σ₂) ∙ˢ (σ₁ ⨟ σ₂)
-  distributivityᴿ         : (T ∙ˢ σ₁) ⨟ ⟨ ρ₂ ⟩               ≡ (T ⋯ᴿ ρ₂) ∙ˢ (σ₁ ⨟ ⟨ ρ₂ ⟩)
   interact                : ⟨ wk ⟩ ⨟ (T ∙ˢ σ)                ≡ σ
   comp-idᵣ                : σ ⨟ ⟨ idᴿ ⟩                      ≡ σ
   comp-idₗ                : ⟨ idᴿ ⟩ ⨟ σ                      ≡ σ
@@ -166,7 +165,7 @@ postulate
   η-law                  : (zero &ˢ σ) ∙ˢ (⟨ wk ⟩ ⨟ σ)      ≡ σ
   --! }
   -- η-lawᴿ                  : (` (zero &ᴿ ρ)) ∙ˢ (⟨ wk ⟩ ⨟ ⟨ ρ ⟩)   ≡ ⟨ ρ ⟩
-
+  -- distributivityᴿ         : (T ∙ˢ σ₁) ⨟ ⟨ ρ₂ ⟩               ≡ (T ⋯ᴿ ρ₂) ∙ˢ (σ₁ ⨟ ⟨ ρ₂ ⟩)
   -- monad laws
   --! Monad
   identityʳ      : T ⋯ᴿ idᴿ          ≡ T
@@ -187,15 +186,7 @@ postulate
   -- coincidence laws
   --! Coincidence
   coincidence              : T ⋯ˢ ⟨ ρ ⟩                                 ≡ T  ⋯ᴿ ρ
-  
-  coincidence-lemma  : (⟨ ρ ↑ᴿ ⟩ ⨟ ((T′ ⋯ᴿ ρ) ∙ˢ ⟨ idᴿ ⟩))   ≡ ((T′ ⋯ᴿ ρ) ∙ˢ ⟨ ρ ⟩)
-  coincidence-lemma₁ : ⟨  zero ∙ᴿ (ρ₁ ∘ (ρ₂ ∘ wk)) ⟩ ⨟ ((T ⋯ᴿ (ρ₁ ∘ ρ₂)) ∙ˢ ⟨ idᴿ ⟩) ≡ (T ⋯ᴿ (ρ₁ ∘ ρ₂)) ∙ˢ (⟨ ρ₁ ⟩ ⨟ ⟨ ρ₂ ⟩)
-  coincidence-lemma₂ : T ⋯ˢ ((` zero) ∙ˢ (⟨ ρ₁ ⟩ ⨟ ⟨ wk ⟩)) ≡ (T ⋯ᴿ (zero ∙ᴿ (ρ₁ ∘ wk)))
-  coincidence-lemma₃ : ⟨ zero ∙ᴿ (ρ₁ ∘ wk) ⟩ ⨟ ((` zero) ∙ˢ (σ₂ ⨟ ⟨ wk ⟩)) ≡ (` zero) ∙ˢ (⟨ ρ₁ ⟩ ⨟ (σ₂ ⨟ ⟨ wk ⟩))
-  coincidence-lemma₄ : ((` zero) ∙ˢ (σ₁ ⨟ (⟨ wk ⟩ ⨟ ⟨ zero ∙ᴿ (ρ₂ ∘ wk) ⟩))) ≡ ((` zero) ∙ˢ (σ₁ ⨟ (⟨ ρ₂ ⟩ ⨟ ⟨ wk ⟩)))
-  -- coincidence-foldx        : α &ˢ (⟨ ρ ↑ᴿ ⟩ ⨟ ((T′ ⋯ᴿ ρ) ∙ˢ ⟨ idᴿ ⟩))   ≡ α &ˢ ((T′ ⋯ᴿ ρ) ∙ˢ ⟨ ρ ⟩)
-  -- coincidence-comp         : ⟨ ρ₁ ⟩ ⨟ ⟨ ρ₂ ⟩                            ≡ ⟨ ρ₂ ∘ ρ₂ ⟩
-  
+  coincidence-comp         : ⟨ ρ₁ ⟩ ⨟ ⟨ ρ₂ ⟩                            ≡ ⟨ ρ₂ ∘ ρ₂ ⟩
 
   -- proofs
 
@@ -214,7 +205,6 @@ postulate
 
   associativity
   distributivity
-  distributivityᴿ
   interact
   comp-idᵣ
   comp-idₗ
@@ -236,16 +226,34 @@ postulate
   composeˢˢ
 
   coincidence
-  
-  coincidence-lemma
+  coincidence-comp
+#-}
+
+-- more coincidence lemmas ...
+-- all follow directly from case analysis
+-- (they are extracted from type failures,
+--  i did not analyise them)
+
+-- definitely supports the claim that we need 
+-- a dedicated coincidence solving strategy
+opaque
+  unfolding wk ⟨_⟩ _⨟_
+  coincidence-lemma₁  : (⟨ ρ ↑ᴿ ⟩ ⨟ ((T′ ⋯ᴿ ρ) ∙ˢ ⟨ idᴿ ⟩)) ≡ ((T′ ⋯ᴿ ρ) ∙ˢ ⟨ ρ ⟩)
+  coincidence-lemma₁ = fun-ext λ { zero → refl; (suc x) → refl }
+  coincidence-lemma₂ : ⟨  zero ∙ᴿ (ρ₁ ∘ (ρ₂ ∘ wk)) ⟩ ⨟ ((T ⋯ᴿ (ρ₁ ∘ ρ₂)) ∙ˢ ⟨ idᴿ ⟩) ≡ (T ⋯ᴿ (ρ₁ ∘ ρ₂)) ∙ˢ (⟨ ρ₁ ⟩ ⨟ ⟨ ρ₂ ⟩)
+  coincidence-lemma₂ = fun-ext λ { zero → refl; (suc x) → refl }
+  coincidence-lemma₃ : ⟨ zero ∙ᴿ (ρ₁ ∘ wk) ⟩ ⨟ ((` zero) ∙ˢ (σ₂ ⨟ ⟨ wk ⟩)) ≡ (` zero) ∙ˢ (⟨ ρ₁ ⟩ ⨟ (σ₂ ⨟ ⟨ wk ⟩))
+  coincidence-lemma₃ = fun-ext λ { zero → refl; (suc x) → refl }
+  coincidence-lemma₄ : ((` zero) ∙ˢ (σ₁ ⨟ (⟨ wk ⟩ ⨟ ⟨ zero ∙ᴿ (ρ₂ ∘ wk) ⟩))) ≡ ((` zero) ∙ˢ (σ₁ ⨟ (⟨ ρ₂ ⟩ ⨟ ⟨ wk ⟩)))
+  coincidence-lemma₄ = fun-ext λ { zero → refl; (suc x) → refl }
+
+
+{-# REWRITE
   coincidence-lemma₁
   coincidence-lemma₂
   coincidence-lemma₃
   coincidence-lemma₄
 #-}
--- traversal-x traversal-∀ traversal-⇒
--- `traversal-x `traversal-∀ `traversal-⇒
-
 
 weaken : Type n → Type (suc n)
 weaken t = t ⋯ᴿ wk
@@ -405,11 +413,11 @@ lift*-dist-Compᴿᴿ _ _ _ _ = fun-ext λ _ → fun-ext λ { (suc* x) → refl 
 
 Composeᴿᴿ : ∀ (e : Expr Γ₁ T) (ρ₁ : n₁ →ᴿ n₂) (ρ₂ : n₂ →ᴿ n₃) (Ρ₁ : ρ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (Ρ₂ : ρ₂ ∣ Γ₂ ⇒ᴿ Γ₃) →
   ρ₂ ∣ (ρ₁ ∣ e ⋯ᴿ Ρ₁) ⋯ᴿ Ρ₂ ≡ (ρ₁ ∘ ρ₂) ∣ e ⋯ᴿ (ρ₁ , ρ₂ ∣ Ρ₁ ⊚ Ρ₂)
-Composeᴿᴿ (` x)      _ _ _ _    = refl
-Composeᴿᴿ (λx e)     _ _ _ _    = cong λx_ (trans (Composeᴿᴿ e _ _ _ _) (cong (_ ∣ e ⋯ᴿ_) (Lift-Dist-Compᴿᴿ _ _)))
-Composeᴿᴿ (Λα e)     _ _ _ _    = cong Λα_ (trans (Composeᴿᴿ e _ _ _ _) (cong (_ ∣ e ⋯ᴿ_) (lift*-dist-Compᴿᴿ _ _ _ _)))
-Composeᴿᴿ (e₁ · e₂)  _ _ _ _    = cong₂ _·_ (Composeᴿᴿ e₁ _ _ _ _) (Composeᴿᴿ e₂ _ _ _ _)
-Composeᴿᴿ (e ·* T′) ρ₁ ρ₂ Ρ₁ Ρ₂ = cong (_·* (T′ ⋯ᴿ (ρ₁ ∘ ρ₂))) (Composeᴿᴿ e _ _ _ _)
+Composeᴿᴿ (` x)     _  _  _  _   = refl
+Composeᴿᴿ (λx e)    _  _  _  _   = cong λx_ (trans (Composeᴿᴿ e _ _ _ _) (cong (_ ∣ e ⋯ᴿ_) (Lift-Dist-Compᴿᴿ _ _)))
+Composeᴿᴿ (Λα e)    _  _  _  _   = cong Λα_ (trans (Composeᴿᴿ e _ _ _ _) (cong (_ ∣ e ⋯ᴿ_) (lift*-dist-Compᴿᴿ _ _ _ _)))
+Composeᴿᴿ (e₁ · e₂) _  _  _  _   = cong₂ _·_ (Composeᴿᴿ e₁ _ _ _ _) (Composeᴿᴿ e₂ _ _ _ _)
+Composeᴿᴿ (e ·* T′) ρ₁ ρ₂ Ρ₁ Ρ₂  = cong (_·* (T′ ⋯ᴿ (ρ₁ ∘ ρ₂))) (Composeᴿᴿ e _ _ _ _)
 
 Lift-Dist-Compᴿˢ : (Ρ₁ : ρ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (Σ₂ : σ₂ ∣ Γ₂ ⇒ˢ Γ₃) →
   ⟨ ρ₁ ⟩ , σ₂ ∣ (ρ₁ ∣⟪ ρ₁ ∣ Ρ₁ ⇑ᴿ T ⟫) ⨾ (σ₂ ∣ Σ₂ ⇑ˢ (T ⋯ᴿ ρ₁)) ≡ ((⟨ ρ₁ ⟩ ⨟ σ₂) ∣ (⟨ ρ₁ ⟩ , σ₂ ∣ ρ₁ ∣⟪ Ρ₁ ⟫ ⨾ Σ₂) ⇑ˢ T)
@@ -421,11 +429,11 @@ lift*-dist-Compᴿˢ _ _ _ _ = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
 
 Composeᴿˢ : ∀ (e : Expr Γ₁ T) (ρ₁ : n₁ →ᴿ n₂) (σ₂ : n₂ →ˢ n₃) (Ρ₁ : ρ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (Σ₂ : σ₂ ∣ Γ₂ ⇒ˢ Γ₃) →
   σ₂ ∣ (ρ₁ ∣ e ⋯ᴿ Ρ₁) ⋯ˢ Σ₂ ≡ (⟨ ρ₁ ⟩ ⨟ σ₂) ∣ e ⋯ˢ (⟨ ρ₁ ⟩ , σ₂ ∣ ρ₁ ∣⟪ Ρ₁ ⟫ ⨾ Σ₂)
-Composeᴿˢ (` x)      _ _ _ _    = refl
-Composeᴿˢ (λx e)     ρ₁ σ₂ Ρ₁ Σ₂  =  cong λx_ (trans (Composeᴿˢ e _ _ _ _) (cong ((⟨ ρ₁ ⟩ ⨟ σ₂) ∣ e ⋯ˢ_) (Lift-Dist-Compᴿˢ Ρ₁ Σ₂)))
-Composeᴿˢ (Λα e)     ρ₁ σ₂ Ρ₁ Σ₂  = cong Λα_ (trans (Composeᴿˢ e _ _ _ _) (cong (((⟨ ρ₁ ⟩ ⨟ σ₂) ↑ˢ) ∣ e ⋯ˢ_) (lift*-dist-Compᴿˢ _ σ₂ Ρ₁ Σ₂)))
-Composeᴿˢ (e₁ · e₂)  _ _ _ _    = cong₂ _·_ (Composeᴿˢ e₁ _ _ _ _) (Composeᴿˢ e₂ _ _ _ _)
-Composeᴿˢ (e ·* T′) ρ₁ σ₂ Ρ₁ Ρ₂ = cong (_·* (T′ ⋯ˢ (⟨ ρ₁ ⟩ ⨟ σ₂))) (Composeᴿˢ e _ _ _ _)
+Composeᴿˢ (` x)     _  _  _  _   = refl
+Composeᴿˢ (λx e)    ρ₁ σ₂ Ρ₁ Σ₂  = cong λx_ (trans (Composeᴿˢ e _ _ _ _) (cong ((⟨ ρ₁ ⟩ ⨟ σ₂) ∣ e ⋯ˢ_) (Lift-Dist-Compᴿˢ Ρ₁ Σ₂)))
+Composeᴿˢ (Λα e)    ρ₁ σ₂ Ρ₁ Σ₂  = cong Λα_ (trans (Composeᴿˢ e _ _ _ _) (cong (((⟨ ρ₁ ⟩ ⨟ σ₂) ↑ˢ) ∣ e ⋯ˢ_) (lift*-dist-Compᴿˢ _ σ₂ Ρ₁ Σ₂)))
+Composeᴿˢ (e₁ · e₂) _  _  _  _   = cong₂ _·_ (Composeᴿˢ e₁ _ _ _ _) (Composeᴿˢ e₂ _ _ _ _)
+Composeᴿˢ (e ·* T′) ρ₁ σ₂ Ρ₁ Ρ₂  = cong (_·* (T′ ⋯ˢ (⟨ ρ₁ ⟩ ⨟ σ₂))) (Composeᴿˢ e _ _ _ _)
 
 postulate
   Coincidence : ∀ (e : Expr Γ₁ T) (Ρ : ρ ∣ Γ₁ ⇒ᴿ Γ₂) →

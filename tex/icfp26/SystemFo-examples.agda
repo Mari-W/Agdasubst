@@ -1,4 +1,4 @@
-{-# OPTIONS --rewriting #-}
+{-# OPTIONS --rewriting --local-confluence-check #-}
 module SystemFo-examples where
 open import Agda.Builtin.Equality.Rewrite public
 
@@ -51,12 +51,10 @@ _ = begin
       λα (λα ((` S Z) $ ((` S Z) $ (` Z))))
     ∎
 
-{-  this gets *real* slow
+-- this gets *real* slow
 
 addᵏ : Type ∅ (ℕᵏ ⇒ (ℕᵏ ⇒ ℕᵏ))
 addᵏ = λα (λα (λα (λα (((` S (S (S Z))) $ (` S Z)) $ (((` S (S Z)) $ (` S Z)) $ (` Z))))))
 
 _ : twoᵏ ≡ (addᵏ $ oneᵏ) $ oneᵏ
 _ = refl
-
--}

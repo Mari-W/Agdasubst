@@ -108,18 +108,18 @@ opaque
   -- blocking alias for lookup
   _&ˢ_ : Φ ∋* K → Φ →ˢ Ψ → Type Ψ K
   x &ˢ σ = σ x 
-  
-  _⋯ˢ_ : Type Φ K → Φ →ˢ Ψ → Type Ψ K
 
   ↑ˢ : Φ →ˢ Ψ → (Φ ,* J) →ˢ (Ψ ,* J)
   ↑ˢ σ = (` Z) ∙ λ x → (σ x) ⋯ᴿ S
+  
+_⋯ˢ_ : Type Φ K → Φ →ˢ Ψ → Type Ψ K
+(` x) ⋯ˢ σ = x &ˢ σ
+(λα T) ⋯ˢ σ = λα (T ⋯ˢ ↑ˢ σ)
+-- (T₁ $ T₂) ⋯ˢ σ = (T₁ ⋯ˢ σ) $ (T₂ ⋯ˢ σ)
+(∀α T) ⋯ˢ σ = ∀α (T ⋯ˢ ↑ˢ σ)
+(T₁ ⇒ T₂) ⋯ˢ σ = (T₁ ⋯ˢ σ) ⇒ (T₂ ⋯ˢ σ)
 
-  (` x) ⋯ˢ σ = σ x
-  (λα T) ⋯ˢ σ = λα (T ⋯ˢ ↑ˢ σ)
-  -- (T₁ $ T₂) ⋯ˢ σ = (T₁ ⋯ˢ σ) $ (T₂ ⋯ˢ σ)
-  (∀α T) ⋯ˢ σ = ∀α (T ⋯ˢ ↑ˢ σ)
-  (T₁ ⇒ T₂) ⋯ˢ σ = (T₁ ⋯ˢ σ) ⇒ (T₂ ⋯ˢ σ)
-
+opaque  
   _⨟_ : Φ →ˢ Ψ → Ψ →ˢ Θ → Φ →ˢ Θ
   (σ₁ ⨟ σ₂) x = (σ₁ x) ⋯ˢ σ₂
 
@@ -207,10 +207,6 @@ postulate
   compositionalityˢᴿ 
   compositionalityˢˢ 
 
-  traversal-x 
-  traversal-∀ 
-  traversal-⇒
-  traversal-λ
   traversal-$
 
   coincidence
@@ -429,4 +425,3 @@ fourᶜ = succᶜ · (succᶜ · (succᶜ · (succᶜ · zeroᶜ)))
 
 two+twoᶜ : Expr ∅ ℕᶜ
 two+twoᶜ = ((twoᶜ • ℕᶜ) · succᶜ)  · twoᶜ
-

@@ -38,8 +38,8 @@ n₁ →ᴿ n₂ = Fin n₁ → Fin n₂
 variable
   ρ ρ′ ρ₁ ρ₂ ρ₃ : n₁ →ᴿ n₂
 
-id : n →ᴿ n
-id α = α
+idᴿ : n →ᴿ n
+idᴿ α = α
 --open import Function using (id)
 
 ↑ᴿ : n₁ →ᴿ n₂ → suc n₁ →ᴿ suc n₂
@@ -67,6 +67,11 @@ variable
 ⟨ ρ ⟩ α = ` ρ α
 {-# INLINE ⟨_⟩ #-} 
 
+idˢ : n →ˢ n
+idˢ = ⟨ idᴿ ⟩
+
+sucˢ : n →ˢ (suc n)
+sucˢ = ⟨ suc ⟩ 
 -- the primitives for substitution must be opaque!
 -- otherwise we cannot rewrite on them (even if inlined..)
 -- since the violate the rewrite rule rules 
@@ -112,28 +117,28 @@ opaque
   -- on which we can rewrite the sigma laws!
 
   -- first-class renamings 
-  beta-lift-id            : ↑ᴿ {n₁ = n₁} id ≡ id
+  beta-lift-id            : ↑ᴿ {n₁ = n₁} idᴿ ≡ idᴿ
 
   -- beta laws
-  beta-id                 : α &ˢ ⟨ id ⟩ ≡ ` α  
-  beta-wk                 : α &ˢ ⟨ suc ⟩ ≡ ` suc α 
+  beta-id                 : α &ˢ idˢ ≡ ` α  
+  beta-wk                 : α &ˢ sucˢ ≡ ` suc α 
   beta-ext-zero           : zero  &ˢ (T ∙ σ)   ≡ T                             
   beta-ext-suc            : suc α &ˢ (T ∙ σ)  ≡ α &ˢ σ 
-  beta-lift               : ↑ˢ σ            ≡ (` zero) ∙ (σ ⨟ ⟨ suc ⟩)
+  beta-lift               : ↑ˢ σ            ≡ (` zero) ∙ (σ ⨟ sucˢ)
 
   -- interaction laws
   associativity           : (σ₁ ⨟ σ₂) ⨟ σ₃                        ≡ σ₁ ⨟ (σ₂ ⨟ σ₃)                     
   distributivity          : (T ∙ σ₁) ⨟ σ₂                         ≡ ((T ⋯ˢ σ₂) ∙ (σ₁ ⨟ σ₂)) 
   distributivityᴿ         : (T ∙ σ₁) ⨟ ⟨ ρ₂ ⟩                     ≡ ((T ⋯ᴿ ρ₂) ∙ (σ₁ ⨟ ⟨ ρ₂ ⟩)) 
-  interact                : ⟨ suc ⟩ ⨟ (T ∙ σ)                     ≡ σ                                        
-  comp-idᵣ                : σ ⨟ ⟨ id ⟩                             ≡ σ                                               
-  comp-idₗ                : ⟨ id ⟩ ⨟ σ                             ≡ σ                                               
-  η-id                    : _∙_ {n₁ = n₁} (` zero)  ⟨ suc ⟩  ≡ ⟨ id ⟩
-  η-lawˢ                  : (zero &ˢ σ) ∙ (⟨ suc ⟩ ⨟ σ)       ≡ σ
-  η-lawᴿ                  : (` ρ zero) ∙ (⟨ suc ⟩ ⨟ ⟨ ρ ⟩)    ≡ ⟨ ρ ⟩
+  interact                : sucˢ ⨟ (T ∙ σ)                     ≡ σ                                        
+  comp-idᵣ                : σ ⨟ idˢ                             ≡ σ                                               
+  comp-idₗ                : idˢ ⨟ σ                             ≡ σ                                               
+  η-id                    : _∙_ {n₁ = n₁} (` zero)  sucˢ  ≡ idˢ
+  η-lawˢ                  : (zero &ˢ σ) ∙ (sucˢ ⨟ σ)       ≡ σ
+  η-lawᴿ                  : (` ρ zero) ∙ (sucˢ ⨟ ⟨ ρ ⟩)    ≡ ⟨ ρ ⟩
 
   -- monad laws
-  right-id                : ∀ (T : Type n) → T ⋯ᴿ id                   ≡ T   
+  right-id                : ∀ (T : Type n) → T ⋯ᴿ idᴿ                   ≡ T   
   compositionalityᴿˢ      : ∀ (T : Type n) → (T ⋯ᴿ ρ₁) ⋯ˢ σ₂   ≡ T ⋯ˢ (⟨ ρ₁ ⟩ ⨟ σ₂)                    
   compositionalityᴿᴿ      : ∀ (T : Type n) → (T ⋯ᴿ ρ₁) ⋯ᴿ ρ₂   ≡ T ⋯ᴿ (ρ₁ ∘ ρ₂)                     
   compositionalityˢᴿ      : ∀ (T : Type n) → (T ⋯ˢ σ₁) ⋯ᴿ ρ₂   ≡ T ⋯ˢ (σ₁ ⨟ ⟨ ρ₂ ⟩)                         
@@ -146,7 +151,7 @@ opaque
 
   -- coincidence laws
   coincidence              : T ⋯ˢ ⟨ ρ ⟩                                  ≡ T  ⋯ᴿ ρ
-  coincidence-fold         : T ⋯ˢ (⟨ ↑ᴿ ρ ⟩ ⨟ ((T′ ⋯ᴿ ρ) ∙ ⟨ id ⟩))  ≡ T ⋯ˢ ((T′ ⋯ᴿ ρ) ∙ ⟨ ρ ⟩)
+  coincidence-fold         : T ⋯ˢ (⟨ ↑ᴿ ρ ⟩ ⨟ ((T′ ⋯ᴿ ρ) ∙ idˢ))  ≡ T ⋯ˢ ((T′ ⋯ᴿ ρ) ∙ ⟨ ρ ⟩)
   
   
   -- proofs 
@@ -188,7 +193,7 @@ weaken : Type n → Type (suc n)
 weaken t = t ⋯ᴿ suc
 
 _[_] : Type (suc n) → Type n → Type n
-t [ t′ ] = t ⋯ˢ (t′ ∙ ⟨ id ⟩) 
+t [ t′ ] = t ⋯ˢ (t′ ∙ idˢ) 
 
 data Ctx : Nat → Set where
   ∅    : Ctx zero
@@ -216,116 +221,132 @@ data Expr : Ctx n → Type n → Set where
   _·_   : Expr Γ (T₁ ⇒ T₂) → 
           Expr Γ T₁ → 
           Expr Γ T₂
-  _•_   : Expr Γ (∀α T) →
+  _·*_   : Expr Γ (∀α T) →
           (T′ : Type n) → 
           Expr Γ (T [ T′ ]) 
 
 variable
   e e′ e₁ e₂ e₃ : Expr Γ T
 
-_→ᴿ[_]_ : Ctx n₁ → (n₁ →ᴿ n₂) → Ctx n₂ → Set
-Γ₁ →ᴿ[ ρ ] Γ₂ = ∀ T → T ∈ Γ₁ → (T ⋯ᴿ ρ) ∈ Γ₂
+_∣_⇒ᴿ_ : n₁ →ᴿ n₂ → Ctx n₁ → Ctx n₂ → Set
+ρ ∣ Γ₁ ⇒ᴿ Γ₂ = ∀ T → T ∈ Γ₁ → (T ⋯ᴿ ρ) ∈ Γ₂
 
 variable
-  Ρ Ρ′ Ρ₁ Ρ₂ Ρ₃ : Γ₁ →ᴿ[ ρ ] Γ₂
+  Ρ Ρ′ Ρ₁ Ρ₂ Ρ₃ : ρ ∣ Γ₁ ⇒ᴿ Γ₂
 
-Id : Γ →ᴿ[ id ] Γ
+Id : idᴿ ∣ Γ ⇒ᴿ Γ
 Id _ x = x -- no subst right-id
 
-Wk : Γ →ᴿ[ id ] (Γ , T) 
+Wk : idᴿ ∣ Γ ⇒ᴿ (Γ , T) 
 Wk _ = suc
 
-wk* : Γ →ᴿ[ suc ] (Γ ,*) 
+wk* : suc ∣ Γ ⇒ᴿ (Γ ,*) 
 wk* _ x = suc* x 
 
-[_,_]_⊚_ : ∀ ρ₁ ρ₂ → (Γ₁ →ᴿ[ ρ₁ ] Γ₂) → (Γ₂ →ᴿ[ ρ₂ ] Γ₃) → (Γ₁ →ᴿ[ ρ₁ ∘ ρ₂ ] Γ₃)
-([ _ , _ ] Ρ₁ ⊚ Ρ₂) _ x = Ρ₂ _ (Ρ₁ _ x)
+_,_∣_⊚_ : ∀ ρ₁ ρ₂ → ρ₁ ∣ Γ₁ ⇒ᴿ Γ₂ → ρ₂ ∣ Γ₂ ⇒ᴿ Γ₃ → (ρ₁ ∘ ρ₂) ∣ Γ₁ ⇒ᴿ Γ₃
+(_ , _ ∣ Ρ₁ ⊚ Ρ₂) _ x = Ρ₂ _ (Ρ₁ _ x)
 
-[_]_⇑ᴿ_ : ∀ ρ → (Γ₁ →ᴿ[ ρ ] Γ₂) → ∀ T → (Γ₁ , T) →ᴿ[ ρ ] (Γ₂ , (T ⋯ᴿ ρ))
-([ _ ] Ρ ⇑ᴿ _) _ zero    = zero
-([ _ ] Ρ ⇑ᴿ _) _ (suc x) = suc (Ρ _ x)
+_⊚_ : ρ₁ ∣ Γ₁ ⇒ᴿ Γ₂ → ρ₂ ∣ Γ₂ ⇒ᴿ Γ₃ → (ρ₁ ∘ ρ₂) ∣ Γ₁ ⇒ᴿ Γ₃
+_⊚_ = _,_∣_⊚_ _ _
 
-[_]↑ᴿ* : ∀ ρ → (Γ₁ →ᴿ[ ρ ] Γ₂) → (Γ₁ ,*) →ᴿ[ ↑ᴿ ρ ] (Γ₂ ,*)
-[ _ ]↑ᴿ* Ρ _ (suc* x) = suc* (Ρ _ x) -- no subst swap ren wk
+_∣_⇑ᴿ_ : ∀ ρ → ρ ∣ Γ₁ ⇒ᴿ Γ₂ → ∀ T → ρ ∣ (Γ₁ , T) ⇒ᴿ (Γ₂ , (T ⋯ᴿ ρ))
+(_ ∣ Ρ ⇑ᴿ _) _ zero    = zero
+(_ ∣ Ρ ⇑ᴿ _) _ (suc x) = suc (Ρ _ x)
 
-_⋯ᴿ[_]_ : {T : Type n₁} {Γ₂ : Ctx n₂} → 
-  Expr Γ₁ T → (ρ : n₁ →ᴿ n₂) → (Γ₁ →ᴿ[ ρ ] Γ₂) → Expr Γ₂ (T ⋯ᴿ ρ)
-(` x)      ⋯ᴿ[ ρ ] Ρ = ` (Ρ _ x)
-(λx e)     ⋯ᴿ[ ρ ] Ρ = λx (e ⋯ᴿ[ ρ ] ([ ρ ] Ρ ⇑ᴿ _))
-(Λα e)     ⋯ᴿ[ ρ ] Ρ = Λα (e ⋯ᴿ[ ↑ᴿ ρ ] ([ ρ ]↑ᴿ* Ρ))
-(e₁ · e₂)  ⋯ᴿ[ ρ ] Ρ = (e₁ ⋯ᴿ[ ρ ] Ρ) · (e₂ ⋯ᴿ[ ρ ] Ρ)
-(e • T′)   ⋯ᴿ[ ρ ] Ρ = (e ⋯ᴿ[ ρ ] Ρ) • (T′ ⋯ᴿ ρ) -- no subst swap ren single subst
+_⇑ᴿ_ : ρ ∣ Γ₁ ⇒ᴿ Γ₂ → ∀ T → ρ ∣ (Γ₁ , T) ⇒ᴿ (Γ₂ , (T ⋯ᴿ ρ))
+_⇑ᴿ_ = _ ∣_⇑ᴿ_
+
+_∣_↑ᴿ* : ∀ ρ → ρ ∣ Γ₁ ⇒ᴿ Γ₂ → ↑ᴿ ρ ∣ (Γ₁ ,*) ⇒ᴿ (Γ₂ ,*)
+(_ ∣ Ρ ↑ᴿ*) _ (suc* x) = suc* (Ρ _ x) -- no subst swap ren wk
+
+↑ᴿ*_ : ρ ∣ Γ₁ ⇒ᴿ Γ₂ → ↑ᴿ ρ ∣ (Γ₁ ,*) ⇒ᴿ (Γ₂ ,*)
+↑ᴿ*_ = _ ∣_↑ᴿ*
+
+-- new symbol?
+_∣_⋯ᴿ_ : {T : Type n₁} {Γ₂ : Ctx n₂} → (ρ : n₁ →ᴿ n₂) →
+  Expr Γ₁ T → ρ ∣ Γ₁ ⇒ᴿ Γ₂ → Expr Γ₂ (T ⋯ᴿ ρ)
+_ ∣ (` x)      ⋯ᴿ Ρ = ` (Ρ _ x)
+_ ∣ (λx e)     ⋯ᴿ Ρ = λx (_ ∣ e ⋯ᴿ (Ρ ⇑ᴿ _))
+_ ∣ (Λα e)     ⋯ᴿ Ρ = Λα (_ ∣ e ⋯ᴿ (↑ᴿ* Ρ))
+_ ∣ (e₁ · e₂)  ⋯ᴿ Ρ = (_ ∣ e₁ ⋯ᴿ Ρ) · (_ ∣ e₂ ⋯ᴿ Ρ)
+ρ ∣ (e ·* T′)  ⋯ᴿ Ρ = (_ ∣ e ⋯ᴿ Ρ) ·* (T′ ⋯ᴿ ρ) -- no subst swap ren single subst
 
 Weaken : Expr Γ T → Expr (Γ , T′) T
-Weaken e = e ⋯ᴿ[ id ] Wk -- no subst right-id
+Weaken e = idᴿ ∣ e ⋯ᴿ Wk -- no subst right-id
   
 weaken* : Expr Γ T → Expr (Γ ,*) (weaken T)
-weaken* e = e ⋯ᴿ[ suc ] wk*
+weaken* e = suc ∣ e ⋯ᴿ wk*
 
-_→ˢ[_]_ : Ctx n₁ → (n₁ →ˢ n₂) → Ctx n₂ → Set
-Γ₁ →ˢ[ σ ] Γ₂ = ∀ T → T ∈ Γ₁ → Expr Γ₂ (T ⋯ˢ σ) 
+_∣_⇒ˢ_ : n₁ →ˢ n₂ → Ctx n₁ → Ctx n₂ → Set
+σ ∣ Γ₁ ⇒ˢ Γ₂ = ∀ T → T ∈ Γ₁ → Expr Γ₂ (T ⋯ˢ σ) 
 
 variable
-  Σ Σ′ Σ₁ Σ₂ Σ₃ : Γ₁ →ᴿ[ ρ ] Γ₂ 
+  Σ Σ′ Σ₁ Σ₂ Σ₃ : σ ∣ Γ₁ ⇒ˢ Γ₂ 
 
-[_]⟪_⟫ : ∀ ρ → Γ₁ →ᴿ[ ρ ] Γ₂ → Γ₁ →ˢ[ ⟨ ρ ⟩ ] Γ₂ 
-[ ρ* ]⟪ ρ ⟫ _ x = ` ρ _ x
+_∣⟪_⟫ : ∀ ρ → ρ ∣ Γ₁ ⇒ᴿ Γ₂ → ⟨ ρ ⟩ ∣ Γ₁ ⇒ˢ Γ₂ 
+(ρ ∣⟪ Ρ ⟫) _ x = ` Ρ _ x
 
-Idˢ : Γ →ˢ[ ⟨ id ⟩ ] Γ 
+⟪_⟫ : ρ ∣ Γ₁ ⇒ᴿ Γ₂ → ⟨ ρ ⟩ ∣ Γ₁ ⇒ˢ Γ₂ 
+⟪_⟫ = _ ∣⟪_⟫
+
+Idˢ : idˢ ∣ Γ ⇒ˢ Γ 
 Idˢ _ = `_ -- no subst right-idˢ
 
-Wkˢ : ∀ T → Γ →ˢ[ ⟨ id ⟩ ] (Γ , T) 
-Wkˢ _ = [ id ]⟪ Wk ⟫
+Wkˢ : ∀ T → idˢ ∣ Γ ⇒ˢ (Γ , T) 
+Wkˢ _ = idᴿ ∣⟪ Wk ⟫
 
-wk*ˢ : Γ →ˢ[ ⟨ suc ⟩ ] (Γ ,*) 
-wk*ˢ = [ suc ]⟪ wk* ⟫
+wk*ˢ : sucˢ ∣ Γ ⇒ˢ (Γ ,*) 
+wk*ˢ = suc ∣⟪ wk* ⟫
 
-[_]_∙_ : ∀ σ → Expr Γ₂ (T ⋯ˢ σ) → Γ₁ →ˢ[ σ ] Γ₂ → (Γ₁ , T) →ˢ[ σ ] Γ₂ 
-([ _ ] e ∙ Σ) _ zero     = e
-([ _ ] e ∙ Σ) _ (suc x)  = Σ _ x
+-- new symbol?
+_∣_∙_ : ∀ σ → Expr Γ₂ (T ⋯ˢ σ) → σ ∣ Γ₁ ⇒ˢ Γ₂ → σ ∣ (Γ₁ , T) ⇒ˢ Γ₂
+(_ ∣ e ∙ Σ) _ zero     = e
+(_ ∣ e ∙ Σ) _ (suc x)  = Σ _ x
 
-[_]_∙*_ : ∀ σ T → Γ₁ →ˢ[ σ ] Γ₂ → (Γ₁ ,*) →ˢ[ T ∙ σ ] Γ₂ 
-([ _ ] T ∙* Σ) _ (suc* x) = Σ _ x -- no subst swap wk single subst
+_∣_∙*_ : ∀ σ T → σ ∣ Γ₁ ⇒ˢ Γ₂ → (T ∙ σ) ∣ (Γ₁ ,*) ⇒ˢ Γ₂
+(_ ∣ T ∙* Σ) _ (suc* x) = Σ _ x -- no subst swap wk single subst
 
-[_]_⇑ˢ_ : ∀ σ → Γ₁ →ˢ[ σ ] Γ₂ → ∀ T → (Γ₁ , T) →ˢ[ σ ] (Γ₂ , (T ⋯ˢ σ))
-[ σ ] Σ ⇑ˢ T = [ σ ] (` zero) ∙ λ _ x → Σ _ x ⋯ᴿ[ id ] Wk -- no subst swap sub wk
+_∣_⇑ˢ_ : ∀ σ → σ ∣ Γ₁ ⇒ˢ Γ₂ → ∀ T → σ ∣ (Γ₁ , T) ⇒ˢ (Γ₂ , (T ⋯ˢ σ))
+σ ∣ Σ ⇑ˢ T = σ ∣ (` zero) ∙ λ _ x → idᴿ ∣ (Σ _ x) ⋯ᴿ Wk -- no subst swap sub wk
 
-[_]↑ˢ* : ∀ σ → (Γ₁ →ˢ[ σ ] Γ₂) → (Γ₁ ,*) →ˢ[ ↑ˢ σ ] (Γ₂ ,*) 
-[ _ ]↑ˢ* Σ _ (suc* x) = (Σ _ x) ⋯ᴿ[ suc ] wk*
+_∣_↑ˢ* : ∀ σ → σ ∣ Γ₁ ⇒ˢ Γ₂ → ↑ˢ σ ∣ (Γ₁ ,*) ⇒ˢ (Γ₂ ,*)
+(_ ∣ Σ ↑ˢ*) _ (suc* x) = suc ∣ (Σ _ x) ⋯ᴿ wk*
 
-_⋯ˢ[_]_ : {T : Type n₁} {Γ₂ : Ctx n₂} → 
-  Expr Γ₁ T → (σ : n₁ →ˢ n₂) → (Γ₁ →ˢ[ σ ] Γ₂) → Expr Γ₂ (T ⋯ˢ σ)
-(` x)      ⋯ˢ[ σ ] Σ = Σ _ x
-(λx e)     ⋯ˢ[ σ ] Σ = λx (e ⋯ˢ[ σ ] ([ σ ] Σ ⇑ˢ _))
-(Λα e)     ⋯ˢ[ σ ] Σ = Λα (e ⋯ˢ[ ↑ˢ σ ] ([ σ ]↑ˢ* Σ))
-(e₁ · e₂)  ⋯ˢ[ σ ] Σ = (e₁ ⋯ˢ[ σ ] Σ) · (e₂ ⋯ˢ[ σ ] Σ)
-(e • T′)   ⋯ˢ[ σ ] Σ = (e ⋯ˢ[ σ ] Σ) • (T′ ⋯ˢ σ) -- no subst swap sub single subst
+-- new symbol?
+_∣_⋯ˢ_ : {T : Type n₁} {Γ₂ : Ctx n₂} → (σ : n₁ →ˢ n₂) →
+  Expr Γ₁ T → σ ∣ Γ₁ ⇒ˢ Γ₂ → Expr Γ₂ (T ⋯ˢ σ)
+σ ∣ (` x)      ⋯ˢ Σ = Σ _ x
+σ ∣ (λx e)     ⋯ˢ Σ = λx (σ ∣ e ⋯ˢ (σ ∣ Σ ⇑ˢ _))
+σ ∣ (Λα e)     ⋯ˢ Σ = Λα (↑ˢ σ ∣ e ⋯ˢ (σ ∣ Σ ↑ˢ*))
+σ ∣ (e₁ · e₂)  ⋯ˢ Σ = (σ ∣ e₁ ⋯ˢ Σ) · (σ ∣ e₂ ⋯ˢ Σ)
+σ ∣ (e ·* T′)  ⋯ˢ Σ = (σ ∣ e ⋯ˢ Σ) ·* (T′ ⋯ˢ σ) -- no subst swap sub single subst
 
-_⨾_ : Γ₁ →ˢ[ σ₁ ] Γ₂ → Γ₂ →ˢ[ σ₂ ] Γ₃ → Γ₁ →ˢ[ σ₁ ⨟ σ₂ ] Γ₃
-(Σ₁ ⨾ Σ₂) _ x = (Σ₁ _ x) ⋯ˢ[ _ ] Σ₂
+_,_∣_⨾_ : ∀ σ₁ σ₂ → σ₁ ∣ Γ₁ ⇒ˢ Γ₂ → σ₂ ∣ Γ₂ ⇒ˢ Γ₃ → (σ₁ ⨟ σ₂) ∣ Γ₁ ⇒ˢ Γ₃
+(_ , _ ∣ Σ₁ ⨾ Σ₂) _ x = _ ∣ (Σ₁ _ x) ⋯ˢ Σ₂
 
-η-Id : [ ⟨ id ⟩ ] (` (zero {T = T} {Γ = Γ})) ∙ (Wkˢ T) ≡ (Idˢ {Γ = Γ , T})
+η-Id : idˢ ∣ (` (zero {T = T} {Γ = Γ})) ∙ (Wkˢ T) ≡ (Idˢ {Γ = Γ , T})
 η-Id = fun-ext λ _ → fun-ext λ { zero → refl; (suc x) → refl }
 
-η*-Id : [ ⟨ id ⟩ ]↑ˢ* (Idˢ {Γ = Γ}) ≡ Idˢ
+η*-Id : idˢ ∣ (Idˢ {Γ = Γ}) ↑ˢ* ≡ Idˢ
 η*-Id = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
 
-Right-Id : ∀ (e : Expr Γ T) → e ⋯ˢ[ ⟨ id ⟩ ] Idˢ ≡ e
+{- 
+Right-Id : ∀ (e : Expr Γ T) → e ⋯ˢ[ idˢ ] Idˢ ≡ e
 Right-Id (` x)      = refl
-Right-Id (λx e)     = cong λx_ (trans (cong (e ⋯ˢ[ ⟨ id ⟩ ]_) η-Id) (Right-Id e))
-Right-Id (Λα e)     = cong Λα_ (trans (cong (e ⋯ˢ[ ⟨ id ⟩ ]_) η*-Id) (Right-Id e))
+Right-Id (λx e)     = cong λx_ (trans (cong (e ⋯ˢ[ idˢ ]_) η-Id) (Right-Id e))
+Right-Id (Λα e)     = cong Λα_ (trans (cong (e ⋯ˢ[ idˢ ]_) η*-Id) (Right-Id e))
 Right-Id (e₁ · e₂)  = cong₂ _·_ (Right-Id e₁) (Right-Id e₂)
-Right-Id (e • T′)   = cong (_• T′) (Right-Id e)
+Right-Id (e ·* T′)   = cong (_·* T′) (Right-Id e)
 
 list-dist-compᴿᴿ : 
   [ ρ₁ , ρ₂ ] ([ ρ₁ ] Ρ₁ ⇑ᴿ T) ⊚ ([ ρ₂ ] Ρ₁ ⇑ᴿ (T ⋯ᴿ ρ₁)) ≡ ([ ρ₁ ∘ ρ₂ ] ([ ρ₁ , ρ₂ ] Ρ₁ ⊚ Ρ₂) ⇑ᴿ {!   !})
 list-dist-compᴿᴿ = {!   !} -- ext λ { zero → refl; (suc x) → refl }
 
-{- compositionalityᴿᴿ {ρ₁ = ρ₁} {ρ₂ = ρ₂} (` x)        = refl
+compositionalityᴿᴿ {ρ₁ = ρ₁} {ρ₂ = ρ₂} (` x)        = refl
 compositionalityᴿᴿ {ρ₁ = ρ₁} {ρ₂ = ρ₂} (λx e)       = cong λx_ (trans (compositionalityᴿᴿ e) (cong (e ⋯ᴿ_) list-dist-compᴿᴿ))
 compositionalityᴿᴿ {ρ₁ = ρ₁} {ρ₂ = ρ₂} (Λα e)       = cong Λα_ (trans (compositionalityᴿᴿ e) (cong (e ⋯ᴿ_) list-dist-compᴿᴿ))
 compositionalityᴿᴿ {ρ₁ = ρ₁} {ρ₂ = ρ₂} (∀[α∶ k ] t) = cong₂ ∀[α∶_]_ (compositionalityᴿᴿ k) (trans (compositionalityᴿᴿ t) (cong (t ⋯ᴿ_) list-dist-compᴿᴿ))
 compositionalityᴿᴿ {ρ₁ = ρ₁} {ρ₂ = ρ₂} (e₁ · e₂)    = cong₂ _·_ (compositionalityᴿᴿ e₁) (compositionalityᴿᴿ e₂)
-compositionalityᴿᴿ {ρ₁ = ρ₁} {ρ₂ = ρ₂} (e • t)      = cong₂ _•_ (compositionalityᴿᴿ e) (compositionalityᴿᴿ t)
+compositionalityᴿᴿ {ρ₁ = ρ₁} {ρ₂ = ρ₂} (e ·* t)      = cong₂ _·*_ (compositionalityᴿᴿ e) (compositionalityᴿᴿ t)
 compositionalityᴿᴿ {ρ₁ = ρ₁} {ρ₂ = ρ₂} (t₁ ⇒ t₂)    = cong₂ _⇒_ (compositionalityᴿᴿ t₁) (compositionalityᴿᴿ t₂)
 compositionalityᴿᴿ {ρ₁ = ρ₁} {ρ₂ = ρ₂} *            = refl -}

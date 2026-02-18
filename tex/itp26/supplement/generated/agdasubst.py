@@ -1,4 +1,4 @@
-# Disclaimer: Written with help from GenAI
+# Disclaimer: We used GenAI in the process of writing this script.
 #!/usr/bin/env python3
 import re
 import sys

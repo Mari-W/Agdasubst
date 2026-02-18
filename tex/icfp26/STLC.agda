@@ -20,7 +20,7 @@ data _∋_ : Ctx → Type → Set where
   there  : Γ ∋ T → (Γ ▷ U) ∋ T
 
 --! Expr
-data Expr (Γ : Ctx) : Type → Set where
+data Expr : Ctx → Type → Set where
   con  : Expr Γ 𝟙
   var  : Γ ∋ T → Expr Γ T
   lam  : Expr (Γ ▷ T) U → Expr Γ (T ⇒ U)

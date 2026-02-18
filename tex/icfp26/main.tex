@@ -52,8 +52,8 @@
 When formalizing the metatheory of a programming language in a proof
 assistant based on dependent type theory, variable binders are often
 represented by de Bruijn indices. In some proof assistants, notably in
-Agda, it can be convenient to go an extra step and use intrinsically
-typed syntax. This idea goes back to Curry style vs.\ Church style
+Agda, it is not uncommon to go an extra step and use intrinsically
+typed syntax. This idea goes back to Curry-style vs.\ Church-style
 formalizations of lambda calculus: the former style has an untyped
 semantics and typing is externally imposed; in the latter style, it is
 impossible to construct untyped terms and semantics is only assigned
@@ -64,35 +64,100 @@ Church-style presentation.
 \begin{figure}[tp]
   \begin{minipage}[t]{0.49\linewidth}
   \STLCTypeCtx
-  \end{minipage}
-  ~
-  \begin{minipage}[t]{0.49\linewidth}
   \STLCVar
   \STLCExpr 
   \end{minipage}
-  \caption{Simply-typed lambda calculus}
+  ~
+  \begin{minipage}[t]{0.49\linewidth}
+    \STLCSmallStep
+    \STLCProgress
+  \end{minipage}
+  \caption{Call-by-name simply-typed lambda calculus}
   \label{fig:simply-typed-syntax}
 \end{figure}
 The simply-typed lambda calculus provides an appealing example where
-intrinsically typed syntax works exceptionally
-well. \Cref{fig:simply-typed-syntax} shows typical definitions of the
+intrinsically typed syntax works well. \Cref{fig:simply-typed-syntax}
+shows typical definitions of the 
 syntax of types, type contexts, variables, and expressions, which are
-indexed by contexts and types. Building on these definitions it is
+indexed by contexts and types (left column). Building on these definitions it is
 straightforward to define denotational or operational
 semantics. Proving type safety for a small-step operational semantics
 is also easy as subject reduction holds by definition and progress
-follows by a simple inductive proof.
+follows by a simple inductive proof (right column). The style of these
+definitions is adapted from the textbook by
+\citet{DBLP:journals/scp/KokkeSW20}. We elide the definition  of the
+substitution operator $\_[\_]$, as we discuss substitutions in detail
+in \cref{sec:types}.
 
 However, managing intrinsically typed syntax can become significantly
 more demanding. For example, \citet{10.1007/978-3-030-33636-3_10}
 present a formalization of System $F_\omega$, which is inspired by
-prior work by \citet{DBLP:conf/csl/AltenkirchR99},
+prior work of \citet{DBLP:conf/csl/AltenkirchR99},
 \citet{DBLP:phd/ethos/Chapman09}, and
-\citet{DBLP:conf/cpp/Allais0MM17}. Their work first defines kinds,
+\citet{DBLP:conf/cpp/Allais0MM17}. \citet{10.1007/978-3-030-33636-3_10}
+start by defining kinds,
 kind contexts, type variables, and type expressions, which are
 isomorphic to the simply-typed lambda calculus, followed by the
 development of type renamings and simultaneous type substitutions
-\cite{DBLP:journals/jar/BentonHKM12}. 
+\cite{DBLP:journals/jar/BentonHKM12}. On top of this type framework,
+they define type contexts, expression variables, and expressions,
+again followed by renaming and simultaneous substitution on
+expressions. Crucially, expression renamings are indexed by type
+renamings and expression substitution by type substitutions in their
+framework. While indexing works smoothly for these definitions,
+it complicates the proofs of some properties with uninteresting type
+corrections, aka transfer hell.
+
+Transfer hell is the colloquial term for being forced to apply
+type-changing lemmas to terms that are already known to be equal. This
+situation is annoying because proof assistants like Agda plainly
+refuse to let users even state this equality.\footnote{A situation
+  that can be addressed using heterogeneous equality introduced in
+  Conor McBride's thesis.} A workaround is to state definitions and
+proofs with explicit equivalence relations, but this practice is
+cumbersome, inefficient, and far away from the holy grail of
+definitional equality, which just works.
+
+In this paper, we examine the transfer hell arising by
+intrinsically-typed syntax encodings of System-F and
+System-F$\omega$. Specifically, we consider the problems arising with
+type-renaming-indexed renamings and type-substitution-indexed
+substitutions. We propose to install the laws of the sigma calculus as
+definitional equalities for type substitutions, thus simplifying
+substitutions with the same approach like the tactics of Autosubst
+\cite{schafer2015autosubst,Stark:2020:Mechanising,10.1145/3293880.3294101},
+but automatically by rewriting \cite{10.1145/3434341}. We build on a
+standard functional representation of renamings and substitutions
+\cite{DBLP:journals/jar/BentonHKM12}, prove the lemmas underlying the
+equational laws of the sigma calculus, and then inject these equations
+into Agda's rewrite engine, i.e., make the sigma calculus equations
+definitional (for type substitutions). The tricky part of this injection is to
+obtain a confluent and terminating rewrite system in connection with
+the existing definitional equalities.
+
+We first exercise this program for plain System-F in \cref{sec:system-f}
+and then apply the same techniques to System-F$\omega$ in
+\cref{sec:system-fomega}. In the latter, the main difference to
+previous work \cite{10.1007/978-3-030-33636-3_10} lies in our
+intrinsic treatment of type conversion, which leads to significant
+simplifications. 
+
+
+\section{System F}
+\label{sec:system-f}
+
+\subsection{Types}
+\label{sec:types}
+
+\subsection{Expressions}
+\label{sec:expressions}
+
+
+
+\section{System F$\omega$}
+\label{sec:system-fomega}
+
+
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}

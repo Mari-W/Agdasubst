@@ -1,6 +1,6 @@
 -- rewriting safe, when rewrites terminate, double checked by kernel
 {-# OPTIONS --rewriting --local-confluence-check --double-check #-}
-module SystemF where
+module SystemF2 where
 open import Agda.Builtin.Equality.Rewrite public
 
 -- standard eq reasoning
@@ -38,16 +38,21 @@ n₁ →ᴿ n₂ = Fin n₁ → Fin n₂
 variable
   ρ ρ′ ρ₁ ρ₂ ρ₃ : n₁ →ᴿ n₂
 
+
 idᴿ : n →ᴿ n
 idᴿ α = α
---open import Function using (id)
-
-_↑ᴿ : n₁ →ᴿ n₂ → suc n₁ →ᴿ suc n₂
-_↑ᴿ ρ zero    = zero
-_↑ᴿ ρ (suc α) = suc (ρ α) 
+  --open import Function using (id)
 
 _∘_ : n₁ →ᴿ n₂ → n₂ →ᴿ n₃ → n₁ →ᴿ n₃
 (ρ₁ ∘ ρ₂) α = ρ₂ (ρ₁ α)
+
+_∙ᴿ_ :  Fin n₂ → n₁ →ᴿ n₂ → suc n₁ →ᴿ n₂    
+(α ∙ᴿ ρ) zero = α
+(_ ∙ᴿ ρ) (suc α) = ρ α 
+
+_↑ᴿ : n₁ →ᴿ n₂ → suc n₁ →ᴿ suc n₂
+ρ ↑ᴿ =  zero ∙ᴿ (ρ ∘ suc)
+{-# INLINE _↑ᴿ #-}
 
 _⋯ᴿ_ : Type n₁ → n₁ →ᴿ n₂ → Type n₂ 
 (` α)      ⋯ᴿ ρ = ` ρ α
@@ -72,7 +77,6 @@ idˢ = ⟨ idᴿ ⟩
 
 sucˢ : n →ˢ (suc n)
 sucˢ = ⟨ suc ⟩ 
-
 -- the primitives for substitution must be opaque!
 -- otherwise we cannot rewrite on them (even if inlined..)
 -- since the violate the rewrite rule rules 
@@ -117,8 +121,9 @@ opaque
   -- but rather use the blocking symbol α ⋯ˢ σ
   -- on which we can rewrite the sigma laws!
 
-  -- first-class renamings 
+  -- first-class renamings
   beta-lift-id            : (idᴿ {n = n}) ↑ᴿ ≡ idᴿ
+  `η-id                    : _∙ᴿ_ {n₁ = n₁} zero suc  ≡ idᴿ
 
   -- beta laws
   beta-id                 : α &ˢ idˢ ≡ ` α  
@@ -159,7 +164,8 @@ opaque
   
 {-# REWRITE 
   beta-lift-id
-
+  `η-id
+  
   beta-id
   beta-wk
   beta-ext-zero 
@@ -258,7 +264,7 @@ _⇑ᴿ_ : ρ ∣ Γ₁ ⇒ᴿ Γ₂ → ∀ T → ρ ∣ (Γ₁ , T) ⇒ᴿ (Γ
 _⇑ᴿ_ = _ ∣_⇑ᴿ_
 
 _∣_↑ᴿ* : ∀ ρ → ρ ∣ Γ₁ ⇒ᴿ Γ₂ → (ρ ↑ᴿ) ∣ (Γ₁ ,*) ⇒ᴿ (Γ₂ ,*)
-(_ ∣ Ρ ↑ᴿ*) _ (suc* x) = suc* (Ρ _ x) -- no subst swap ren wk
+(_ ∣ Ρ ↑ᴿ*) _ (suc* x) = suc* (Ρ _ x) -- suc* (Ρ _ x) -- no subst swap ren wk
 
 ↑ᴿ*_ : ρ ∣ Γ₁ ⇒ᴿ Γ₂ → (ρ ↑ᴿ) ∣ (Γ₁ ,*) ⇒ᴿ (Γ₂ ,*)
 ↑ᴿ*_ = _ ∣_↑ᴿ*
@@ -337,14 +343,14 @@ Right-Id (` x)      = refl
 Right-Id (λx e)     = cong λx_ (trans (cong (idˢ ∣ e ⋯ˢ_) η-Id) (Right-Id e))
 Right-Id (Λα e)     = cong Λα_ (trans (cong (idˢ ∣ e ⋯ˢ_) η*-Id) (Right-Id e))
 Right-Id (e₁ · e₂)  = cong₂ _·_ (Right-Id e₁) (Right-Id e₂)
-Right-Id (e ·* T′)   = cong (_·* T′) (Right-Id e)
+Right-Id (e ·* T′)  = cong (_·* T′) (Right-Id e)
 
 Lift-Dist-Compᴿᴿ : (Ρ₁ : ρ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (Ρ₂ : ρ₂ ∣ Γ₂ ⇒ᴿ Γ₃) →
   ρ₁ , ρ₂ ∣ ( ρ₁ ∣ Ρ₁ ⇑ᴿ T) ⊚ (ρ₂ ∣ Ρ₂ ⇑ᴿ (T ⋯ᴿ ρ₁)) ≡ ((ρ₁ ∘ ρ₂) ∣ (ρ₁ , ρ₂ ∣ Ρ₁ ⊚ Ρ₂) ⇑ᴿ T)
 Lift-Dist-Compᴿᴿ _ _ = fun-ext λ _ → fun-ext λ { zero → refl; (suc x) → refl }
 
 lift*-dist-Compᴿᴿ : (Ρ₁ : ρ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (Ρ₂ : ρ₂ ∣ Γ₂ ⇒ᴿ Γ₃) →
-  ρ₁ , ρ₂ ∣ ( ρ₁ ↑ᴿ ∣ Ρ₁ ↑ᴿ*) ⊚ (ρ₂ ∣ Ρ₂ ↑ᴿ*) ≡ ((ρ₁ ∘ ρ₂) ∣ (ρ₁ , ρ₂ ∣ Ρ₁ ⊚ Ρ₂) ↑ᴿ*)
+  (ρ₁ ↑ᴿ) , (ρ₂ ↑ᴿ) ∣ ( ρ₁ ∣ Ρ₁ ↑ᴿ*) ⊚ (ρ₂ ∣ Ρ₂ ↑ᴿ*) ≡ {! ((ρ₁ ∘ ρ₂) ∣ (ρ₁ , ρ₂ ∣ Ρ₁ ⊚ Ρ₂) ↑ᴿ*)  !}
 lift*-dist-Compᴿᴿ _ _ = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
 
 

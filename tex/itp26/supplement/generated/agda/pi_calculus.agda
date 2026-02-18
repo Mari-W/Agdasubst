@@ -59,48 +59,54 @@ data _⊢[_]_ where
   In   : S ⊢ chan → (chan ∷ S) ⊢ proc → S ⊢ proc
   Out  : S ⊢ chan → S ⊢ chan → S ⊢ proc → S ⊢ proc
 
-variable
+private variable
   x x′     : S ∋ s
   t t′     : S ⊢ s
   x/t x/t′ : S ⊢[ m ] s
 
---! Ren {
 _→ᴿ_ : Scope → Scope → Set
 S₁ →ᴿ S₂ = ∀ s → S₁ ∋ s → S₂ ∋ s 
 
---! [
-variable
+private variable
   ρ ρ₁ ρ₂ ρ₃ : S₁ →ᴿ S₂
---! ]
-idᴿ : S →ᴿ S
-idᴿ _ x = x
 
-wk : ∀ s → S →ᴿ (s ∷ S)
-wk _ _ = suc
+opaque
+  idᴿ : S →ᴿ S
+  idᴿ _ x = x
 
-_∘_ : S₁ →ᴿ S₂ → S₂ →ᴿ S₃ → S₁ →ᴿ S₃
-(ρ₁ ∘ ρ₂) _ x = ρ₂ _ (ρ₁ _ x)
+  wkᴿ : ∀ s → S →ᴿ (s ∷ S)
+  wkᴿ _ _ = suc
+
+  _∘_ : S₁ →ᴿ S₂ → S₂ →ᴿ S₃ → 
+    S₁ →ᴿ S₃
+  (ρ₁ ∘ ρ₂) _ x = ρ₂ _ (ρ₁ _ x)
+
+  _∙ᴿ_ :  S₂ ∋ s → S₁ →ᴿ S₂ → 
+    (s ∷ S₁) →ᴿ S₂    
+  (x ∙ᴿ ρ) _ zero = x
+  (_ ∙ᴿ ρ) _ (suc x) = ρ _ x
+
 
 _↑ᴿ_ : (S₁ →ᴿ S₂) → ∀ s → 
   ((s ∷ S₁) →ᴿ (s ∷ S₂))
-(ρ ↑ᴿ _) _ zero    = zero
-(ρ ↑ᴿ _) _ (suc x) = suc (ρ _ x)
+(ρ ↑ᴿ _) = zero ∙ᴿ (ρ ∘ (wkᴿ _))
 
 _↑ᴿ*_ : (S₁ →ᴿ S₂) → ∀ S → ((S ++ S₁) →ᴿ (S ++ S₂))
 ρ ↑ᴿ* []      = ρ
 ρ ↑ᴿ* (s ∷ S) = (ρ ↑ᴿ* S) ↑ᴿ s
 
-_⋯ᴿ_ : S₁ ⊢[ m ] s → S₁ →ᴿ S₂ → 
-  S₂ ⊢ s 
-_⋯ᴿ_ {m = V} x   ρ  = var (ρ _ x)
-(var x)         ⋯ᴿ ρ = var (ρ _ x)
+opaque
+  _⋯ᴿ_ : S₁ ⊢[ m ] s → S₁ →ᴿ S₂ → 
+    S₂ ⊢[ m ] s 
+  _⋯ᴿ_ {m = V} x   ρ  = ρ _ x
+  (var x)         ⋯ᴿ ρ = var (ρ _ x)
 
-Nil                     ⋯ᴿ ρ = Nil
-(Bang proc0)            ⋯ᴿ ρ = Bang (proc0 ⋯ᴿ ρ)
-(Res proc0)             ⋯ᴿ ρ = Res (proc0 ⋯ᴿ (ρ ↑ᴿ* _))
-(Par proc0 proc1)       ⋯ᴿ ρ = Par (proc0 ⋯ᴿ ρ) (proc1 ⋯ᴿ ρ)
-(In chan0 proc0)        ⋯ᴿ ρ = In (chan0 ⋯ᴿ ρ) (proc0 ⋯ᴿ (ρ ↑ᴿ* _))
-(Out chan0 chan1 proc0) ⋯ᴿ ρ = Out (chan0 ⋯ᴿ ρ) (chan1 ⋯ᴿ ρ) (proc0 ⋯ᴿ ρ)
+  Nil                     ⋯ᴿ ρ = Nil
+  (Bang proc0)            ⋯ᴿ ρ = Bang (proc0 ⋯ᴿ ρ)
+  (Res proc0)             ⋯ᴿ ρ = Res (proc0 ⋯ᴿ (ρ ↑ᴿ* _))
+  (Par proc0 proc1)       ⋯ᴿ ρ = Par (proc0 ⋯ᴿ ρ) (proc1 ⋯ᴿ ρ)
+  (In chan0 proc0)        ⋯ᴿ ρ = In (chan0 ⋯ᴿ ρ) (proc0 ⋯ᴿ (ρ ↑ᴿ* _))
+  (Out chan0 chan1 proc0) ⋯ᴿ ρ = Out (chan0 ⋯ᴿ ρ) (chan1 ⋯ᴿ ρ) (proc0 ⋯ᴿ ρ)
 
 variable
   chan0 chan1 : S ⊢ chan
@@ -112,32 +118,33 @@ S₁ →ˢ S₂ = ∀ s → S₁ ∋ s → S₂ ⊢ s
 variable
   σ σ₁ σ₂ σ₃ : S₁ →ˢ S₂  
 
-⟨_⟩ : S₁ →ᴿ S₂ → S₁ →ˢ S₂ 
-⟨ ρ ⟩ _ x = var (ρ _ x)
-{-# INLINE ⟨_⟩ #-}
-
-wkˢ : ∀ s → S →ˢ (s ∷ S)
-wkˢ _ = ⟨ wk _ ⟩
-{-# INLINE wkˢ #-}
+opaque
+  ⟨_⟩ : S₁ →ᴿ S₂ → S₁ →ˢ S₂ 
+  ⟨ ρ ⟩ _ x = var (ρ _ x)
 
 idˢ : S →ˢ S
-idˢ _ = var
+idˢ = ⟨ idᴿ ⟩
 {-# INLINE idˢ #-}
 
+wkˢ : ∀ s → S →ˢ (s ∷ S)
+wkˢ _ = ⟨ wkᴿ _ ⟩
+{-# INLINE wkˢ #-}
+
 opaque  
-  _∙_ : S₂ ⊢ s → S₁ →ˢ S₂ → (s ∷ S₁) →ˢ S₂    
-  _∙_  t σ _ zero = t
-  (t ∙ σ) _ (suc x) = σ _ x 
+  unfolding _⋯ᴿ_ 
+  _∙ˢ_ : S₂ ⊢ s → S₁ →ˢ S₂ → (s ∷ S₁) →ˢ S₂    
+  _∙ˢ_  t σ _ zero = t
+  (t ∙ˢ σ) _ (suc x) = σ _ x 
 
   _↑ˢ_ : S₁ →ˢ S₂ → ∀ s → (s ∷ S₁) →ˢ (s ∷ S₂)
-  σ ↑ˢ s =  (var zero) ∙ λ s₁ x → (σ _ x) ⋯ᴿ wk _
+  σ ↑ˢ s =  (var zero) ∙ˢ λ _ x → (σ _ x) ⋯ᴿ wkᴿ _
 
 _↑ˢ*_ : (S₁ →ˢ S₂) → ∀ S → ((S ++ S₁) →ˢ (S ++ S₂))
 σ ↑ˢ* [] = σ
 σ ↑ˢ* (s ∷ S) = (σ ↑ˢ* S) ↑ˢ s
 
 opaque
-  unfolding  _∙_ _↑ˢ_ 
+  unfolding idᴿ _⋯ᴿ_ ⟨_⟩ _∙ˢ_
   _⋯ˢ_ : S₁ ⊢[ m ] s → S₁ →ˢ S₂ → S₂ ⊢ s
   _⋯ˢ_ {m = V} x σ = σ _ x
   (var x) ⋯ˢ σ = σ _ x
@@ -152,21 +159,32 @@ opaque
   _⨟_ : S₁ →ˢ S₂ → S₂ →ˢ S₃ → S₁ →ˢ S₃
   (σ₁ ⨟ σ₂) _ x = (σ₁ _ x) ⋯ˢ σ₂
 
-  lift-id            : idᴿ {S = S} ↑ᴿ s ≡ idᴿ 
-  def-∙-zero           : zero ⋯ˢ (t ∙ σ)   ≡ t                             
-  def-∙-suc            : suc x ⋯ˢ (t ∙ σ)  ≡ x ⋯ˢ σ 
-  def-↑ˢ               : σ ↑ˢ s ≡ (var zero) ∙ (σ ⨟ wkˢ _)
+  def-∙ˢ-zero           : zero ⋯ˢ (t ∙ˢ σ)   ≡ t                             
+  def-∙ˢ-suc            : suc x ⋯ˢ (t ∙ˢ σ)  ≡ x ⋯ˢ σ 
   def-⨟ : (x ⋯ˢ (σ₁ ⨟ σ₂)) ≡ ((x ⋯ˢ σ₁) ⋯ˢ σ₂)
+  def-↑ˢ               : σ ↑ˢ s ≡ (var zero) ∙ˢ (σ ⨟ wkˢ _)
 
-  associativity           : (σ₁ ⨟ σ₂) ⨟ σ₃                      ≡ σ₁ ⨟ (σ₂ ⨟ σ₃)                     
-  distributivityˢ         : (t ∙ σ₁) ⨟ σ₂                       ≡ ((t ⋯ˢ σ₂) ∙ (σ₁ ⨟ σ₂)) 
-  distributivityᴿ         : (t ∙ σ₁) ⨟ ⟨ ρ₂ ⟩                   ≡ ((t ⋯ᴿ ρ₂) ∙ (σ₁ ⨟ ⟨ ρ₂ ⟩)) 
-  interact                : wkˢ s ⨟ (t ∙ σ)                     ≡ σ                                        
-  comp-idᵣ                : σ ⨟ idˢ                             ≡ σ                                               
-  comp-idₗ                : idˢ ⨟ σ                             ≡ σ                                               
-  η-id                    : (var (zero {s = s} {S = S})) ∙ (wkˢ _)  ≡ idˢ
-  η-lawˢ                  : (zero ⋯ˢ σ) ∙ (wkˢ _ ⨟ σ)           ≡ σ
-  η-lawᴿ                  : (zero ⋯ᴿ ρ) ∙ ((wkˢ _ ⨟ ⟨ ρ ⟩))     ≡ ⟨ ρ ⟩
+  def-id                : x ⋯ᴿ idᴿ ≡ x
+  def-wkᴿ                : x ⋯ᴿ (wkᴿ s) ≡ suc x  
+  def-∙ᴿ-zero           : zero ⋯ᴿ (x ∙ᴿ ρ)     ≡ x         
+  def-∙ᴿ-suc            : (suc x) ⋯ᴿ (x′ ∙ᴿ ρ)  ≡ x ⋯ᴿ ρ      
+  def-∘                 : x ⋯ᴿ (ρ₁ ∘ ρ₂) ≡ (x ⋯ᴿ ρ₁) ⋯ᴿ ρ₂
+
+  assoc : (σ₁ ⨟ σ₂) ⨟ σ₃ ≡ σ₁ ⨟ (σ₂ ⨟ σ₃)                     
+  dist : (t ∙ˢ σ₁)  ⨟ σ₂  ≡ ((t ⋯ˢ σ₂) ∙ˢ (σ₁ ⨟ σ₂)) 
+  interact                : wkˢ s ⨟ (t ∙ˢ σ) ≡ σ                                        
+  comp-idᵣ                : σ ⨟ idˢ         ≡ σ                                               
+  comp-idₗ                : idˢ ⨟ σ         ≡ σ                                               
+  η-id    : (var (zero {s} {S})) ∙ˢ (wkˢ _)      ≡ idˢ
+  η-law  : (zero ⋯ˢ σ) ∙ˢ (wkˢ _ ⨟ σ)        ≡ σ
+
+  assocᴿ           : (ρ₁ ∘ ρ₂) ∘ ρ₃ ≡ ρ₁ ∘ (ρ₂ ∘ ρ₃)                     
+  distᴿ : (x ∙ᴿ ρ₁)  ∘ ρ₂  ≡ ((x ⋯ᴿ ρ₂) ∙ᴿ (ρ₁ ∘ ρ₂)) 
+  interactᴿ                : wkᴿ s ∘ (x ∙ᴿ ρ) ≡ ρ                                        
+  comp-idᵣᴿ                : ρ ∘ idᴿ         ≡ ρ                                               
+  comp-idₗᴿ                : idᴿ ∘ ρ         ≡ ρ                                               
+  η-idᴿ    : (zero {s} {S}) ∙ᴿ (wkᴿ _)      ≡ idᴿ
+  η-lawᴿ  : (zero ⋯ᴿ ρ) ∙ᴿ (wkᴿ _ ∘ ρ)        ≡ ρ
 
   right-id                : ∀ (t : S ⊢ s) → t ⋯ᴿ idᴿ                   ≡ t   
   compositionalityᴿᴿ      : ∀ (t : S ⊢ s) → (t ⋯ᴿ ρ₁) ⋯ᴿ ρ₂   ≡ t ⋯ᴿ (ρ₁ ∘ ρ₂)     
@@ -175,40 +193,60 @@ opaque
   compositionalityˢˢ      : ∀ (t : S ⊢ s) → (t ⋯ˢ σ₁) ⋯ˢ σ₂   ≡ t ⋯ˢ (σ₁ ⨟ σ₂)
 
 
-  traversal-var           : (var x)         ⋯ˢ σ  ≡ x ⋯ˢ σ
-  traversal-var = refl
+  inst-var           : (var x)         ⋯ˢ σ  ≡ x ⋯ˢ σ
+  inst-var = refl
 
-  traversal-Nil  : Nil ⋯ˢ σ                     ≡ Nil
-  traversal-Nil  = refl
-  traversal-Bang : (Bang proc0) ⋯ˢ σ            ≡ Bang (proc0 ⋯ˢ σ)
-  traversal-Bang = refl
-  traversal-Res  : (Res proc0) ⋯ˢ σ             ≡ Res (proc0 ⋯ˢ (σ ↑ˢ* (chan ∷ [])))
-  traversal-Res  = refl
-  traversal-Par  : (Par proc0 proc1) ⋯ˢ σ       ≡ Par (proc0 ⋯ˢ σ) (proc1 ⋯ˢ σ)
-  traversal-Par  = refl
-  traversal-In   : (In chan0 proc0) ⋯ˢ σ        ≡ In (chan0 ⋯ˢ σ) (proc0 ⋯ˢ (σ ↑ˢ* (chan ∷ [])))
-  traversal-In   = refl
-  traversal-Out  : (Out chan0 chan1 proc0) ⋯ˢ σ ≡ Out (chan0 ⋯ˢ σ) (chan1 ⋯ˢ σ) (proc0 ⋯ˢ σ)
-  traversal-Out  = refl
+  instᴿ-var           : (var x)         ⋯ˢ σ  ≡ x ⋯ˢ σ
+  instᴿ-var = refl
 
-  coincidence              : {x/t : S ⊢[ m ] s} → x/t ⋯ˢ ⟨ ρ ⟩ ≡ x/t ⋯ᴿ ρ
-  coincidence-fold         : x/t ⋯ˢ (⟨ ρ ↑ᴿ s ⟩ ⨟ ((x/t′ ⋯ᴿ ρ) ∙ idˢ))  ≡ x/t ⋯ˢ ((x/t′ ⋯ᴿ ρ) ∙ ⟨ ρ ⟩)
+  instᴿ-Nil  : Nil ⋯ᴿ ρ                     ≡ Nil
+  instᴿ-Nil  = refl
+  instᴿ-Bang : (Bang proc0) ⋯ᴿ ρ            ≡ Bang (proc0 ⋯ᴿ ρ)
+  instᴿ-Bang = refl
+  instᴿ-Res  : (Res proc0) ⋯ᴿ ρ             ≡ Res (proc0 ⋯ᴿ (ρ ↑ᴿ* (chan ∷ [])))
+  instᴿ-Res  = refl
+  instᴿ-Par  : (Par proc0 proc1) ⋯ᴿ ρ       ≡ Par (proc0 ⋯ᴿ ρ) (proc1 ⋯ᴿ ρ)
+  instᴿ-Par  = refl
+  instᴿ-In   : (In chan0 proc0) ⋯ᴿ ρ        ≡ In (chan0 ⋯ᴿ ρ) (proc0 ⋯ᴿ (ρ ↑ᴿ* (chan ∷ [])))
+  instᴿ-In   = refl
+  instᴿ-Out  : (Out chan0 chan1 proc0) ⋯ᴿ ρ ≡ Out (chan0 ⋯ᴿ ρ) (chan1 ⋯ᴿ ρ) (proc0 ⋯ᴿ ρ)
+  instᴿ-Out  = refl
+  inst-Nil  : Nil ⋯ˢ σ                     ≡ Nil
+  inst-Nil  = refl
+  inst-Bang : (Bang proc0) ⋯ˢ σ            ≡ Bang (proc0 ⋯ˢ σ)
+  inst-Bang = refl
+  inst-Res  : (Res proc0) ⋯ˢ σ             ≡ Res (proc0 ⋯ˢ (σ ↑ˢ* (chan ∷ [])))
+  inst-Res  = refl
+  inst-Par  : (Par proc0 proc1) ⋯ˢ σ       ≡ Par (proc0 ⋯ˢ σ) (proc1 ⋯ˢ σ)
+  inst-Par  = refl
+  inst-In   : (In chan0 proc0) ⋯ˢ σ        ≡ In (chan0 ⋯ˢ σ) (proc0 ⋯ˢ (σ ↑ˢ* (chan ∷ [])))
+  inst-In   = refl
+  inst-Out  : (Out chan0 chan1 proc0) ⋯ˢ σ ≡ Out (chan0 ⋯ˢ σ) (chan1 ⋯ˢ σ) (proc0 ⋯ˢ σ)
+  inst-Out  = refl
 
+  coincidence     : t ⋯ˢ ⟨ ρ ⟩ ≡ t ⋯ᴿ ρ
+  coincidence-var : x ⋯ˢ ⟨ ρ ⟩ ≡ var (x ⋯ᴿ ρ)
 
-  lift-id = ext λ { zero → refl; (suc x) → refl }
-
-  def-∙-zero = refl
-  def-∙-suc  = refl
-  def-↑ˢ     = cong1 ((var zero) ∙_) (sym (ext λ x → coincidence))
+  def-∙ˢ-zero = refl
+  def-∙ˢ-suc  = refl
+  def-↑ˢ {σ = σ} = cong1 ((var zero) ∙ˢ_) (sym (ext λ x → coincidence {t = (σ _ x)}))
   def-⨟      = refl
+
+  def-id      = refl
+  def-wkᴿ      = refl      
+  def-∙ᴿ-zero = refl
+  def-∙ᴿ-suc  = refl
+  def-∘       = refl
+
+  η-lawˢᴿ  : (var (zero ⋯ᴿ ρ)) ∙ˢ (wkˢ _ ⨟ ⟨ ρ ⟩)  ≡ ⟨ ρ ⟩
+  η-lawˢᴿ = ext λ { zero → refl; (suc x) → refl }
 
   lift-idˢ* : ∀ S → (idˢ {S = S₁} ↑ˢ* S) ≡ idˢ 
   lift-idˢ* []    = refl
-  lift-idˢ* {S₁} (_ ∷ S) rewrite lift-idˢ* {S₁} S = η-lawᴿ
+  lift-idˢ* {S₁} (_ ∷ S) rewrite lift-idˢ* {S₁} S = η-lawˢᴿ
 
   right-idˢ               : ∀ (t : S ⊢ s) → t ⋯ˢ idˢ                   ≡ t 
   right-idˢ (var x)        = refl
-
   right-idˢ Nil                     = refl
   right-idˢ (Bang proc0)            = cong1 Bang (right-idˢ proc0)
   right-idˢ (Res proc0)             = cong1 Res (trans (cong1 (proc0 ⋯ˢ_) (lift-idˢ* (chan ∷ []))) (right-idˢ proc0))
@@ -216,28 +254,37 @@ opaque
   right-idˢ (In chan0 proc0)        = cong2 In (right-idˢ chan0) (trans (cong1 (proc0 ⋯ˢ_) (lift-idˢ* (chan ∷ []))) (right-idˢ proc0))
   right-idˢ (Out chan0 chan1 proc0) = cong3 Out (right-idˢ chan0) (right-idˢ chan1) (right-idˢ proc0)
 
-  associativity {σ₁ = σ₁} = ext λ x → compositionalityˢˢ (σ₁ _ x) 
-  distributivityˢ = ext λ { zero → refl; (suc x) → refl }
-  distributivityᴿ = ext λ { zero → coincidence; (suc x) → refl }
+  assoc {σ₁ = σ₁} = ext λ x → compositionalityˢˢ (σ₁ _ x) 
+  dist = ext λ { zero → refl; (suc x) → refl }
   interact        = refl
   comp-idᵣ        = ext λ x → (right-idˢ _)
   comp-idₗ        = refl
   η-id            = ext λ { zero → refl; (suc x) → refl }
-  η-lawˢ          = ext λ { zero → refl; (suc x) → refl }
-  η-lawᴿ          = ext λ { zero → refl; (suc x) → refl }
+  η-law          = ext λ { zero → refl; (suc x) → refl }
+
+  assocᴿ = refl
+  distᴿ = ext λ { zero → refl; (suc x) → refl }
+  interactᴿ = refl
+  comp-idᵣᴿ = refl
+  comp-idₗᴿ = refl
+  η-idᴿ = ext λ { zero → refl; (suc x) → refl }
+  η-lawᴿ = ext λ { zero → refl; (suc x) → refl }
+
+  lift-id : idᴿ {S = S} ↑ᴿ s ≡ idᴿ
+  lift-id = ext λ { zero → refl; (suc x) → refl }
 
   lift-id* : ∀ S → (idᴿ {S = S₁} ↑ᴿ* S) ≡ idᴿ
   lift-id* []    = refl
   lift-id* {S₁}  (_ ∷ S) rewrite lift-id* {S₁} S = lift-id
 
   right-id (var x)        = refl
-
   right-id Nil                     = refl
   right-id (Bang proc0)            = cong1 Bang (right-id proc0)
   right-id (Res proc0)             = cong1 Res (trans (cong1 (proc0 ⋯ᴿ_) (lift-id* (chan ∷ []))) (right-id proc0))
   right-id (Par proc0 proc1)       = cong2 Par (right-id proc0) (right-id proc1)
   right-id (In chan0 proc0)        = cong2 In (right-id chan0) (trans (cong1 (proc0 ⋯ᴿ_) (lift-id* (chan ∷ []))) (right-id proc0))
   right-id (Out chan0 chan1 proc0) = cong3 Out (right-id chan0) (right-id chan1) (right-id proc0)
+
   lift-dist-compᴿᴿ : ((ρ₁ ↑ᴿ s) ∘ (ρ₂ ↑ᴿ s)) ≡ ((ρ₁ ∘ ρ₂) ↑ᴿ s)
   lift-dist-compᴿᴿ = ext λ { zero → refl; (suc x) → refl }
 
@@ -246,83 +293,94 @@ opaque
   lift-dist-comp*ᴿᴿ (_ ∷ S) = trans lift-dist-compᴿᴿ (cong1 (_↑ᴿ _) (lift-dist-comp*ᴿᴿ S))
 
   compositionalityᴿᴿ (var x)  = refl
-  compositionalityᴿᴿ Nil                     = refl
-  compositionalityᴿᴿ (Bang proc0)            = cong1 Bang (compositionalityᴿᴿ proc0)
-  compositionalityᴿᴿ (Res proc0)             = cong1 Res (trans (compositionalityᴿᴿ proc0) (cong1 (proc0 ⋯ᴿ_) (lift-dist-comp*ᴿᴿ (chan ∷ []))))
-  compositionalityᴿᴿ (Par proc0 proc1)       = cong2 Par (compositionalityᴿᴿ proc0) (compositionalityᴿᴿ proc1)
-  compositionalityᴿᴿ (In chan0 proc0)        = cong2 In (compositionalityᴿᴿ chan0) (trans (compositionalityᴿᴿ proc0) (cong1 (proc0 ⋯ᴿ_) (lift-dist-comp*ᴿᴿ (chan ∷ []))))
-  compositionalityᴿᴿ (Out chan0 chan1 proc0) = cong3 Out (compositionalityᴿᴿ chan0) (compositionalityᴿᴿ chan1) (compositionalityᴿᴿ proc0)
+  compositionalityᴿᴿ Nil                      = refl
+  compositionalityᴿᴿ  (Bang proc0)            = cong1 Bang (compositionalityᴿᴿ proc0)
+  compositionalityᴿᴿ  (Res proc0)             = cong1 Res (trans (compositionalityᴿᴿ proc0) (cong1 (proc0 ⋯ᴿ_) (lift-dist-comp*ᴿᴿ  (chan ∷ []))))
+  compositionalityᴿᴿ  (Par proc0 proc1)       = cong2 Par (compositionalityᴿᴿ proc0) (compositionalityᴿᴿ proc1)
+  compositionalityᴿᴿ  (In chan0 proc0)        = cong2 In (compositionalityᴿᴿ chan0) (trans (compositionalityᴿᴿ proc0) (cong1 (proc0 ⋯ᴿ_) (lift-dist-comp*ᴿᴿ  (chan ∷ []))))
+  compositionalityᴿᴿ  (Out chan0 chan1 proc0) = cong3 Out (compositionalityᴿᴿ chan0) (compositionalityᴿᴿ chan1) (compositionalityᴿᴿ proc0)
+
   lift-dist-compᴿˢ : (⟨ ρ₁ ↑ᴿ s ⟩ ⨟ (σ₂ ↑ˢ s)) ≡ ((⟨ ρ₁ ⟩ ⨟ σ₂) ↑ˢ s)
   lift-dist-compᴿˢ = ext λ { zero → refl; (suc x) → refl }
 
   lift-dist-comp*ᴿˢ : ∀ S → (⟨ (ρ₁ ↑ᴿ* S) ⟩ ⨟ (σ₂ ↑ˢ* S)) ≡ ((⟨ ρ₁ ⟩ ⨟ σ₂) ↑ˢ* S)
   lift-dist-comp*ᴿˢ []      = refl 
-  lift-dist-comp*ᴿˢ (_ ∷ S) = trans lift-dist-compᴿˢ (cong1 (_↑ˢ _) (lift-dist-comp*ᴿˢ S))
+  lift-dist-comp*ᴿˢ {σ₂ = σ₂} (_ ∷ S) = trans (lift-dist-compᴿˢ {σ₂ = σ₂ ↑ˢ* S}) (cong1 (_↑ˢ _) (lift-dist-comp*ᴿˢ {σ₂ = σ₂} S))
 
   compositionalityᴿˢ (var x)  = refl
-  compositionalityᴿˢ Nil                     = refl
-  compositionalityᴿˢ (Bang proc0)            = cong1 Bang (compositionalityᴿˢ proc0)
-  compositionalityᴿˢ (Res proc0)             = cong1 Res (trans (compositionalityᴿˢ proc0) (cong1 (proc0 ⋯ˢ_) (lift-dist-comp*ᴿˢ (chan ∷ []))))
-  compositionalityᴿˢ (Par proc0 proc1)       = cong2 Par (compositionalityᴿˢ proc0) (compositionalityᴿˢ proc1)
-  compositionalityᴿˢ (In chan0 proc0)        = cong2 In (compositionalityᴿˢ chan0) (trans (compositionalityᴿˢ proc0) (cong1 (proc0 ⋯ˢ_) (lift-dist-comp*ᴿˢ (chan ∷ []))))
-  compositionalityᴿˢ (Out chan0 chan1 proc0) = cong3 Out (compositionalityᴿˢ chan0) (compositionalityᴿˢ chan1) (compositionalityᴿˢ proc0)
+  compositionalityᴿˢ Nil                               = refl
+  compositionalityᴿˢ {σ₂ = σ₂} (Bang proc0)            = cong1 Bang (compositionalityᴿˢ proc0)
+  compositionalityᴿˢ {σ₂ = σ₂} (Res proc0)             = cong1 Res (trans (compositionalityᴿˢ proc0) (cong1 (proc0 ⋯ˢ_) (lift-dist-comp*ᴿˢ {σ₂ = σ₂} (chan ∷ []))))
+  compositionalityᴿˢ {σ₂ = σ₂} (Par proc0 proc1)       = cong2 Par (compositionalityᴿˢ proc0) (compositionalityᴿˢ proc1)
+  compositionalityᴿˢ {σ₂ = σ₂} (In chan0 proc0)        = cong2 In (compositionalityᴿˢ chan0) (trans (compositionalityᴿˢ proc0) (cong1 (proc0 ⋯ˢ_) (lift-dist-comp*ᴿˢ {σ₂ = σ₂} (chan ∷ []))))
+  compositionalityᴿˢ {σ₂ = σ₂} (Out chan0 chan1 proc0) = cong3 Out (compositionalityᴿˢ chan0) (compositionalityᴿˢ chan1) (compositionalityᴿˢ proc0)
+
   lift-dist-compˢᴿ : ((σ₁ ↑ˢ s) ⨟ ⟨ ρ₂ ↑ᴿ s ⟩) ≡ ((σ₁ ⨟ ⟨ ρ₂ ⟩) ↑ˢ s)
   lift-dist-compˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} = ext λ { zero → refl; (suc x) → 
     let t = σ₁ _ x in
-    (t ⋯ᴿ (wk _)) ⋯ˢ ⟨ ρ₂ ↑ᴿ _ ⟩ ≡⟨ coincidence ⟩ 
-    (t ⋯ᴿ (wk _)) ⋯ᴿ (ρ₂ ↑ᴿ _)   ≡⟨ compositionalityᴿᴿ t ⟩ 
-    t ⋯ᴿ (wk _ ∘ (ρ₂ ↑ᴿ _))    ≡⟨ sym (compositionalityᴿᴿ t) ⟩ 
-    (t ⋯ᴿ ρ₂) ⋯ᴿ wk _          ≡⟨ cong1 (_⋯ᴿ (wk _)) (sym coincidence) ⟩ 
-    (t ⋯ˢ ⟨ ρ₂ ⟩) ⋯ᴿ wk _      ∎ }
+    (t ⋯ᴿ (wkᴿ _)) ⋯ˢ ⟨ ρ₂ ↑ᴿ _ ⟩ ≡⟨ coincidence {t = t ⋯ᴿ (wkᴿ _)} ⟩ 
+    (t ⋯ᴿ (wkᴿ _)) ⋯ᴿ (ρ₂ ↑ᴿ _)   ≡⟨ compositionalityᴿᴿ t ⟩ 
+    t ⋯ᴿ (wkᴿ _ ∘ (ρ₂ ↑ᴿ _))    ≡⟨ sym (compositionalityᴿᴿ t) ⟩ 
+    (t ⋯ᴿ ρ₂) ⋯ᴿ wkᴿ _          ≡⟨ cong1 (_⋯ᴿ (wkᴿ _)) (sym (coincidence {t = t})) ⟩ 
+    (t ⋯ˢ ⟨ ρ₂ ⟩) ⋯ᴿ wkᴿ _      ∎ }
 
   lift-dist-comp*ˢᴿ : ∀ S → ((σ₁ ↑ˢ* S) ⨟ ⟨ ρ₂ ↑ᴿ* S ⟩) ≡ ((σ₁ ⨟ ⟨ ρ₂ ⟩) ↑ˢ* S )
   lift-dist-comp*ˢᴿ []      = refl 
-  lift-dist-comp*ˢᴿ (_ ∷ S) =  trans lift-dist-compˢᴿ (cong1 (_↑ˢ _) (lift-dist-comp*ˢᴿ S))
+  lift-dist-comp*ˢᴿ {σ₁ = σ₁} (_ ∷ S) =  trans (lift-dist-compˢᴿ {σ₁ = σ₁ ↑ˢ* S}) (cong1 (_↑ˢ _) (lift-dist-comp*ˢᴿ {σ₁ = σ₁} S))
  
-  compositionalityˢᴿ (var x)  = sym coincidence
-  compositionalityˢᴿ Nil                     = refl
-  compositionalityˢᴿ (Bang proc0)            = cong1 Bang (compositionalityˢᴿ proc0)
-  compositionalityˢᴿ (Res proc0)             = cong1 Res (trans (compositionalityˢᴿ proc0) (cong1 (proc0 ⋯ˢ_) (lift-dist-comp*ˢᴿ (chan ∷ []))))
-  compositionalityˢᴿ (Par proc0 proc1)       = cong2 Par (compositionalityˢᴿ proc0) (compositionalityˢᴿ proc1)
-  compositionalityˢᴿ (In chan0 proc0)        = cong2 In (compositionalityˢᴿ chan0) (trans (compositionalityˢᴿ proc0) (cong1 (proc0 ⋯ˢ_) (lift-dist-comp*ˢᴿ (chan ∷ []))))
-  compositionalityˢᴿ (Out chan0 chan1 proc0) = cong3 Out (compositionalityˢᴿ chan0) (compositionalityˢᴿ chan1) (compositionalityˢᴿ proc0)
+  compositionalityˢᴿ {σ₁ = σ₁} (var x)  = sym (coincidence {t = σ₁ _ x})
+  compositionalityˢᴿ Nil                               = refl
+  compositionalityˢᴿ {σ₁ = σ₁} (Bang proc0)            = cong1 Bang (compositionalityˢᴿ proc0)
+  compositionalityˢᴿ {σ₁ = σ₁} (Res proc0)             = cong1 Res (trans (compositionalityˢᴿ proc0) (cong1 (proc0 ⋯ˢ_) (lift-dist-comp*ˢᴿ {σ₁ = σ₁} (chan ∷ []))))
+  compositionalityˢᴿ {σ₁ = σ₁} (Par proc0 proc1)       = cong2 Par (compositionalityˢᴿ proc0) (compositionalityˢᴿ proc1)
+  compositionalityˢᴿ {σ₁ = σ₁} (In chan0 proc0)        = cong2 In (compositionalityˢᴿ chan0) (trans (compositionalityˢᴿ proc0) (cong1 (proc0 ⋯ˢ_) (lift-dist-comp*ˢᴿ {σ₁ = σ₁} (chan ∷ []))))
+  compositionalityˢᴿ {σ₁ = σ₁} (Out chan0 chan1 proc0) = cong3 Out (compositionalityˢᴿ chan0) (compositionalityˢᴿ chan1) (compositionalityˢᴿ proc0)
   lift-dist-compˢˢ : ((σ₁ ↑ˢ s) ⨟ (σ₂ ↑ˢ s)) ≡ ((σ₁ ⨟ σ₂) ↑ˢ s)
   lift-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂} = ext λ { zero → refl; (suc x) → 
     let t = σ₁ _ x in
     begin
-    (t ⋯ᴿ (wk _)) ⋯ˢ (σ₂ ↑ˢ _)    ≡⟨ compositionalityᴿˢ t ⟩ 
-    t ⋯ˢ (⟨ (wk _) ⟩ ⨟ (σ₂ ↑ˢ _)) ≡⟨ cong1 (t ⋯ˢ_) (ext λ y → sym coincidence) ⟩   
-    t ⋯ˢ (σ₂ ⨟ ⟨ (wk _) ⟩)        ≡⟨ sym (compositionalityˢᴿ t) ⟩ 
-    (t ⋯ˢ σ₂) ⋯ᴿ (wk _)           ∎ }
+    (t ⋯ᴿ (wkᴿ _)) ⋯ˢ (σ₂ ↑ˢ _)    ≡⟨ compositionalityᴿˢ t ⟩ 
+    t ⋯ˢ (⟨ (wkᴿ _) ⟩ ⨟ (σ₂ ↑ˢ _)) ≡⟨ cong1 (t ⋯ˢ_) (ext λ x → sym (coincidence {t = σ₂ _ x})) ⟩   
+    t ⋯ˢ (σ₂ ⨟ ⟨ (wkᴿ _) ⟩)        ≡⟨ sym (compositionalityˢᴿ t) ⟩ 
+    (t ⋯ˢ σ₂) ⋯ᴿ (wkᴿ _)           ∎ }
   
   lift-dist-comp*ˢˢ : ∀ S →  ((σ₁ ↑ˢ* S) ⨟ (σ₂ ↑ˢ* S)) ≡ ((σ₁ ⨟ σ₂) ↑ˢ* S)
   lift-dist-comp*ˢˢ []      = refl 
-  lift-dist-comp*ˢˢ (_ ∷ S) =  trans lift-dist-compˢˢ (cong1 (_↑ˢ _) (lift-dist-comp*ˢˢ S))
+  lift-dist-comp*ˢˢ  {σ₁ = σ₁} {σ₂ = σ₂} (_ ∷ S) =  trans (lift-dist-compˢˢ {σ₁ = σ₁ ↑ˢ* S} {σ₂ = σ₂ ↑ˢ* S}) (cong1 (_↑ˢ _) (lift-dist-comp*ˢˢ {σ₁ = σ₁} {σ₂ = σ₂} S))
 
   compositionalityˢˢ (var x)  = refl
-  compositionalityˢˢ Nil                     = refl
-  compositionalityˢˢ (Bang proc0)            = cong1 Bang (compositionalityˢˢ proc0)
-  compositionalityˢˢ (Res proc0)             = cong1 Res (trans (compositionalityˢˢ proc0) (cong1 (proc0 ⋯ˢ_) (lift-dist-comp*ˢˢ (chan ∷ []))))
-  compositionalityˢˢ (Par proc0 proc1)       = cong2 Par (compositionalityˢˢ proc0) (compositionalityˢˢ proc1)
-  compositionalityˢˢ (In chan0 proc0)        = cong2 In (compositionalityˢˢ chan0) (trans (compositionalityˢˢ proc0) (cong1 (proc0 ⋯ˢ_) (lift-dist-comp*ˢˢ (chan ∷ []))))
-  compositionalityˢˢ (Out chan0 chan1 proc0) = cong3 Out (compositionalityˢˢ chan0) (compositionalityˢˢ chan1) (compositionalityˢˢ proc0)
-  coincidence {m = V} = refl
-  coincidence {m = T} {ρ = ρ} {x/t = x/t} = 
-    x/t ⋯ˢ (⟨ ρ ⟩ ⨟ idˢ) ≡⟨ sym (compositionalityᴿˢ x/t) ⟩ 
-    (x/t ⋯ᴿ ρ) ⋯ˢ idˢ    ≡⟨ right-idˢ _ ⟩ 
-    x/t ⋯ᴿ ρ             ∎
+  compositionalityˢˢ Nil                                         = refl
+  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (Bang proc0)            = cong1 Bang (compositionalityˢˢ proc0)
+  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (Res proc0)             = cong1 Res (trans (compositionalityˢˢ proc0) (cong1 (proc0 ⋯ˢ_) (lift-dist-comp*ˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (chan ∷ []))))
+  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (Par proc0 proc1)       = cong2 Par (compositionalityˢˢ proc0) (compositionalityˢˢ proc1)
+  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (In chan0 proc0)        = cong2 In (compositionalityˢˢ chan0) (trans (compositionalityˢˢ proc0) (cong1 (proc0 ⋯ˢ_) (lift-dist-comp*ˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (chan ∷ []))))
+  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (Out chan0 chan1 proc0) = cong3 Out (compositionalityˢˢ chan0) (compositionalityˢˢ chan1) (compositionalityˢˢ proc0)
 
-  coincidence-fold {x/t = x/t} {ρ = ρ} {x/t′ = x/t′} = 
-    (x/t ⋯ˢ (⟨ ρ ↑ᴿ _ ⟩ ⨟ ((x/t′ ⋯ᴿ ρ) ∙ idˢ))) ≡⟨ cong1 (x/t ⋯ˢ_) (ext λ { zero → refl; (suc x) → refl }) ⟩ 
-    (x/t ⋯ˢ ((x/t′ ⋯ᴿ ρ) ∙ ⟨ ρ ⟩))              ∎
+  coincidence {t = t} {ρ = ρ} = 
+    t ⋯ˢ (⟨ ρ ⟩ ⨟ idˢ) ≡⟨ sym (compositionalityᴿˢ t) ⟩ 
+    (t ⋯ᴿ ρ) ⋯ˢ idˢ    ≡⟨ right-idˢ _ ⟩ 
+    t ⋯ᴿ ρ             ∎
+
+  coincidence-var = refl
 
 {-# REWRITE
-  lift-id def-∙-zero def-∙-suc def-↑ˢ def-⨟
-  associativity distributivityˢ distributivityᴿ interact
-  comp-idᵣ comp-idₗ η-id η-lawˢ η-lawᴿ
-  traversal-var traversal-Nil traversal-Bang traversal-Res traversal-Par traversal-In traversal-Out
-  right-id
-  compositionalityᴿˢ compositionalityᴿᴿ
+  def-∙ˢ-zero def-∙ˢ-suc def-↑ˢ def-⨟   
+  assoc dist interact       
+  comp-idᵣ comp-idₗ η-id η-law
+  right-id         
+  compositionalityᴿᴿ compositionalityᴿˢ
   compositionalityˢᴿ compositionalityˢˢ
-  coincidence coincidence-fold
+  coincidence 
+
+  inst-var instᴿ-var
+  inst-Nil instᴿ-Nil
+  inst-Bang instᴿ-Bang
+  inst-Res instᴿ-Res
+  inst-Par instᴿ-Par
+  inst-In instᴿ-In
+  inst-Out instᴿ-Out
+  def-id def-wkᴿ def-∙ᴿ-zero def-∙ᴿ-suc def-∘      
+  assocᴿ distᴿ interactᴿ       
+  comp-idᵣᴿ comp-idₗᴿ η-idᴿ η-lawᴿ
+  coincidence-var
 #-}

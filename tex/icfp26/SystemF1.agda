@@ -86,19 +86,18 @@ opaque
   ⟨ ρ ⟩ α = ` (α &ᴿ ρ)
   
   -- syntax
-  _∙_ : Type n₂ → n₁ →ˢ n₂ → suc n₁ →ˢ n₂    
-  (t ∙ σ) zero = t
-  (t ∙ σ) (suc α) = σ α 
+  _∙ˢ_ : Type n₂ → n₁ →ˢ n₂ → suc n₁ →ˢ n₂    
+  (t ∙ˢ σ) zero = t
+  (t ∙ˢ σ) (suc α) = σ α 
 
   -- blocking alias for lookup
   _&ˢ_ : Fin n₁ → n₁ →ˢ n₂ → Type n₂
   α &ˢ σ = σ α 
-  
-  _⋯ˢ_ : Type n₁ → n₁ →ˢ n₂ → Type n₂
 
   _↑ˢ : n₁ →ˢ n₂ → suc n₁ →ˢ suc n₂
-  _↑ˢ σ = (` zero) ∙ λ α → (σ α) ⋯ᴿ wk
-
+  _↑ˢ σ = (` zero) ∙ˢ λ α → (σ α) ⋯ᴿ wk
+  
+  _⋯ˢ_ : Type n₁ → n₁ →ˢ n₂ → Type n₂
   (` α)         ⋯ˢ σ = σ α
   (∀α t)        ⋯ˢ σ = ∀α (t ⋯ˢ (σ ↑ˢ))
   (t₁ ⇒ t₂)     ⋯ˢ σ = (t₁ ⋯ˢ σ) ⇒ (t₂ ⋯ˢ σ)
@@ -134,21 +133,21 @@ postulate
   -- beta laws
   -- beta-id                 : α &ˢ ⟨ idᴿ ⟩ ≡ ` α  
   -- beta-wk                 : α &ˢ ⟨ suc ⟩ ≡ ` suc α
-  beta-ext-zero           : zero  &ˢ (T ∙ σ)   ≡ T                             
-  beta-ext-suc            : suc α &ˢ (T ∙ σ)  ≡ α &ˢ σ 
-  beta-lift               : σ ↑ˢ             ≡ (` zero) ∙ (σ ⨟ ⟨ wk ⟩)
+  beta-ext-zero           : zero  &ˢ (T ∙ˢ σ)   ≡ T                             
+  beta-ext-suc            : suc α &ˢ (T ∙ˢ σ)  ≡ α &ˢ σ 
+  beta-lift               : σ ↑ˢ             ≡ (` zero) ∙ˢ (σ ⨟ ⟨ wk ⟩)
   beta-comp               : (α &ˢ (σ₁ ⨟ σ₂)) ≡ ((α &ˢ σ₁) ⋯ˢ σ₂)
 
   -- interaction laws
   associativity           : (σ₁ ⨟ σ₂) ⨟ σ₃                        ≡ σ₁ ⨟ (σ₂ ⨟ σ₃)                     
-  distributivity          : (T ∙ σ₁) ⨟ σ₂                         ≡ ((T ⋯ˢ σ₂) ∙ (σ₁ ⨟ σ₂)) 
-  distributivityᴿ         : (T ∙ σ₁) ⨟ ⟨ ρ₂ ⟩                     ≡ ((T ⋯ᴿ ρ₂) ∙ (σ₁ ⨟ ⟨ ρ₂ ⟩)) 
-  interact                : ⟨ wk ⟩ ⨟ (T ∙ σ)                     ≡ σ                                        
+  distributivity          : (T ∙ˢ σ₁) ⨟ σ₂                         ≡ ((T ⋯ˢ σ₂) ∙ˢ (σ₁ ⨟ σ₂)) 
+  distributivityᴿ         : (T ∙ˢ σ₁) ⨟ ⟨ ρ₂ ⟩                     ≡ ((T ⋯ᴿ ρ₂) ∙ˢ (σ₁ ⨟ ⟨ ρ₂ ⟩)) 
+  interact                : ⟨ wk ⟩ ⨟ (T ∙ˢ σ)                     ≡ σ                                        
   comp-idᵣ                : σ ⨟ ⟨ idᴿ ⟩                             ≡ σ                                               
   comp-idₗ                : ⟨ idᴿ ⟩ ⨟ σ                             ≡ σ                                               
-  η-id                    : _∙_ {n₁ = n₁} (` zero)  ⟨ wk ⟩        ≡ ⟨ idᴿ ⟩
-  η-lawˢ                  : (zero &ˢ σ) ∙ (⟨ wk ⟩ ⨟ σ)            ≡ σ
-  -- η-lawᴿ                  : (` (zero &ᴿ ρ)) ∙ (⟨ wk ⟩ ⨟ ⟨ ρ ⟩)    ≡ ⟨ ρ ⟩
+  η-id                    : (` (zero {n = n})) ∙ˢ ⟨ wk ⟩        ≡ ⟨ idᴿ ⟩
+  η-lawˢ                  : (zero &ˢ σ) ∙ˢ (⟨ wk ⟩ ⨟ σ)            ≡ σ
+  -- η-lawᴿ                  : (` (zero &ᴿ ρ)) ∙ˢ (⟨ wk ⟩ ⨟ ⟨ ρ ⟩)    ≡ ⟨ ρ ⟩
 
   `associativity           : (ρ₁ ∘ ρ₂) ∘ ρ₃                        ≡ ρ₁ ∘ (ρ₂ ∘ ρ₃)                     
   `distributivity          : (α ∙ᴿ ρ₁) ∘ ρ₂                         ≡ ((α &ᴿ ρ₂) ∙ᴿ (ρ₁ ∘ ρ₂))
@@ -177,10 +176,10 @@ postulate
   -- coincidence laws
   coincidence              : T ⋯ˢ ⟨ ρ ⟩                           ≡ T  ⋯ᴿ ρ
   coincidencex             : α &ˢ ⟨ ρ ⟩                           ≡ ` (α  &ᴿ ρ)
-  coincidence-fold         : T ⋯ˢ (⟨ ρ ↑ᴿ ⟩ ⨟ ((T′ ⋯ᴿ ρ) ∙ ⟨ idᴿ ⟩))  ≡ T ⋯ˢ ((T′ ⋯ᴿ ρ) ∙ ⟨ ρ ⟩)
-  coincidence-foldx        : α &ˢ (⟨ ρ ↑ᴿ ⟩ ⨟ ((T′ ⋯ᴿ ρ) ∙ ⟨ idᴿ ⟩))  ≡ α &ˢ ((T′ ⋯ᴿ ρ) ∙ ⟨ ρ ⟩) 
+  coincidence-fold         : T ⋯ˢ (⟨ ρ ↑ᴿ ⟩ ⨟ ((T′ ⋯ᴿ ρ) ∙ˢ ⟨ idᴿ ⟩))  ≡ T ⋯ˢ ((T′ ⋯ᴿ ρ) ∙ˢ ⟨ ρ ⟩)
+  coincidence-foldx        : α &ˢ (⟨ ρ ↑ᴿ ⟩ ⨟ ((T′ ⋯ᴿ ρ) ∙ˢ ⟨ idᴿ ⟩))  ≡ α &ˢ ((T′ ⋯ᴿ ρ) ∙ˢ ⟨ ρ ⟩) 
   coincidence-comp         : ⟨ ρ₁ ⟩ ⨟ ⟨ ρ₂ ⟩ ≡ ⟨ ρ₂ ∘ ρ₂ ⟩
-  coincidence-comp-fold    : (⟨  zero ∙ᴿ (ρ₁ ∘ (ρ₂ ∘ wk)) ⟩ ⨟ ((T′ ⋯ᴿ (ρ₁ ∘ ρ₂)) ∙ ⟨ idᴿ ⟩)) ≡ ((T′ ⋯ᴿ (ρ₁ ∘ ρ₂)) ∙ (⟨ ρ₁ ⟩ ⨟ ⟨ ρ₂ ⟩))
+  coincidence-comp-fold    : (⟨  zero ∙ᴿ (ρ₁ ∘ (ρ₂ ∘ wk)) ⟩ ⨟ ((T′ ⋯ᴿ (ρ₁ ∘ ρ₂)) ∙ˢ ⟨ idᴿ ⟩)) ≡ ((T′ ⋯ᴿ (ρ₁ ∘ ρ₂)) ∙ˢ (⟨ ρ₁ ⟩ ⨟ ⟨ ρ₂ ⟩))
   -- proofs 
 
 {-# REWRITE 
@@ -237,7 +236,7 @@ weaken : Type n → Type (suc n)
 weaken t = t ⋯ᴿ wk
 
 _[_] : Type (suc n) → Type n → Type n
-t [ t′ ] = t ⋯ˢ (t′ ∙ ⟨ idᴿ ⟩) 
+t [ t′ ] = t ⋯ˢ (t′ ∙ˢ ⟨ idᴿ ⟩) 
 
 data Ctx : Nat → Set where
   ∅    : Ctx zero
@@ -343,15 +342,15 @@ wk*ˢ : ⟨ wk ⟩ ∣ Γ ⇒ˢ (Γ ,*)
 wk*ˢ = wk ∣⟪ wk* ⟫
 
 -- new symbol?
-_∣_∙_ : ∀ σ → Expr Γ₂ (T ⋯ˢ σ) → σ ∣ Γ₁ ⇒ˢ Γ₂ → σ ∣ (Γ₁ , T) ⇒ˢ Γ₂
-(_ ∣ e ∙ Σ) _ zero     = e
-(_ ∣ e ∙ Σ) _ (suc x)  = Σ _ x
+_∣_∙ˢ_ : ∀ σ → Expr Γ₂ (T ⋯ˢ σ) → σ ∣ Γ₁ ⇒ˢ Γ₂ → σ ∣ (Γ₁ , T) ⇒ˢ Γ₂
+(_ ∣ e ∙ˢ Σ) _ zero     = e
+(_ ∣ e ∙ˢ Σ) _ (suc x)  = Σ _ x
 
-_∣_∙*_ : ∀ σ T → σ ∣ Γ₁ ⇒ˢ Γ₂ → (T ∙ σ) ∣ (Γ₁ ,*) ⇒ˢ Γ₂
+_∣_∙*_ : ∀ σ T → σ ∣ Γ₁ ⇒ˢ Γ₂ → (T ∙ˢ σ) ∣ (Γ₁ ,*) ⇒ˢ Γ₂
 (_ ∣ T ∙* Σ) _ (suc* x) = Σ _ x -- no subst swap wk single subst
 
 _∣_⇑ˢ_ : ∀ σ → σ ∣ Γ₁ ⇒ˢ Γ₂ → ∀ T → σ ∣ (Γ₁ , T) ⇒ˢ (Γ₂ , (T ⋯ˢ σ))
-σ ∣ Σ ⇑ˢ T = σ ∣ (` zero) ∙ λ _ x → idᴿ ∣ (Σ _ x) ⋯ᴿ Wk -- no subst swap sub wk
+σ ∣ Σ ⇑ˢ T = σ ∣ (` zero) ∙ˢ λ _ x → idᴿ ∣ (Σ _ x) ⋯ᴿ Wk -- no subst swap sub wk
 
 _∣_↑ˢ* : ∀ σ → σ ∣ Γ₁ ⇒ˢ Γ₂ → (σ ↑ˢ) ∣ (Γ₁ ,*) ⇒ˢ (Γ₂ ,*)
 (σ ∣ Σ ↑ˢ*) _ (suc* x) = _ ∣ (Σ _ x) ⋯ᴿ wk* -- ? ∣ (Σ _ x) ⋯ᴿ wk*
@@ -368,7 +367,7 @@ _∣_⋯ˢ_ : {T : Type n₁} {Γ₂ : Ctx n₂} → (σ : n₁ →ˢ n₂) →
 _,_∣_⨾_ : ∀ σ₁ σ₂ → σ₁ ∣ Γ₁ ⇒ˢ Γ₂ → σ₂ ∣ Γ₂ ⇒ˢ Γ₃ → (σ₁ ⨟ σ₂) ∣ Γ₁ ⇒ˢ Γ₃
 (_ , _ ∣ Σ₁ ⨾ Σ₂) _ x = _ ∣ (Σ₁ _ x) ⋯ˢ Σ₂
 
-η-Id : ⟨ idᴿ ⟩ ∣ (` (zero {T = T} {Γ = Γ})) ∙ (Wkˢ T) ≡ (Idˢ {Γ = Γ , T})
+η-Id : ⟨ idᴿ ⟩ ∣ (` (zero {T = T} {Γ = Γ})) ∙ˢ (Wkˢ T) ≡ (Idˢ {Γ = Γ , T})
 η-Id = fun-ext λ _ → fun-ext λ { zero → refl; (suc x) → refl }
 
 η*-Id : ⟨ idᴿ ⟩ ∣ (Idˢ {Γ = Γ}) ↑ˢ* ≡ Idˢ

@@ -1,5 +1,5 @@
 {-# OPTIONS --rewriting --double-check --local-confluence-check #-}
-module systemf1 where
+module systemf where
 
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; trans; module ≡-Reasoning)
 open ≡-Reasoning
@@ -70,39 +70,33 @@ S₁ →ᴿ S₂ = ∀ s → S₁ ∋ s → S₂ ∋ s
 variable
   ρ ρ₁ ρ₂ ρ₃ : S₁ →ᴿ S₂
 --! ]
+idᴿ : S →ᴿ S
+idᴿ _ x = x
 
-opaque
-  idᴿ : S →ᴿ S
-  idᴿ _ x = x
+wkᴿ : ∀ s → S →ᴿ (s ∷ S)
+wkᴿ _ _ = suc
 
-  _∙ᴿ_ :  S₂ ∋ s → S₁ →ᴿ S₂ → (s ∷ S₁) →ᴿ S₂    
-  (x ∙ᴿ ρ) _ zero = x
-  (_ ∙ᴿ ρ) _ (suc x) = ρ _ x
+_∘_ : S₁ →ᴿ S₂ → S₂ →ᴿ S₃ → 
+  S₁ →ᴿ S₃
+(ρ₁ ∘ ρ₂) _ x = ρ₂ _ (ρ₁ _ x)
 
-  wkᴿ : ∀ s → S →ᴿ (s ∷ S)
-  wkᴿ _ _ = suc
+_↑ᴿ_ : (S₁ →ᴿ S₂) → ∀ s → 
+  ((s ∷ S₁) →ᴿ (s ∷ S₂))
+(ρ ↑ᴿ _) _ zero    = zero
+(ρ ↑ᴿ _) _ (suc x) = suc (ρ _ x)
 
-  _∘_ : S₁ →ᴿ S₂ → S₂ →ᴿ S₃ → 
-    S₁ →ᴿ S₃
-  (ρ₁ ∘ ρ₂) _ x = ρ₂ _ (ρ₁ _ x)
-
-  _↑ᴿ_ : (S₁ →ᴿ S₂) → ∀ s → 
-    ((s ∷ S₁) →ᴿ (s ∷ S₂))
-  (ρ ↑ᴿ _) _ zero    = zero
-  (ρ ↑ᴿ _) _ (suc x) = suc (ρ _ x)
-
-  _⋯ᴿ_ : S₁ ⊢[ m ] s → S₁ →ᴿ S₂ → 
-    S₂ ⊢[ m ] s 
-  _⋯ᴿ_ {m = V} x   ρ = ρ _ x
-  (` x)         ⋯ᴿ ρ = ` ρ _ x
-  (λx e)        ⋯ᴿ ρ = λx (e ⋯ᴿ (ρ ↑ᴿ _))
-  (Λα e)        ⋯ᴿ ρ = Λα (e ⋯ᴿ (ρ ↑ᴿ _))
-  (∀[α∶ k ] t)  ⋯ᴿ ρ = ∀[α∶ k ⋯ᴿ ρ ] 
-                       (t ⋯ᴿ (ρ ↑ᴿ _))
-  (e₁ · e₂)     ⋯ᴿ ρ = (e₁ ⋯ᴿ ρ) · (e₂ ⋯ᴿ ρ)
-  (e • t)       ⋯ᴿ ρ = (e ⋯ᴿ ρ) • (t ⋯ᴿ ρ)
-  (t₁ ⇒ t₂)     ⋯ᴿ ρ = (t₁ ⋯ᴿ ρ) ⇒ (t₂ ⋯ᴿ ρ)
-  *             ⋯ᴿ ρ = * 
+_⋯ᴿ_ : S₁ ⊢[ m ] s → S₁ →ᴿ S₂ → 
+  S₂ ⊢ s 
+_⋯ᴿ_ {m = V} x   ρ = ` ρ _ x
+(` x)         ⋯ᴿ ρ = ` ρ _ x
+(λx e)        ⋯ᴿ ρ = λx (e ⋯ᴿ (ρ ↑ᴿ _))
+(Λα e)        ⋯ᴿ ρ = Λα (e ⋯ᴿ (ρ ↑ᴿ _))
+(∀[α∶ k ] t)  ⋯ᴿ ρ = ∀[α∶ k ⋯ᴿ ρ ] 
+                     (t ⋯ᴿ (ρ ↑ᴿ _))
+(e₁ · e₂)     ⋯ᴿ ρ = (e₁ ⋯ᴿ ρ) · (e₂ ⋯ᴿ ρ)
+(e • t)       ⋯ᴿ ρ = (e ⋯ᴿ ρ) • (t ⋯ᴿ ρ)
+(t₁ ⇒ t₂)     ⋯ᴿ ρ = (t₁ ⋯ᴿ ρ) ⇒ (t₂ ⋯ᴿ ρ)
+*             ⋯ᴿ ρ = * 
 --! }
 --! Sub {
 _→ˢ_ : Scope → Scope → Set
@@ -112,11 +106,9 @@ S₁ →ˢ S₂ = ∀ s → S₁ ∋ s → S₂ ⊢ s
 variable
   σ σ₁ σ₂ σ₃ : S₁ →ˢ S₂  
 --! ]
-
-opaque
-  ⟨_⟩ : S₁ →ᴿ S₂ → S₁ →ˢ S₂ 
-  ⟨ ρ ⟩ _ x = ` ρ _ x
-  {-# INLINE ⟨_⟩ #-}
+⟨_⟩ : S₁ →ᴿ S₂ → S₁ →ˢ S₂ 
+⟨ ρ ⟩ _ x = ` ρ _ x
+{-# INLINE ⟨_⟩ #-}
 
 idˢ : S →ˢ S
 idˢ _ = `_
@@ -126,16 +118,13 @@ wkˢ : ∀ s → S →ˢ (s ∷ S)
 wkˢ _ = ⟨ wkᴿ _ ⟩
 {-# INLINE wkˢ #-}
 
-opaque
-  --! [ 
-  unfolding idᴿ ⟨_⟩
-  --! ]
-  _∙ˢ_ : S₂ ⊢ s → S₁ →ˢ S₂ → (s ∷ S₁) →ˢ S₂    
-  (t ∙ˢ σ) _ zero = t
-  (t ∙ˢ σ) _ (suc x) = σ _ x 
+opaque  
+  _∙_ : S₂ ⊢ s → S₁ →ˢ S₂ → (s ∷ S₁) →ˢ S₂    
+  (t ∙ σ) _ zero = t
+  (t ∙ σ) _ (suc x) = σ _ x 
 
   _↑ˢ_ : S₁ →ˢ S₂ → ∀ s → (s ∷ S₁) →ˢ (s ∷ S₂)
-  σ ↑ˢ s =  (` zero) ∙ˢ λ _ x → (σ _ x) ⋯ᴿ wkᴿ _
+  σ ↑ˢ s =  (` zero) ∙ λ _ x → (σ _ x) ⋯ᴿ wkᴿ _
 
   _⋯ˢ_ : S₁ ⊢[ m ] s → S₁ →ˢ S₂ → S₂ ⊢ s
   _⋯ˢ_ {m = V} x σ = σ _ x
@@ -155,24 +144,26 @@ opaque
   -- rewrite system
 
   --! DefLaws {
+  -- first class renamings rules
+  lift-idᴿ            : idᴿ {S = S} ↑ᴿ s ≡ idᴿ 
   -- definitional laws
-  def-∙ᴿ-zero           : zero ⋯ᴿ (x ∙ᴿ ρ)   ≡ x            
-
-  def-∙ˢ-zero           : zero ⋯ˢ (t ∙ˢ σ)   ≡ t                             
-  def-∙ˢ-suc            : suc x ⋯ˢ (t ∙ˢ σ)  ≡ x ⋯ˢ σ 
+  def-∙-zero           : zero ⋯ˢ (t ∙ σ)   ≡ t                             
+  def-∙-suc            : suc x ⋯ˢ (t ∙ σ)  ≡ x ⋯ˢ σ 
   def-⨟ : (x ⋯ˢ (σ₁ ⨟ σ₂)) ≡ ((x ⋯ˢ σ₁) ⋯ˢ σ₂)
-  def-↑ˢ               : σ ↑ˢ s ≡ (` zero) ∙ˢ (σ ⨟ wkˢ _)
+  def-↑ˢ               : σ ↑ˢ s ≡ (` zero) ∙ (σ ⨟ wkˢ _)
   --! }
 
   --! InteractLaws {
   -- interaction rules
   associativity           : (σ₁ ⨟ σ₂) ⨟ σ₃ ≡ σ₁ ⨟ (σ₂ ⨟ σ₃)                     
-  dist : (t ∙ˢ σ₁)  ⨟ σ₂  ≡ ((t ⋯ˢ σ₂) ∙ˢ (σ₁ ⨟ σ₂)) 
-  interact                : wkˢ s ⨟ (t ∙ˢ σ) ≡ σ                                        
+  dist : (t ∙ σ₁)  ⨟ σ₂  ≡ ((t ⋯ˢ σ₂) ∙ (σ₁ ⨟ σ₂)) 
+  interact                : wkˢ s ⨟ (t ∙ σ) ≡ σ                                        
   comp-idᵣ                : σ ⨟ idˢ         ≡ σ                                               
   comp-idₗ                : idˢ ⨟ σ         ≡ σ                                               
-  η-id    : (` zero {s} {S}) ∙ˢ (wkˢ _)      ≡ idˢ
-  η-lawˢ  : (zero ⋯ˢ σ) ∙ˢ (wkˢ _ ⨟ σ)        ≡ σ
+  η-id    : (` zero {s} {S}) ∙ (wkˢ _)      ≡ idˢ
+  η-lawˢ  : (zero ⋯ˢ σ) ∙ (wkˢ _ ⨟ σ)        ≡ σ
+  η-lawᴿ  : (zero ⋯ᴿ ρ) ∙ (wkˢ _ ⨟ ⟨ ρ ⟩)  ≡ ⟨ ρ ⟩
+
   --! }
 
   --! MonadLaws {
@@ -198,7 +189,7 @@ opaque
   traversal-∀             : (∀[α∶ k ] t)  ⋯ˢ σ  ≡ 
     ∀[α∶ k ⋯ˢ σ ] 
     (t ⋯ˢ (σ ↑ˢ _))
-  traversal-∙ˢ             : (e₁ · e₂)     ⋯ˢ σ  ≡ 
+  traversal-∙             : (e₁ · e₂)     ⋯ˢ σ  ≡ 
     (e₁ ⋯ˢ σ) · (e₂ ⋯ˢ σ)
   traversal-•             : (e • t)       ⋯ˢ σ  ≡ 
     (e ⋯ˢ σ) • (t ⋯ˢ σ)
@@ -209,13 +200,11 @@ opaque
 
   --! CoincidenceLaws {
   -- coincidence rules
-  coincidence : ∀ (t : S ⊢ s) →
-    t ⋯ˢ ⟨ ρ ⟩ ≡ (t ⋯ᴿ ρ)
-  coincidence-var : ∀ (t : S ∋ s) →
-    x ⋯ˢ ⟨ ρ ⟩ ≡ ` (x ⋯ᴿ ρ)
-  coincidence-fold : ∀ (t : (s ∷ S) ⊢ s) →
-    t ⋯ˢ (⟨ ρ ↑ᴿ s ⟩ ⨟ ((t′ ⋯ᴿ ρ) ∙ˢ idˢ))  ≡ 
-    t ⋯ˢ ((t′ ⋯ᴿ ρ) ∙ˢ ⟨ ρ ⟩)
+  coincidence : ∀ (x/t : S ⊢[ m ] s) →
+    x/t ⋯ˢ ⟨ ρ ⟩ ≡ x/t ⋯ᴿ ρ
+  coincidence-fold : ∀ (x/t : (s ∷ S) ⊢[ m ] s) →
+    x/t ⋯ˢ (⟨ ρ ↑ᴿ s ⟩ ⨟ ((x/t′ ⋯ᴿ ρ) ∙ idˢ))  ≡ 
+    x/t ⋯ˢ ((x/t′ ⋯ᴿ ρ) ∙ ⟨ ρ ⟩)
   --! }
 
   -- proofs 
@@ -223,13 +212,12 @@ opaque
   -- not part of the theory.
   right-idˢ               : ∀ (t : S ⊢ s) → t ⋯ˢ idˢ                   ≡ t      
 
-  lift-idᴿ : idᴿ {S = S} ↑ᴿ s ≡ idᴿ
   lift-idᴿ = ext λ { zero → refl; (suc x) → refl }
 
-  def-∙ˢ-zero = refl
-  def-∙ˢ-suc  = refl
+  def-∙-zero = refl
+  def-∙-suc  = refl
   def-⨟     = refl
-  def-↑ˢ {σ = σ} = cong ((` zero) ∙ˢ_) (sym (ext λ x → coincidence (σ _ x)))
+  def-↑ˢ     = cong ((` zero) ∙_) (sym (ext λ x → coincidence _))
 
   associativity {σ₁ = σ₁} = ext (λ x → compositionalityˢˢ (σ₁ _ x))
   dist = ext λ { zero → refl; (suc x) → refl }
@@ -239,6 +227,7 @@ opaque
   comp-idₗ = refl
   η-id = ext λ { zero → refl; (suc x) → refl }
   η-lawˢ = ext λ { zero → refl; (suc x) → refl }
+  η-lawᴿ = ext λ { zero → refl; (suc x) → refl }
 
   right-id (` x)        = refl
   right-id (λx e)       = cong λx_ (trans (cong (e ⋯ᴿ_) lift-idᴿ) (right-id e))
@@ -272,9 +261,9 @@ opaque
   list-dist-compᴿˢ : (⟨ ρ₁ ↑ᴿ s ⟩ ⨟ (σ₂ ↑ˢ s)) ≡ ((⟨ ρ₁ ⟩ ⨟ σ₂) ↑ˢ s)
   list-dist-compᴿˢ = ext λ { zero → refl; (suc x) → refl }
   compositionalityᴿˢ {ρ₁ = ρ₁}  {σ₂ = σ₂} (` x)        = refl
-  compositionalityᴿˢ {ρ₁ = ρ₁}  {σ₂ = σ₂} (λx e)       = cong λx_ (trans (compositionalityᴿˢ e) (cong (e ⋯ˢ_) (list-dist-compᴿˢ {σ₂ = σ₂})))
-  compositionalityᴿˢ {ρ₁ = ρ₁}  {σ₂ = σ₂} (Λα e)       = cong Λα_ (trans (compositionalityᴿˢ e) (cong (e ⋯ˢ_) (list-dist-compᴿˢ {σ₂ = σ₂})))
-  compositionalityᴿˢ {ρ₁ = ρ₁}  {σ₂ = σ₂} (∀[α∶ k ] t) = cong₂ ∀[α∶_]_ (compositionalityᴿˢ k) (trans (compositionalityᴿˢ t) (cong (t ⋯ˢ_) (list-dist-compᴿˢ {σ₂ = σ₂})))
+  compositionalityᴿˢ {ρ₁ = ρ₁}  {σ₂ = σ₂} (λx e)       = cong λx_ (trans (compositionalityᴿˢ e) (cong (e ⋯ˢ_) list-dist-compᴿˢ))
+  compositionalityᴿˢ {ρ₁ = ρ₁}  {σ₂ = σ₂} (Λα e)       = cong Λα_ (trans (compositionalityᴿˢ e) (cong (e ⋯ˢ_) list-dist-compᴿˢ))
+  compositionalityᴿˢ {ρ₁ = ρ₁}  {σ₂ = σ₂} (∀[α∶ k ] t) = cong₂ ∀[α∶_]_ (compositionalityᴿˢ k) (trans (compositionalityᴿˢ t) (cong (t ⋯ˢ_) list-dist-compᴿˢ))
   compositionalityᴿˢ {ρ₁ = ρ₁}  {σ₂ = σ₂} (e₁ · e₂)    = cong₂ _·_ (compositionalityᴿˢ e₁) (compositionalityᴿˢ e₂)
   compositionalityᴿˢ {ρ₁ = ρ₁}  {σ₂ = σ₂} (e • t)      = cong₂ _•_ (compositionalityᴿˢ e) (compositionalityᴿˢ t)
   compositionalityᴿˢ {ρ₁ = ρ₁}  {σ₂ = σ₂} (t₁ ⇒ t₂)    = cong₂ _⇒_ (compositionalityᴿˢ t₁) (compositionalityᴿˢ t₂)
@@ -283,15 +272,15 @@ opaque
   list-dist-compˢᴿ : ((σ₁ ↑ˢ s) ⨟ ⟨ ρ₂ ↑ᴿ s ⟩) ≡ ((σ₁ ⨟ ⟨ ρ₂ ⟩) ↑ˢ s)
   list-dist-compˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} = ext λ { zero → refl; (suc x) → 
     let t = σ₁ _ x in
-    (t ⋯ᴿ (wkᴿ _)) ⋯ˢ ⟨ ρ₂ ↑ᴿ _ ⟩ ≡⟨ (coincidence (t ⋯ᴿ (wkᴿ _))) ⟩ 
+    (t ⋯ᴿ (wkᴿ _)) ⋯ˢ ⟨ ρ₂ ↑ᴿ _ ⟩ ≡⟨ (coincidence _) ⟩ 
     (t ⋯ᴿ (wkᴿ _)) ⋯ᴿ (ρ₂ ↑ᴿ _)   ≡⟨ compositionalityᴿᴿ t ⟩ 
     t ⋯ᴿ (wkᴿ _ ∘ (ρ₂ ↑ᴿ _))    ≡⟨ sym (compositionalityᴿᴿ t) ⟩ 
-    (t ⋯ᴿ ρ₂) ⋯ᴿ wkᴿ _          ≡⟨ cong (_⋯ᴿ (wkᴿ _)) (sym (coincidence t)) ⟩ 
+    (t ⋯ᴿ ρ₂) ⋯ᴿ wkᴿ _          ≡⟨ cong (_⋯ᴿ (wkᴿ _)) (sym (coincidence _)) ⟩ 
     (t ⋯ˢ ⟨ ρ₂ ⟩) ⋯ᴿ wkᴿ _      ∎ }
-  compositionalityˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} (` x)         = sym (coincidence (σ₁ _ x))
-  compositionalityˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} (λx e)        = cong λx_ (trans (compositionalityˢᴿ e) (cong (e ⋯ˢ_) (list-dist-compˢᴿ {σ₁ = σ₁})))
-  compositionalityˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} (Λα e)        = cong Λα_ (trans (compositionalityˢᴿ e) (cong (e ⋯ˢ_) (list-dist-compˢᴿ {σ₁ = σ₁})))
-  compositionalityˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} (∀[α∶ k ] t)  = cong₂ ∀[α∶_]_ (compositionalityˢᴿ k) (trans (compositionalityˢᴿ t) (cong (t ⋯ˢ_) (list-dist-compˢᴿ {σ₁ = σ₁})))
+  compositionalityˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} (` x)         = sym (coincidence _)
+  compositionalityˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} (λx e)        = cong λx_ (trans (compositionalityˢᴿ e) (cong (e ⋯ˢ_) list-dist-compˢᴿ))
+  compositionalityˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} (Λα e)        = cong Λα_ (trans (compositionalityˢᴿ e) (cong (e ⋯ˢ_) list-dist-compˢᴿ))
+  compositionalityˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} (∀[α∶ k ] t)  = cong₂ ∀[α∶_]_ (compositionalityˢᴿ k) (trans (compositionalityˢᴿ t) (cong (t ⋯ˢ_) list-dist-compˢᴿ))
   compositionalityˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} (e₁ · e₂)     = cong₂ _·_ (compositionalityˢᴿ e₁) (compositionalityˢᴿ e₂)
   compositionalityˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} (e • t)       = cong₂ _•_ (compositionalityˢᴿ e) (compositionalityˢᴿ t)
   compositionalityˢᴿ {σ₁ = σ₁} {ρ₂ = ρ₂} (t₁ ⇒ t₂)     = cong₂ _⇒_ (compositionalityˢᴿ t₁) (compositionalityˢᴿ t₂)
@@ -302,13 +291,13 @@ opaque
     let t = σ₁ _ x in
     begin
     (t ⋯ᴿ (wkᴿ _)) ⋯ˢ (σ₂ ↑ˢ _)    ≡⟨ compositionalityᴿˢ t ⟩ 
-    t ⋯ˢ (⟨ (wkᴿ _) ⟩ ⨟ (σ₂ ↑ˢ _)) ≡⟨ cong (t ⋯ˢ_) (ext λ x → sym (coincidence (σ₂ _ x))) ⟩   
+    t ⋯ˢ (⟨ (wkᴿ _) ⟩ ⨟ (σ₂ ↑ˢ _)) ≡⟨ cong (t ⋯ˢ_) (ext λ y → sym (coincidence _)) ⟩   
     t ⋯ˢ (σ₂ ⨟ ⟨ (wkᴿ _) ⟩)        ≡⟨ sym (compositionalityˢᴿ t) ⟩ 
     (t ⋯ˢ σ₂) ⋯ᴿ (wkᴿ _)           ∎ }
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (` x)        = refl
-  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (λx e)       = cong λx_ (trans (compositionalityˢˢ e) (cong (e ⋯ˢ_) (list-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂})))
-  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (Λα e)       = cong Λα_ (trans (compositionalityˢˢ e) (cong (e ⋯ˢ_) (list-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂})))
-  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (∀[α∶ k ] t) = cong₂ ∀[α∶_]_ (compositionalityˢˢ k) (trans (compositionalityˢˢ t) (cong (t ⋯ˢ_) (list-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂})))
+  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (λx e)       = cong λx_ (trans (compositionalityˢˢ e) (cong (e ⋯ˢ_) list-dist-compˢˢ))
+  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (Λα e)       = cong Λα_ (trans (compositionalityˢˢ e) (cong (e ⋯ˢ_) list-dist-compˢˢ))
+  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (∀[α∶ k ] t) = cong₂ ∀[α∶_]_ (compositionalityˢˢ k) (trans (compositionalityˢˢ t) (cong (t ⋯ˢ_) list-dist-compˢˢ))
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (e₁ · e₂)    = cong₂ _·_ (compositionalityˢˢ e₁) (compositionalityˢˢ e₂)
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (e • t)      = cong₂ _•_ (compositionalityˢˢ e) (compositionalityˢˢ t)
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (t₁ ⇒ t₂)    = cong₂ _⇒_ (compositionalityˢˢ t₁) (compositionalityˢˢ t₂)
@@ -319,21 +308,20 @@ opaque
   traversal-λ = refl
   traversal-Λ = refl
   traversal-∀ = refl
-  traversal-∙ˢ = refl
+  traversal-∙ = refl
   traversal-• = refl
   traversal-⇒ = refl
   traversal-* = refl
 
-  coincidence {ρ = ρ} x/t = 
+  coincidence {m = V} _ = refl
+  coincidence {m = T} {ρ = ρ} x/t = 
     x/t ⋯ˢ (⟨ ρ ⟩ ⨟ idˢ) ≡⟨ sym (compositionalityᴿˢ x/t) ⟩ 
     (x/t ⋯ᴿ ρ) ⋯ˢ idˢ    ≡⟨ right-idˢ _ ⟩ 
     x/t ⋯ᴿ ρ             ∎
 
-  coincidence-var x = refl
-
-  coincidence-fold {ρ = ρ} {t′ = t′} t = 
-    (t ⋯ˢ (⟨ ρ ↑ᴿ _ ⟩ ⨟ ((t′ ⋯ᴿ ρ) ∙ˢ idˢ))) ≡⟨ cong (t ⋯ˢ_) (ext λ { zero → refl; (suc x) → refl }) ⟩ 
-    (t ⋯ˢ ((t′ ⋯ᴿ ρ) ∙ˢ ⟨ ρ ⟩))              ∎
+  coincidence-fold {ρ = ρ} {x/t′ = x/t′} x/t = 
+    (x/t ⋯ˢ (⟨ ρ ↑ᴿ _ ⟩ ⨟ ((x/t′ ⋯ᴿ ρ) ∙ idˢ))) ≡⟨ cong (x/t ⋯ˢ_) (ext λ { zero → refl; (suc x) → refl }) ⟩ 
+    (x/t ⋯ˢ ((x/t′ ⋯ᴿ ρ) ∙ ⟨ ρ ⟩))              ∎
 
   
   demo1 : σ ⨟ idˢ ≡ σ
@@ -357,13 +345,13 @@ opaque
 
 --! RewriteSys {
 {-# REWRITE 
-lift-idᴿ def-∙ˢ-zero def-∙ˢ-suc def-↑ˢ def-⨟   
+lift-idᴿ def-∙-zero def-∙-suc def-↑ˢ def-⨟   
 
 associativity dist interact       
-comp-idᵣ comp-idₗ η-id η-lawˢ 
+comp-idᵣ comp-idₗ η-id η-lawˢ η-lawᴿ
 
 traversal-x traversal-λ traversal-Λ 
-traversal-∀ traversal-∙ˢ traversal-•
+traversal-∀ traversal-∙ traversal-•
 traversal-⇒ traversal-*
 
 right-id         
@@ -374,7 +362,7 @@ coincidence coincidence-fold
 #-}
 --! }
 
-{-
+
 ↑ᵗ_ : Sort → Sort 
 ↑ᵗ expr = type
 ↑ᵗ type = kind
@@ -404,7 +392,7 @@ weaken : S ⊢ s → (s′ ∷ S) ⊢ s
 weaken {s′ = s} t = t ⋯ᴿ λ s₂ x → suc x
 
 _[_] : (s′ ∷ S) ⊢ s → S ⊢ s′ → S ⊢ s
-t [ t′ ] = t ⋯ˢ (t′ ∙ˢ idˢ) 
+t [ t′ ] = t ⋯ˢ (t′ ∙ idˢ) 
 
 wk-drop-∈ : (x : S ∋ s) → drop-∈ x S ⊢ s′ → S ⊢ s′
 wk-drop-∈ zero t = weaken t 
@@ -521,7 +509,7 @@ _⊢⋯ˢ[_]_ :
 ⊢*              ⊢⋯ˢ[ σ ] ⊢σ  = ⊢*
 --! }
 
-⊢[] : ∀ {Γ : Ctx S} {e : S ⊢ s} {t : S ∶⊢ s} → Γ ⊢ e ∶ t → (e ∙ˢ idˢ) ∶ (t ∷ₜ Γ) →ˢ Γ
+⊢[] : ∀ {Γ : Ctx S} {e : S ⊢ s} {t : S ∶⊢ s} → Γ ⊢ e ∶ t → (e ∙ idˢ) ∶ (t ∷ₜ Γ) →ˢ Γ
 ⊢[] ⊢t _ zero     _ refl = ⊢t 
 ⊢[] ⊢t _ (suc x)  _ refl = ⊢` refl 
 
@@ -531,13 +519,13 @@ sr :
   e ↪ e′ → 
   Γ ⊢ e′ ∶ t 
 sr (⊢· {e₂ = e₂} (⊢λ ⊢e₁) ⊢e₂) (β-λ v₂) = 
-  ⊢e₁ ⊢⋯ˢ[ e₂ ∙ˢ idˢ ] (⊢[] ⊢e₂)
+  ⊢e₁ ⊢⋯ˢ[ e₂ ∙ idˢ ] (⊢[] ⊢e₂)
 sr (⊢• {t = t} (⊢Λ ⊢e) ⊢t ⊢t') β-Λ = 
-  ⊢e ⊢⋯ˢ[ t ∙ˢ idˢ ] (⊢[] ⊢t)     
+  ⊢e ⊢⋯ˢ[ t ∙ idˢ ] (⊢[] ⊢t)     
 sr (⊢· ⊢e₁ ⊢e₂) (ξ-·₁ e₁↪e) = 
   ⊢· (sr ⊢e₁ e₁↪e) ⊢e₂
 sr (⊢· ⊢e₁ ⊢e₂) (ξ-·₂ e₂↪e x) = 
   ⊢· ⊢e₁ (sr ⊢e₂ e₂↪e)          
 sr (⊢• ⊢e ⊢t ⊢t') (ξ-• e↪e') = 
   ⊢• (sr ⊢e e↪e') ⊢t ⊢t'
---! }   -}
+--! }  

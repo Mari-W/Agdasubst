@@ -8,3 +8,6 @@ python3 agdatex.py -v -f -e examples.tex -r . \
 
 python3 agdatex.py -v -f -e STLC.tex -r . \
   STLC.agda
+
+python3 agdatex.py -v -f -e SystemF1.tex -r . \
+  SystemF1.agda

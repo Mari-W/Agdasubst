@@ -6,8 +6,8 @@ open import Agda.Builtin.Equality.Rewrite
 
 open import STLC
 
-{-# BUILTIN REWRITE _⟶_ #-}
-{-# REWRITE ⟶β #-}
+{-  # BUILTIN REWRITE _⟶_ #-}
+{-  # REWRITE ⟶β #-}
 
 
 postulate
@@ -27,7 +27,7 @@ e₀ = lam con
 _ : app (var here) con [ e₀ ] ≡ app (lam con) con
 _ = refl
 
--- {-# REWRITE ·[] β≡ #-}
+{-# REWRITE ·[] β≡ #-}
 
 _ : lam (var here · con) · e₀ ≡ con
-_ = {!   !}
+_ = refl

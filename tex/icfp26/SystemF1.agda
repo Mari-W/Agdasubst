@@ -43,7 +43,7 @@ opaque
   idᴿ : n →ᴿ n
   idᴿ α = α
 
-  -- push new variable
+  -- extend with new variable
   _∙ᴿ_ :  Fin n₂ → n₁ →ᴿ n₂ → suc n₁ →ᴿ n₂
   (α ∙ᴿ ρ) zero = α
   (_ ∙ᴿ ρ) (suc α) = ρ α
@@ -56,7 +56,7 @@ opaque
   _∘_ : n₁ →ᴿ n₂ → n₂ →ᴿ n₃ → n₁ →ᴿ n₃
   (ρ₁ ∘ ρ₂) α = ρ₂ (ρ₁ α)
 
--- extension
+-- lifting
 _↑ᴿ : n₁ →ᴿ n₂ → suc n₁ →ᴿ suc n₂
 _↑ᴿ ρ = zero ∙ᴿ (ρ ∘ wk)
 
@@ -81,7 +81,7 @@ opaque
   ⟨_⟩ : n₁ →ᴿ n₂ → n₁ →ˢ n₂
   ⟨ ρ ⟩ α = ` (α &ᴿ ρ)
 
-  -- push new type
+  -- extend with new type
   _∙ˢ_ : Type n₂ → n₁ →ˢ n₂ → suc n₁ →ˢ n₂
   (T ∙ˢ σ) zero = T
   (T ∙ˢ σ) (suc α) = σ α
@@ -90,7 +90,7 @@ opaque
   _&ˢ_ : Fin n₁ → n₁ →ˢ n₂ → Type n₂
   α &ˢ σ = σ α
 
-  -- extension
+  -- lifting
   _↑ˢ : n₁ →ˢ n₂ → suc n₁ →ˢ suc n₂
   _↑ˢ σ = (` zero) ∙ˢ λ α → (σ α) ⋯ᴿ wk
 
@@ -256,6 +256,56 @@ opaque
   coincidence-lemma₄
 #-}
 
+idˢ : n →ˢ n
+idˢ = ⟨ idᴿ ⟩
+
+-- functorial action
+lift*-id1 : α &ᴿ (idᴿ ↑ᴿ) ≡ α
+lift*-id1 = refl
+
+lift*-comp1 : α &ᴿ ((ρ′ ∘ ρ) ↑ᴿ) ≡ (α &ᴿ (ρ′ ↑ᴿ)) &ᴿ (ρ ↑ᴿ)
+lift*-comp1 {α = zero} = refl
+lift*-comp1 {α = suc α} = refl
+
+lifts*-id1 : α &ˢ (idˢ ↑ˢ) ≡ ` α
+lifts*-id1 = refl
+
+lifts*-comp1 : α &ˢ ((σ′ ⨟ σ) ↑ˢ) ≡ (α &ˢ (σ′ ↑ˢ)) ⋯ˢ (σ ↑ˢ)
+lifts*-comp1 {α = zero} = refl
+lifts*-comp1 {α = suc α} = refl
+
+
+--! RenFunctorial {
+lift*-id : (idᴿ {n} ↑ᴿ) ≡ idᴿ
+lift*-id = refl
+
+lift*-comp : (ρ′ ∘ ρ) ↑ᴿ ≡ (ρ′ ↑ᴿ) ∘ (ρ ↑ᴿ)
+lift*-comp  = refl
+
+ren*-id : T ⋯ᴿ idᴿ ≡ T
+ren*-id = refl
+
+ren*-comp : T ⋯ᴿ (ρ′ ∘ ρ) ≡ (T ⋯ᴿ ρ′) ⋯ᴿ ρ
+ren*-comp = refl
+--! }
+
+--! SubFunctorial {
+lifts*-id : (idˢ {n} ↑ˢ) ≡ idˢ
+lifts*-id = refl
+
+lifts*-comp : (σ′ ⨟ σ) ↑ˢ ≡ (σ′ ↑ˢ) ⨟ (σ ↑ˢ)
+lifts*-comp = refl
+
+sub*-id : T ⋯ˢ idˢ ≡ T
+sub*-id = refl
+
+sub*-var : (` α) ⋯ˢ σ ≡ α &ˢ σ
+sub*-var = refl
+
+sub*-comp : T ⋯ˢ (σ ⨟ σ′) ≡ (T ⋯ˢ σ) ⋯ˢ σ′
+sub*-comp = refl
+--! }
+
 --! Weaken
 weaken : Type n → Type (suc n)
 weaken T = T ⋯ᴿ wk
@@ -290,11 +340,11 @@ data Expr : Ctx n → Type n → Set where
           Expr Γ T
   λx_   : Expr (Γ ▷ T₁) T₂ →
           Expr Γ (T₁ ⇒ T₂)
-  Λα_   : Expr (Γ ▷*) T →
-          Expr Γ (∀α T)
   _·_   : Expr Γ (T₁ ⇒ T₂) →
           Expr Γ T₁ →
           Expr Γ T₂
+  Λα_   : Expr (Γ ▷*) T →
+          Expr Γ (∀α T)
   _·*_  : Expr Γ (∀α T) →
           (T′ : Type n) →
           Expr Γ (T [ T′ ])

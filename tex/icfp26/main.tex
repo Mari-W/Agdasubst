@@ -22,6 +22,7 @@
 \input{examples}
 \input{SystemF1}
 \input{STLC}
+\input{SystemFo}
 \input{unicodeletters}
 
 \begin{document}
@@ -177,16 +178,15 @@ type renamings (left column) and substitutions (right column).
 A type renaming maps variables from one scope $n_1$ to
 another $n_2$. We write the type of type renamings as $n_1 \to^R n_2$.
 The definitions comprise (in order) weakening, the identity renaming,
-pushing a new mapping for variable
-\AgdaInductiveConstructor{zero} on a renaming, applying a renaming to a variable,
-composing two renamings, extending a renaming (to move under a
+extending a renaming, applying a renaming to a variable,
+composing two renamings, lifting a renaming (to move under a
 binder), and applying a renaming to a type.
 
 A this point, the astute reader may wonder about the use of
 \AgdaKeyword{opaque} in the definitions. The function symbols defined in an
 \AgdaKeyword{opaque} block are usable from outside, but their
 computational behavior is hidden. Thus, the only normal definition is
-$\uparrow^R$ for extending a renaming. This selective hiding is
+$\uparrow^R$ for lifting a renaming. This selective hiding is
 essential for our approach because we want to establish new definitional
 equalities (i.e., the laws of the sigma calculus with first-class
 renamigns) on top of the thus defined symbols. These new equalities 
@@ -199,8 +199,8 @@ proceed analogously. A type substitution maps variables from scope
 $n_1$ to types defined over scope $n_2$. We write the type of type
 substitutions as $n_1 \to^S n_2$. The definitions (in order)
 comprise
-lifting a renaming to a substitution, pushing a new mapping on a
-substitution, applying a substitution to variable, extending a
+lifting a renaming to a substitution, extending a
+substitution, applying a substitution to variable, lifting a
 substitution (to move under a binder), applying a substitution to a
 type, and composing two substitutions.
 
@@ -229,9 +229,9 @@ deal with composition.
 
 The third group presents computation rules for substitutions starting
 with the application of a substitution to a variable. There is one
-equation for each possible form of a substitution: pushed
+equation for each possible form of a substitution: extended
 substitution, lifted renaming, and composition of substitutions. The
-final equation in this group characterizes lifting in terms of push,
+final equation in this group characterizes lifting in terms of extension,
 weakening, and composition.
 
 The fourth group contains laws about composition of substitutions,
@@ -247,6 +247,17 @@ Orienting these equations from left to right results in a confluent
 and terminating rewrite system that we install in Agda using its
 rewrite pragma \cite{10.1145/3434341}. From now on, all equations in
 \cref{fig:system-f-sigma-calculus} are definitional!
+
+As a sanity check, we show that lifting a renaming as well as the
+action of a renaming satisfy the functor laws. All of these lemmas
+hold definitionally, some correspond directly equations from the sigma
+calculus in \cref{fig:system-f-sigma-calculus}. The latter are marked
+with $*$.\footnote{The naming of the lemmas is taken from
+  \citet{10.1007/978-3-030-33636-3_10} to enable direct comparisons.} 
+\SFTypeRenFunctorial
+
+We also show analogous results for substitution.
+\SFTypeSubFunctorial
 
 \subsection{Expressions}
 \label{sec:expressions}
@@ -271,11 +282,94 @@ Working towards intrinsically-typed expressions,
 single substitution along with type contexts, expression variables, and the syntax of
 expressions. Type contexts and expression variables follow the work of
 \citet{10.1007/978-3-030-33636-3_10}. Type contexts \AgdaDatatype{Ctx}
-keep track of expression variables and type variables
+keep track of expression variables and type
+variables. Correspondingly, variables are implemented as typed de Bruijn
+indices with an extra case \AgdaInductiveConstructor{suc*} to skip
+over type variables in the context. Skipping requires weakening of the
+type as it is used under one more type binding.
+
+Expressions are indexed by a context and a type. Each expression
+constructor corresponds to a typing rule in System F.
+
+\subsection{Examples}
+\label{sec:examples-1}
+
+
 
 \section{System F$\omega$}
 \label{sec:system-fomega}
 
+System F$\omega$ extends System F with higher-kinded types, that is,
+abstraction over type functions. This calculus is the basis of
+Haskell's type system where type functions are limited to partial
+application of type constructors. Abstraction of higher-kinded types
+is key to defining type classes for functors, monads, etc. An
+extension of F$\omega$ with isorecursive types is the basis for
+Plutus, the language of the Cardano blockchain
+\cite{10.1007/978-3-030-33636-3_10}. 
+
+\subsection{Definitions}
+\label{sec:definitions}
+
+We only give a glimpse of the definitions of the syntax of types and
+expressions, which generalize the definitions for System F from
+\cref{sec:system-f}. We do not reiterate the development of renamings
+and substitutions, as it transfers mutatis mutandis: the typings get
+more involved, but the equational laws remain exactly the same.
+
+\subsection{Examples}
+\label{sec:examples}
+
+\citet{10.1007/978-3-030-33636-3_10} consider several examples
+to demonstrate their encoding of System F$\omega\mu$. Their first group
+of examples covers Church numerals in System~F. These are covered in
+\cref{sec:examples-1}. Their second group of example covers recursive
+types. We have no counterpart for them. Unfortunately, they do not
+provide examples that exercise the full power of System F$\omega$,
+namely higher-kinded types! We fill this gap in the following.
+
+\subsubsection{Church Numerals}
+\label{sec:church-numerals}
+
+
+First, we encode (simply-typed) Church numerals \emph{in the type
+  language}. As beta reduction on the type level is definitional in
+our development, normalization of Church numerals is performed by
+Agda's type checker.
+
+The kind of type level Church numerals is as expected.
+\CNKind
+
+We define zero and successor for Church numerals in the usual way. For readability, we
+define aliases like $\lambda\beta$ and so on for the type level lambda
+$\lambda\alpha$. Analogously, we define aliases for type variables like
+$`\alpha$ for $` Z$, $`\beta$ for $` (S Z)$, and so on.
+\CNZeroSucc
+
+We construct the Church numeral for $2$ by applying the successor
+twice to zero. The proof that this term is equal to is normal form is definitional.
+\CNTwoProof
+
+Finally, we define addition and construct $2$ by adding $1+1$. The
+corresponding equality proof puts some load on the type checker and
+takes more than a minute to complete on the authors' machine.
+\CNAddition
+
+\subsubsection{Arrows}
+\label{sec:arrows}
+
+The final example is inspired by the work on arrows
+\cite{DBLP:journals/scp/Hughes00}. This work uses type classes to
+abstract over different instantiations of the function arrow. For
+clarity, we start with an Agda version of the function that we wish to
+implement in System F$\omega$.
+
+\FOPrelude
+
+\FOTyApp
+\FOAbstApp
+\FOInstApp
+\FOUseApp
 
 
 \bibliographystyle{ACM-Reference-Format}

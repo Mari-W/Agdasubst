@@ -11,3 +11,7 @@ python3 agdatex.py -v -f -e STLC.tex -r . \
 
 python3 agdatex.py -v -f -e SystemF1.tex -r . \
   SystemF1.agda
+
+python3 agdatex.py -v -f -e SystemFo.tex -r . \
+	SystemFo.agda SystemFo-examples.agda
+

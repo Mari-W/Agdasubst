@@ -283,10 +283,10 @@ lift*-comp : (ρ′ ∘ ρ) ↑ᴿ ≡ (ρ′ ↑ᴿ) ∘ (ρ ↑ᴿ)
 lift*-comp  = refl
 
 ren*-id : T ⋯ᴿ idᴿ ≡ T
-ren*-id = refl
+ren*-id = refl                  -- *
 
 ren*-comp : T ⋯ᴿ (ρ′ ∘ ρ) ≡ (T ⋯ᴿ ρ′) ⋯ᴿ ρ
-ren*-comp = refl
+ren*-comp = refl                -- *
 --! }
 
 --! SubFunctorial {
@@ -300,10 +300,10 @@ sub*-id : T ⋯ˢ idˢ ≡ T
 sub*-id = refl
 
 sub*-var : (` α) ⋯ˢ σ ≡ α &ˢ σ
-sub*-var = refl
+sub*-var = refl                 -- *
 
 sub*-comp : T ⋯ˢ (σ ⨟ σ′) ≡ (T ⋯ˢ σ) ⋯ˢ σ′
-sub*-comp = refl
+sub*-comp = refl                -- *
 --! }
 
 --! Weaken

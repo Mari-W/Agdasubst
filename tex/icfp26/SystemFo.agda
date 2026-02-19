@@ -19,7 +19,7 @@ data Kind : Set where
   _⇒_ : Kind → Kind → Kind
 
 variable
-  J K : Kind
+  I J K : Kind
 
 data Ctx* : Set where
   ∅ : Ctx*

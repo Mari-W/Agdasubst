@@ -42,7 +42,7 @@
 \orcid{0009-0008-1152-165X}
 
 \begin{abstract}
-
+  TODO: ABSTRACT
 \end{abstract}
 
 \maketitle
@@ -93,7 +93,7 @@ in \cref{sec:types}.
 
 However, managing intrinsically typed syntax can become significantly
 more demanding. For example, \citet{10.1007/978-3-030-33636-3_10}
-present a formalization of System $F_\omega$, which is inspired by
+present a formalization of System~$F_\omega$, which is inspired by
 prior work of \citet{DBLP:conf/csl/AltenkirchR99},
 \citet{DBLP:phd/ethos/Chapman09}, and
 \citet{DBLP:conf/cpp/Allais0MM17}. \citet{10.1007/978-3-030-33636-3_10}
@@ -121,8 +121,8 @@ cumbersome, inefficient, and far away from the holy grail of
 definitional equality, which just works.
 
 In this paper, we examine the transfer hell arising by
-intrinsically-typed syntax encodings of System-F and
-System-F$\omega$. Specifically, we consider the problems arising with
+intrinsically-typed syntax encodings of System~F and
+System~F$\omega$. Specifically, we consider the problems arising with
 type-renaming-indexed renamings and type-substitution-indexed
 substitutions. We propose to install the laws of the sigma calculus as
 definitional equalities for type substitutions, thus simplifying
@@ -137,10 +137,10 @@ definitional (for type substitutions). The tricky part of this injection is to
 obtain a confluent and terminating rewrite system in connection with
 the existing definitional equalities.
 
-We first exercise this program for plain System-F in
+We first exercise this program for plain System~F in
 \cref{sec:system-f}, radically simplifying the transfer-ridden approach used by
 \citet{10.1145/3678000.3678201}, 
-and then apply the same techniques to System-F$\omega$ in
+and then apply the same techniques to System~F$\omega$ in
 \cref{sec:system-fomega}. In the latter, the main difference to
 previous work \cite{10.1007/978-3-030-33636-3_10} lies in our
 intrinsic treatment of type conversion, which leads to significant
@@ -166,9 +166,9 @@ simplifications.
   \label{fig:system-f-ren-sub}
 \end{figure}
 
-The syntax of System-F types uses the standard de Bruijn encoding of
+The syntax of System~F types uses the standard de Bruijn encoding of
 variables by natural numbers. The index $n$ stands for the number of
-type variables in scope. Variables are drawn from the type $Fin n$, i.e.,
+type variables in scope. Variables are drawn from the type $\AgdaDatatype{Fin}\ n$, i.e.,
 the set $\{0,\dots, n-1\}$. The $\forall$-binder introduces a new type
 variable, and $\Rightarrow$ is the infix function type constructor.
 \SFTypeDefinition
@@ -289,17 +289,23 @@ over type variables in the context. Skipping requires weakening of the
 type as it is used under one more type binding.
 
 Expressions are indexed by a context and a type. Each expression
-constructor corresponds to a typing rule in System F.
+constructor corresponds to a typing rule in System~F.
+
+TODO: expression renamings and substitution
+
+TODO: progress
+
+TODO: expression substitution laws (monad laws for substitutions)
 
 \subsection{Examples}
 \label{sec:examples-1}
 
-
+TODO: Church numerale
 
 \section{System F$\omega$}
 \label{sec:system-fomega}
 
-System F$\omega$ extends System F with higher-kinded types, that is,
+System~F$\omega$ extends System~F with higher-kinded types, that is,
 abstraction over type functions. This calculus is the basis of
 Haskell's type system where type functions are limited to partial
 application of type constructors. Abstraction of higher-kinded types
@@ -312,20 +318,26 @@ Plutus, the language of the Cardano blockchain
 \label{sec:definitions}
 
 We only give a glimpse of the definitions of the syntax of types and
-expressions, which generalize the definitions for System F from
+expressions, which generalize the definitions for System~F from
 \cref{sec:system-f}. We do not reiterate the development of renamings
 and substitutions, as it transfers mutatis mutandis: the typings get
 more involved, but the equational laws remain exactly the same.
+
+TODO: definitions
+
+TODO: progress - same as before
+
+TODO: type level conversion
 
 \subsection{Examples}
 \label{sec:examples}
 
 \citet{10.1007/978-3-030-33636-3_10} consider several examples
-to demonstrate their encoding of System F$\omega\mu$. Their first group
+to demonstrate their encoding of System~F$\omega\mu$. Their first group
 of examples covers Church numerals in System~F. These are covered in
 \cref{sec:examples-1}. Their second group of example covers recursive
 types. We have no counterpart for them. Unfortunately, they do not
-provide examples that exercise the full power of System F$\omega$,
+provide examples that exercise the full power of System~F$\omega$,
 namely higher-kinded types! We fill this gap in the following.
 
 \subsubsection{Church Numerals}
@@ -362,8 +374,11 @@ The final example is inspired by the work on arrows
 \cite{DBLP:journals/scp/Hughes00}. This work uses type classes to
 abstract over different instantiations of the function arrow. For
 clarity, we start with an Agda version of the function that we wish to
-implement in System F$\omega$.
+implement in System~F$\omega$. 
 
+This function is a glorified identity function. It abstracts over a
+binary type constructor $\kappa$, two types $\beta$ and $\alpha$, then
+it takes an application function and applies it to suitable arguments.
 \FOPrelude
 
 \FOTyApp
@@ -371,13 +386,17 @@ implement in System F$\omega$.
 \FOInstApp
 \FOUseApp
 
+\section{Conclusions}
+\label{sec:conclusions}
+
+
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}
 
-\appendix
+% \appendix
 
-\section{Proofs}
+% \section{Proofs}
 
 \end{document}
 \endinput

@@ -6,55 +6,68 @@ open import Agda.Builtin.Equality.Rewrite public
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; trans; module ≡-Reasoning)
 open ≡-Reasoning
 
-open import Axiom.Extensionality.Propositional using (Extensionality; ExtensionalityImplicit)
+-- open import Axiom.Extensionality.Propositional using (Extensionality; ExtensionalityImplicit)
 
 open import SystemFo
 
 {-# REWRITE β≡* #-}
 
-ℕᵏ : Kind
-ℕᵏ = (∗ ⇒ ∗) ⇒ (∗ ⇒ ∗)
+-- -- abstracting over a type constructor
 
-zeroᵏ : Type ∅ ℕᵏ
-zeroᵏ = λα (λα (` Z))
+arrow-app : {A B : Set} (k : Set → Set → Set) → (app : k A B → A → B) → k A B → A → B
+arrow-app = λ k app f x → app f x
 
-succᵏ : Type ∅ (ℕᵏ ⇒ ℕᵏ)
-succᵏ = λα (λα (λα ((` S Z) $ (((` S (S Z)) $ (` S Z)) $ (` Z)))))
+Funᵏ : Kind
+Funᵏ = ∗ ⇒ (∗ ⇒ ∗)
 
-oneᵏ : Type ∅ ℕᵏ
-oneᵏ = λα (λα ((` S Z) $ (` Z)))
+ty-app : Type ∅ ∗
+ty-app = ∀α (∀α (∀α (((((` S (S Z)) $ (` S Z)) $ (` Z)) ⇒ ((` S Z) ⇒ (` Z)))
+                   ⇒ ((((` S (S Z)) $ (` S Z)) $ (` Z)) ⇒ ((` S Z) ⇒ (` Z))) )))
 
-_ : succᵏ $ zeroᵏ ≡ oneᵏ
-_ = begin
-      (succᵏ $ zeroᵏ)
-    ≡⟨ refl ⟩
-      (λα (λα (λα ((` S Z) $ (((` S (S Z)) $ (` S Z)) $ (` Z))))) $ zeroᵏ)
-    ≡⟨ refl ⟩
-      ((λα (λα ((` S Z) $ (((` S (S Z)) $ (` S Z)) $ (` Z))))) [ zeroᵏ ]*)
-    ≡⟨ refl ⟩
-      ( (λα (λα ((` S Z) $ (((` S (S Z)) $ (` S Z)) $ (` Z))))) ⋯ˢ ( zeroᵏ ∙ ⟨ id ⟩) )
-    ≡⟨ refl ⟩
-      ( (λα (λα ((` S Z) $ (((` S (S Z)) $ (` S Z)) $ (` Z)))  ⋯ˢ (↑ˢ ( zeroᵏ ∙ ⟨ id ⟩)) )) )
-    ≡⟨ refl ⟩
-      λα (λα ((` S Z) $ (` Z)))
-    ∎
 
-twoᵏ : Type ∅ ℕᵏ
-twoᵏ = succᵏ $ (succᵏ $ zeroᵏ)
+-- ℕᵏ : Kind
+-- ℕᵏ = (∗ ⇒ ∗) ⇒ (∗ ⇒ ∗)
 
-_ : twoᵏ ≡ λα (λα ((` S Z) $ ((` S Z) $ (` Z))))
-_ = begin
-      twoᵏ
-    ≡⟨ refl ⟩
-      succᵏ $ (succᵏ $ zeroᵏ)
-    ≡⟨ refl ⟩
-      λα (λα ((` S Z) $ ((` S Z) $ (` Z))))
-    ∎
+-- zeroᵏ : Type ∅ ℕᵏ
+-- zeroᵏ = λα (λα (` Z))
 
--- this gets *real* slow
+-- succᵏ : Type ∅ (ℕᵏ ⇒ ℕᵏ)
+-- succᵏ = λα (λα (λα ((` S Z) $ (((` S (S Z)) $ (` S Z)) $ (` Z)))))
 
-addᵏ : Type ∅ (ℕᵏ ⇒ (ℕᵏ ⇒ ℕᵏ))
-addᵏ = λα (λα (λα (λα (((` S (S (S Z))) $ (` S Z)) $ (((` S (S Z)) $ (` S Z)) $ (` Z))))))
+-- oneᵏ : Type ∅ ℕᵏ
+-- oneᵏ = λα (λα ((` S Z) $ (` Z)))
 
-_ : twoᵏ ≡ (addᵏ $ oneᵏ) $ oneᵏ
-_ = refl
+-- _ : succᵏ $ zeroᵏ ≡ oneᵏ
+-- _ = begin
+--       (succᵏ $ zeroᵏ)
+--     ≡⟨ refl ⟩
+--       (λα (λα (λα ((` S Z) $ (((` S (S Z)) $ (` S Z)) $ (` Z))))) $ zeroᵏ)
+--     ≡⟨ refl ⟩
+--       ((λα (λα ((` S Z) $ (((` S (S Z)) $ (` S Z)) $ (` Z))))) [ zeroᵏ ]*)
+--     ≡⟨ refl ⟩
+--       ( (λα (λα ((` S Z) $ (((` S (S Z)) $ (` S Z)) $ (` Z))))) ⋯ˢ ( zeroᵏ ∙ ⟨ id ⟩) )
+--     ≡⟨ refl ⟩
+--       ( (λα (λα ((` S Z) $ (((` S (S Z)) $ (` S Z)) $ (` Z)))  ⋯ˢ (↑ˢ ( zeroᵏ ∙ ⟨ id ⟩)) )) )
+--     ≡⟨ refl ⟩
+--       λα (λα ((` S Z) $ (` Z)))
+--     ∎
+
+-- twoᵏ : Type ∅ ℕᵏ
+-- twoᵏ = succᵏ $ (succᵏ $ zeroᵏ)
+
+-- _ : twoᵏ ≡ λα (λα ((` S Z) $ ((` S Z) $ (` Z))))
+-- _ = begin
+--       twoᵏ
+--     ≡⟨ refl ⟩
+--       succᵏ $ (succᵏ $ zeroᵏ)
+--     ≡⟨ refl ⟩
+--       λα (λα ((` S Z) $ ((` S Z) $ (` Z))))
+--     ∎
+
+-- -- this gets *real* slow
+
+-- addᵏ : Type ∅ (ℕᵏ ⇒ (ℕᵏ ⇒ ℕᵏ))
+-- addᵏ = λα (λα (λα (λα (((` S (S (S Z))) $ (` S Z)) $ (((` S (S Z)) $ (` S Z)) $ (` Z))))))
+
+-- _ : twoᵏ ≡ (addᵏ $ oneᵏ) $ oneᵏ
+-- _ = refl

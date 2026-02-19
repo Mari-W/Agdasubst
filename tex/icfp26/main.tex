@@ -241,13 +241,37 @@ The fifth group presents laws that govern the composition of different
 kinds of term traversal. All four combinations of applying renamings
 and substitutions to a type are covered.
 
-The final group covers laws that provide shortcuts and cover critical
-pairs that arise from the preceding laws.
+The final group contains covers laws that mediate between substitutions and renamings.
+
+Orienting these equations from left to right results in a confluent
+and terminating rewrite system that we install in Agda using its
+rewrite pragma \cite{10.1145/3434341}. From now on, all equations in
+\cref{fig:system-f-sigma-calculus} are definitional!
 
 \subsection{Expressions}
 \label{sec:expressions}
 
+\begin{figure}[tp]
+  \begin{minipage}[t]{0.49\linewidth}
+  \SFTypeWeaken
+  \SFTypeSubzero
+  \SFTypeCtx
+  \SFTypeVar
+  \end{minipage}
+  \begin{minipage}[t]{0.49\linewidth}
+    \SFExprDefinition
+  \end{minipage}
+  \caption{Type contexts, variables, and expressions}
+  \label{fig:system-f-expressions}
+\end{figure}
 
+
+Working towards intrinsically-typed expressions,
+\Cref{fig:system-f-expressions} defines type weakening and
+single substitution along with type contexts, expression variables, and the syntax of
+expressions. Type contexts and expression variables follow the work of
+\citet{10.1007/978-3-030-33636-3_10}. Type contexts \AgdaDatatype{Ctx}
+keep track of expression variables and type variables
 
 \section{System F$\omega$}
 \label{sec:system-fomega}

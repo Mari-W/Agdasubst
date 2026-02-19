@@ -235,8 +235,8 @@ opaque
   -- coincidence rules
   coincidence : ∀ (t : S ⊢ s) →
     t ⋯ˢ ⟨ ρ ⟩ ≡ (t ⋯ᴿ ρ)
-  coincidence-fold : (
-    ⟨ ρ ↑ᴿ s ⟩ ⨟ ((t ⋯ᴿ ρ) ∙ˢ idˢ))  ≡ (t ⋯ᴿ ρ) ∙ˢ ⟨ ρ ⟩
+  coincidence-fold : 
+    ⟨ ρ ↑ᴿ s ⟩ ⨟ ((t ⋯ᴿ ρ) ∙ˢ idˢ)  ≡ (t ⋯ᴿ ρ) ∙ˢ ⟨ ρ ⟩
   --! }
   coincidence-var : 
     x ⋯ˢ ⟨ ρ ⟩ ≡ ` (x ⋯ᴿ ρ)

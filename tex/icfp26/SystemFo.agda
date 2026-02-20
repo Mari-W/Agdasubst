@@ -71,13 +71,13 @@ _∘_ : Φ →ᴿ Ψ → Ψ →ᴿ Θ → Φ →ᴿ Θ
 (ρ₁ ∘ ρ₂) x = ρ₂ (ρ₁ x)
 
 
+--! FORenTraversal
 _⋯ᴿ_ : Type Φ K → Φ →ᴿ Ψ → Type Ψ K
 (` x) ⋯ᴿ ρ = ` ρ x
 (λα T) ⋯ᴿ ρ = λα (T ⋯ᴿ ↑ᴿ ρ)
 -- (T₁ $ T₂) ⋯ᴿ ρ = (T₁ ⋯ᴿ ρ) $ (T₂ ⋯ᴿ ρ)
 (∀α T) ⋯ᴿ ρ = ∀α (T ⋯ᴿ ↑ᴿ ρ)
 (T₁ ⇒ T₂) ⋯ᴿ ρ = (T₁ ⋯ᴿ ρ) ⇒ (T₂ ⋯ᴿ ρ)
-
 postulate
   traverseᴿ-$ : (T₁ $ T₂) ⋯ᴿ ρ ≡ (T₁ ⋯ᴿ ρ) $ (T₂ ⋯ᴿ ρ)
 
@@ -224,6 +224,7 @@ t [ t′ ]* = t ⋯ˢ (t′ ∙ ⟨ id ⟩)
 
 -- type equality
 
+--! FOTypeBeta
 postulate
   β≡* : (λα T₁) $ T₂ ≡ T₁ [ T₂ ]*
   

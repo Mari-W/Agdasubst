@@ -305,6 +305,9 @@ suitable functions, rather than axiomatic as with type renamings and
 substitutions. Hence, we cannot automate the simplification of
 expression substitutions; nevertheless, we define the primitives analogously.
 
+\subsubsection{Renaming}
+\label{sec:renamings}
+
 Expression renamings are indexed by type renamings because type
 variables in expression may have to be renamed at the same time as
 expression variables. This complication makes the types of the
@@ -324,6 +327,8 @@ Inductive definition of a renaming on expressions. The last case of
 the definition requires rewriting to type check.
 \SFExprRenTraversal
 
+\subsubsection{Substitution}
+\label{sec:substitution}
 
 Expression substitutions are indexed by type substitutions.
 \SFExprSubstitution
@@ -469,7 +474,8 @@ Plutus, the language of the Cardano blockchain
 \label{sec:definitions}
 
 We only give a glimpse of the definitions of the syntax of types and
-expressions, which generalize the definitions for System~F from
+expressions, which are taken from \cite{10.1007/978-3-030-33636-3_10}
+and hence generalize the definitions for System~F from
 \cref{sec:system-f}. We do not reiterate the development of renamings
 and substitutions, as it transfers mutatis mutandis: the typings get
 more involved, but the equational laws remain exactly the same.
@@ -486,12 +492,38 @@ simply-typed lambda calculus (see \cref{fig:simply-typed-syntax}).
 \FOTypeVar
 
 The definition of the type syntax also mimicks the expressions of the
-simply-typed lambda calculus, but with an important twist.
+simply-typed lambda calculus, but with an important
+twist, which deviates from the prior work. 
 \FOType
+As System~F$\omega$ enjoys full beta reduction at the type level, we
+do not define application (with symbol $\$$) as a data
+constructor. Instead, we introduce it as a symbol and use rewriting
+to extend functions on the type syntax to include application.
 
-TODO: progress - same as before
+As an example, we show the definition of applying a renaming to an
+expression. We elide the preceding definitions of lifting, extension,
+and the type substitution machinery because they are identical to the
+ones for System~F in \cref{sec:types}, save for the more elaborate type signatures.
+\FORenTraversal
 
-TODO: type level conversion
+On top of the rewriting theory for type substitutions, we install type-level beta reduction as a rewrite rule,
+using single type substitution on the right side:
+\FOTypeBeta
+\FORewrite
+The combined theory is still confluent and terminating \cite{10.1145/96709.96712,10.1145/226643.226675}.
+
+Surprisingly, type-level beta reduction is not required to define the
+syntax of expressions, expression renamings and substitutions,
+defining the operational semantics, as well as the proof of
+type safety. Thanks to definitional beta conversion at the type level,
+the expression syntax does \emph{not} require an explicit type conversion
+rule as it was the case in prior work \cite{10.1007/978-3-030-33636-3_10}.
+Hence, the proof presented in
+\cref{fig:system-f-progress} for System~F carries over, mutatis
+mutandis (i.e., adapting the type signatures).
+
+In the next section, we develop some examples that genuinely rely on
+type conversion.
 
 \subsection{Examples}
 \label{sec:examples}

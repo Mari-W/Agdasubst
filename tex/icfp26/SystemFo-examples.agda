@@ -10,6 +10,7 @@ open ≡-Reasoning
 
 open import SystemFo
 
+--! FORewrite
 {-# REWRITE β≡* #-}
 
 

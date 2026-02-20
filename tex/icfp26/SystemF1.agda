@@ -606,7 +606,7 @@ Composeˢˢ (e₁ · e₂)  _  _  _  _   = cong₂ _·_ (Composeˢˢ e₁ _ _ _ 
 Composeˢˢ (e ·* T′)  η₁ η₂ σ₁ σ₂  = cong (_·* (T′ ⋯ˢ (η₁ ⨟ η₂))) (Composeˢˢ e _ _ _ _)
 
 -- single substitution, semantics, and progress
-
+--! <
 --! Sem >
 --! SingleSub {
 _[_] : Expr (Γ ▷ T′) T → Expr Γ T′ → Expr Γ T

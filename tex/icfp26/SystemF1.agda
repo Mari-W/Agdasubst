@@ -20,7 +20,7 @@ open import Data.List using (List; []; _∷_)
 --! Definition
 data Type (n : Nat) : Set where
   `_   : Fin n → Type n
-  ∀α_  : Type (suc n) → Type n
+  ∀α  : Type (suc n) → Type n
   _⇒_  : Type n → Type n → Type n
 
 variable
@@ -186,6 +186,7 @@ postulate
 
   -- coincidence laws
   --! Coincidence
+  -- transforming renamings to substitutions
   coincidence              : T ⋯ˢ ⟨ ζ ⟩                                 ≡ T  ⋯ᴿ ζ
   coincidence-comp         : ⟨ ζ₁ ⟩ ⨟ ⟨ ζ₂ ⟩                            ≡ ⟨ ζ₁ ∘ ζ₂ ⟩
 
@@ -370,9 +371,11 @@ variable
 Idᴿ : idᴿ ∣ Γ ⇒ᴿ Γ
 Idᴿ _ x = x -- no subst identityᵣ
 
+--! Weakening
 Wk : ∀ T → idᴿ ∣ Γ ⇒ᴿ (Γ ▷ T)
 Wk _ _ = suc
 
+--! TWeakening
 wk* : wk ∣ Γ ⇒ᴿ (Γ ▷*)
 wk* _ x = suc* x
 
@@ -438,7 +441,7 @@ _∣⟪_⟫ : ∀ ζ → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → ⟨ ζ ⟩ ∣ Γ₁ ⇒�
 
 --! Ids
 Idˢ : idˢ ∣ Γ ⇒ˢ Γ
-Idˢ _ = `_ -- no subst right-⟨ idᴿ ⟩
+Idˢ _ = `_ -- no subst identityᵣ
 
 Wkˢ : ∀ T → ⟨ idᴿ ⟩ ∣ Γ ⇒ˢ (Γ ▷ T)
 Wkˢ _ = idᴿ ∣⟪ Wk _ ⟫
@@ -596,14 +599,17 @@ Composeˢˢ : ∀ (e : Expr Γ₁ T) (η₁ : n₁ →ˢ n₂) (η₂ : n₂ →
   η₂ ∣ (η₁ ∣ e ⋯ˢ σ₁) ⋯ˢ σ₂ ≡ (η₁ ⨟ η₂) ∣ e ⋯ˢ (η₁ , η₂ ∣ σ₁ ⨾ σ₂)
 
 --! ComposeBody
-Composeˢˢ (` x)      _  _  _  _   = refl
-Composeˢˢ (λx e)     η₁ η₂ σ₁ σ₂  = cong λx (trans (Composeˢˢ e _ _ _ _)
-                                           (cong ((η₁ ⨟ η₂) ∣ e ⋯ˢ_) (Lift-Dist-Compˢˢ σ₁ σ₂)))
-Composeˢˢ (Λα e)     η₁ η₂ σ₁ σ₂  = cong Λα (trans (Composeˢˢ e _ _ _ _)
-                                           (cong (((η₁ ⨟ η₂) ↑ˢ) ∣ e ⋯ˢ_) (lift*-dist-Compˢˢ η₁ η₂ σ₁ σ₂)))
-Composeˢˢ (e₁ · e₂)  _  _  _  _   = cong₂ _·_ (Composeˢˢ e₁ _ _ _ _)
-                                             (Composeˢˢ e₂ _ _ _ _)
-Composeˢˢ (e ·* T′)  η₁ η₂ σ₁ σ₂  = cong (_·* (T′ ⋯ˢ (η₁ ⨟ η₂))) (Composeˢˢ e _ _ _ _)
+Composeˢˢ (` x)      η₁ η₂ σ₁ σ₂   = refl
+Composeˢˢ (λx e)     η₁ η₂ σ₁ σ₂  = cong λx (begin 
+                                      _  ≡⟨ Composeˢˢ e η₁ η₂ (η₁ ∣ σ₁ ⇑ˢ _) (η₂ ∣ σ₂ ⇑ˢ _) ⟩
+                                      _  ≡⟨ cong ((η₁ ⨟ η₂) ∣ e ⋯ˢ_) (Lift-Dist-Compˢˢ σ₁ σ₂) ⟩
+                                      _  ∎)
+Composeˢˢ (Λα e)     η₁ η₂ σ₁ σ₂  = cong Λα (begin
+                                      _  ≡⟨ Composeˢˢ e (η₁ ↑ˢ) (η₂ ↑ˢ) (η₁ ∣ σ₁ ↑ˢ*) (η₂ ∣ σ₂ ↑ˢ*) ⟩
+                                      _  ≡⟨ cong (((η₁ ⨟ η₂) ↑ˢ) ∣ e ⋯ˢ_) (lift*-dist-Compˢˢ η₁ η₂ σ₁ σ₂) ⟩ 
+                                      _  ∎)
+Composeˢˢ (e₁ · e₂)  η₁ η₂ σ₁ σ₂   = cong₂ _·_ (Composeˢˢ e₁ η₁ η₂ σ₁ σ₂) (Composeˢˢ e₂ η₁ η₂ σ₁ σ₂)
+Composeˢˢ (e ·* T′)  η₁ η₂ σ₁ σ₂  = cong (_·* (T′ ⋯ˢ (η₁ ⨟ η₂))) (Composeˢˢ e η₁ η₂ σ₁ σ₂)
 
 -- single substitution, semantics, and progress
 --! <

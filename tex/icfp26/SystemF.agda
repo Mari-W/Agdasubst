@@ -20,7 +20,7 @@ open import Data.List using (List; []; _∷_)
 
 data Type (n : Nat) : Set where
   `_   : Fin n → Type n
-  ∀α_  : Type (suc n) → Type n
+  ∀α   : Type (suc n) → Type n
   _⇒_  : Type n → Type n → Type n
 
 variable

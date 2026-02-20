@@ -115,7 +115,7 @@ type-changing lemmas to terms that are already known to be equal. This
 situation is annoying because proof assistants like Agda plainly
 refuse to let users even state this equality.\footnote{A situation
   that can be addressed using heterogeneous equality introduced in
-  Conor McBride's thesis.} A workaround is to state definitions and
+  Conor McBride's thesis~\cite{DBLP:conf/types/McBride00}.} A workaround is to state definitions and
 proofs with explicit equivalence relations, but this practice is
 cumbersome, inefficient, and far away from the holy grail of
 definitional equality, which just works.
@@ -169,14 +169,14 @@ simplifications.
 The syntax of System~F types uses the standard de Bruijn encoding of
 variables by natural numbers. The index $n$ stands for the number of
 type variables in scope. Variables are drawn from the type $\AgdaDatatype{Fin}\ n$, i.e.,
-the set $\{0,\dots, n-1\}$. The $\forall$-binder introduces a new type
-variable, and $\Rightarrow$ is the infix function type constructor.
+the set $\{0,\dots, n-1\}$. The  \AgdaInductiveConstructor{$\forall\alpha$}-binder introduces a new type
+variable, and \AgdaInductiveConstructor{$\Rightarrow$} is the infix function type constructor.
 \SFTypeDefinition
 
 \Cref{fig:system-f-ren-sub} contains the first step in defining
 type renamings (left column) and substitutions (right column).
 A type renaming $\zeta$ maps variables from one scope $n_1$ to
-another $n_2$. We write the type of type renamings as $n_1 \to^R n_2$.
+another $n_2$. We write the type of type renamings as $n_1$ \AgdaFunction{$\to^R$} $n_2$.
 The definitions comprise (in order) weakening, the identity renaming,
 extending a renaming, applying a renaming to a variable,
 composing two renamings, lifting a renaming (to move under a
@@ -186,7 +186,7 @@ A this point, the astute reader may wonder about the use of
 \AgdaKeyword{opaque} in the definitions. The function symbols defined in an
 \AgdaKeyword{opaque} block are usable from outside, but their
 computational behavior is hidden. Thus, the only normal definition is
-$\uparrow^R$ for lifting a renaming. This selective hiding is
+\AgdaFunction{$\uparrow^R$} for lifting a renaming. This selective hiding is
 essential for our approach because we want to establish new definitional
 equalities (i.e., the laws of the sigma calculus with first-class
 renamigns) on top of the thus defined symbols. These new equalities 
@@ -197,7 +197,7 @@ definitions locally and proceed as usual.
 For substitutions (right column of \cref{fig:system-f-ren-sub}) we
 proceed analogously. A type substitution $\eta$ maps variables from scope
 $n_1$ to types defined over scope $n_2$. We write the type of type
-substitutions as $n_1 \to^S n_2$. The definitions (in order)
+substitutions as $n_1$ \AgdaFunction{$\to^S$} $n_2$. The definitions (in order)
 comprise
 lifting a renaming to a substitution, extending a
 substitution, applying a substitution to variable, lifting a
@@ -314,6 +314,10 @@ complicated.
 Defining the identity renaming is straightforward due to the presence
 of rewriting for type substitutions.
 \SFExprRenIdr
+Weakening of a renaming by a value binding. 
+\SFExprRenWeakening
+Weakening of a renaming by a type binding.
+\SFExprRenTWeakening
 Extension of a renaming.
 \SFExprRenExtension
 Lifting of a renaming over a value binding.
@@ -423,9 +427,8 @@ adjustments for type substitutions can be ignored and we can
 concentrate on the gist of the proof, rather than being overwhelmed by
 transfers. The remaining fly in the ointment is the explicit passing
 of the type substitutions $\eta_1$ and $\eta_2$. We chose to make them
-explicit; while Agda can infer them in many places (indicated by using
-the wildcard $\_$), there are equally many places where inference is
-not possible.
+explicit; while Agda can infer them in many places, 
+there are equally many places where inference is not possible.
 \SFExprSubComposeBody
 
 This proof relies on further properties, in particular
@@ -443,7 +446,7 @@ material gives the full story.
 
 As an example of System~F expressions, we present some definitions for
 Church numerals. We start with their type. For readability, we define aliases for type variables like
-$`\alpha$ for $` Z$, $`\beta$ for $` (S Z)$, and analogously for
+\AgdaFunction{$`\alpha$} for \AgdaInductiveConstructor{` Z}, \AgdaFunction{$`\beta$} for \AgdaInductiveConstructor{` (S Z)}, and analogously for
 expression variables and binders.
 \FCNType
 We give the definitions for some constants and the successor operation.
@@ -517,9 +520,9 @@ The kind of type level Church numerals is as expected.
 \CNKind
 
 We define zero and successor for Church numerals in the usual way. For readability, we
-define aliases like $\lambda\beta$ and so on for the type level lambda
-$\lambda\alpha$. Analogously, we define aliases for type variables like
-$`\alpha$ for $` Z$, $`\beta$ for $` (S Z)$, and so on.
+define aliases like \AgdaFunction{$\lambda\beta$} and so on for the type level lambda
+\AgdaFunction{$\lambda\alpha$}. Analogously, we define aliases for type variables like
+\AgdaFunction{$`\alpha$} for \AgdaInductiveConstructor{` Z}, \AgdaFunction{$`\beta$} for \AgdaInductiveConstructor{` (S Z)}, and so on.
 \CNZeroSucc
 
 We construct the Church numeral for $2$ by applying the successor

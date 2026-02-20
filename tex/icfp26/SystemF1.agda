@@ -376,6 +376,7 @@ Wk _ _ = suc
 wk* : wk ∣ Γ ⇒ᴿ (Γ ▷*)
 wk* _ x = suc* x
 
+--! Composition
 _,_∣_⊚_ : ∀ ζ₁ ζ₂ → ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂ → ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃ → (ζ₁ ∘ ζ₂) ∣ Γ₁ ⇒ᴿ Γ₃
 (_ , _ ∣ ρ₁ ⊚ ρ₂) _ x = ρ₂ _ (ρ₁ _ x)
 
@@ -447,6 +448,7 @@ wk*ˢ = wk ∣⟪ wk* ⟫
 
 -- extending a substitution
 -- new symbol?
+--! Extension
 _∣_∙ˢ_ : ∀ η → Expr Γ₂ (T ⋯ˢ η) → η ∣ Γ₁ ⇒ˢ Γ₂ → η ∣ (Γ₁ ▷ T) ⇒ˢ Γ₂
 (_ ∣ e ∙ˢ σ) _ zero     = e
 (_ ∣ e ∙ˢ σ) _ (suc x)  = σ _ x
@@ -474,10 +476,9 @@ _∣_⋯ˢ_ : (η : n₁ →ˢ n₂) → Expr Γ₁ T → η ∣ Γ₁ ⇒ˢ Γ�
 η  ∣ (e · e₁)   ⋯ˢ σ  = (η ∣ e ⋯ˢ σ) · (η ∣ e₁ ⋯ˢ σ)
 η  ∣ (e ·* T′)  ⋯ˢ σ  = (η ∣ e ⋯ˢ σ) ·* (T′ ⋯ˢ η) -- no subst swap sub single subst
 
+--! CompDefinition
 _,_∣_⨾_ : ∀ η₁ η₂ → η₁ ∣ Γ₁ ⇒ˢ Γ₂ → η₂ ∣ Γ₂ ⇒ˢ Γ₃ → (η₁ ⨟ η₂) ∣ Γ₁ ⇒ˢ Γ₃
 (_ , _ ∣ σ₁ ⨾ σ₂) _ x = _ ∣ (σ₁ _ x) ⋯ˢ σ₂
-
---! <
 
 opaque
   η-Id : ⟨ idᴿ ⟩ ∣ (` (zero {Γ = Γ} {T = T})) ∙ˢ (Wkˢ T) ≡ (Idˢ {Γ = Γ ▷ T})
@@ -590,13 +591,19 @@ lift*-dist-Compˢˢ _ η₂ σ₁ σ₂ = fun-ext λ _ → fun-ext λ
     _ ≡⟨ sym (Composeˢᴿ e _ wk σ₂ wk*) ⟩
     _ ∎ }
 
+--! ComposeType
 Composeˢˢ : ∀ (e : Expr Γ₁ T) (η₁ : n₁ →ˢ n₂) (η₂ : n₂ →ˢ n₃) (σ₁ : η₁ ∣ Γ₁ ⇒ˢ Γ₂) (σ₂ : η₂ ∣ Γ₂ ⇒ˢ Γ₃) →
   η₂ ∣ (η₁ ∣ e ⋯ˢ σ₁) ⋯ˢ σ₂ ≡ (η₁ ⨟ η₂) ∣ e ⋯ˢ (η₁ , η₂ ∣ σ₁ ⨾ σ₂)
-Composeˢˢ (` x)     _  _  _  _   = refl
-Composeˢˢ (λx e)    η₁ η₂ σ₁ σ₂  = cong λx (trans (Composeˢˢ e _ _ _ _) (cong ((η₁ ⨟ η₂) ∣ e ⋯ˢ_) (Lift-Dist-Compˢˢ σ₁ σ₂)))
-Composeˢˢ (Λα e)    η₁ η₂ σ₁ σ₂  = cong Λα (trans (Composeˢˢ e _ _ _ _) (cong (((η₁ ⨟ η₂) ↑ˢ) ∣ e ⋯ˢ_) (lift*-dist-Compˢˢ η₁ η₂ σ₁ σ₂)))
-Composeˢˢ (e₁ · e₂) _  _  _  _   = cong₂ _·_ (Composeˢˢ e₁ _ _ _ _) (Composeˢˢ e₂ _ _ _ _)
-Composeˢˢ (e ·* T′) η₁ η₂ σ₁ σ₂  = cong (_·* (T′ ⋯ˢ (η₁ ⨟ η₂))) (Composeˢˢ e _ _ _ _)
+
+--! ComposeBody
+Composeˢˢ (` x)      _  _  _  _   = refl
+Composeˢˢ (λx e)     η₁ η₂ σ₁ σ₂  = cong λx (trans (Composeˢˢ e _ _ _ _)
+                                           (cong ((η₁ ⨟ η₂) ∣ e ⋯ˢ_) (Lift-Dist-Compˢˢ σ₁ σ₂)))
+Composeˢˢ (Λα e)     η₁ η₂ σ₁ σ₂  = cong Λα (trans (Composeˢˢ e _ _ _ _)
+                                           (cong (((η₁ ⨟ η₂) ↑ˢ) ∣ e ⋯ˢ_) (lift*-dist-Compˢˢ η₁ η₂ σ₁ σ₂)))
+Composeˢˢ (e₁ · e₂)  _  _  _  _   = cong₂ _·_ (Composeˢˢ e₁ _ _ _ _)
+                                             (Composeˢˢ e₂ _ _ _ _)
+Composeˢˢ (e ·* T′)  η₁ η₂ σ₁ σ₂  = cong (_·* (T′ ⋯ˢ (η₁ ⨟ η₂))) (Composeˢˢ e _ _ _ _)
 
 -- single substitution, semantics, and progress
 

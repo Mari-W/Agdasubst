@@ -332,8 +332,11 @@ define. But this simplicity is due to the installed rewriting of type
 substitutions, which avoids an explicit application of a transport
 lemma using \AgdaPostulate{comp-id$_r$}.
 \SFExprSubIds
-The same holds for lifting of a substitution over a value binding, but
-using a different transport lemma.
+Extending a substitution is standard.
+\SFExprSubExtension
+Due to the structure of contexts, we need two lifting lemmas, one for
+value bindings and another for type bindings. 
+The former requires a transport lemma, which is applied by rewriting.
 \SFExprSubLifting
 Lifting a substitution over a type binding is straightforward.
 \SFExprSubTLifting
@@ -384,7 +387,56 @@ structure of this proof closely follows the corresponding proof by
 because their semantics is call-by-value and their language supports
 isorecursive types.
 
-TODO: expression substitution laws (monad laws for substitutions)
+\subsection{Laws for Renamings and Substitutions}
+\label{sec:laws-renam-subst}
+
+Proving type safety for System~F \emph{requires} exercising the
+substitution theory at the \emph{type level}. Without installing its
+laws as definitional equalities, many definitions become more
+cumbersome because transport lemmas have to be inserted to equalize
+the types of (Agda) expressions.
+
+While proving type safety does \emph{not} require exercising same
+theory at the \emph{expression level}, it is still good practice to
+verify functorial and monadic properties of expression
+substitutions. Moreover, if we were to move on to constructing and
+proving properties of logical relations, then these properties would
+be needed \cite{10.1145/3678000.3678201}.
+
+As an example, we examine the composition of two expression
+substitutions. Its definition involves two type substitutions $\eta_1$ and $\eta_2$ that
+index the corresponding expression substitutions $\sigma_1$ and
+$\sigma_2$. The composed expression substitution is indexed by the
+composition of  $\eta_1$ and $\eta_2$. Type checking this definition
+already exercises the laws for composition of type substitutions.
+\SFExprSubCompDefinition
+
+Here is the statement of functoriality of expression substitution:
+applying two substitutions one after the other to an expression is the
+same as applying their composition. This statement is a very prominent
+example of transfer hell: the types of the left and right side of the
+equality are different and would require a transfer without our
+rewriting machinery in place.
+\SFExprSubComposeType
+We show the proof of this property just do demonstrate that type
+adjustments for type substitutions can be ignored and we can
+concentrate on the gist of the proof, rather than being overwhelmed by
+transfers. The remaining fly in the ointment is the explicit passing
+of the type substitutions $\eta_1$ and $\eta_2$. We chose to make them
+explicit; while Agda can infer them in many places (indicated by using
+the wildcard $\_$), there are equally many places where inference is
+not possible.
+\SFExprSubComposeBody
+
+This proof relies on further properties, in particular
+\AgdaFunction{Lift-Dist-Comp$^{SS}$} (lifting a composition of substitutions
+is equal to composing their liftings) and
+\AgdaFunction{lift*-dist-Comp$^{SS}$} (its counterpart for lifting
+over type bindings), where the statement and proof would require
+explicit transfers. Essentially, these properties form a ``food
+chain'' that stops at the composition properties of renamings with
+renamings and liftings, all with similar issues. The supplemental
+material gives the full story.
 
 \subsection{Examples}
 \label{sec:examples-1}

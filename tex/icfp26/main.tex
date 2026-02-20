@@ -474,7 +474,20 @@ expressions, which generalize the definitions for System~F from
 and substitutions, as it transfers mutatis mutandis: the typings get
 more involved, but the equational laws remain exactly the same.
 
-TODO: definitions
+For System~F$\omega$, type variables have more structure as in
+System~F, as there are arrow kinds in addition to plain types. We use
+$I, J, K$ to range over types.
+\FOKind
+Consequently, kind contexts are not mere numbers, but lists of kinds
+that grow to the right. Kind contexts are ranged over by $\Phi, \Psi, \Theta$.
+\FOTypeCtx
+Type variables have the same structure as plain variables in the
+simply-typed lambda calculus (see \cref{fig:simply-typed-syntax}).
+\FOTypeVar
+
+The definition of the type syntax also mimicks the expressions of the
+simply-typed lambda calculus, but with an important twist.
+\FOType
 
 TODO: progress - same as before
 

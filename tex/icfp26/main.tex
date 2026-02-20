@@ -24,6 +24,9 @@
 \input{STLC}
 \input{SystemFo}
 \input{unicodeletters}
+\usepackage{latex-hell/agda-generated}
+\input{latex-hell/extra}
+
 
 \begin{document}
 
@@ -446,6 +449,27 @@ chain'' that stops at the composition properties of renamings with
 renamings and liftings, all with similar issues. The supplemental
 material gives the full story.
 
+\subsection{Comparison to Proof in Transfer Hell}
+We compare this proof to the one without the additional 
+definitional equalities for type substitutions, provided in the supplement 
+for the aforementioned logical relation construction \cite{10.1145/3678000.3678201}. 
+Here we only state the \emph{type} of the proof and the induction case for application, 
+which is among the short ones.
+\EFFusionSubSub
+The mapping from their to our syntax (in order) is
+\begin{itemize}
+  \item $\Delta$ $\mapsto$ $n$
+  \item \AgdaFunction{ESub} $\mapsto$ \AgdaFunction{$\_∣\_⋯ˢ\_$}
+  \item $\sigma^*$ $\mapsto$ $\eta$
+  \item \AgdaFunction{fusion-Tsub-Tsub} $\mapsto$ \AgdaFunction{compose$^{SS}$}
+  \item \AgdaFunction{$\_∘ˢˢ$} $\mapsto$ \AgdaFunction{$\_⨟\_$}
+  \item \AgdaFunction{$\_$>>$ˢˢ\_$} $\mapsto$ \AgdaFunction{$\_∣\_⨟\_$}
+\end{itemize}
+The authors use heterogeneous equality to proof the lemma, 
+thereby avoiding some of the troubles arising from transfer hell.
+\LambdaEx
+The full proof can be found in Appendix ~ref{appendix:appendix-proof}
+
 \subsection{Examples}
 \label{sec:examples-1}
 
@@ -603,9 +627,16 @@ beta reduction $\beta{\equiv}*$.
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}
 
-% \appendix
+\appendix
 
-% \section{Proofs}
+\section{Proof for Compose Monad Law in Transfer Hell}\label{appendix:appendix-proof}
+
+\AgdaNoSpaceAroundCode{}
+\setlength{\mathindent}{0pt}
+\fotenotesize{}
+\EFExampleProofPrelude
+\ExampleProof
+
 
 \end{document}
 \endinput

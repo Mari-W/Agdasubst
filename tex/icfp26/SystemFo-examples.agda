@@ -12,70 +12,46 @@ open import SystemFo
 
 {-# REWRITE β≡* #-}
 
--- readability
-∀β ∀κ : Type (Φ ,* J) ∗ → Type Φ ∗
-∀β = ∀α
-∀κ = ∀α
-
-λβ λγ : Type (Φ ,* J) K → Type Φ (J ⇒ K)
-λβ = λα
-λγ = λα
-
-λf λg λz λy : Expr (Γ , T₁) T₂ → Expr Γ (T₁ ⇒ T₂)
-λf = λx
-λg = λx
-λz = λx
-λy = λx
-
-`α : Type (Φ ,* K) K
-`α = ` Z
-`β : Type ((Φ ,* K) ,* J) K
-`β = ` (S Z)
-`κ `γ : Type (((Φ ,* K) ,* I) ,* J) K
-`κ = ` (S (S Z))
-`γ = `κ
-
-Λκ Λβ : Expr (Γ ,*) T → Expr Γ (∀α T)
-Λκ = Λα
-Λβ = Λα
-
-`x : Expr (Γ , T) T
-`x = ` Z
-`y `g : Expr ((Γ , T) , T₁) T
-`y = ` (S Z)
-`g = ` (S Z)
-`z `f : Expr (((Γ , T) , T₂) , T₁) T
-`z = ` (S (S Z))
-`f = `z
 
 -- abstracting over a type constructor
 
---! FOPrelude
-arrow-app : (κ : Set → Set → Set) (β α : Set) → (app : κ β α → β → α) → κ β α → β → α
-arrow-app = λ κ β α → λ app f x → app f x
+module example-in-agda where
+  --! FOPrelude {
+  ty : Set₁
+  ty = (κ : Set → Set → Set) (β α : Set) (app : κ β α → β → α) (f : κ β α) (x : β) → α
+
+  abst : ty
+  abst = λ κ β α → λ app f x → app f x
+
+  inst : ∀ α → ty → α → α
+  inst = λ α g x → g (λ β α → (β → α)) α α (λ f x → f x) (λ z → z) x
+
+  use : ∀ α → α → α
+  use = λ α x → inst α abst x
+  --! }
 
 Funᵏ : Kind
 Funᵏ = ∗ ⇒ (∗ ⇒ ∗)
 
 --! FOTyApp
-ty-app : Type Φ ∗
-ty-app = ∀κ (∀β (∀α ((((`κ $ `β) $ `α) ⇒ (`β ⇒ `α))
+ty-enc : Type Φ ∗
+ty-enc = ∀κ (∀β (∀α ((((`κ $ `β) $ `α) ⇒ (`β ⇒ `α))
                    ⇒ (((`κ $ `β) $ `α) ⇒ (`β ⇒ `α)))))
 
 --! FOAbstApp
-abst-app : Expr Γ ty-app
-abst-app = Λκ (Λβ (Λα (λf (λy (λx ((`f · `y) · `x))))))
+abst-enc : Expr Γ ty-enc
+abst-enc = Λκ (Λβ (Λα (λf (λy (λx ((`f · `y) · `x))))))
 
 --! FOInstApp
-inst-app : Expr Γ (∀α (ty-app ⇒ (`α ⇒ `α)))
-inst-app = Λα (λg (λx ((((((`g • (λβ (λα (`β ⇒ `α)))) • `α) • `α)
-                                    · (λy (λx (`y · `x))))
-                                    · (λx `x))
-                                    · `x)))
+inst-enc : Expr Γ (∀α (ty-enc ⇒ (`α ⇒ `α)))
+inst-enc = Λα (λg (λx ((((((`g  • (λβ (λα (`β ⇒ `α)))) • `α) • `α)
+                                · (λy (λx (`y · `x))))
+                                · (λx `x))
+                                · `x)))
 
 --! FOUseApp
-use-app : Expr ∅ (∀α (`α ⇒ `α))
-use-app = Λα (λx (((inst-app • `α) · abst-app) · `x))
+use-enc : Expr ∅ (∀α (`α ⇒ `α))
+use-enc = Λα (λx (((inst-enc • `α) · abst-enc) · `x))
 
 -- type level Church numerals
 

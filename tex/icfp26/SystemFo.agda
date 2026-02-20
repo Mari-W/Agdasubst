@@ -400,28 +400,69 @@ run (suc n) e
 ... | e″ , e′⟶e″ , mve″ = e″ , ⟶trans e⟶e′ e′⟶e″ , mve″
 
 -- examples
+-- readability
+∀β ∀κ : Type (Φ ,* J) ∗ → Type Φ ∗
+∀β = ∀α
+∀κ = ∀α
+
+λβ λγ : Type (Φ ,* J) K → Type Φ (J ⇒ K)
+λβ = λα
+λγ = λα
+
+λf λg λz λy : Expr (Γ , T₁) T₂ → Expr Γ (T₁ ⇒ T₂)
+λf = λx
+λg = λx
+λz = λx
+λy = λx
+
+`α : Type (Φ ,* K) K
+`α = ` Z
+`β : Type ((Φ ,* K) ,* J) K
+`β = ` (S Z)
+`κ `γ : Type (((Φ ,* K) ,* I) ,* J) K
+`κ = ` (S (S Z))
+`γ = `κ
+
+Λκ Λβ : Expr (Γ ,*) T → Expr Γ (∀α T)
+Λκ = Λα
+Λβ = Λα
+
+`x : Expr (Γ , T) T
+`x = ` Z
+`y `g : Expr ((Γ , T) , T₁) T
+`y = ` (S Z)
+`g = ` (S Z)
+`z `f : Expr (((Γ , T) , T₂) , T₁) T
+`z = ` (S (S Z))
+`f = `z
 
 -- Church numerals
 
 -- ∀ α (α→α) → α→α
 
+--! FCNType
 ℕᶜ : Type ∅ ∗
-ℕᶜ = ∀α (((` Z) ⇒ (` Z)) ⇒ ((` Z) ⇒ (` Z)))
+ℕᶜ = ∀α ((`α ⇒ `α) ⇒ (`α ⇒ `α))
 
+--! FCNZero
 zeroᶜ : Expr ∅ ℕᶜ
-zeroᶜ = Λα (λx (λx (` Z)))
+zeroᶜ = Λα (λg (λx `x))
 
+--! FCNOne
 oneᶜ : Expr ∅ ℕᶜ
-oneᶜ = Λα (λx (λx ((` S Z) · (` Z))))
+oneᶜ = Λα (λg (λx (`g · `x)))
 
+--! FCNSucc
 succᶜ : Expr ∅ (ℕᶜ ⇒ ℕᶜ)
-succᶜ = λx (Λα (λx (λx ((` S Z) · ((((` (S (S (S* Z)))) • (` Z)) · (` S Z)) · (` Z))))))
+succᶜ = λx (Λα (λg (λx (`g · ((((` (S (S (S* Z)))) • `α) · `g) · `x)))))
 
+--! FCNTwo
 twoᶜ : Expr ∅ ℕᶜ
 twoᶜ = succᶜ · (succᶜ · zeroᶜ)
 
 fourᶜ : Expr ∅ ℕᶜ
 fourᶜ = succᶜ · (succᶜ · (succᶜ · (succᶜ · zeroᶜ)))
 
+--! FCNFour
 two+twoᶜ : Expr ∅ ℕᶜ
 two+twoᶜ = ((twoᶜ • ℕᶜ) · succᶜ)  · twoᶜ

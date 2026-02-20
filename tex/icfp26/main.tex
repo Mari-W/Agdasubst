@@ -175,7 +175,7 @@ variable, and $\Rightarrow$ is the infix function type constructor.
 
 \Cref{fig:system-f-ren-sub} contains the first step in defining
 type renamings (left column) and substitutions (right column).
-A type renaming maps variables from one scope $n_1$ to
+A type renaming $\zeta$ maps variables from one scope $n_1$ to
 another $n_2$. We write the type of type renamings as $n_1 \to^R n_2$.
 The definitions comprise (in order) weakening, the identity renaming,
 extending a renaming, applying a renaming to a variable,
@@ -195,7 +195,7 @@ we hide the latter. To prove these equalities, we open the opaque
 definitions locally and proceed as usual.
 
 For substitutions (right column of \cref{fig:system-f-ren-sub}) we
-proceed analogously. A type substitution maps variables from scope
+proceed analogously. A type substitution $\eta$ maps variables from scope
 $n_1$ to types defined over scope $n_2$. We write the type of type
 substitutions as $n_1 \to^S n_2$. The definitions (in order)
 comprise
@@ -289,18 +289,117 @@ over type variables in the context. Skipping requires weakening of the
 type as it is used under one more type binding.
 
 Expressions are indexed by a context and a type. Each expression
-constructor corresponds to a typing rule in System~F.
+constructor corresponds to a typing rule in System~F. The rule for
+type application relies on single substitution for types.
 
-TODO: expression renamings and substitution
+The definition of a small-step operational semantics requires
+expression renamings and substitution to implement beta reduction for
+value abstractions and type abstractions. As before, we aim to define
+a call-by-name semantics for concision.
 
-TODO: progress
+\subsection{Expression Renaming and Substitution}
+\label{sec:expr-renam-subst}
+
+For expressions, we represent renamings and substitutions directly by
+suitable functions, rather than axiomatic as with type renamings and
+substitutions. Hence, we cannot automate the simplification of
+expression substitutions; nevertheless, we define the primitives analogously.
+
+Expression renamings are indexed by type renamings because type
+variables in expression may have to be renamed at the same time as
+expression variables. This complication makes the types of the
+operations quite involved, although the actual operations are not that
+complicated. 
+\SFExprRenaming
+Defining the identity renaming is straightforward due to the presence
+of rewriting for type substitutions.
+\SFExprRenIdr
+Extension of a renaming.
+\SFExprRenExtension
+Lifting of a renaming over a value binding.
+\SFExprRenLifting
+Lifting of a renaming over a type binding.
+\SFExprRenTLifting
+Inductive definition of a renaming on expressions. The last case of
+the definition requires rewriting to type check.
+\SFExprRenTraversal
+
+
+Expression substitutions are indexed by type substitutions.
+\SFExprSubstitution
+The identity substitution for expressions is straightforward to
+define. But this simplicity is due to the installed rewriting of type
+substitutions, which avoids an explicit application of a transport
+lemma using \AgdaPostulate{comp-id$_r$}.
+\SFExprSubIds
+The same holds for lifting of a substitution over a value binding, but
+using a different transport lemma.
+\SFExprSubLifting
+Lifting a substitution over a type binding is straightforward.
+\SFExprSubTLifting
+These operations are sufficient to define the application of a
+substitution to an expression.
+\SFExprSubTraversal
+
+\subsection{Semantics}
+\label{sec:semantics}
+
+\begin{figure}[tp]
+  \begin{minipage}[t]{0.49\linewidth}
+    \SFExprSemProgressDefs
+  \end{minipage}
+  \begin{minipage}[t]{0.49\linewidth}
+    \SFExprSemProgress
+  \end{minipage}
+  \caption{Progress for System~F}
+  \label{fig:system-f-progress}
+\end{figure}
+
+We are now in position to define a small-step operational
+semantics. The definition of single substitution, needed for beta
+reduction, is analogous to the one on types: we build the substitution
+by extending the identity substitution with the argument. In addition, a type
+substitution into expression is needed for beta reduction of type
+applications. This substitution is also implemented by an expression
+substitution indexed by a type substitution that performs the actual change.
+\SFExprSemSingleSub
+
+With substitution in place, the definition of call-by-name small-step
+reduction is straightforward. As usual, such a definition of reduction for
+intrinsically-typed syntax implies subject reduction by construction.
+\SFExprSemDefinition
+
+To obtain type safety, it remains to prove progress.
+\Cref{fig:system-f-progress} presents the complete proof of progress
+for call-by-name System~F. A value is either a lambda or a big lambda
+where the body is already a value. An expression fulfills progress if
+it is either a value (\AgdaInductiveConstructor{done}) or it can make
+a step (\AgdaInductiveConstructor{step}). Due to the definition of
+value for big lambdas, we establish progress for type contexts that
+may contain type bindings, but no value bindings. These contexts are
+characterized by function \AgdaFunction{NoVar}. The actual proof of
+progress is by induction on the structure of expressions. The overall
+structure of this proof closely follows the corresponding proof by
+\cite{10.1007/978-3-030-33636-3_10}. Their proof is more complicated
+because their semantics is call-by-value and their language supports
+isorecursive types.
 
 TODO: expression substitution laws (monad laws for substitutions)
 
 \subsection{Examples}
 \label{sec:examples-1}
 
-TODO: Church numerale
+As an example of System~F expressions, we present some definitions for
+Church numerals. We start with their type. For readability, we define aliases for type variables like
+$`\alpha$ for $` Z$, $`\beta$ for $` (S Z)$, and analogously for
+expression variables and binders.
+\FCNType
+We give the definitions for some constants and the successor operation.
+\FCNZero
+\FCNOne
+\FCNSucc
+\FCNTwo
+% \FCNFour
 
 \section{System F$\omega$}
 \label{sec:system-fomega}
@@ -363,7 +462,7 @@ twice to zero. The proof that this term is equal to is normal form is definition
 \CNTwoProof
 
 Finally, we define addition and construct $2$ by adding $1+1$. The
-corresponding equality proof puts some load on the type checker and
+corresponding equality proof puts a significant load on the type checker and
 takes more than a minute to complete on the authors' machine.
 \CNAddition
 
@@ -376,15 +475,25 @@ abstract over different instantiations of the function arrow. For
 clarity, we start with an Agda version of the function that we wish to
 implement in System~F$\omega$. 
 
-This function is a glorified identity function. It abstracts over a
+The function \AgdaFunction{abst} is a glorified identity function. It abstracts over a
 binary type constructor $\kappa$, two types $\beta$ and $\alpha$, then
-it takes an application function and applies it to suitable arguments.
+it takes an abstract application function $app$ and applies it to an
+abstract function $f$ and a suitable
+argument $x$. Function \AgdaFunction{inst} instantiates this function. It
+acts like an eliminator for \AgdaFunction{abst}. The function
+\AgdaFunction{use} puts both together.
 \FOPrelude
-
+We start by defining the type in our encoding.
 \FOTyApp
+Next, we encode the defining expression equivalent to \AgdaFunction{abst}.
 \FOAbstApp
+To use this function, we encode functions \AgdaFunction{inst} and \AgdaFunction{use}.
 \FOInstApp
 \FOUseApp
+
+The definitions of the encodings require beta conversion at the type
+level. These definitions are not accepted without the rewriting of
+beta reduction $\beta{\equiv}*$.
 
 \section{Conclusions}
 \label{sec:conclusions}

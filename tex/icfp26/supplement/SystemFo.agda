@@ -88,20 +88,12 @@ _→ˢ_ : Ctx* → Ctx* → Set
 variable
   σ σ₁ σ₂ σ₃ : Φ →ˢ Ψ
 
--- just helpers! 
--- {-# inline -#} so that agda does not say we rewrite 
--- on reducing symbols..
 ⟨_⟩ : Φ →ᴿ Ψ → Φ →ˢ Ψ
 ⟨ ρ ⟩ x = ` ρ x
 {-# INLINE ⟨_⟩ #-} 
 
--- the primitives for substitution must be opaque!
--- otherwise we cannot rewrite on them (even if inlined..)
--- since the violate the rewrite rule rules 
--- ask me for an example for where it breaks if neccessary!
+
 opaque
-  -- σₛ­ₚ calculus with first class renamings
-  
   -- syntax
   _∙_ : Type Ψ K → Φ →ˢ Ψ → (Φ ▷* K) →ˢ Ψ
   (t ∙ σ) Z = t
@@ -124,22 +116,6 @@ _⋯ˢ_ : Type Φ K → Φ →ˢ Ψ → Type Ψ K
 opaque  
   _⨟_ : Φ →ˢ Ψ → Ψ →ˢ Θ → Φ →ˢ Θ
   (σ₁ ⨟ σ₂) x = (σ₁ x) ⋯ˢ σ₂
-
-  -- rewrite system
-  -- you probably shouldnt care too much about 
-  -- the spcific system here, it just "the same as in autosubst" 
-  -- namely the σₛₚ calculus
-  
-  -- importantly: it is locally confluent and terminating
-  -- (not complete in presence of first class renamings)
-  -- <insert reference>
-  -- thus valid rewrite rules 
-
-  -- more importantly, we do not 
-  -- (by convention, currently not enforced) use (σ _ x) 
-  -- to lookup a variable in a substittution, 
-  -- but rather use the blocking symbol x ⋯ˢ σ
-  -- on which we can rewrite the sigma laws!
 
 postulate
   -- first-class renamings 

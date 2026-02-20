@@ -1,6 +1,6 @@
 -- rewriting safe, when rewrites terminate, double checked by kernel
 {-# OPTIONS --rewriting --local-confluence-check --double-check #-}
-module SystemF1 where
+module SystemF where
 open import Agda.Builtin.Equality.Rewrite public
 
 -- standard eq reasoning
@@ -109,7 +109,8 @@ opaque
 variable
   η η′ η₁ η₂ η₃ : n₁ →ˢ n₂
 
-postulate
+opaque
+  unfolding wkᴿ ⟨_⟩ _⨟_
   -- rewrite system
   -- you probably shouldnt care too much about
   -- the spcific system here, it just "the same as in autosubst"
@@ -117,7 +118,6 @@ postulate
 
   -- importantly: it is locally confluent and terminating
   -- (not complete in presence of first class renamings)
-  -- <insert reference>
   -- thus valid rewrite rules
 
   -- more importantly, we do not
@@ -144,10 +144,6 @@ postulate
   `η-law                   : (zero &ᴿ ζ) ∙ᴿ (wkᴿ ∘ ζ)  ≡ ζ
   --! }
 
-  -- beta laws
-  -- beta-id                 : α &ˢ ⟨ idᴿ ⟩ ≡ ` α
-  -- beta-wkᴿ                 : α &ˢ ⟨ suc ⟩ ≡ ` suc α
-
   --! SubstitutionBeta {
   -- computing substitutions
   beta-ext-zero           : zero  &ˢ (T ∙ˢ η)                ≡ T
@@ -164,8 +160,7 @@ postulate
   η-id                    : (` zero {n}) ∙ˢ ⟨ wkᴿ ⟩           ≡ ⟨ idᴿ ⟩
   η-law                   : (zero &ˢ η) ∙ˢ (⟨ wkᴿ ⟩ ⨟ η)      ≡ η
   --! }
-  -- η-lawᴿ                  : (` (zero &ᴿ ζ)) ∙ˢ (⟨ wkᴿ ⟩ ⨟ ⟨ ζ ⟩)   ≡ ⟨ ζ ⟩
-  -- distributivityᴿ         : (T ∙ˢ η₁) ⨟ ⟨ ζ₂ ⟩               ≡ (T ⋯ᴿ ζ₂) ∙ˢ (η₁ ⨟ ⟨ ζ₂ ⟩)
+ 
   -- monad laws
   --! Monad
   -- composing renamings and substitutions
@@ -175,22 +170,102 @@ postulate
   composeˢᴿ      : (T ⋯ˢ η₁) ⋯ᴿ ζ₂   ≡ T ⋯ˢ (η₁ ⨟ ⟨ ζ₂ ⟩)
   composeˢˢ      : (T ⋯ˢ η₁) ⋯ˢ η₂   ≡ T ⋯ˢ (η₁ ⨟ η₂)
 
-
-  -- traversal-x             : (` α)         ⋯ˢ η  ≡ α &ˢ η
-  -- traversal-∀             : (∀α T)        ⋯ˢ η  ≡ ∀α (T ⋯ˢ (η ↑ˢ))
-  -- traversal-⇒             : (T₁ ⇒ T₂)     ⋯ˢ η  ≡ (T₁ ⋯ˢ η) ⇒ (T₂ ⋯ˢ η)
-
-  -- `traversal-x             : (` α)         ⋯ᴿ ζ  ≡ ` (α &ᴿ ζ)
-  -- `traversal-∀             : (∀α T)        ⋯ᴿ ζ  ≡ ∀α (T ⋯ᴿ (ζ ↑ᴿ))
-  -- `traversal-⇒             : (T₁ ⇒ T₂)     ⋯ᴿ ζ  ≡ (T₁ ⋯ᴿ ζ) ⇒ (T₂ ⋯ᴿ ζ)
-
   -- coincidence laws
   --! Coincidence
   -- transforming substitutions to renamings
   coincidence              : T ⋯ˢ ⟨ ζ ⟩                                 ≡ T  ⋯ᴿ ζ
   coincidence-comp         : ⟨ ζ₁ ⟩ ⨟ ⟨ ζ₂ ⟩                            ≡ ⟨ ζ₁ ∘ ζ₂ ⟩
 
-  -- proofs
+  identityᵣˢ : T ⋯ˢ ⟨ idᴿ ⟩          ≡ T
+
+  `beta-ext-zero = refl
+  `beta-ext-suc  = refl
+  `beta-id       = refl
+  `beta-wk       = refl
+  `beta-comp     = refl
+
+  `associativity  = refl
+  `distributivity = fun-ext λ { zero → refl; (suc x) → refl }
+  `interact       = refl
+  `comp-idᵣ       = refl
+  `comp-idₗ       = refl
+  `η-id           = fun-ext λ { zero → refl; (suc x) → refl }
+  `η-law          = fun-ext λ { zero → refl; (suc x) → refl }
+
+  beta-ext-zero = refl
+  beta-ext-suc  = refl
+  beta-rename   = refl
+  beta-comp     = refl
+  beta-lift     = cong ((` zero) ∙ˢ_) (sym (fun-ext λ x → coincidence))
+
+  associativity {η₁ = η₁} = fun-ext (λ x → composeˢˢ {T = η₁ x})
+  distributivity = fun-ext λ { zero → refl; (suc x) → refl }
+  interact       = refl
+  comp-idᵣ       = fun-ext (λ x → identityᵣˢ)
+  comp-idₗ       = refl
+  η-id           = fun-ext λ { zero → refl; (suc x) → refl }
+  η-law          = fun-ext λ { zero → refl; (suc x) → refl }
+
+
+  lift-idᴿ : (idᴿ {n}) ↑ᴿ ≡ idᴿ
+  lift-idᴿ = fun-ext λ { zero → refl; (suc x) → refl }
+  identityᵣ {T = (` x)}    = refl
+  identityᵣ {T = (∀α T)}    = cong ∀α (trans (cong (T ⋯ᴿ_) lift-idᴿ) (identityᵣ {T = T}))
+  identityᵣ {T = (T₁ ⇒ T₂) }    = cong₂ _⇒_ (identityᵣ {T = T₁}) (identityᵣ {T = T₂})
+
+  lift-coincidence : ∀ {n₁ n₂} {ζ : n₁ →ᴿ n₂} → (⟨ ζ ⟩ ↑ˢ) ≡ ⟨ ζ ↑ᴿ ⟩
+  lift-coincidence = fun-ext λ { zero → refl; (suc α) → refl }
+
+  coincidence {T = ` α} = refl
+  coincidence {T = ∀α T} {ζ = ζ} = cong ∀α (trans (cong (T ⋯ˢ_) lift-coincidence) coincidence)
+  coincidence {T = T₁ ⇒ T₂} = cong₂ _⇒_ coincidence coincidence
+
+  coincidence-comp = fun-ext λ α → refl
+
+  lift-composeᴿᴿ : ∀ {n₁ n₂ n₃} {ζ₁ : n₁ →ᴿ n₂} {ζ₂ : n₂ →ᴿ n₃} → (ζ₁ ↑ᴿ) ∘ (ζ₂ ↑ᴿ) ≡ (ζ₁ ∘ ζ₂) ↑ᴿ
+  lift-composeᴿᴿ = fun-ext λ { zero → refl; (suc α) → refl }
+
+  composeᴿᴿ {T = ` α} = refl
+  composeᴿᴿ {T = ∀α T} = cong ∀α (trans composeᴿᴿ (cong (T ⋯ᴿ_) lift-composeᴿᴿ))
+  composeᴿᴿ {T = T₁ ⇒ T₂} = cong₂ _⇒_ composeᴿᴿ composeᴿᴿ
+
+  lift-composeᴿˢ : ∀ {n₁ n₂ n₃} {ζ₁ : n₁ →ᴿ n₂} {η₂ : n₂ →ˢ n₃} → (⟨ ζ₁ ↑ᴿ ⟩ ⨟ (η₂ ↑ˢ)) ≡ ((⟨ ζ₁ ⟩ ⨟ η₂) ↑ˢ)
+  lift-composeᴿˢ = fun-ext λ { zero → refl; (suc α) → refl }
+
+  composeᴿˢ {T = ` α} = refl
+  composeᴿˢ {T = ∀α T} = cong ∀α (trans (composeᴿˢ {T = T}) (cong (T ⋯ˢ_) lift-composeᴿˢ))
+  composeᴿˢ {T = T₁ ⇒ T₂} = cong₂ _⇒_ (composeᴿˢ {T = T₁}) (composeᴿˢ {T = T₂})
+
+  lift-composeˢᴿ : ∀ {n₁ n₂ n₃} {η₁ : n₁ →ˢ n₂} {ζ₂ : n₂ →ᴿ n₃} → ((η₁ ↑ˢ) ⨟ ⟨ ζ₂ ↑ᴿ ⟩) ≡ ((η₁ ⨟ ⟨ ζ₂ ⟩) ↑ˢ)
+  lift-composeˢᴿ {η₁ = η₁} {ζ₂ = ζ₂} = fun-ext λ { zero → refl; (suc α) → 
+    let T = η₁ α in
+    begin
+    (T ⋯ᴿ wkᴿ) ⋯ˢ ⟨ ζ₂ ↑ᴿ ⟩ ≡⟨ coincidence ⟩
+    (T ⋯ᴿ wkᴿ) ⋯ᴿ (ζ₂ ↑ᴿ)   ≡⟨ composeᴿᴿ ⟩
+    T ⋯ᴿ (wkᴿ ∘ (ζ₂ ↑ᴿ))    ≡⟨ sym composeᴿᴿ ⟩
+    (T ⋯ᴿ ζ₂) ⋯ᴿ wkᴿ        ≡⟨ cong (_⋯ᴿ wkᴿ) (sym coincidence) ⟩
+    (T ⋯ˢ ⟨ ζ₂ ⟩) ⋯ᴿ wkᴿ    ∎ }
+
+  composeˢᴿ {T = ` α} = sym coincidence
+  composeˢᴿ {T = ∀α T} = cong ∀α (trans (composeˢᴿ {T = T}) (cong (T ⋯ˢ_) lift-composeˢᴿ))
+  composeˢᴿ {T = T₁ ⇒ T₂} = cong₂ _⇒_ (composeˢᴿ {T = T₁}) (composeˢᴿ {T = T₂})
+
+  lift-composeˢˢ : ∀ {n₁ n₂ n₃} {η₁ : n₁ →ˢ n₂} {η₂ : n₂ →ˢ n₃} → ((η₁ ↑ˢ) ⨟ (η₂ ↑ˢ)) ≡ ((η₁ ⨟ η₂) ↑ˢ)
+  lift-composeˢˢ {η₁ = η₁} {η₂ = η₂} = fun-ext λ { zero → refl; (suc α) → 
+    let T = η₁ α in
+    begin
+    (T ⋯ᴿ wkᴿ) ⋯ˢ (η₂ ↑ˢ)    ≡⟨ composeᴿˢ {T = T} ⟩
+    T ⋯ˢ (⟨ wkᴿ ⟩ ⨟ (η₂ ↑ˢ)) ≡⟨ cong (T ⋯ˢ_) (fun-ext λ x → sym (coincidence {T = η₂ x})) ⟩
+    T ⋯ˢ (η₂ ⨟ ⟨ wkᴿ ⟩)      ≡⟨ sym (composeˢᴿ {T = T}) ⟩
+    (T ⋯ˢ η₂) ⋯ᴿ wkᴿ         ∎ }
+
+  composeˢˢ {T = ` α} = refl
+  composeˢˢ {T = ∀α T} = cong ∀α (trans (composeˢˢ {T = T}) (cong (T ⋯ˢ_) lift-composeˢˢ))
+  composeˢˢ {T = T₁ ⇒ T₂} = cong₂ _⇒_ (composeˢˢ {T = T₁}) (composeˢˢ {T = T₂})
+
+  identityᵣˢ {T = ` α} = refl
+  identityᵣˢ {T = ∀α T} = cong ∀α (trans (cong (T ⋯ˢ_) η-id) identityᵣˢ)
+  identityᵣˢ {T = T₁ ⇒ T₂} = cong₂ _⇒_ identityᵣˢ identityᵣˢ
 
 -- more coincidence lemmas ...
 -- all follow directly from case analysis
@@ -672,3 +747,4 @@ progress nv (e ·* T′)
   with progress nv e
 ... | done (Λα v) = step β-Λ
 ... | step e⟶e′ = step (ξ-·* e⟶e′)
+ 

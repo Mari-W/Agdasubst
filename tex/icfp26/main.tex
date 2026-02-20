@@ -121,7 +121,7 @@ proving type safety. This is because subject reduction holds by construction and
 follows by a simple inductive proof (right column). The style of these
 definitions is adapted from the textbook by
 \citet{DBLP:journals/scp/KokkeSW20}. We elide the definition  of the
-substitution operator $\_[\_]$, as we discuss substitutions in detail
+substitution operator \AgdaFunction{$\_[\_]$}, as we discuss substitutions in detail
 in \cref{sec:types}.
 
 The simply-typed lambda calculus therefore represents the ideal
@@ -334,6 +334,9 @@ kinds of term traversal. All four combinations of applying renamings
 and substitutions to a type are covered.
 
 The final group contains covers laws that mediate between substitutions and renamings.
+The extraction of renamings from substitutions in general requires a dedicated solving
+strategy~\cite{10.1145/3293880.3294101} and we have omitted some additionally required coincidence laws
+from the figure.
 
 Orienting these equations from left to right results in a confluent
 and terminating rewrite system that we install in Agda using its

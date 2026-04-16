@@ -20,7 +20,6 @@ auto/
 latex/
 .agdatex*
 agda-generated*
-*.pdf
 supplement.zip
 .mypy_cache
 _build

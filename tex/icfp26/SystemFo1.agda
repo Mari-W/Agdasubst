@@ -96,7 +96,6 @@ _→ˢ_ : Ctx* → Ctx* → Set
 variable
   σ σ₁ σ₂ σ₃ : Φ →ˢ Ψ
 
-
 opaque
   ⟨_⟩ : Φ →ᴿ Ψ → Φ →ˢ Ψ
   ⟨ ρ ⟩ _ x = ` (ρ _ x)
@@ -125,8 +124,9 @@ opaque
   (σ₁ ⨟ σ₂) _ x = (σ₁ _ x) ⋯ˢ σ₂
 
 
-opaque
-  unfolding wkᴿ ⟨_⟩ _⨟_
+postulate
+-- opaque
+--   unfolding wkᴿ ⟨_⟩ _⨟_
   `beta-ext-zero           : Z  &ᴿ (α ∙ᴿ ρ)        ≡ α
   `beta-ext-suc            : S α &ᴿ (α′ ∙ᴿ ρ)       ≡ α &ᴿ ρ
   `beta-id                 : α &ᴿ idᴿ                 ≡ α
@@ -165,9 +165,9 @@ opaque
   coincidence-comp         : ⟨ ρ₁ ⟩ ⨟ ⟨ ρ₂ ⟩                            ≡ ⟨ ρ₁ ∘ ρ₂ ⟩
 
   coincidence-lemma₁  : (⟨ ρ ↑ᴿ ⟩ ⨟ ((T′ ⋯ᴿ ρ) ∙ˢ ⟨ idᴿ ⟩)) ≡ ((T′ ⋯ᴿ ρ) ∙ˢ ⟨ ρ ⟩)
-  coincidence-lemma₁ = fun-ext λ _ → fun-ext λ { Z → refl; (S x) → refl }
+  -- coincidence-lemma₁ = fun-ext λ _ → fun-ext λ { Z → refl; (S x) → refl }
   coincidence-lemma₂ : ((_↑ᴿ {Φ = Φ} wkᴿ ) ∗ Z &ˢ ((` Z) ∙ˢ ⟨ idᴿ ⟩)) ≡ (` Z)
-  coincidence-lemma₂ = refl
+  -- coincidence-lemma₂ = refl
   
   
   

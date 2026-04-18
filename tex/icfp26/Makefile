@@ -2,4 +2,4 @@
 
 run:
 	./runagdatex
-	pdflatex -interaction=nonstopmode main
+	pdflatex main

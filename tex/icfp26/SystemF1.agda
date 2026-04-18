@@ -1,6 +1,6 @@
 -- rewriting safe, when rewrites terminate, double checked by kernel
 {-# OPTIONS --rewriting --local-confluence-check --double-check #-}
-module SystemF where
+module SystemF1 where
 open import Agda.Builtin.Equality.Rewrite public
 
 -- standard eq reasoning

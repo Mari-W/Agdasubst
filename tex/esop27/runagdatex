@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+python3 agdatex.py -v -f -e SystemF.tex -r . \
+  SystemF.agda
+
+python3 agdatex.py -v -f -e examples.tex -r . \
+  examples.agda
+
+python3 agdatex.py -v -f -e STLC.tex -r . \
+  STLC.agda
+
+python3 agdatex.py -v -f -e SystemF1.tex -r . \
+  SystemF1.agda
+
+python3 agdatex.py -v -f -e SystemFo.tex -r . \
+	SystemFo.agda SystemFo-examples.agda
+

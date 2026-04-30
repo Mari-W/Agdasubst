@@ -1,0 +1,24 @@
+1. intrinsically typed syntax where substitution appears as an operation on th index leads to transfer hell.
+
+INSERT MORE STORY ABOUT THIS ISSUE 
+-> strictification paper? system f logrel paper?
+
+2. the sigma calculus provides a confluent, terminating normalization approach, already used to generate prop eq. 
+
+-> AUTOSUBST STORY 
+
+3. if we use this decision procedure to generate def eq, we solve the transfer hell problem
+
+4. for consistency, we need both the full computational behaviour and symbolic behaviour of substitutions (for adherence to rewrite rule restrictions)
+
+5. use combination of opaque + REWRITE for 
+approach that preserves logical consistency
+
+-> 4. and 5. == SHORT VERSION OF MY PAPER
+
+6. rewrite the sigma calculus on types
+
+7. avoid transfer hell inside proofs for expressions 
+  (here monad laws for expression substitution)
+
+8. can we use this for type theory in type theory?

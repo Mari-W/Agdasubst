@@ -1,0 +1,37 @@
+TODO 
+=============================================
+Source: tex/icfp26/reviews.txt
+
+P0 — Critical (raised by multiple reviewers)
+--------------------------------------------
+[ ] Termination & confluence proof outline of the rewrite system.
+    Don't just cite [1,8]; give a roadmap others can reuse. (A, B)
+[ ] Quantitative comparison vs. prior work: proof-size table and
+    type-check times. Currently the "it works" claim is unsubstantiated. (B, C)
+[ ] Address the performance elephant: Explain
+    cause, scaling, and tradeoffs. Does it scale beyond System F/Fω? (B, C)
+[ ] Rewrite for pearl style. Pages 4,6,7,8,9 are code dumps with
+    caption-prose. Add motivation/insight per definition; cut dryness
+    in 2.3; make it "instructive and entertaining". (A, B, C)
+
+P1 — Substantive gaps
+---------------------
+[ ] Related work on proof automation: Lean equality saturation
+    (POPL'26), Rocq Hammer, Isabelle Sledgehammer. Discuss whether
+    those tactics could yield similar simplifications. (A)
+[ ] Deliver on the abstract's promise of "practical guidelines" and
+    "general methodology". Give other examples where strengthening
+    definitional equality helps (or might). (B)
+[ ] Make Section 2.6 comparison concrete: explicit proof-size numbers,
+    visibly identify what counts as "transfer hell" in the appendix
+    proof, and show clearly that Compose Monad Law ≡ Compose^SS. (B)
+
+P2 — Polish
+-----------
+[ ] Explain non-standard Agda notation on first use: renaming with
+    vertical bar / right arrow (2.3.1), equational-reasoning combinators
+    (≡⟨⟩, R.=~, Qed). Don't assume Agda fluency. (B)
+[ ] Add a small additional worked example (e.g. free theorems on
+    lists) to broaden the demonstration beyond F/Fω. (B)
+[ ] Strengthen takeaways for non-Agda readers — what should a
+    Rocq/Lean/Isabelle user learn from this pearl? (B)

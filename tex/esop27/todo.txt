@@ -5,9 +5,9 @@ Source: tex/icfp26/reviews.txt
 P0 — Critical (raised by multiple reviewers)
 --------------------------------------------
 [ ]  Termination & confluence proof outline of the rewrite system.
-{MW} Don't just cite [1,8]; give a roadmap others can reuse. (A, B)
+{MW} Don't just cite [1,8].
      => explain some meta theory of RTT and how agda checks confluence 
-    
+
 [ ]  Quantitative comparison vs. prior work: proof-size table and
 {MW} type-check times. Currently the "it works" claim is unsubstantiated. (B, C)
      => will compare with out proof from the log rel. 
@@ -15,22 +15,30 @@ P0 — Critical (raised by multiple reviewers)
 [ ]  Address the performance elephant: Explain
      cause, scaling, and tradeoffs. Does it scale beyond System F/Fω? (B, C)
 
-
 [ ]  Rewrite for pearl style. Pages 4,6,7,8,9 are code dumps with
 {PT} caption-prose. Add motivation/insight per definition; cut dryness
      in 2.3; make it "instructive and entertaining". (A, B, C)
+
+[ ]  Propositional vs definitional. make clear early in the paper.
+     what is transport hell:
+{PT} transport in a proposition (type signature), gets worse when inductive proof required.
 
 P1 — Substantive gaps
 ---------------------
 [ ]  Related work on proof automation: Lean equality saturation
      (POPL'26), Rocq Hammer, Isabelle Sledgehammer. Discuss whether
      those tactics could yield similar simplifications. (A)
-     => this is easy, they dont yield def eqs
+{PT} => this is easy, they dont yield def eqs
 
 
 [ ]  Deliver on the abstract's promise of "practical guidelines" and
-{PT} "general methodology". Give other examples where strengthening
-     definitional equality helps (or might). (B)
+     "general methodology".
+     give a roadmap others can reuse. (A, B)
+     [what is a good example for demonstrating index^n substitutions]
+    
+
+[ ]  Give other examples where strengthening
+{PT} definitional equality helps (or might). (B)
 
 [ ]  Make Section 2.6 comparison concrete: explicit proof-size numbers,
 {MW} visibly identify what counts as "transfer hell" in the appendix
@@ -44,12 +52,12 @@ P2 — Polish
 -----------
 [ ]  Explain non-standard Agda notation on first use: renaming with
      vertical bar / right arrow (2.3.1), equational-reasoning combinators
-     (≡⟨⟩, R.=~, Qed). Don't assume Agda fluency. (B)
+{PT} (≡⟨⟩, R.=~, Qed). Don't assume Agda fluency. (B)
 [ ]  Add a small additional worked example (e.g. free theorems on
      lists) to broaden the demonstration beyond F/Fω. (B)
-     => ???
+     => ??? [PT: not clear if free theorems on lists is an appropriate showcase]
 [ ]  Strengthen takeaways for non-Agda readers — what should a
      Rocq/Lean/Isabelle user learn from this pearl? (B)
      => rewrite rules with instantiated proofs are good. 
-[ ]  Update to Phil syntax
+[ ]  Update to Phil syntax (standard syntax from published papers, e.g. ACC or Autosubst)
 {MW} => hopefully claude code does this.

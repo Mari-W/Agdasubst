@@ -43,14 +43,14 @@ abst-enc = Λκ (Λβ (Λα (λf (λy (λx ((`f · `y) · `x))))))
 
 --! FOInstApp
 inst-enc : Expr Γ (∀α (ty-enc ⇒ (`α ⇒ `α)))
-inst-enc = Λα (λg (λx ((((((`g  • (λβ (λα (`β ⇒ `α)))) • `α) • `α)
+inst-enc = Λα (λg (λx ((((((`g  ·* (λβ (λα (`β ⇒ `α)))) ·* `α) ·* `α)
                                 · (λy (λx (`y · `x))))
                                 · (λx `x))
                                 · `x)))
 
 --! FOUseApp
 use-enc : Expr ∅ (∀α (`α ⇒ `α))
-use-enc = Λα (λx (((inst-enc • `α) · abst-enc) · `x))
+use-enc = Λα (λx (((inst-enc ·* `α) · abst-enc) · `x))
 
 -- type level Church numerals
 
@@ -81,7 +81,7 @@ oneᵏ : Type ∅ ℕᵏ
 oneᵏ = λβ (λα (`β $ `α))
 
 addᵏ : Type ∅ (ℕᵏ ⇒ (ℕᵏ ⇒ ℕᵏ))
-addᵏ = λα (λα (λα (λα (((` S (S (S Z))) $ (` S Z)) $ (((` S (S Z)) $ (` S Z)) $ (` Z))))))
+addᵏ = λα (λα (λα (λα (((` suc (suc (suc zero))) $ (` suc zero)) $ (((` suc (suc zero)) $ (` suc zero)) $ (` zero))))))
 
 _ : twoᵏ ≡ (addᵏ $ oneᵏ) $ oneᵏ
 _ = refl

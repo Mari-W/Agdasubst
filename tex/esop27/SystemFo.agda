@@ -1,22 +1,20 @@
 -- rewriting safe, when rewrites terminate, double checked by kernel
-{-# OPTIONS --rewriting --local-confluence-check --double-check #-}
+{-# OPTIONS --rewriting --confluence-check --double-check #-}
 module SystemFo where
 open import Agda.Builtin.Equality.Rewrite public
 
--- standard eq reasoning
+-- standard equational reasoning
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; trans; module ≡-Reasoning)
 open ≡-Reasoning
 
-open import Axiom.Extensionality.Propositional using (Extensionality; ExtensionalityImplicit)
--- we rely on fun-ext for renamings/ substittutions.. 
--- with a little more effort this is not neccessary
--- <insert reference>
+-- function extensionality (postulated)
+open import Axiom.Extensionality.Propositional using (Extensionality)
 postulate
-  fun-ext : ∀{ℓ₁ ℓ₂} → Extensionality ℓ₁ ℓ₂
+  fun-ext : ∀ {ℓ₁ ℓ₂} → Extensionality ℓ₁ ℓ₂
 
 --! FOKind
 data Kind : Set where
-  ∗ : Kind
+  ∗   : Kind
   _⇒_ : Kind → Kind → Kind
 
 variable
@@ -24,374 +22,631 @@ variable
 
 --! FOTypeCtx
 data Ctx* : Set where
-  ∅ : Ctx*
+  ∅    : Ctx*
   _▷*_ : Ctx* → Kind → Ctx*
 
 variable
-  Φ Ψ Θ : Ctx*
+  Φ Φ′ Φ₁ Φ₂ Φ₃ : Ctx*
+  Ψ Ψ′ Ψ₁ Ψ₂ Ψ₃ : Ctx*
+  Θ Θ′ Θ₁ Θ₂ Θ₃ : Ctx*
 
 --! FOTypeVar
 data _∋*_ : Ctx* → Kind → Set where
-  Z  : (Φ ▷* K) ∋* K
-  S  : Φ ∋* K → (Φ ▷* J) ∋* K
+  zero  : (Φ ▷* K) ∋* K
+  suc   : Φ ∋* K → (Φ ▷* J) ∋* K
 
 --! FOType
+--! Definition
 data Type Φ : Kind → Set where
   `_   : Φ ∋* K → Type Φ K
-  λα  : Type (Φ ▷* J) K → Type Φ (J ⇒ K)
-  -- _$_  : Type Φ (J ⇒ K) → Type Φ J → Type Φ K
-  ∀α  : Type (Φ ▷* J) ∗ → Type Φ ∗
+  λα   : Type (Φ ▷* J) K → Type Φ (J ⇒ K)
+  ∀α   : Type (Φ ▷* J) ∗ → Type Φ ∗
   _⇒_  : Type Φ ∗ → Type Φ ∗ → Type Φ ∗
+
+-- type-level application is a postulate so that β≡* and traversal-$ are legal
+-- rewrite rules (constructor heads aren't allowed for rewrite rules).
 postulate
   _$_  : Type Φ (J ⇒ K) → Type Φ J → Type Φ K
+infixl 9 _$_
 
 variable
   α α′ α₁ α₂ α₃ : Φ ∋* K
   T T′ T₁ T₂ T₃ : Type Φ K
 
--- renamings are functions that with 
--- primitive operations that reduce
--- they already have (nearly) all 
--- definitional equalities we need!
+--! Renaming
+-- renamings (K is explicit so plain fun-ext suffices)
 _→ᴿ_ : Ctx* → Ctx* → Set
-Φ →ᴿ Ψ = ∀ {K} → Φ ∋* K → Ψ ∋* K
+Φ →ᴿ Ψ = (K : Kind) → Φ ∋* K → Ψ ∋* K
 
-variable
-  ρ ρ′ ρ₁ ρ₂ ρ₃ : Φ →ᴿ Ψ
-
-id : Φ →ᴿ Φ
-id x = x
---open import Function using (id)
-
-↑ᴿ : Φ →ᴿ Ψ → (Φ ▷* J) →ᴿ (Ψ ▷* J)
-↑ᴿ ρ Z    = Z
-↑ᴿ ρ (S x) = S (ρ x) 
-
-_∘_ : Φ →ᴿ Ψ → Ψ →ᴿ Θ → Φ →ᴿ Θ
-(ρ₁ ∘ ρ₂) x = ρ₂ (ρ₁ x)
-
---! FORenTraversal
-_⋯ᴿ_ : Type Φ K → Φ →ᴿ Ψ → Type Ψ K
-(` x) ⋯ᴿ ρ = ` ρ x
-(λα T) ⋯ᴿ ρ = λα (T ⋯ᴿ ↑ᴿ ρ)
--- (T₁ $ T₂) ⋯ᴿ ρ = (T₁ ⋯ᴿ ρ) $ (T₂ ⋯ᴿ ρ)
-(∀α T) ⋯ᴿ ρ = ∀α (T ⋯ᴿ ↑ᴿ ρ)
-(T₁ ⇒ T₂) ⋯ᴿ ρ = (T₁ ⋯ᴿ ρ) ⇒ (T₂ ⋯ᴿ ρ)
-postulate
-  traverseᴿ-$ : (T₁ $ T₂) ⋯ᴿ ρ ≡ (T₁ ⋯ᴿ ρ) $ (T₂ ⋯ᴿ ρ)
-
-{-# REWRITE traverseᴿ-$ #-}
-
-_→ˢ_ : Ctx* → Ctx* → Set
-Φ →ˢ Ψ = ∀ {K} → Φ ∋* K → Type Ψ K
-
-variable
-  σ σ₁ σ₂ σ₃ : Φ →ˢ Ψ
-
--- just helpers! 
--- {-# inline -#} so that agda does not say we rewrite 
--- on reducing symbols..
-⟨_⟩ : Φ →ᴿ Ψ → Φ →ˢ Ψ
-⟨ ρ ⟩ x = ` ρ x
-{-# INLINE ⟨_⟩ #-} 
-
--- the primitives for substitution must be opaque!
--- otherwise we cannot rewrite on them (even if inlined..)
--- since the violate the rewrite rule rules 
--- ask me for an example for where it breaks if neccessary!
+--! RenamingOpaque {
 opaque
-  -- σₛ­ₚ calculus with first class renamings
-  
-  -- syntax
-  _∙_ : Type Ψ K → Φ →ˢ Ψ → (Φ ▷* K) →ˢ Ψ
-  (t ∙ σ) Z = t
-  (t ∙ σ) (S x) = σ x 
+  -- weakening (J explicit)
+  wkᴿ : ∀ J → Φ →ᴿ (Φ ▷* J)
+  wkᴿ _ _ α = suc α
 
-  -- blocking alias for lookup
+  -- identity renaming
+  idᴿ : Φ →ᴿ Φ
+  idᴿ _ α = α
+
+  -- extend with new variable
+  _∙ᴿ_ : ∀ {K} → Ψ ∋* K → Φ →ᴿ Ψ → (Φ ▷* K) →ᴿ Ψ
+  (α ∙ᴿ ζ) _ zero    = α
+  (_ ∙ᴿ ζ) K (suc α) = ζ K α
+
+  -- apply renaming to variable
+  _&ᴿ_ : Φ ∋* K → Φ →ᴿ Ψ → Ψ ∋* K
+  _&ᴿ_ {K = K} α ζ = ζ K α
+
+  -- composition
+  _⨟ᴿ_ : Φ →ᴿ Ψ → Ψ →ᴿ Θ → Φ →ᴿ Θ
+  (ζ₁ ⨟ᴿ ζ₂) K α = ζ₂ K (ζ₁ K α)
+
+-- lifting (J explicit, postfix-with-arg shape)
+_↑ᴿ_ : Φ →ᴿ Ψ → ∀ J → (Φ ▷* J) →ᴿ (Ψ ▷* J)
+ζ ↑ᴿ J = zero ∙ᴿ (ζ ⨟ᴿ wkᴿ J)
+
+-- apply renaming to type
+_[_]ᴿ : Type Φ K → Φ →ᴿ Ψ → Type Ψ K
+(` α) [ ζ ]ᴿ           = ` (α &ᴿ ζ)
+(λα {J = J} T) [ ζ ]ᴿ  = λα (T [ ζ ↑ᴿ J ]ᴿ)
+(∀α {J = J} T) [ ζ ]ᴿ  = ∀α (T [ ζ ↑ᴿ J ]ᴿ)
+(T₁ ⇒ T₂) [ ζ ]ᴿ       = (T₁ [ ζ ]ᴿ) ⇒ (T₂ [ ζ ]ᴿ)
+--! }
+
+variable
+  ζ ζ′ ζ₁ ζ₂ ζ₃ : Φ →ᴿ Ψ
+
+--! Substitution
+-- substitutions (K is explicit so plain fun-ext suffices)
+_→ˢ_ : Ctx* → Ctx* → Set
+Φ →ˢ Ψ = (K : Kind) → Φ ∋* K → Type Ψ K
+
+--! SubstitutionOpaque {
+opaque
+  -- lift renaming to substitution
+  ⟨_⟩ : Φ →ᴿ Ψ → Φ →ˢ Ψ
+  ⟨ ζ ⟩ K α = ` (α &ᴿ ζ)
+
+  -- extend with new type
+  _∙ˢ_ : ∀ {K} → Type Ψ K → Φ →ˢ Ψ → (Φ ▷* K) →ˢ Ψ
+  (T ∙ˢ η) _ zero    = T
+  (T ∙ˢ η) K (suc α) = η K α
+
+  -- apply substitution to variable
   _&ˢ_ : Φ ∋* K → Φ →ˢ Ψ → Type Ψ K
-  x &ˢ σ = σ x 
+  _&ˢ_ {K = K} α η = η K α
 
-  ↑ˢ : Φ →ˢ Ψ → (Φ ▷* J) →ˢ (Ψ ▷* J)
-  ↑ˢ σ = (` Z) ∙ λ x → (σ x) ⋯ᴿ S
-  
-_⋯ˢ_ : Type Φ K → Φ →ˢ Ψ → Type Ψ K
-(` x) ⋯ˢ σ = x &ˢ σ
-(λα T) ⋯ˢ σ = λα (T ⋯ˢ ↑ˢ σ)
--- (T₁ $ T₂) ⋯ˢ σ = (T₁ ⋯ˢ σ) $ (T₂ ⋯ˢ σ)
-(∀α T) ⋯ˢ σ = ∀α (T ⋯ˢ ↑ˢ σ)
-(T₁ ⇒ T₂) ⋯ˢ σ = (T₁ ⋯ˢ σ) ⇒ (T₂ ⋯ˢ σ)
+  -- lifting (J explicit, postfix-with-arg shape)
+  _↑ˢ_ : Φ →ˢ Ψ → ∀ J → (Φ ▷* J) →ˢ (Ψ ▷* J)
+  η ↑ˢ J = (` zero) ∙ˢ λ K α → (η K α) [ wkᴿ J ]ᴿ
 
-opaque  
-  _⨟_ : Φ →ˢ Ψ → Ψ →ˢ Θ → Φ →ˢ Θ
-  (σ₁ ⨟ σ₂) x = (σ₁ x) ⋯ˢ σ₂
+-- apply substitution to type
+_[_]ˢ : Type Φ K → Φ →ˢ Ψ → Type Ψ K
+(` α) [ η ]ˢ           = α &ˢ η
+(λα {J = J} T) [ η ]ˢ  = λα (T [ η ↑ˢ J ]ˢ)
+(∀α {J = J} T) [ η ]ˢ  = ∀α (T [ η ↑ˢ J ]ˢ)
+(T₁ ⇒ T₂) [ η ]ˢ       = (T₁ [ η ]ˢ) ⇒ (T₂ [ η ]ˢ)
 
-  -- rewrite system
-  -- you probably shouldnt care too much about 
-  -- the spcific system here, it just "the same as in autosubst" 
-  -- namely the σₛₚ calculus
-  
-  -- importantly: it is locally confluent and terminating
-  -- (not complete in presence of first class renamings)
-  -- <insert reference>
-  -- thus valid rewrite rules 
-
-  -- more importantly, we do not 
-  -- (by convention, currently not enforced) use (σ _ x) 
-  -- to lookup a variable in a substittution, 
-  -- but rather use the blocking symbol x ⋯ˢ σ
-  -- on which we can rewrite the sigma laws!
-
+-- traversal of the postulated `_$_` is itself postulated (since `_$_` has no
+-- defining equations). Adding these as rewrites makes substitution push past `_$_`.
 postulate
-  -- first-class renamings 
-  beta-lift-id            : ↑ᴿ {Φ = Φ}{J = J} id {K} ≡ id
+  traversal-$ᴿ : ∀ {Φ Ψ J K} {T₁ : Type Φ (J ⇒ K)} {T₂ : Type Φ J} {ζ : Φ →ᴿ Ψ} →
+                 (T₁ $ T₂) [ ζ ]ᴿ ≡ (T₁ [ ζ ]ᴿ) $ (T₂ [ ζ ]ᴿ)
+  traversal-$ˢ : ∀ {Φ Ψ J K} {T₁ : Type Φ (J ⇒ K)} {T₂ : Type Φ J} {η : Φ →ˢ Ψ} →
+                 (T₁ $ T₂) [ η ]ˢ ≡ (T₁ [ η ]ˢ) $ (T₂ [ η ]ˢ)
 
-  -- beta laws
-  beta-id                 : α &ˢ ⟨ id ⟩ ≡ ` α  
-  beta-wk                 : α &ˢ ⟨ S {J = J} ⟩ ≡ ` S α 
-  beta-ext-zero           : Z  &ˢ (T ∙ σ)   ≡ T                             
-  beta-ext-suc            : S α &ˢ (T ∙ σ)  ≡ α &ˢ σ 
-  beta-lift               : ↑ˢ {Φ}{Ψ}{J} σ {K}           ≡ (` Z) ∙ (σ ⨟ ⟨ S ⟩)
+opaque
+  -- composition
+  _⨟ˢ_ : Φ →ˢ Ψ → Ψ →ˢ Θ → Φ →ˢ Θ
+  (η₁ ⨟ˢ η₂) K α = (η₁ K α) [ η₂ ]ˢ
+--! }
 
-  -- interaction laws
-  associativity           : ((σ₁ ⨟ σ₂) ⨟ σ₃) {K}                        ≡ σ₁ ⨟ (σ₂ ⨟ σ₃)                     
-  distributivity          : ((T ∙ σ₁) ⨟ σ₂) {K}                         ≡ ((T ⋯ˢ σ₂) ∙ (σ₁ ⨟ σ₂)) 
-  distributivityᴿ         : ((T ∙ σ₁) ⨟ ⟨ ρ₂ ⟩) {K}                     ≡ ((T ⋯ᴿ ρ₂) ∙ (σ₁ ⨟ ⟨ ρ₂ ⟩)) 
-  interact                : (⟨ S ⟩ ⨟ (T ∙ σ)) {K}                     ≡ σ                                        
-  comp-idᵣ                : (σ ⨟ ⟨ id ⟩) {K}                             ≡ σ                                               
-  comp-idₗ                : (⟨ id ⟩ ⨟ σ) {K}                             ≡ σ                                               
-  η-id                    : ((` Z) ∙ ⟨ S ⟩)  ≡ ⟨ id {Φ ▷* J} ⟩ {K}
-  η-lawˢ                  : ((Z &ˢ σ) ∙ (⟨ S ⟩ ⨟ σ)) {K}       ≡ σ
-  η-lawᴿ                  : ((` ρ Z) ∙ (⟨ S ⟩ ⨟ ⟨ ρ ⟩)) {K}   ≡ ⟨ ρ ⟩
+variable
+  η η′ η₁ η₂ η₃ : Φ →ˢ Ψ
 
-  -- monad laws
-  right-id                : ∀ (T : Type Φ K) → T ⋯ᴿ id                   ≡ T   
-  compositionalityᴿˢ      : ∀ (T : Type Φ K) → (T ⋯ᴿ ρ₁) ⋯ˢ σ₂   ≡ T ⋯ˢ (⟨ ρ₁ ⟩ ⨟ σ₂)                    
-  compositionalityᴿᴿ      : ∀ (T : Type Φ K) → (T ⋯ᴿ ρ₁) ⋯ᴿ ρ₂   ≡ T ⋯ᴿ (ρ₁ ∘ ρ₂)                     
-  compositionalityˢᴿ      : ∀ (T : Type Φ K) → (T ⋯ˢ σ₁) ⋯ᴿ ρ₂   ≡ T ⋯ˢ (σ₁ ⨟ ⟨ ρ₂ ⟩)                         
-  compositionalityˢˢ      : ∀ (T : Type Φ K) → (T ⋯ˢ σ₁) ⋯ˢ σ₂   ≡ T ⋯ˢ (σ₁ ⨟ σ₂)
+opaque
+  unfolding wkᴿ ⟨_⟩ _⨟ˢ_
 
-  -- traversal laws
-  traversal-x             : (` α)         ⋯ˢ σ  ≡ α &ˢ σ
-  traversal-λ             : (λα T)        ⋯ˢ σ  ≡ λα (T ⋯ˢ (↑ˢ σ))
-  traversal-$             : (T₁ $ T₂)     ⋯ˢ σ  ≡ (T₁ ⋯ˢ σ) $ (T₂ ⋯ˢ σ)
-  traversal-∀             : (∀α T)        ⋯ˢ σ  ≡ ∀α (T ⋯ˢ (↑ˢ σ))
-  traversal-⇒             : (T₁ ⇒ T₂)     ⋯ˢ σ  ≡ (T₁ ⋯ˢ σ) ⇒ (T₂ ⋯ˢ σ)
+  --! RenamingBeta {
+  -- computing renamings
+  `beta-ext-zero    : zero  &ᴿ (α ∙ᴿ ζ)              ≡ α
+  `beta-ext-suc     : suc α &ᴿ (α′ ∙ᴿ ζ)             ≡ α &ᴿ ζ
+  `beta-id          : α &ᴿ idᴿ                       ≡ α
+  `beta-wk          : ∀ {J} → α &ᴿ wkᴿ J             ≡ suc {J = J} α
+  `beta-comp        : α &ᴿ (ζ₁ ⨟ᴿ ζ₂)                ≡ (α &ᴿ ζ₁) &ᴿ ζ₂
+  -- interaction between renamings
+  `associativity    : (ζ₁ ⨟ᴿ ζ₂) ⨟ᴿ ζ₃               ≡ ζ₁ ⨟ᴿ (ζ₂ ⨟ᴿ ζ₃)
+  `distributivity   : (α ∙ᴿ ζ₁) ⨟ᴿ ζ₂                ≡ (α &ᴿ ζ₂) ∙ᴿ (ζ₁ ⨟ᴿ ζ₂)
+  `interact         : ∀ {Φ Ψ K} {α : Ψ ∋* K} {ζ : Φ →ᴿ Ψ} → wkᴿ K ⨟ᴿ (α ∙ᴿ ζ) ≡ ζ
+  `comp-idᵣ         : ζ ⨟ᴿ idᴿ                       ≡ ζ
+  `comp-idₗ         : idᴿ ⨟ᴿ ζ                       ≡ ζ
+  `η-id             : ∀ {Φ J} → zero {Φ}{J} ∙ᴿ wkᴿ J ≡ idᴿ
+  `η-law            : ∀ {Φ Ψ J} {ζ : (Φ ▷* J) →ᴿ Ψ} → (zero {Φ}{J} &ᴿ ζ) ∙ᴿ (wkᴿ J ⨟ᴿ ζ) ≡ ζ
+  --! }
 
-  -- coincidence laws
-  coincidence              : T ⋯ˢ ⟨ ρ ⟩                                  ≡ T  ⋯ᴿ ρ
-  coincidence-fold         : T ⋯ˢ (⟨ ↑ᴿ ρ ⟩ ⨟ ((T′ ⋯ᴿ ρ) ∙ ⟨ id ⟩))  ≡ T ⋯ˢ ((T′ ⋯ᴿ ρ) ∙ ⟨ ρ ⟩)
-  
-  
-  -- proofs 
-  
-{-# REWRITE 
-  beta-lift-id
+  --! SubstitutionBeta {
+  -- computing substitutions
+  beta-ext-zero     : zero  &ˢ (T ∙ˢ η)              ≡ T
+  beta-ext-suc      : suc α &ˢ (T ∙ˢ η)              ≡ α &ˢ η
+  beta-rename       : α &ˢ ⟨ ζ ⟩                     ≡ ` (α &ᴿ ζ)
+  beta-comp         : α &ˢ (η₁ ⨟ˢ η₂)                ≡ (α &ˢ η₁) [ η₂ ]ˢ
+  beta-lift         : ∀ {Φ Ψ J} {η : Φ →ˢ Ψ} →
+                      η ↑ˢ J ≡ (`_ {Ψ ▷* J} (zero {K = J})) ∙ˢ (η ⨟ˢ ⟨ wkᴿ J ⟩)
+  -- interaction between substitutions
+  associativity     : (η₁ ⨟ˢ η₂) ⨟ˢ η₃               ≡ η₁ ⨟ˢ (η₂ ⨟ˢ η₃)
+  distributivity    : (T ∙ˢ η₁) ⨟ˢ η₂                ≡ (T [ η₂ ]ˢ) ∙ˢ (η₁ ⨟ˢ η₂)
+  interact          : ∀ {Φ Ψ K} {T : Type Ψ K} {η : Φ →ˢ Ψ} → ⟨ wkᴿ K ⟩ ⨟ˢ (T ∙ˢ η) ≡ η
+  comp-idᵣ          : η ⨟ˢ ⟨ idᴿ ⟩                   ≡ η
+  comp-idₗ          : ⟨ idᴿ ⟩ ⨟ˢ η                   ≡ η
+  η-id              : ∀ {Φ J} → (`_ {Φ ▷* J} (zero {K = J})) ∙ˢ ⟨ wkᴿ J ⟩ ≡ ⟨ idᴿ ⟩
+  η-law             : ∀ {Φ Ψ J} {η : (Φ ▷* J) →ˢ Ψ} → (zero {Φ}{J} &ˢ η) ∙ˢ (⟨ wkᴿ J ⟩ ⨟ˢ η) ≡ η
+  --! }
 
-  beta-id
-  beta-wk
-  beta-ext-zero 
-  beta-ext-suc  
-  beta-lift     
+  -- monad laws (composing renamings and substitutions)
+  --! Monad
+  identityᵣ          : T [ idᴿ ]ᴿ        ≡ T
+  compositionalityᴿˢ : (T [ ζ₁ ]ᴿ) [ η₂ ]ˢ ≡ T [ ⟨ ζ₁ ⟩ ⨟ˢ η₂ ]ˢ
+  compositionalityᴿᴿ : (T [ ζ₁ ]ᴿ) [ ζ₂ ]ᴿ ≡ T [ ζ₁ ⨟ᴿ ζ₂ ]ᴿ
+  compositionalityˢᴿ : (T [ η₁ ]ˢ) [ ζ₂ ]ᴿ ≡ T [ η₁ ⨟ˢ ⟨ ζ₂ ⟩ ]ˢ
+  compositionalityˢˢ : (T [ η₁ ]ˢ) [ η₂ ]ˢ ≡ T [ η₁ ⨟ˢ η₂ ]ˢ
 
-  associativity  
-  distributivity 
-  distributivityᴿ
-  interact       
-  comp-idᵣ       
-  comp-idₗ       
-  η-id           
-  η-lawˢ         
-  η-lawᴿ
+  -- coincidence laws (transforming substitutions to renamings)
+  --! Coincidence
+  coincidence        : T [ ⟨ ζ ⟩ ]ˢ      ≡ T [ ζ ]ᴿ
+  coincidence-comp   : ⟨ ζ₁ ⟩ ⨟ˢ ⟨ ζ₂ ⟩  ≡ ⟨ ζ₁ ⨟ᴿ ζ₂ ⟩
 
-  right-id           
-  compositionalityᴿˢ 
-  compositionalityᴿᴿ 
-  compositionalityˢᴿ 
-  compositionalityˢˢ 
+  identityᵣˢ         : T [ ⟨ idᴿ ⟩ ]ˢ    ≡ T
 
-  traversal-$
+  -- proofs
+  `beta-ext-zero = refl
+  `beta-ext-suc  = refl
+  `beta-id       = refl
+  `beta-wk       = refl
+  `beta-comp     = refl
+
+  `associativity  = refl
+  `distributivity = fun-ext λ _ → fun-ext λ { zero → refl; (suc _) → refl }
+  `interact       = refl
+  `comp-idᵣ       = refl
+  `comp-idₗ       = refl
+  `η-id           = fun-ext λ _ → fun-ext λ { zero → refl; (suc _) → refl }
+  `η-law          = fun-ext λ _ → fun-ext λ { zero → refl; (suc _) → refl }
+
+  beta-ext-zero = refl
+  beta-ext-suc  = refl
+  beta-rename   = refl
+  beta-comp     = refl
+  beta-lift     = fun-ext λ _ → fun-ext λ { zero → refl; (suc _) → sym coincidence }
+
+  associativity {η₁ = η₁} = fun-ext λ K → fun-ext (λ α → compositionalityˢˢ {T = η₁ K α})
+  distributivity = fun-ext λ _ → fun-ext λ { zero → refl; (suc _) → refl }
+  interact       = refl
+  comp-idᵣ       = fun-ext λ _ → fun-ext (λ _ → identityᵣˢ)
+  comp-idₗ       = refl
+  η-id           = fun-ext λ _ → fun-ext λ { zero → refl; (suc _) → refl }
+  η-law          = fun-ext λ _ → fun-ext λ { zero → refl; (suc _) → refl }
+
+
+  lift-idᴿ : ∀ {Φ} J → (idᴿ {Φ}) ↑ᴿ J ≡ idᴿ
+  lift-idᴿ _ = fun-ext λ _ → fun-ext λ { zero → refl; (suc _) → refl }
+  identityᵣ {T = (` α)}              = refl
+  identityᵣ {T = (λα {J = J} T)}     = cong λα (trans (cong (T [_]ᴿ) (lift-idᴿ J)) (identityᵣ {T = T}))
+  identityᵣ {T = (∀α {J = J} T)}     = cong ∀α (trans (cong (T [_]ᴿ) (lift-idᴿ J)) (identityᵣ {T = T}))
+  identityᵣ {T = (T₁ ⇒ T₂)}          = cong₂ _⇒_ (identityᵣ {T = T₁}) (identityᵣ {T = T₂})
+
+  lift-coincidence : ∀ {Φ Ψ} J {ζ : Φ →ᴿ Ψ} → ⟨ ζ ⟩ ↑ˢ J ≡ ⟨ ζ ↑ᴿ J ⟩
+  lift-coincidence _ = fun-ext λ _ → fun-ext λ { zero → refl; (suc _) → refl }
+
+  coincidence {T = ` α}                       = refl
+  coincidence {T = λα {J = J} T} {ζ = ζ}      = cong λα (trans (cong (T [_]ˢ) (lift-coincidence J)) coincidence)
+  coincidence {T = ∀α {J = J} T} {ζ = ζ}      = cong ∀α (trans (cong (T [_]ˢ) (lift-coincidence J)) coincidence)
+  coincidence {T = T₁ ⇒ T₂}                   = cong₂ _⇒_ coincidence coincidence
+
+  coincidence-comp = fun-ext λ _ → fun-ext λ _ → refl
+
+  lift-compositionalityᴿᴿ : ∀ {Φ Ψ Θ} J {ζ₁ : Φ →ᴿ Ψ} {ζ₂ : Ψ →ᴿ Θ} → (ζ₁ ↑ᴿ J) ⨟ᴿ (ζ₂ ↑ᴿ J) ≡ (ζ₁ ⨟ᴿ ζ₂) ↑ᴿ J
+  lift-compositionalityᴿᴿ _ = fun-ext λ _ → fun-ext λ { zero → refl; (suc _) → refl }
+
+  compositionalityᴿᴿ {T = ` α}              = refl
+  compositionalityᴿᴿ {T = λα {J = J} T}     = cong λα (trans compositionalityᴿᴿ (cong (T [_]ᴿ) (lift-compositionalityᴿᴿ J)))
+  compositionalityᴿᴿ {T = ∀α {J = J} T}     = cong ∀α (trans compositionalityᴿᴿ (cong (T [_]ᴿ) (lift-compositionalityᴿᴿ J)))
+  compositionalityᴿᴿ {T = T₁ ⇒ T₂}          = cong₂ _⇒_ compositionalityᴿᴿ compositionalityᴿᴿ
+
+  lift-compositionalityᴿˢ : ∀ {Φ Ψ Θ} J {ζ₁ : Φ →ᴿ Ψ} {η₂ : Ψ →ˢ Θ} → (⟨ ζ₁ ↑ᴿ J ⟩ ⨟ˢ (η₂ ↑ˢ J)) ≡ ((⟨ ζ₁ ⟩ ⨟ˢ η₂) ↑ˢ J)
+  lift-compositionalityᴿˢ _ = fun-ext λ _ → fun-ext λ { zero → refl; (suc _) → refl }
+
+  compositionalityᴿˢ {T = ` α}              = refl
+  compositionalityᴿˢ {T = λα {J = J} T}     = cong λα (trans (compositionalityᴿˢ {T = T}) (cong (T [_]ˢ) (lift-compositionalityᴿˢ J)))
+  compositionalityᴿˢ {T = ∀α {J = J} T}     = cong ∀α (trans (compositionalityᴿˢ {T = T}) (cong (T [_]ˢ) (lift-compositionalityᴿˢ J)))
+  compositionalityᴿˢ {T = T₁ ⇒ T₂}          = cong₂ _⇒_ (compositionalityᴿˢ {T = T₁}) (compositionalityᴿˢ {T = T₂})
+
+  lift-compositionalityˢᴿ : ∀ {Φ Ψ Θ} J {η₁ : Φ →ˢ Ψ} {ζ₂ : Ψ →ᴿ Θ} → ((η₁ ↑ˢ J) ⨟ˢ ⟨ ζ₂ ↑ᴿ J ⟩) ≡ ((η₁ ⨟ˢ ⟨ ζ₂ ⟩) ↑ˢ J)
+  lift-compositionalityˢᴿ J {η₁ = η₁} {ζ₂ = ζ₂} = fun-ext λ K → fun-ext λ { zero → refl; (suc α) →
+    let T = η₁ K α in
+    begin
+      (T [ wkᴿ J ]ᴿ) [ ⟨ ζ₂ ↑ᴿ J ⟩ ]ˢ  ≡⟨ coincidence ⟩
+      (T [ wkᴿ J ]ᴿ) [ ζ₂ ↑ᴿ J ]ᴿ      ≡⟨ compositionalityᴿᴿ ⟩
+      T [ wkᴿ J ⨟ᴿ (ζ₂ ↑ᴿ J) ]ᴿ        ≡⟨ sym compositionalityᴿᴿ ⟩
+      (T [ ζ₂ ]ᴿ) [ wkᴿ J ]ᴿ           ≡⟨ cong (_[ wkᴿ J ]ᴿ) (sym coincidence) ⟩
+      (T [ ⟨ ζ₂ ⟩ ]ˢ) [ wkᴿ J ]ᴿ       ∎ }
+
+  compositionalityˢᴿ {T = ` α}              = sym coincidence
+  compositionalityˢᴿ {T = λα {J = J} T}     = cong λα (trans (compositionalityˢᴿ {T = T}) (cong (T [_]ˢ) (lift-compositionalityˢᴿ J)))
+  compositionalityˢᴿ {T = ∀α {J = J} T}     = cong ∀α (trans (compositionalityˢᴿ {T = T}) (cong (T [_]ˢ) (lift-compositionalityˢᴿ J)))
+  compositionalityˢᴿ {T = T₁ ⇒ T₂}          = cong₂ _⇒_ (compositionalityˢᴿ {T = T₁}) (compositionalityˢᴿ {T = T₂})
+
+  lift-compositionalityˢˢ : ∀ {Φ Ψ Θ} J {η₁ : Φ →ˢ Ψ} {η₂ : Ψ →ˢ Θ} → ((η₁ ↑ˢ J) ⨟ˢ (η₂ ↑ˢ J)) ≡ ((η₁ ⨟ˢ η₂) ↑ˢ J)
+  lift-compositionalityˢˢ J {η₁ = η₁} {η₂ = η₂} = fun-ext λ K → fun-ext λ { zero → refl; (suc α) →
+    let T = η₁ K α in
+    begin
+      (T [ wkᴿ J ]ᴿ) [ η₂ ↑ˢ J ]ˢ      ≡⟨ compositionalityᴿˢ {T = T} ⟩
+      T [ ⟨ wkᴿ J ⟩ ⨟ˢ (η₂ ↑ˢ J) ]ˢ    ≡⟨ cong (T [_]ˢ) (fun-ext λ _ → fun-ext λ α → sym (coincidence {T = η₂ _ α})) ⟩
+      T [ η₂ ⨟ˢ ⟨ wkᴿ J ⟩ ]ˢ           ≡⟨ sym (compositionalityˢᴿ {T = T}) ⟩
+      (T [ η₂ ]ˢ) [ wkᴿ J ]ᴿ           ∎ }
+
+  compositionalityˢˢ {T = ` α}              = refl
+  compositionalityˢˢ {T = λα {J = J} T}     = cong λα (trans (compositionalityˢˢ {T = T}) (cong (T [_]ˢ) (lift-compositionalityˢˢ J)))
+  compositionalityˢˢ {T = ∀α {J = J} T}     = cong ∀α (trans (compositionalityˢˢ {T = T}) (cong (T [_]ˢ) (lift-compositionalityˢˢ J)))
+  compositionalityˢˢ {T = T₁ ⇒ T₂}          = cong₂ _⇒_ (compositionalityˢˢ {T = T₁}) (compositionalityˢˢ {T = T₂})
+
+  identityᵣˢ {T = ` α}              = refl
+  identityᵣˢ {T = λα T}             = cong λα (trans (cong (T [_]ˢ) η-id) identityᵣˢ)
+  identityᵣˢ {T = ∀α T}             = cong ∀α (trans (cong (T [_]ˢ) η-id) identityᵣˢ)
+  identityᵣˢ {T = T₁ ⇒ T₂}          = cong₂ _⇒_ identityᵣˢ identityᵣˢ
+
+-- additional coincidence lemmas (mirroring SystemF.agda) needed to close the
+-- rewrite system on the term-level _·*_ traversal. Each lemma describes a
+-- σ-form that arises when the existing rewrites fire on a specific pattern.
+opaque
+  unfolding wkᴿ ⟨_⟩ _⨟ˢ_
+
+  -- "single substitution under renaming": lifting ζ and post-composing with a
+  -- single-substitution `_∙ˢ⟨idᴿ⟩` collapses to direct single substitution
+  -- with ζ as the tail. Justifies (T [ T′ ]*) [ ζ ]ᴿ ≡ (T [ ζ ↑ᴿ ]ᴿ) [ T′[ζ]ᴿ ]*.
+  coincidence-pop-ᴿ : ∀ {Φ Ψ J} {ζ : Φ →ᴿ Ψ} {T′ : Type Φ J} →
+                       (⟨ ζ ↑ᴿ J ⟩ ⨟ˢ ((T′ [ ζ ]ᴿ) ∙ˢ ⟨ idᴿ ⟩)) ≡ ((T′ [ ζ ]ᴿ) ∙ˢ ⟨ ζ ⟩)
+  coincidence-pop-ᴿ = fun-ext λ _ → fun-ext λ { zero → refl; (suc _) → refl }
+
+  -- variant of coincidence-pop-ᴿ where the renaming is itself a composition
+  -- ζ₁ ⨟ᴿ ζ₂; the tail keeps ⟨ ζ₁ ⟩ ⨟ˢ ⟨ ζ₂ ⟩ (not yet folded by coincidence-comp).
+  coincidence-pop-ᴿ-⨟ : ∀ {Φ Ψ Θ J} {ζ₁ : Φ →ᴿ Ψ} {ζ₂ : Ψ →ᴿ Θ} {T : Type Φ J} →
+                       ⟨ zero ∙ᴿ (ζ₁ ⨟ᴿ (ζ₂ ⨟ᴿ wkᴿ J)) ⟩ ⨟ˢ ((T [ ζ₁ ⨟ᴿ ζ₂ ]ᴿ) ∙ˢ ⟨ idᴿ ⟩)
+                       ≡ (T [ ζ₁ ⨟ᴿ ζ₂ ]ᴿ) ∙ˢ (⟨ ζ₁ ⟩ ⨟ˢ ⟨ ζ₂ ⟩)
+  coincidence-pop-ᴿ-⨟ = fun-ext λ _ → fun-ext λ { zero → refl; (suc _) → refl }
+
+  -- "lift fusion" for renaming-then-substitution: ↑ᴿ(ζ₁) ⨟ˢ ↑ˢ(η₂) ≡ ↑ˢ(⟨ζ₁⟩ ⨟ˢ η₂),
+  -- expressed in expanded form (post-`beta-lift`). Justifies the equation
+  -- (T [ ζ₁ ↑ᴿ ]ᴿ) [ η₂ ↑ˢ ]ˢ ≡ T [ (⟨ ζ₁ ⟩ ⨟ˢ η₂) ↑ˢ ]ˢ as a rewrite.
+  coincidence-↑ᴿ-↑ˢ : ∀ {Φ Ψ Θ J} {ζ₁ : Φ →ᴿ Ψ} {η₂ : Ψ →ˢ Θ} →
+                       ⟨ zero ∙ᴿ (ζ₁ ⨟ᴿ wkᴿ J) ⟩ ⨟ˢ ((`_ {Θ ▷* J} (zero {K = J})) ∙ˢ (η₂ ⨟ˢ ⟨ wkᴿ J ⟩))
+                       ≡ (`_ {Θ ▷* J} (zero {K = J})) ∙ˢ (⟨ ζ₁ ⟩ ⨟ˢ (η₂ ⨟ˢ ⟨ wkᴿ J ⟩))
+  coincidence-↑ᴿ-↑ˢ = fun-ext λ _ → fun-ext λ { zero → refl; (suc _) → refl }
+
+  -- substitution analogue of coincidence-pop-ᴿ: a "shifted renaming"
+  -- ⟨ ζ ⨟ᴿ wkᴿ ⟩ followed by a single-substitution simplifies (the wkᴿ skips
+  -- the head). Justifies (T [ T′ ]*) [ η ]ˢ ≡ (T [ η ↑ˢ ]ˢ) [ T′[η]ˢ ]*.
+  coincidence-pop-ˢ : ∀ {Φ Ψ Θ J} {η₁ : Φ →ˢ Ψ} {ζ₂ : Ψ →ᴿ Θ} {T′ : Type Φ J} →
+                       ((T′ [ η₁ ⨟ˢ ⟨ ζ₂ ⟩ ]ˢ) ∙ˢ (η₁ ⨟ˢ (⟨ ζ₂ ⨟ᴿ wkᴿ J ⟩ ⨟ˢ ((T′ [ η₁ ⨟ˢ ⟨ ζ₂ ⟩ ]ˢ) ∙ˢ ⟨ idᴿ ⟩))))
+                       ≡ ((T′ [ η₁ ⨟ˢ ⟨ ζ₂ ⟩ ]ˢ) ∙ˢ (η₁ ⨟ˢ ⟨ ζ₂ ⟩))
+  coincidence-pop-ˢ = fun-ext λ _ → fun-ext λ { zero → refl; (suc _) → refl }
+
+{-# REWRITE
+  `beta-id
+  `beta-wk
+  `beta-ext-zero
+  `beta-ext-suc
+  `beta-comp
+
+  `associativity
+  `distributivity
+  `interact
+  `comp-idᵣ
+  `comp-idₗ
+  `η-id
+  `η-law
+
+  beta-ext-zero
+  beta-ext-suc
+  beta-comp
+  beta-rename
+  beta-lift
+
+  associativity
+  distributivity
+  interact
+  comp-idᵣ
+  comp-idₗ
+  η-id
+  η-law
+
+  identityᵣ
+  compositionalityᴿˢ
+  compositionalityᴿᴿ
+  compositionalityˢᴿ
+  compositionalityˢˢ
 
   coincidence
-  coincidence-fold
+  coincidence-comp
+
+  coincidence-pop-ᴿ
+  coincidence-pop-ᴿ-⨟
+  coincidence-↑ᴿ-↑ˢ
+  coincidence-pop-ˢ
+
+  traversal-$ᴿ
+  traversal-$ˢ
 #-}
 
-weaken* : Type Φ K → Type (Φ ▷* J) K
-weaken* t = t ⋯ᴿ S
+idˢ : Φ →ˢ Φ
+idˢ = ⟨ idᴿ ⟩
 
+-- functorial action
+lift*-id : ∀ {Φ J} → (idᴿ {Φ}) ↑ᴿ J ≡ idᴿ
+lift*-id = refl
+
+lift*-comp : (ζ′ ⨟ᴿ ζ) ↑ᴿ J ≡ (ζ′ ↑ᴿ J) ⨟ᴿ (ζ ↑ᴿ J)
+lift*-comp = refl
+
+ren*-id : T [ idᴿ ]ᴿ ≡ T
+ren*-id = refl
+
+ren*-comp : T [ ζ′ ⨟ᴿ ζ ]ᴿ ≡ (T [ ζ′ ]ᴿ) [ ζ ]ᴿ
+ren*-comp = refl
+
+lifts*-id : ∀ {Φ J} → (idˢ {Φ}) ↑ˢ J ≡ idˢ
+lifts*-id = refl
+
+lifts*-comp : (η′ ⨟ˢ η) ↑ˢ J ≡ (η′ ↑ˢ J) ⨟ˢ (η ↑ˢ J)
+lifts*-comp = refl
+
+sub*-id : T [ idˢ ]ˢ ≡ T
+sub*-id = refl
+
+sub*-var : (` α) [ η ]ˢ ≡ α &ˢ η
+sub*-var = refl
+
+sub*-comp : T [ η ⨟ˢ η′ ]ˢ ≡ (T [ η ]ˢ) [ η′ ]ˢ
+sub*-comp = refl
+
+--! Weaken
+weaken : ∀ J → Type Φ K → Type (Φ ▷* J) K
+weaken J T = T [ wkᴿ J ]ᴿ
+
+--! Subzero
 _[_]* : Type (Φ ▷* J) K → Type Φ J → Type Φ K
-t [ t′ ]* = t ⋯ˢ (t′ ∙ ⟨ id ⟩)
+T [ T′ ]* = T [ T′ ∙ˢ idˢ ]ˢ
 
 -- type equality
-
 --! FOTypeBeta
 postulate
-  β≡* : (λα T₁) $ T₂ ≡ T₁ [ T₂ ]*
-  
--- term contexts
+  β≡* : ∀ {Φ J K} {T₁ : Type (Φ ▷* J) K} {T₂ : Type Φ J} →
+        _$_ {Φ}{J}{K} (λα {Φ}{J}{K} T₁) T₂ ≡ T₁ [ T₂ ]*
 
+-- term contexts
+--! Ctx
 data Ctx : Ctx* → Set where
   ∅    : Ctx ∅
-  _▷*  : Ctx Φ → Ctx (Φ ▷* J) 
   _▷_  : Ctx Φ → Type Φ ∗ → Ctx Φ
+  _▷*  : Ctx Φ → ∀ {J} → Ctx (Φ ▷* J)
 
 variable
   Γ Γ′ Γ₁ Γ₂ Γ₃ : Ctx Φ
-  Δ Δ′ : Ctx Ψ
 
 -- term variables
-
+--! Var
 data _∋_ : Ctx Φ → Type Φ ∗ → Set where
-  Z   : (Γ ▷ T) ∋ T
-  S   : Γ ∋ T → (Γ ▷ T′) ∋ T
-  S*  : Γ ∋ T → (Γ ▷*) ∋ weaken* {J = J} T
-
-data Expr {Φ} Γ : Type Φ ∗ → Set where
-  `_    : Γ ∋ T → 
-          Expr Γ T
-  λx   : Expr (Γ ▷ T₁) T₂ → 
-          Expr Γ (T₁ ⇒ T₂) 
-  Λα   : Expr (Γ ▷*) T → 
-          Expr Γ (∀α T)
-  _·_   : Expr Γ (T₁ ⇒ T₂) → 
-          Expr Γ T₁ → 
-          Expr Γ T₂
-  _•_   : Expr Γ (∀α T) →
-          (T′ : Type Φ K) → 
-          Expr Γ (T [ T′ ]*) 
+  zero  : (Γ ▷ T) ∋ T
+  suc   : Γ ∋ T → (Γ ▷ T′) ∋ T
+  suc*  : ∀ {J} → Γ ∋ T → ((Γ ▷*) {J}) ∋ weaken J T
 
 variable
-  e e′ e₁ e₂ e₃ e₁′ e₂′ e₃′ : Expr Γ T
+  x x′ x₁ x₂ x₃ : Γ ∋ T
 
--- term renamings
+--! <
+--! Expr >
+--! Definition
+data Expr {Φ} Γ : Type Φ ∗ → Set where
+  `_    : Γ ∋ T →
+          Expr Γ T
+  λx    : Expr (Γ ▷ T₁) T₂ →
+          Expr Γ (T₁ ⇒ T₂)
+  _·_   : Expr Γ (T₁ ⇒ T₂) →
+          Expr Γ T₁ →
+          Expr Γ T₂
+  Λα    : Expr (Γ ▷*) T →
+          Expr Γ (∀α T)
+  _·*_  : Expr Γ (∀α T) →
+          (T′ : Type Φ K) →
+          Expr Γ (T [ T′ ]*)
 
-_→ᴿ[_]_ : Ctx Φ → (Φ →ᴿ Ψ) → Ctx Ψ → Set
-Γ →ᴿ[ ρ ] Δ = ∀ T → Γ ∋ T  → Δ ∋ (T ⋯ᴿ ρ)
+variable
+  e e′ e₁ e₁′ e₂ e₃ : Expr Γ T
 
-_⊚ᴿ_ : (Γ₁ →ᴿ[ ρ₁ ] Γ₂) → (Γ₂ →ᴿ[ ρ₂ ] Γ₃) → (Γ₁ →ᴿ[ ρ₁ ∘ ρ₂ ] Γ₃)
-(ρ₁ ⊚ᴿ ρ₂) _ x = ρ₂ _ (ρ₁ _ x)
+--! Renaming
+_∣_⇒ᴿ_ : Φ →ᴿ Ψ → Ctx Φ → Ctx Ψ → Set
+ζ ∣ Γ₁ ⇒ᴿ Γ₂ = ∀ T → Γ₁ ∋ T → Γ₂ ∋ (T [ ζ ]ᴿ)
 
-Wk : Γ →ᴿ[ id ] (Γ ▷ T) 
-Wk _ = S
+variable
+  ρ ρ′ ρ₁ ρ₂ ρ₃ : ζ ∣ Γ₁ ⇒ᴿ Γ₂
 
-wk* : Γ →ᴿ[ S {J = J} ] (Γ ▷*) 
-wk* _ x = S* x 
+--! Ren >
+--! Idr
+Idᴿ : idᴿ ∣ Γ ⇒ᴿ Γ
+Idᴿ _ x = x
 
-_⇑ᴿ_ : (Γ₁ →ᴿ[ ρ ] Γ₂) → ∀ T → (Γ₁ ▷ T) →ᴿ[ ρ ] (Γ₂ ▷ (T ⋯ᴿ ρ))
-(ρ ⇑ᴿ _) _ Z    = Z
-(ρ ⇑ᴿ _) _ (S x) = S (ρ _ x)
+--! Weakening
+Wkᴿ : ∀ T → idᴿ ∣ Γ ⇒ᴿ (Γ ▷ T)
+Wkᴿ _ _ = suc
 
-↑ᴿ* : (Γ₁ →ᴿ[ ρ ] Γ₂) → (Γ₁ ▷*) →ᴿ[ ↑ᴿ {J = J} ρ ] (Γ₂ ▷*)
-↑ᴿ* ρ _ (S* x) = S* (ρ _ x)
+--! TWeakening
+wkᴿ* : ∀ J → wkᴿ J ∣ Γ ⇒ᴿ ((Γ ▷*) {J})
+wkᴿ* _ _ x = suc* x
 
-_⋯ᴿ[_]_ : {T : Type Φ ∗} {Γ₂ : Ctx Ψ} → 
-  Expr Γ₁ T → (ρ* : Φ →ᴿ Ψ) → (Γ₁ →ᴿ[ ρ* ] Γ₂) → Expr Γ₂ (T ⋯ᴿ ρ*)
-(` x)      ⋯ᴿ[ ρ* ] ρ = ` (ρ _ x)
-(λx e)     ⋯ᴿ[ ρ* ] ρ = λx (e ⋯ᴿ[ ρ* ] (ρ ⇑ᴿ _))
-(Λα e)     ⋯ᴿ[ ρ* ] ρ = Λα (e ⋯ᴿ[ ↑ᴿ ρ* ] (↑ᴿ* ρ))
-(e₁ · e₂)  ⋯ᴿ[ ρ* ] ρ = (e₁ ⋯ᴿ[ ρ* ] ρ) · (e₂ ⋯ᴿ[ ρ* ] ρ)
-(e • t′)   ⋯ᴿ[ ρ* ] ρ = (e ⋯ᴿ[ ρ* ] ρ) • (t′ ⋯ᴿ ρ*)
+--! Composition
+_,_∣_⨾ᴿ_ : ∀ (ζ₁ : Φ →ᴿ Ψ) (ζ₂ : Ψ →ᴿ Θ) → ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂ → ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃ → (ζ₁ ⨟ᴿ ζ₂) ∣ Γ₁ ⇒ᴿ Γ₃
+(_ , _ ∣ ρ₁ ⨾ᴿ ρ₂) _ x = ρ₂ _ (ρ₁ _ x)
+
+_⨾ᴿ_ : ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂ → ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃ → (ζ₁ ⨟ᴿ ζ₂) ∣ Γ₁ ⇒ᴿ Γ₃
+_⨾ᴿ_ = _,_∣_⨾ᴿ_ _ _
+
+--! Extension
+_∣_∙ᴿ_ : ∀ (ζ : Φ →ᴿ Ψ) → Γ₂ ∋ (T [ ζ ]ᴿ) → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → ζ ∣ (Γ₁ ▷ T) ⇒ᴿ Γ₂
+(_ ∣ x ∙ᴿ ρ) _ zero     = x
+(_ ∣ _ ∙ᴿ ρ) _ (suc x)  = ρ _ x
+
+--! Lifting
+_∣_⇑ᴿ_ : ∀ (ζ : Φ →ᴿ Ψ) → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → ∀ T → ζ ∣ (Γ₁ ▷ T) ⇒ᴿ (Γ₂ ▷ (T [ ζ ]ᴿ))
+(_ ∣ _ ⇑ᴿ _) _ zero    = zero
+(_ ∣ ρ ⇑ᴿ _) _ (suc x) = suc (ρ _ x)
+
+_⇑ᴿ_ : ζ ∣ Γ₁ ⇒ᴿ Γ₂ → ∀ T → ζ ∣ (Γ₁ ▷ T) ⇒ᴿ (Γ₂ ▷ (T [ ζ ]ᴿ))
+_⇑ᴿ_ = _ ∣_⇑ᴿ_
+
+--! TLifting
+_∣_↑ᴿ*_ : ∀ (ζ : Φ →ᴿ Ψ) → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → ∀ J → (ζ ↑ᴿ J) ∣ ((Γ₁ ▷*) {J}) ⇒ᴿ ((Γ₂ ▷*) {J})
+(_ ∣ ρ ↑ᴿ* _) _ (suc* x) = suc* (ρ _ x)
+
+↑ᴿ*_ : ζ ∣ Γ₁ ⇒ᴿ Γ₂ → ∀ J → (ζ ↑ᴿ J) ∣ ((Γ₁ ▷*) {J}) ⇒ᴿ ((Γ₂ ▷*) {J})
+↑ᴿ*_ = _ ∣_↑ᴿ*_
+
+--! Traversal
+_∣_[_]ᴿ : (ζ : Φ →ᴿ Ψ) → Expr Γ₁ T → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → Expr Γ₂ (T [ ζ ]ᴿ)
+_  ∣ (` x) [ ρ ]ᴿ      = ` (ρ _ x)
+_  ∣ (λx e) [ ρ ]ᴿ     = λx (_ ∣ e [ ρ ⇑ᴿ _ ]ᴿ)
+_  ∣ (Λα e) [ ρ ]ᴿ     = Λα (_ ∣ e [ _ ∣ ρ ↑ᴿ* _ ]ᴿ)
+_  ∣ (e₁ · e₂) [ ρ ]ᴿ  = (_ ∣ e₁ [ ρ ]ᴿ) · (_ ∣ e₂ [ ρ ]ᴿ)
+ζ  ∣ (e ·* T′) [ ρ ]ᴿ  = (ζ ∣ e [ ρ ]ᴿ) ·* (T′ [ ζ ]ᴿ)
 
 Weaken : Expr Γ T → Expr (Γ ▷ T′) T
-Weaken e = e ⋯ᴿ[ id ] Wk
-  
-weaken** : Expr Γ T → Expr (Γ ▷*) (weaken* {J = J} T)
-weaken** e = e ⋯ᴿ[ S ] wk*
+Weaken e = idᴿ ∣ e [ Wkᴿ _ ]ᴿ
 
--- term substitution
+weaken* : ∀ J → Expr Γ T → Expr ((Γ ▷*) {J}) (weaken J T)
+weaken* J e = wkᴿ J ∣ e [ wkᴿ* J ]ᴿ
 
-_→ˢ[_]_ : Ctx Φ → (Φ →ˢ Ψ) → Ctx Ψ → Set
-Γ →ˢ[ σ* ] Δ = ∀ T → Γ ∋ T  → Expr Δ (T ⋯ˢ σ*)
+--! <
+--! Substitution
+_∣_⇒ˢ_ : Φ →ˢ Ψ → Ctx Φ → Ctx Ψ → Set
+η ∣ Γ₁ ⇒ˢ Γ₂ = ∀ T → Γ₁ ∋ T → Expr Γ₂ (T [ η ]ˢ)
 
-idˢ : Γ →ˢ[ ⟨ id ⟩ ] Γ
-idˢ _ x = ` x
+--! Sub >
+variable
+  σ σ′ σ₁ σ₂ σ₃ : η ∣ Γ₁ ⇒ˢ Γ₂
 
-⇑ˢ    : {σ* : Φ →ˢ Ψ} → Γ₁ →ˢ[ σ* ] Γ₂ → (Γ₁ ▷ T) →ˢ[ σ* ] (Γ₂ ▷ (T ⋯ˢ σ*))
-⇑ˢ σ T Z = ` Z
-⇑ˢ σ T (S x) = Weaken (σ _ x)
+-- raising a renaming to a substitution
+_∣⟪_⟫ : ∀ (ζ : Φ →ᴿ Ψ) → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → ⟨ ζ ⟩ ∣ Γ₁ ⇒ˢ Γ₂
+(ζ ∣⟪ ρ ⟫) _ x = ` ρ _ x
 
-⇑ˢ*   : {σ* : Φ →ˢ Ψ} → (σ : Γ₁ →ˢ[ σ* ] Γ₂) → (Γ₁ ▷*) →ˢ[ ↑ˢ {J = J} σ* ] (Γ₂ ▷*)
-⇑ˢ* σ T (S* x) = weaken** (σ _ x)
+⟪_⟫ : ζ ∣ Γ₁ ⇒ᴿ Γ₂ → ⟨ ζ ⟩ ∣ Γ₁ ⇒ˢ Γ₂
+⟪_⟫ = _ ∣⟪_⟫
 
-_⋯s[_]_ : Expr Γ T → (σ* : Φ →ˢ Ψ) → Γ →ˢ[ σ* ] Δ → Expr Δ (T ⋯ˢ σ*)
-(` x)      ⋯s[ σ* ] σ  = σ _ x
-(λx e)     ⋯s[ σ* ] σ  = λx (e ⋯s[ σ* ] ⇑ˢ {σ* = σ*} σ)
-(Λα e)     ⋯s[ σ* ] σ  = Λα (e ⋯s[ ↑ˢ σ* ] ⇑ˢ* {σ* = σ*} σ)
-(e₁ · e₂)  ⋯s[ σ* ] σ  = (e₁ ⋯s[ σ* ] σ) · (e₂ ⋯s[ σ* ] σ)
-(e • T′)   ⋯s[ σ* ] σ  = (e ⋯s[ σ* ] σ) • (T′ ⋯ˢ σ*)
+--! Ids
+Idˢ : idˢ ∣ Γ ⇒ˢ Γ
+Idˢ _ = `_
 
+Wkˢ : ∀ T → ⟨ idᴿ ⟩ ∣ Γ ⇒ˢ (Γ ▷ T)
+Wkˢ _ = idᴿ ∣⟪ Wkᴿ _ ⟫
+
+wkᴿ*ˢ : ∀ J → ⟨ wkᴿ J ⟩ ∣ Γ ⇒ˢ ((Γ ▷*) {J})
+wkᴿ*ˢ J = wkᴿ J ∣⟪ wkᴿ* J ⟫
+
+-- extending a substitution
+--! Extension
+_∣_∙ˢ_ : ∀ (η : Φ →ˢ Ψ) → Expr Γ₂ (T [ η ]ˢ) → η ∣ Γ₁ ⇒ˢ Γ₂ → η ∣ (Γ₁ ▷ T) ⇒ˢ Γ₂
+(_ ∣ e ∙ˢ σ) _ zero     = e
+(_ ∣ e ∙ˢ σ) _ (suc x)  = σ _ x
+
+_∣_∙ˢ*_ : ∀ (η : Φ →ˢ Ψ) → ∀ {J} (T : Type Ψ J) → η ∣ Γ₁ ⇒ˢ Γ₂ → (T ∙ˢ η) ∣ ((Γ₁ ▷*) {J}) ⇒ˢ Γ₂
+(_ ∣ T ∙ˢ* σ) _ (suc* x) = σ _ x
+
+-- lifting a substitution
+--! Lifting
+_∣_⇑ˢ_ : ∀ (η : Φ →ˢ Ψ) → η ∣ Γ₁ ⇒ˢ Γ₂ → ∀ T → η ∣ (Γ₁ ▷ T) ⇒ˢ (Γ₂ ▷ (T [ η ]ˢ))
+(η ∣ _ ⇑ˢ T) _ zero    = ` zero
+(η ∣ σ ⇑ˢ T) _ (suc x) = Weaken (σ _ x)
+
+-- type lifting
+--! TLifting
+_∣_↑ˢ*_ : ∀ (η : Φ →ˢ Ψ) → η ∣ Γ₁ ⇒ˢ Γ₂ → ∀ J → (η ↑ˢ J) ∣ ((Γ₁ ▷*) {J}) ⇒ˢ ((Γ₂ ▷*) {J})
+(η ∣ σ ↑ˢ* J) _ (suc* x) = wkᴿ J ∣ (σ _ x) [ wkᴿ* J ]ᴿ
+
+-- expression substitution - traversal
+--! Traversal
+_∣_[_]ˢ : (η : Φ →ˢ Ψ) → Expr Γ₁ T → η ∣ Γ₁ ⇒ˢ Γ₂ → Expr Γ₂ (T [ η ]ˢ)
+η  ∣ (` x) [ σ ]ˢ      = σ _ x
+η  ∣ (λx e) [ σ ]ˢ     = λx (η ∣ e [ η ∣ σ ⇑ˢ _ ]ˢ)
+η  ∣ (Λα e) [ σ ]ˢ     = Λα ((η ↑ˢ _) ∣ e [ η ∣ σ ↑ˢ* _ ]ˢ)
+η  ∣ (e · e₁) [ σ ]ˢ   = (η ∣ e [ σ ]ˢ) · (η ∣ e₁ [ σ ]ˢ)
+η  ∣ (e ·* T′) [ σ ]ˢ  = (η ∣ e [ σ ]ˢ) ·* (T′ [ η ]ˢ)
+
+--! CompDefinition
+_,_∣_⨾ˢ_ : ∀ (η₁ : Φ →ˢ Ψ) (η₂ : Ψ →ˢ Θ) → η₁ ∣ Γ₁ ⇒ˢ Γ₂ → η₂ ∣ Γ₂ ⇒ˢ Γ₃ → (η₁ ⨟ˢ η₂) ∣ Γ₁ ⇒ˢ Γ₃
+(_ , _ ∣ σ₁ ⨾ˢ σ₂) _ x = _ ∣ (σ₁ _ x) [ σ₂ ]ˢ
+
+-- single substitution, semantics, and progress
+--! <
+--! Sem >
+--! SingleSub {
 _[_] : Expr (Γ ▷ T′) T → Expr Γ T′ → Expr Γ T
-e₁ [ e₂ ] = e₁ ⋯s[ ⟨ id ⟩ ] σ₀ e₂
-  where σ₀ : Expr Γ T′ → (Γ ▷ T′) →ˢ[ ⟨ id ⟩ ] Γ
-        σ₀ e T Z = e
-        σ₀ e T (S x) = ` x
+e [ e′ ] = idˢ ∣ e [ idˢ ∣ e′ ∙ˢ Idˢ ]ˢ
 
-extˢ : {σ* : Φ →ˢ Ψ}{T′ : Type Ψ J} → (Γ₁ →ˢ[ σ* ] Γ₂) → ((Γ₁ ▷*) →ˢ[ T′ ∙ σ* ] Γ₂)
-extˢ σ T (S* x) = σ _ x
+_[*_*] : Expr (Γ ▷*) T → (T′ : Type Φ J) → Expr Γ (T [ T′ ]*)
+e [* T′ *] = (T′ ∙ˢ idˢ) ∣ e [ idˢ ∣ T′ ∙ˢ* Idˢ ]ˢ
+--! }
 
-_[_]** : {Γ : Ctx Φ} → Expr (Γ ▷*) T → (T′ : Type Φ J) → Expr Γ (T [ T′ ]*)
-e [ T′ ]** = e ⋯s[ T′ ∙ ⟨ id ⟩ ] (extˢ {T′ = T′}) idˢ
+--! Definition
+data _⟶_ : Expr Γ T → Expr Γ T → Set where
+  β-λ   : (λx e₁ · e₂) ⟶ (e₁ [ e₂ ])
+  β-Λ   : (Λα e ·* T′) ⟶ (e [* T′ *])
+  ξ-·   : e₁ ⟶ e₁′ → (e₁ · e₂) ⟶ (e₁′ · e₂)
+  ξ-·*  : e ⟶ e′ → (e ·* T) ⟶ (e′ ·* T)
+  ξ-Λ   : e ⟶ e′ → (Λα e) ⟶ (Λα e′)
 
--- term reduction
-
-data _⟶_ {Γ : Ctx Φ} : ∀ {T} → Expr Γ T → Expr Γ T → Set where
-  β-λ : ((λx e₁) · e₂) ⟶ (e₁ [ e₂ ])
-  β-Λ : ∀ {T′ : Type Φ J} → -- ∀ {T : Type (Φ ▷* J) ∗} → -- {e : Expr (Γ ▷*) {!!}} →
-       ((Λα e) • T′) ⟶ (e [ T′ ]**)
-
-  ξ-· : e₁ ⟶ e₁′ → (e₁ · e₂) ⟶ (e₁′ · e₂)
-  ξ-Λ : e ⟶ e′ → (Λα e) ⟶ (Λα e′)
-  ξ-• : e ⟶ e′ → (e • T) ⟶ (e′ • T)
-
--- progress
+data _⟶*_ : Expr Γ T → Expr Γ T → Set where
+  ⟶refl  : e ⟶* e
+  ⟶trans : e₁ ⟶ e₂ → e₂ ⟶* e₃ → e₁ ⟶* e₃
 
 open import Data.Empty using (⊥; ⊥-elim)
 open import Relation.Nullary using (¬_; contradiction)
 
-data Value {Γ : Ctx Φ} : ∀ {T : Type Φ ∗} → Expr Γ T → Set where
+--! ProgressDefs {
+data Value : Expr Γ T → Set where
   λx : (e : Expr (Γ ▷ T₁) T₂) → Value (λx e)
   Λα : Value e → Value (Λα e)
 
-data Progress {Γ : Ctx Φ} {T : Type Φ ∗} : Expr Γ T → Set where
-  done : {e : Expr Γ T} → (v : Value e) → Progress e
+data Progress : Expr Γ T → Set where
+  done : (v : Value e) → Progress e
   step : (e⟶e′ : e ⟶ e′) → Progress e
 
 data NoVar : Ctx Φ → Set where
-  ∅ : NoVar ∅
+  ∅   : NoVar ∅
   _▷* : NoVar Γ → NoVar {Φ ▷* J} (Γ ▷*)
 
 noVar : NoVar Γ → ¬ (Γ ∋ T)
-noVar (nv ▷*) (S* x) = noVar nv x
+noVar (nv ▷*) (suc* x) = noVar nv x
+--! }
 
+--! Progress
 progress : NoVar Γ → (e : Expr Γ T) → Progress e
 progress nv (` x) = ⊥-elim (noVar nv x)
 progress nv (λx e) = done (λx e)
+progress nv (e · e′)
+  with progress nv e
+... | done (λx e₁) = step β-λ
+... | step e⟶e′ = step (ξ-· e⟶e′)
 progress nv (Λα e)
   with progress (nv ▷*) e
 ... | done v = done (Λα v)
 ... | step e⟶e′ = step (ξ-Λ e⟶e′)
-progress nv (e · e′)
+progress nv (e ·* T′)
   with progress nv e
-... | step e⟶e′ = step (ξ-· e⟶e′)
-... | done (λx e₁) = step β-λ
-progress nv (e • T′)
-  with progress nv e
-... | step e⟶e′ = step (ξ-• e⟶e′)
 ... | done (Λα v) = step β-Λ
-
--- composition of term substitutions
-
-_⊚ˢ_ : (Γ₁ →ˢ[ σ₁ ] Γ₂) → (Γ₂ →ˢ[ σ₂ ] Γ₃) → (Γ₁ →ˢ[ σ₁ ⨟ σ₂ ] Γ₃)
-(σ₁ ⊚ˢ σ₂) _ x = σ₁ _ x ⋯s[ _ ] σ₂
+... | step e⟶e′ = step (ξ-·* e⟶e′)
 
 -- execution
 
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Maybe using (Maybe; nothing; just)
 open import Data.Product using (Σ; ∃-syntax; _,_; _×_)
-
-data _⟶*_ {Γ : Ctx Φ} : ∀ {T} → Expr Γ T → Expr Γ T → Set where
-  ⟶refl   : e ⟶* e
-  ⟶trans  : e₁ ⟶ e₂ → e₂ ⟶* e₃ → e₁ ⟶* e₃
 
 run : {T : Type ∅ ∗} → ℕ → (e : Expr ∅ T) → ∃[ e′ ] e ⟶* e′ × Maybe (Value e′)
 run zero e = e , ⟶refl , nothing
@@ -419,11 +674,11 @@ run (suc n) e
 λy = λx
 
 `α : Type (Φ ▷* K) K
-`α = ` Z
+`α = ` zero
 `β : Type ((Φ ▷* K) ▷* J) K
-`β = ` (S Z)
+`β = ` (suc zero)
 `κ `γ : Type (((Φ ▷* K) ▷* I) ▷* J) K
-`κ = ` (S (S Z))
+`κ = ` (suc (suc zero))
 `γ = `κ
 
 Λκ Λβ : Expr (Γ ▷*) T → Expr Γ (∀α T)
@@ -431,12 +686,12 @@ run (suc n) e
 Λβ = Λα
 
 `x : Expr (Γ ▷ T) T
-`x = ` Z
+`x = ` zero
 `y `g : Expr ((Γ ▷ T) ▷ T₁) T
-`y = ` (S Z)
-`g = ` (S Z)
+`y = ` (suc zero)
+`g = ` (suc zero)
 `z `f : Expr (((Γ ▷ T) ▷ T₂) ▷ T₁) T
-`z = ` (S (S Z))
+`z = ` (suc (suc zero))
 `f = `z
 
 -- Church numerals
@@ -457,7 +712,7 @@ oneᶜ = Λα (λg (λx (`g · `x)))
 
 --! FCNSucc
 succᶜ : Expr ∅ (ℕᶜ ⇒ ℕᶜ)
-succᶜ = λx (Λα (λg (λx (`g · ((((` (S (S (S* Z)))) • `α) · `g) · `x)))))
+succᶜ = λx (Λα (λg (λx (`g · ((((` (suc (suc (suc* zero)))) ·* `α) · `g) · `x)))))
 
 --! FCNTwo
 twoᶜ : Expr ∅ ℕᶜ
@@ -468,4 +723,4 @@ fourᶜ = succᶜ · (succᶜ · (succᶜ · (succᶜ · zeroᶜ)))
 
 --! FCNFour
 two+twoᶜ : Expr ∅ ℕᶜ
-two+twoᶜ = ((twoᶜ • ℕᶜ) · succᶜ)  · twoᶜ
+two+twoᶜ = ((twoᶜ ·* ℕᶜ) · succᶜ) · twoᶜ

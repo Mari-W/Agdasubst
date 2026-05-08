@@ -85,6 +85,14 @@ opaque
 _↑ᴿ_ : Φ →ᴿ Ψ → ∀ J → (Φ ▷* J) →ᴿ (Ψ ▷* J)
 ζ ↑ᴿ J = zero ∙ᴿ (ζ ⨟ᴿ wkᴿ J)
 
+-- Leaf : BTree
+-- Branch : BTree -> BTree -> BTree
+
+-- REWRITE Branch a b -> b
+-- f : BTree -> N 
+-- Leaf = 1
+-- Branch a b = f(a) + f(b) 
+
 -- apply renaming to type
 _[_]ᴿ : Type Φ K → Φ →ᴿ Ψ → Type Ψ K
 (` α) [ ζ ]ᴿ           = ` (α &ᴿ ζ)
@@ -442,8 +450,7 @@ data _∋_ : Ctx Φ → Type Φ ∗ → Set where
 variable
   x x′ x₁ x₂ x₃ : Γ ∋ T
 
---! <
---! Expr >
+--! FO >
 --! Definition
 data Expr {Φ} Γ : Type Φ ∗ → Set where
   `_    : Γ ∋ T →
@@ -698,6 +705,8 @@ run (suc n) e
 
 -- ∀ α (α→α) → α→α
 
+--! <
+--! <
 --! FCNType
 ℕᶜ : Type ∅ ∗
 ℕᶜ = ∀α ((`α ⇒ `α) ⇒ (`α ⇒ `α))

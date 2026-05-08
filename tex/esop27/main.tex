@@ -23,8 +23,7 @@
 \input{STLC}
 \input{SystemFo}
 \input{unicodeletters}
-\usepackage{latex-hell/agda-generated}
-\input{latex-hell/extra}
+\input{agdacommands}
 
 
 \begin{document}
@@ -520,7 +519,7 @@ same as applying their composition. This statement is a very prominent
 example of transfer hell: the types of the left and right side of the
 equality are different and would require a transfer without our
 rewriting machinery in place.
-\SFExprSubComposeType
+\SFExprSubCompositionalityType
 We show the proof of this property just do demonstrate that type
 adjustments for type substitutions can be ignored and we can
 concentrate on the gist of the proof, rather than being overwhelmed by
@@ -528,7 +527,7 @@ transfers. The remaining fly in the ointment is the explicit passing
 of the type substitutions $\eta_1$ and $\eta_2$. We chose to make them
 explicit; while Agda can infer them in many places, 
 there are equally many places where inference is not possible.
-\SFExprSubComposeBody
+\SFExprSubCompositionalityBody
 
 This proof relies on further properties, in particular
 \AgdaFunction{Lift-Dist-Comp$^{SS}$} (lifting a composition of substitutions
@@ -541,24 +540,54 @@ renamings and liftings, all with similar issues. The supplemental
 material gives the full story.
 
 \subsection{Comparison to Proof in Transfer Hell}
+\begin{figure}[t]
+  \centering
+  \small
+  \setlength{\tabcolsep}{8pt}
+  \begin{tabular}{|l|rr|rr|}
+    \hline
+                                          & \multicolumn{2}{c|}{\textbf{Agdasubst}}
+                                          & \multicolumn{2}{c|}{\textbf{StratF}} \\
+                                          & LOC & Chars & LOC & Chars \\
+    \hline
+    Type substitution + proofs            &   217 &  12\,246 &    285 &  12\,584 \\
+    Expression substitution + proofs      &   202 &  11\,675 & 1\,405 &  69\,846 \\
+    \hline
+    \textbf{Total}                        & \textbf{419} & \textbf{23\,921}
+                                          & \textbf{1\,690} & \textbf{82\,430} \\
+    \hline
+  \end{tabular}
+  \caption{%
+    Code required to prove the four expression-level compositionality
+    lemmas (renaming/substitution fusion in all four ren/sub
+    combinations) in two Agda formalizations of System~F.
+    %
+    Both columns are restricted to code transitively used by the four
+    proofs; semantic interpretations, operational semantics, and
+    unreferenced auxiliary lemmas are excluded.
+    %
+    LOC counts non-blank, non-comment-only lines.
+  }
+  \label{fig:compositionality-cost}
+\end{figure}
 We compare this proof to the one without the additional 
 definitional equalities for type substitutions, provided in the supplement 
 for the aforementioned logical relation construction \cite{10.1145/3678000.3678201}. 
 Here we only state the \emph{type} of the proof and the induction case for application, 
 which is among the short ones.
-\EFFusionSubSub
-The mapping from their to our syntax (in order) is
-\begin{itemize}
-  \item $\Delta$ $\mapsto$ $n$
-  \item \AgdaFunction{ESub} $\mapsto$ \AgdaFunction{$\_∣\_⋯ˢ\_$}
-  \item $\sigma^*$ $\mapsto$ $\eta$
-  \item \AgdaFunction{fusion-Tsub-Tsub} $\mapsto$ \AgdaFunction{compose$^{SS}$}
-  \item \AgdaFunction{$\_∘^{SS}$} $\mapsto$ \AgdaFunction{$\_⨟\_$}
-  \item \AgdaFunction{$\_$>>$^{SS}\_$} $\mapsto$ \AgdaFunction{$\_∣\_⨟\_$}
-\end{itemize}
+% \EFFusionSubSub
+% The mapping from their to our syntax (in order) is
+% \begin{itemize}
+%   \item $\Delta$ $\mapsto$ $n$
+%   \item \AgdaFunction{ESub} $\mapsto$ \AgdaFunction{$\_∣\_⋯ˢ\_$}
+%   \item $\sigma^*$ $\mapsto$ $\eta$
+%   \item \AgdaFunction{fusion-Tsub-Tsub} $\mapsto$ \AgdaFunction{compose$^{SS}$}
+%   \item \AgdaFunction{$\_∘^{SS}$} $\mapsto$ \AgdaFunction{$\_⨟\_$}
+%   \item \AgdaFunction{$\_$>>$^{SS}\_$} $\mapsto$ \AgdaFunction{$\_∣\_⨟\_$}
+% \end{itemize}
 The authors use heterogeneous equality to proof the lemma, 
 thereby avoiding some of the troubles arising from transfer hell.
-\LambdaEx
+% \LambdaEx
 The full proof can be found in Appendix \ref{appendix:appendix-proof}
 
 \subsection{Examples}
@@ -587,6 +616,8 @@ is key to defining type classes for functors, monads, etc. An
 extension of F$\omega$ with isorecursive types is the basis for
 Plutus, the language of the Cardano blockchain
 \cite{10.1007/978-3-030-33636-3_10}. 
+
+%TODO @PT: we leave safety land here, i.e. rewrite on a postulated symbol.
 
 \subsection{Definitions}
 \label{sec:definitions}
@@ -742,8 +773,8 @@ introduce additional lemmas or automation.
 \AgdaNoSpaceAroundCode{}
 \setlength{\mathindent}{0pt}
 \footnotesize{}
-\EFExampleProofPrelude
-\ExampleProof
+% \EFExampleProofPrelude
+% \ExampleProof
 
 
 \end{document}

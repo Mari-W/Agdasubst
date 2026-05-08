@@ -29,6 +29,7 @@ P1 — Substantive gaps
      (POPL'26), Rocq Hammer, Isabelle Sledgehammer. Discuss whether
      those tactics could yield similar simplifications. (A)
 {PT} => this is easy, they dont yield def eqs
+     => what about strictification paper?
 
 
 [ ]  Deliver on the abstract's promise of "practical guidelines" and
@@ -58,6 +59,10 @@ P2 — Polish
      => ??? [PT: not clear if free theorems on lists is an appropriate showcase]
 [ ]  Strengthen takeaways for non-Agda readers — what should a
      Rocq/Lean/Isabelle user learn from this pearl? (B)
-     => rewrite rules with instantiated proofs are good. 
-[ ]  Update to Phil syntax (standard syntax from published papers, e.g. ACC or Autosubst)
+     => rewrite rules with instantiated proofs are good when working 
+        with intrinisically typed syntax 
+[x]  Update to Phil syntax (standard syntax from published papers, e.g. ACC or Autosubst)
 {MW} => hopefully claude code does this.
+
+[ ]  explain why coincidence lemmas     
+{MW}

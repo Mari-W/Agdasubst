@@ -1,0 +1,979 @@
+% =====================================================================
+% agdacommands.tex
+% =====================================================================
+%
+% LaTeX macros for inline references to Agda definitions in
+%   - SystemF.agda
+%   - SystemFo.agda
+%   - SystemFo-examples.agda
+%
+% Each macro renders the corresponding identifier with the right
+% agda.sty highlighting class (\AgdaFunction, \AgdaDatatype,
+% \AgdaInductiveConstructor, etc.) and supplies the Unicode/math symbol
+% the source uses. The Agda source line(s) are included as a comment
+% directly above each macro for easy navigation.
+%
+% Conventions
+% -----------
+%   * \A...           building block: a single token in math/text mode
+%   * \SF...          definitions from SystemF.agda
+%   * \SFO...         definitions from SystemFo.agda
+%   * \SFOEx...       definitions from SystemFo-examples.agda
+%   * Suffixes RR/RS/SR/SS encode the four compositionality variants;
+%     R/S indicate renaming/substitution variants of a lemma.
+% =====================================================================
+
+% ---------------------------------------------------------------------
+% 1. Generic building blocks
+% ---------------------------------------------------------------------
+
+\providecommand{\AFun}[1]{\AgdaFunction{\ensuremath{#1}}}
+\providecommand{\ACtor}[1]{\AgdaInductiveConstructor{\ensuremath{#1}}}
+\providecommand{\AData}[1]{\AgdaDatatype{\ensuremath{#1}}}
+\providecommand{\APost}[1]{\AgdaPostulate{\ensuremath{#1}}}
+\providecommand{\AField}[1]{\AgdaField{\ensuremath{#1}}}
+\providecommand{\ABound}[1]{\AgdaBound{\ensuremath{#1}}}
+\providecommand{\AArg}[1]{\AgdaArgument{\ensuremath{#1}}}
+\providecommand{\ASym}[1]{\AgdaSymbol{\ensuremath{#1}}}
+\providecommand{\AKw}[1]{\AgdaKeyword{#1}}
+\providecommand{\AGen}[1]{\AgdaGeneralizable{\ensuremath{#1}}}
+\providecommand{\APrim}[1]{\AgdaPrimitive{\ensuremath{#1}}}
+\providecommand{\ARec}[1]{\AgdaRecord{\ensuremath{#1}}}
+\providecommand{\AMod}[1]{\AgdaModule{#1}}
+
+% Operator hole and common decorations
+\providecommand{\Ahole}{\ensuremath{\_}}
+\providecommand{\Aren}{\ensuremath{^{R}}}
+\providecommand{\Asub}{\ensuremath{^{S}}}
+\providecommand{\ARR}{\ensuremath{^{RR}}}
+\providecommand{\ARS}{\ensuremath{^{RS}}}
+\providecommand{\ASR}{\ensuremath{^{SR}}}
+\providecommand{\ASS}{\ensuremath{^{SS}}}
+
+% ⨾ glyph (expression-level composition); ⨟ is \fatsemi (type-level).
+\providecommand{\bdot}{\mathbin{\fatsemi}}
+
+% =====================================================================
+% 2. Imports / metatheoretic infrastructure
+% =====================================================================
+% Agda: open import Agda.Builtin.Nat using (Nat; zero; suc)
+\providecommand{\Anat}{\AData{\mathsf{Nat}}}
+% Agda: open import Data.Fin using (Fin; zero; suc)
+\providecommand{\AFin}{\AData{\mathsf{Fin}}}
+\providecommand{\Asuc}{\ACtor{\mathsf{suc}}}
+\providecommand{\Azero}{\ACtor{\mathsf{zero}}}
+
+% Agda: open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; trans; module ≡-Reasoning)
+\providecommand{\Arefl}{\ACtor{\mathsf{refl}}}
+\providecommand{\Acong}{\AFun{\mathsf{cong}}}
+\providecommand{\Acongtwo}{\AFun{\mathsf{cong}_2}}
+\providecommand{\Atrans}{\AFun{\mathsf{trans}}}
+\providecommand{\Asymm}{\AFun{\mathsf{sym}}}
+\providecommand{\Asubst}{\AFun{\mathsf{subst}}}
+
+% Agda: postulate fun-ext : ∀ {ℓ₁ ℓ₂} → Extensionality ℓ₁ ℓ₂
+\providecommand{\Afunext}{\APost{\mathit{fun\text{-}ext}}}
+\providecommand{\Aopaque}{\AKw{opaque}}
+\providecommand{\Adata}{\AKw{data}}
+\providecommand{\Awhere}{\AKw{where}}
+\providecommand{\Avariable}{\AKw{variable}}
+\providecommand{\Apostulate}{\AKw{postulate}}
+\providecommand{\Arewrite}{\AKw{REWRITE}}
+
+\providecommand{\Atop}{\AData{\top}}
+\providecommand{\Abot}{\AData{\bot}}
+\providecommand{\Anotop}{\AFun{\neg}}
+
+% =====================================================================
+% 3. SystemF.agda
+% =====================================================================
+
+% ---------- 3.1 Types and type variables ----------
+% Agda: data Type (n : Nat) : Set where
+%         `_   : Fin n → Type n
+%         ∀α   : Type (suc n) → Type n
+%         _⇒_  : Type n → Type n → Type n
+\providecommand{\SFType}{\AData{\mathsf{Type}}}
+\providecommand{\SFTyVar}{\ACtor{`}}
+\providecommand{\SFTyForall}{\ACtor{\forall\alpha}}
+\providecommand{\SFTyArr}{\ACtor{\Rightarrow}}
+\providecommand{\SFTyArrOp}{\ACtor{\_\Rightarrow\_}}
+
+% Agda: variable
+%         n n′ n₁ n₂ n₃ : Nat
+%         α α′ α₁ α₂ α₃ : Fin n
+%         T T′ T₁ T₂ T₃ : Type n
+\providecommand{\SFn}{\ABound{n}}
+\providecommand{\SFnOne}{\ABound{n_1}}
+\providecommand{\SFnTwo}{\ABound{n_2}}
+\providecommand{\SFnThree}{\ABound{n_3}}
+\providecommand{\SFalpha}{\ABound{\alpha}}
+\providecommand{\SFT}{\ABound{T}}
+\providecommand{\SFTone}{\ABound{T_1}}
+\providecommand{\SFTtwo}{\ABound{T_2}}
+
+% ---------- 3.2 Type renamings ----------
+% Agda: _→ᴿ_ : Nat → Nat → Set
+%       n₁ →ᴿ n₂ = Fin n₁ → Fin n₂
+\providecommand{\SFRen}{\AFun{\to^{R}}}
+
+% Agda: wkᴿ : n →ᴿ suc n
+%       wkᴿ = suc
+\providecommand{\SFwk}{\AFun{\mathsf{wk}^{R}}}
+
+% Agda: idᴿ : n →ᴿ n
+%       idᴿ α = α
+\providecommand{\SFid}{\AFun{\mathsf{id}^{R}}}
+
+% Agda: _∙ᴿ_ : Fin n₂ → n₁ →ᴿ n₂ → suc n₁ →ᴿ n₂
+\providecommand{\SFconsR}{\AFun{\_\bullet^{R}\_}}
+
+% Agda: _&ᴿ_ : Fin n₁ → n₁ →ᴿ n₂ → Fin n₂
+\providecommand{\SFvarR}{\AFun{\_\&^{R}\_}}
+
+% Agda: _⨟ᴿ_ : n₁ →ᴿ n₂ → n₂ →ᴿ n₃ → n₁ →ᴿ n₃
+%       (ζ₁ ⨟ᴿ ζ₂) α = ζ₂ (ζ₁ α)
+\providecommand{\SFcompR}{\AFun{\_\fatsemi^{R}\_}}
+
+% Agda: _↑ᴿ : n₁ →ᴿ n₂ → suc n₁ →ᴿ suc n₂
+%       _↑ᴿ ζ = zero ∙ᴿ (ζ ⨟ᴿ wkᴿ)
+\providecommand{\SFliftR}{\AFun{\_\uparrow^{R}}}
+
+% Agda: _[_]ᴿ : Type n₁ → n₁ →ᴿ n₂ → Type n₂   -- type renaming traversal
+\providecommand{\SFappR}{\AFun{\_[\_]^{R}}}
+
+% ---------- 3.3 Type substitutions ----------
+% Agda: _→ˢ_ : Nat → Nat → Set
+%       n₁ →ˢ n₂ = Fin n₁ → Type n₂
+\providecommand{\SFSub}{\AFun{\to^{S}}}
+
+% Agda: ⟨_⟩ : n₁ →ᴿ n₂ → n₁ →ˢ n₂
+%       ⟨ ζ ⟩ α = ` (α &ᴿ ζ)
+\providecommand{\SFembed}{\AFun{\langle\_\rangle}}
+
+% Agda: _∙ˢ_ : Type n₂ → n₁ →ˢ n₂ → suc n₁ →ˢ n₂
+\providecommand{\SFconsS}{\AFun{\_\bullet^{S}\_}}
+
+% Agda: _&ˢ_ : Fin n₁ → n₁ →ˢ n₂ → Type n₂
+\providecommand{\SFvarS}{\AFun{\_\&^{S}\_}}
+
+% Agda: _↑ˢ : n₁ →ˢ n₂ → suc n₁ →ˢ suc n₂
+%       _↑ˢ η = (` zero) ∙ˢ λ α → (η α) [ wkᴿ ]ᴿ
+\providecommand{\SFliftS}{\AFun{\_\uparrow^{S}}}
+
+% Agda: _[_]ˢ : Type n₁ → n₁ →ˢ n₂ → Type n₂   -- type substitution traversal
+\providecommand{\SFappS}{\AFun{\_[\_]^{S}}}
+
+% Agda: _⨟ˢ_ : n₁ →ˢ n₂ → n₂ →ˢ n₃ → n₁ →ˢ n₃
+%       (η₁ ⨟ˢ η₂) α = (η₁ α) [ η₂ ]ˢ
+\providecommand{\SFcompS}{\AFun{\_\fatsemi^{S}\_}}
+
+% ---------- 3.4 Sigma-calculus rewrite rules ----------
+% Renaming β-laws
+% Agda: `beta-ext-zero : zero  &ᴿ (α ∙ᴿ ζ)  ≡ α
+\providecommand{\SFbetaExtZeroR}{\APost{`\beta\text{-}ext\text{-}zero}}
+% Agda: `beta-ext-suc  : suc α &ᴿ (α′ ∙ᴿ ζ) ≡ α &ᴿ ζ
+\providecommand{\SFbetaExtSucR}{\APost{`\beta\text{-}ext\text{-}suc}}
+% Agda: `beta-id : α &ᴿ idᴿ ≡ α
+\providecommand{\SFbetaIdR}{\APost{`\beta\text{-}id}}
+% Agda: `beta-wk : α &ᴿ wkᴿ ≡ suc α
+\providecommand{\SFbetaWkR}{\APost{`\beta\text{-}wk}}
+% Agda: `beta-comp : α &ᴿ (ζ₁ ⨟ᴿ ζ₂) ≡ (α &ᴿ ζ₁) &ᴿ ζ₂
+\providecommand{\SFbetaCompR}{\APost{`\beta\text{-}comp}}
+% Agda: `associativity  : (ζ₁ ⨟ᴿ ζ₂) ⨟ᴿ ζ₃ ≡ ζ₁ ⨟ᴿ (ζ₂ ⨟ᴿ ζ₃)
+\providecommand{\SFassocR}{\APost{`associativity}}
+% Agda: `distributivity : (α ∙ᴿ ζ₁) ⨟ᴿ ζ₂ ≡ (α &ᴿ ζ₂) ∙ᴿ (ζ₁ ⨟ᴿ ζ₂)
+\providecommand{\SFdistR}{\APost{`distributivity}}
+% Agda: `interact : wkᴿ ⨟ᴿ (α ∙ᴿ ζ) ≡ ζ
+\providecommand{\SFinteractR}{\APost{`interact}}
+% Agda: `comp-idᵣ : ζ ⨟ᴿ idᴿ ≡ ζ
+\providecommand{\SFcompIdrR}{\APost{`comp\text{-}id_r}}
+% Agda: `comp-idₗ : idᴿ ⨟ᴿ ζ ≡ ζ
+\providecommand{\SFcompIdlR}{\APost{`comp\text{-}id_l}}
+% Agda: `η-id  : zero {n} ∙ᴿ wkᴿ ≡ idᴿ
+\providecommand{\SFetaIdR}{\APost{`\eta\text{-}id}}
+% Agda: `η-law : (zero &ᴿ ζ) ∙ᴿ (wkᴿ ⨟ᴿ ζ) ≡ ζ
+\providecommand{\SFetaLawR}{\APost{`\eta\text{-}law}}
+
+% Substitution β-laws
+% Agda: beta-ext-zero : zero  &ˢ (T ∙ˢ η) ≡ T
+\providecommand{\SFbetaExtZero}{\APost{\beta\text{-}ext\text{-}zero}}
+% Agda: beta-ext-suc  : suc α &ˢ (T ∙ˢ η) ≡ α &ˢ η
+\providecommand{\SFbetaExtSuc}{\APost{\beta\text{-}ext\text{-}suc}}
+% Agda: beta-rename : α &ˢ ⟨ ζ ⟩ ≡ ` (α &ᴿ ζ)
+\providecommand{\SFbetaRename}{\APost{\beta\text{-}rename}}
+% Agda: beta-comp   : α &ˢ (η₁ ⨟ˢ η₂) ≡ (α &ˢ η₁) [ η₂ ]ˢ
+\providecommand{\SFbetaComp}{\APost{\beta\text{-}comp}}
+% Agda: beta-lift   : η ↑ˢ ≡ (` zero) ∙ˢ (η ⨟ˢ ⟨ wkᴿ ⟩)
+\providecommand{\SFbetaLift}{\APost{\beta\text{-}lift}}
+% Agda: associativity  : (η₁ ⨟ˢ η₂) ⨟ˢ η₃ ≡ η₁ ⨟ˢ (η₂ ⨟ˢ η₃)
+\providecommand{\SFassoc}{\APost{associativity}}
+% Agda: distributivity : (T ∙ˢ η₁) ⨟ˢ η₂ ≡ (T [ η₂ ]ˢ) ∙ˢ (η₁ ⨟ˢ η₂)
+\providecommand{\SFdist}{\APost{distributivity}}
+% Agda: interact : ⟨ wkᴿ ⟩ ⨟ˢ (T ∙ˢ η) ≡ η
+\providecommand{\SFinteract}{\APost{interact}}
+% Agda: comp-idᵣ : η ⨟ˢ ⟨ idᴿ ⟩ ≡ η
+\providecommand{\SFcompIdr}{\APost{comp\text{-}id_r}}
+% Agda: comp-idₗ : ⟨ idᴿ ⟩ ⨟ˢ η ≡ η
+\providecommand{\SFcompIdl}{\APost{comp\text{-}id_l}}
+% Agda: η-id  : (` zero {n}) ∙ˢ ⟨ wkᴿ ⟩ ≡ ⟨ idᴿ ⟩
+\providecommand{\SFetaId}{\APost{\eta\text{-}id}}
+% Agda: η-law : (zero &ˢ η) ∙ˢ (⟨ wkᴿ ⟩ ⨟ˢ η) ≡ η
+\providecommand{\SFetaLaw}{\APost{\eta\text{-}law}}
+
+% Monad / compositionality laws (type level)
+% Agda: identityᵣ : T [ idᴿ ]ᴿ ≡ T
+\providecommand{\SFidentity}{\APost{identity_r}}
+% Agda: identityᵣˢ : T [ ⟨ idᴿ ⟩ ]ˢ ≡ T
+\providecommand{\SFidentityRS}{\APost{identity_{rs}}}
+% Agda: compositionalityᴿᴿ : (T [ ζ₁ ]ᴿ) [ ζ₂ ]ᴿ ≡ T [ ζ₁ ⨟ᴿ ζ₂ ]ᴿ
+\providecommand{\SFcompositionalityRR}{\APost{compositionality\ARR}}
+% Agda: compositionalityᴿˢ : (T [ ζ₁ ]ᴿ) [ η₂ ]ˢ ≡ T [ ⟨ ζ₁ ⟩ ⨟ˢ η₂ ]ˢ
+\providecommand{\SFcompositionalityRS}{\APost{compositionality\ARS}}
+% Agda: compositionalityˢᴿ : (T [ η₁ ]ˢ) [ ζ₂ ]ᴿ ≡ T [ η₁ ⨟ˢ ⟨ ζ₂ ⟩ ]ˢ
+\providecommand{\SFcompositionalitySR}{\APost{compositionality\ASR}}
+% Agda: compositionalityˢˢ : (T [ η₁ ]ˢ) [ η₂ ]ˢ ≡ T [ η₁ ⨟ˢ η₂ ]ˢ
+\providecommand{\SFcompositionalitySS}{\APost{compositionality\ASS}}
+
+% Coincidence
+% Agda: coincidence : T [ ⟨ ζ ⟩ ]ˢ ≡ T [ ζ ]ᴿ
+\providecommand{\SFcoincidence}{\APost{coincidence}}
+% Agda: coincidence-comp : ⟨ ζ₁ ⟩ ⨟ˢ ⟨ ζ₂ ⟩ ≡ ⟨ ζ₁ ⨟ᴿ ζ₂ ⟩
+\providecommand{\SFcoincidenceComp}{\APost{coincidence\text{-}comp}}
+
+% Coincidence side lemmas
+% Agda: coincidence-pop-ᴿ : (⟨ ζ ↑ᴿ ⟩ ⨟ˢ ((T′ [ ζ ]ᴿ) ∙ˢ ⟨ idᴿ ⟩)) ≡ ((T′ [ ζ ]ᴿ) ∙ˢ ⟨ ζ ⟩)
+\providecommand{\SFcoincPopR}{\APost{coincidence\text{-}pop\text{-}{R}}}
+% Agda: coincidence-pop-ᴿ-⨟ : ⟨ zero ∙ᴿ (ζ₁ ⨟ᴿ (ζ₂ ⨟ᴿ wkᴿ)) ⟩ ⨟ˢ ((T [ ζ₁ ⨟ᴿ ζ₂ ]ᴿ) ∙ˢ ⟨ idᴿ ⟩) ≡ (T [ ζ₁ ⨟ᴿ ζ₂ ]ᴿ) ∙ˢ (⟨ ζ₁ ⟩ ⨟ˢ ⟨ ζ₂ ⟩)
+\providecommand{\SFcoincPopRComp}{\APost{coincidence\text{-}pop\text{-}{R}\text{-}\fatsemi}}
+% Agda: coincidence-↑ᴿ-↑ˢ : ⟨ zero ∙ᴿ (ζ₁ ⨟ᴿ wkᴿ) ⟩ ⨟ˢ ((` zero) ∙ˢ (η₂ ⨟ˢ ⟨ wkᴿ ⟩)) ≡ (` zero) ∙ˢ (⟨ ζ₁ ⟩ ⨟ˢ (η₂ ⨟ˢ ⟨ wkᴿ ⟩))
+\providecommand{\SFcoincLiftRS}{\APost{coincidence\text{-}\uparrow^{R}\text{-}\uparrow^{S}}}
+% Agda: coincidence-pop-ˢ : ((T′ [ η₁ ⨟ˢ ⟨ ζ₂ ⟩ ]ˢ) ∙ˢ (η₁ ⨟ˢ (⟨ ζ₂ ⨟ᴿ wkᴿ ⟩ ⨟ˢ ((T′ [ η₁ ⨟ˢ ⟨ ζ₂ ⟩ ]ˢ) ∙ˢ ⟨ idᴿ ⟩)))) ≡ ((T′ [ η₁ ⨟ˢ ⟨ ζ₂ ⟩ ]ˢ) ∙ˢ (η₁ ⨟ˢ ⟨ ζ₂ ⟩))
+\providecommand{\SFcoincPopS}{\APost{coincidence\text{-}pop\text{-}{S}}}
+
+% Lift helpers used inside proofs
+% Agda: lift-idᴿ : (idᴿ {n}) ↑ᴿ ≡ idᴿ
+\providecommand{\SFliftIdR}{\AFun{lift\text{-}id^{R}}}
+% Agda: lift-coincidence : (⟨ ζ ⟩ ↑ˢ) ≡ ⟨ ζ ↑ᴿ ⟩
+\providecommand{\SFliftCoincidence}{\AFun{lift\text{-}coincidence}}
+% Agda: lift-compositionalityᴿᴿ : (ζ₁ ↑ᴿ) ⨟ᴿ (ζ₂ ↑ᴿ) ≡ (ζ₁ ⨟ᴿ ζ₂) ↑ᴿ
+\providecommand{\SFliftCompositionalityRR}{\AFun{lift\text{-}compositionality\ARR}}
+% Agda: lift-compositionalityᴿˢ : (⟨ ζ₁ ↑ᴿ ⟩ ⨟ˢ (η₂ ↑ˢ)) ≡ ((⟨ ζ₁ ⟩ ⨟ˢ η₂) ↑ˢ)
+\providecommand{\SFliftCompositionalityRS}{\AFun{lift\text{-}compositionality\ARS}}
+% Agda: lift-compositionalityˢᴿ : ((η₁ ↑ˢ) ⨟ˢ ⟨ ζ₂ ↑ᴿ ⟩) ≡ ((η₁ ⨟ˢ ⟨ ζ₂ ⟩) ↑ˢ)
+\providecommand{\SFliftCompositionalitySR}{\AFun{lift\text{-}compositionality\ASR}}
+% Agda: lift-compositionalityˢˢ : ((η₁ ↑ˢ) ⨟ˢ (η₂ ↑ˢ)) ≡ ((η₁ ⨟ˢ η₂) ↑ˢ)
+\providecommand{\SFliftCompositionalitySS}{\AFun{lift\text{-}compositionality\ASS}}
+
+% ---------- 3.5 Functorial-action sanity checks (after rewrites) ----------
+% Agda: lift*-id : (idᴿ {n} ↑ᴿ) ≡ idᴿ
+\providecommand{\SFlifttId}{\AFun{lift^{\ast}\text{-}id}}
+% Agda: lift*-comp : (ζ′ ⨟ᴿ ζ) ↑ᴿ ≡ (ζ′ ↑ᴿ) ⨟ᴿ (ζ ↑ᴿ)
+\providecommand{\SFlifttComp}{\AFun{lift^{\ast}\text{-}comp}}
+% Agda: ren*-id : T [ idᴿ ]ᴿ ≡ T
+\providecommand{\SFrenStarId}{\AFun{ren^{\ast}\text{-}id}}
+% Agda: ren*-comp : T [ ζ′ ⨟ᴿ ζ ]ᴿ ≡ (T [ ζ′ ]ᴿ) [ ζ ]ᴿ
+\providecommand{\SFrenStarComp}{\AFun{ren^{\ast}\text{-}comp}}
+% Agda: lifts*-id : (idˢ {n} ↑ˢ) ≡ idˢ
+\providecommand{\SFliftsStarId}{\AFun{lifts^{\ast}\text{-}id}}
+% Agda: lifts*-comp : (η′ ⨟ˢ η) ↑ˢ ≡ (η′ ↑ˢ) ⨟ˢ (η ↑ˢ)
+\providecommand{\SFliftsStarComp}{\AFun{lifts^{\ast}\text{-}comp}}
+% Agda: sub*-id : T [ idˢ ]ˢ ≡ T
+\providecommand{\SFsubStarId}{\AFun{sub^{\ast}\text{-}id}}
+% Agda: sub*-var : (` α) [ η ]ˢ ≡ α &ˢ η
+\providecommand{\SFsubStarVar}{\AFun{sub^{\ast}\text{-}var}}
+% Agda: sub*-comp : T [ η ⨟ˢ η′ ]ˢ ≡ (T [ η ]ˢ) [ η′ ]ˢ
+\providecommand{\SFsubStarComp}{\AFun{sub^{\ast}\text{-}comp}}
+
+% ---------- 3.6 Single substitution / weakening (type level) ----------
+% Agda: weaken : Type n → Type (suc n)
+%       weaken T = T [ wkᴿ ]ᴿ
+\providecommand{\SFweaken}{\AFun{weaken}}
+% Agda: _[_]* : Type (suc n) → Type n → Type n
+%       T [ T′ ]* = T [ T′ ∙ˢ idˢ ]ˢ
+\providecommand{\SFsubzero}{\AFun{\_[\_]^{\ast}}}
+% Agda: idˢ : n →ˢ n   --  idˢ = ⟨ idᴿ ⟩
+\providecommand{\SFidS}{\AFun{\mathsf{id}^{S}}}
+
+% ---------- 3.7 Term contexts and variables ----------
+% Agda: data Ctx : Nat → Set where
+%         ∅    : Ctx zero
+%         _▷_  : Ctx n → Type n → Ctx n
+%         _▷*  : Ctx n → Ctx (suc n)
+\providecommand{\SFCtx}{\AData{\mathsf{Ctx}}}
+\providecommand{\SFEmpty}{\ACtor{\emptyset}}
+\providecommand{\SFExtVar}{\ACtor{\_\rhd\_}}
+\providecommand{\SFExtTy}{\ACtor{\_\rhd^{\ast}}}
+
+% Agda: data _∋_ : Ctx n → Type n → Set where
+%         zero : (Γ ▷ T) ∋ T
+%         suc  : Γ ∋ T → (Γ ▷ T′) ∋ T
+%         suc* : Γ ∋ T → (Γ ▷*) ∋ (weaken T)
+\providecommand{\SFNi}{\AData{\_\ni\_}}
+\providecommand{\SFVarZ}{\ACtor{\mathsf{zero}}}
+\providecommand{\SFVarSuc}{\ACtor{\mathsf{suc}}}
+\providecommand{\SFVarSucStar}{\ACtor{\mathsf{suc}^{\ast}}}
+
+% ---------- 3.8 Expressions ----------
+% Agda: data Expr : Ctx n → Type n → Set where
+%         `_   : Γ ∋ T → Expr Γ T
+%         λx   : Expr (Γ ▷ T₁) T₂ → Expr Γ (T₁ ⇒ T₂)
+%         _·_  : Expr Γ (T₁ ⇒ T₂) → Expr Γ T₁ → Expr Γ T₂
+%         Λα   : Expr (Γ ▷*) T → Expr Γ (∀α T)
+%         _·*_ : Expr Γ (∀α T) → (T′ : Type n) → Expr Γ (T [ T′ ]*)
+\providecommand{\SFExpr}{\AData{\mathsf{Expr}}}
+\providecommand{\SFEvar}{\ACtor{`}}
+\providecommand{\SFElam}{\ACtor{\lambda x}}
+\providecommand{\SFEapp}{\ACtor{\_\cdot\_}}
+\providecommand{\SFETLam}{\ACtor{\Lambda\alpha}}
+\providecommand{\SFETApp}{\ACtor{\_\cdot^{\ast}\_}}
+
+% ---------- 3.9 Expression-level renamings ----------
+% Agda: _∣_⇒ᴿ_ : n₁ →ᴿ n₂ → Ctx n₁ → Ctx n₂ → Set
+%       ζ ∣ Γ₁ ⇒ᴿ Γ₂ = ∀ T → Γ₁ ∋ T → Γ₂ ∋ (T [ ζ ]ᴿ)
+\providecommand{\SFERen}{\AFun{\_\mid\_\Rightarrow^{R}\_}}
+
+% Agda: Idᴿ : idᴿ ∣ Γ ⇒ᴿ Γ
+%       Idᴿ _ x = x
+\providecommand{\SFEIdR}{\AFun{\mathsf{Id}^{R}}}
+
+% Agda: Wkᴿ : ∀ T → idᴿ ∣ Γ ⇒ᴿ (Γ ▷ T)
+%       Wkᴿ _ _ = suc
+\providecommand{\SFEWkR}{\AFun{\mathsf{Wk}^{R}}}
+
+% Agda: wkᴿ* : wkᴿ ∣ Γ ⇒ᴿ (Γ ▷*)
+%       wkᴿ* _ x = suc* x
+\providecommand{\SFEwkstarR}{\AFun{\mathsf{wk}^{R\ast}}}
+
+% Agda: _,_∣_⨾ᴿ_ : ∀ ζ₁ ζ₂ → ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂ → ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃ → (ζ₁ ⨟ᴿ ζ₂) ∣ Γ₁ ⇒ᴿ Γ₃
+\providecommand{\SFECompR}{\AFun{\_\,,\_\mid\_\bdot^{R}\_}}
+
+% Agda: _⨾ᴿ_ : ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂ → ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃ → (ζ₁ ⨟ᴿ ζ₂) ∣ Γ₁ ⇒ᴿ Γ₃
+%       _⨾ᴿ_ = _,_∣_⨾ᴿ_ _ _
+\providecommand{\SFECompRBare}{\AFun{\_\bdot^{R}\_}}
+
+% Agda: _∣_∙ᴿ_ : ∀ ζ → Γ₂ ∋ (T [ ζ ]ᴿ) → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → ζ ∣ (Γ₁ ▷ T) ⇒ᴿ Γ₂
+\providecommand{\SFEextR}{\AFun{\_\mid\_\bullet^{R}\_}}
+
+% Agda: _∣_⇑ᴿ_ : ∀ ζ → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → ∀ T → ζ ∣ (Γ₁ ▷ T) ⇒ᴿ (Γ₂ ▷ (T [ ζ ]ᴿ))
+\providecommand{\SFEliftR}{\AFun{\_\mid\_\Uparrow^{R}\_}}
+
+% Agda: _⇑ᴿ_ = _ ∣_⇑ᴿ_
+\providecommand{\SFEliftRBare}{\AFun{\_\Uparrow^{R}\_}}
+
+% Agda: _∣_↑ᴿ* : ∀ ζ → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → (ζ ↑ᴿ) ∣ (Γ₁ ▷*) ⇒ᴿ (Γ₂ ▷*)
+\providecommand{\SFETliftR}{\AFun{\_\mid\_\uparrow^{R\ast}}}
+% Agda: ↑ᴿ*_ = _ ∣_↑ᴿ*
+\providecommand{\SFETliftRBare}{\AFun{\uparrow^{R\ast}\_}}
+
+% Agda: _∣_[_]ᴿ : (ζ : n₁ →ᴿ n₂) → Expr Γ₁ T → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → Expr Γ₂ (T [ ζ ]ᴿ)
+\providecommand{\SFEappR}{\AFun{\_\mid\_[\_]^{R}}}
+
+% Agda: Weaken : Expr Γ T → Expr (Γ ▷ T′) T
+%       Weaken e = idᴿ ∣ e [ Wkᴿ _ ]ᴿ
+\providecommand{\SFEWeaken}{\AFun{\mathsf{Weaken}}}
+% Agda: weaken* : Expr Γ T → Expr (Γ ▷*) (weaken T)
+%       weaken* e = wkᴿ ∣ e [ wkᴿ* ]ᴿ
+\providecommand{\SFEweakenStar}{\AFun{weaken^{\ast}}}
+
+% ---------- 3.10 Expression-level substitutions ----------
+% Agda: _∣_⇒ˢ_ : n₁ →ˢ n₂ → Ctx n₁ → Ctx n₂ → Set
+%       η ∣ Γ₁ ⇒ˢ Γ₂ = ∀ T → Γ₁ ∋ T → Expr Γ₂ (T [ η ]ˢ)
+\providecommand{\SFESub}{\AFun{\_\mid\_\Rightarrow^{S}\_}}
+
+% Agda: _∣⟪_⟫ : ∀ ζ → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → ⟨ ζ ⟩ ∣ Γ₁ ⇒ˢ Γ₂
+%       (ζ ∣⟪ ρ ⟫) _ x = ` ρ _ x
+\providecommand{\SFEemb}{\AFun{\_\mid\langle\!\langle\_\rangle\!\rangle}}
+\providecommand{\SFEembBare}{\AFun{\langle\!\langle\_\rangle\!\rangle}}
+
+% Agda: Idˢ : idˢ ∣ Γ ⇒ˢ Γ   --  Idˢ _ = `_
+\providecommand{\SFEIdS}{\AFun{\mathsf{Id}^{S}}}
+% Agda: Wkˢ : ∀ T → ⟨ idᴿ ⟩ ∣ Γ ⇒ˢ (Γ ▷ T)   --  Wkˢ _ = idᴿ ∣⟪ Wkᴿ _ ⟫
+\providecommand{\SFEWkS}{\AFun{\mathsf{Wk}^{S}}}
+% Agda: wkᴿ*ˢ : ⟨ wkᴿ ⟩ ∣ Γ ⇒ˢ (Γ ▷*)        --  wkᴿ*ˢ = wkᴿ ∣⟪ wkᴿ* ⟫
+\providecommand{\SFEwkstarS}{\AFun{\mathsf{wk}^{R\ast S}}}
+
+% Agda: _∣_∙ˢ_ : ∀ η → Expr Γ₂ (T [ η ]ˢ) → η ∣ Γ₁ ⇒ˢ Γ₂ → η ∣ (Γ₁ ▷ T) ⇒ˢ Γ₂
+\providecommand{\SFEextS}{\AFun{\_\mid\_\bullet^{S}\_}}
+% Agda: _∣_∙ˢ*_ : ∀ η T → η ∣ Γ₁ ⇒ˢ Γ₂ → (T ∙ˢ η) ∣ (Γ₁ ▷*) ⇒ˢ Γ₂
+\providecommand{\SFEextSstar}{\AFun{\_\mid\_\bullet^{S\ast}\_}}
+% Agda: _∣_⇑ˢ_ : ∀ η → η ∣ Γ₁ ⇒ˢ Γ₂ → ∀ T → η ∣ (Γ₁ ▷ T) ⇒ˢ (Γ₂ ▷ (T [ η ]ˢ))
+\providecommand{\SFEliftS}{\AFun{\_\mid\_\Uparrow^{S}\_}}
+% Agda: _∣_↑ˢ* : ∀ η → η ∣ Γ₁ ⇒ˢ Γ₂ → (η ↑ˢ) ∣ (Γ₁ ▷*) ⇒ˢ (Γ₂ ▷*)
+\providecommand{\SFETliftS}{\AFun{\_\mid\_\uparrow^{S\ast}}}
+% Agda: _∣_[_]ˢ : (η : n₁ →ˢ n₂) → Expr Γ₁ T → η ∣ Γ₁ ⇒ˢ Γ₂ → Expr Γ₂ (T [ η ]ˢ)
+\providecommand{\SFEappS}{\AFun{\_\mid\_[\_]^{S}}}
+
+% Agda: _,_∣_⨾ˢ_ : ∀ η₁ η₂ → η₁ ∣ Γ₁ ⇒ˢ Γ₂ → η₂ ∣ Γ₂ ⇒ˢ Γ₃ → (η₁ ⨟ˢ η₂) ∣ Γ₁ ⇒ˢ Γ₃
+\providecommand{\SFECompS}{\AFun{\_\,,\_\mid\_\bdot^{S}\_}}
+% Agda: _⨾ˢ_ : ζ₁ ∣ Γ₁ ⇒ˢ Γ₂ → ζ₂ ∣ Γ₂ ⇒ˢ Γ₃ → (ζ₁ ⨟ˢ ζ₂) ∣ Γ₁ ⇒ˢ Γ₃
+\providecommand{\SFECompSBare}{\AFun{\_\bdot^{S}\_}}
+
+% ---------- 3.11 Expression-level monad-law lemmas ----------
+% Agda: Identityᵣ : ∀ (e : Expr Γ T) → ⟨ idᴿ ⟩ ∣ e [ Idˢ ]ˢ ≡ e
+\providecommand{\SFEIdentity}{\AFun{\mathsf{Identity}_r}}
+
+% Agda: Compositionalityᴿᴿ : ∀ (e : Expr Γ₁ T) (ζ₁ : n₁ →ᴿ n₂) (ζ₂ : n₂ →ᴿ n₃) (ρ₁ : ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (ρ₂ : ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃) →
+%   ζ₂ ∣ (ζ₁ ∣ e [ ρ₁ ]ᴿ) [ ρ₂ ]ᴿ ≡ (ζ₁ ⨟ᴿ ζ₂) ∣ e [ ζ₁ , ζ₂ ∣ ρ₁ ⨾ᴿ ρ₂ ]ᴿ
+\providecommand{\SFECompositionalityRR}{\AFun{Compositionality\ARR}}
+% Agda: Compositionalityᴿˢ : η₂ ∣ (ζ₁ ∣ e [ ρ₁ ]ᴿ) [ σ₂ ]ˢ ≡ (⟨ ζ₁ ⟩ ⨟ˢ η₂) ∣ e [ ⟨ ζ₁ ⟩ , η₂ ∣ ζ₁ ∣⟪ ρ₁ ⟫ ⨾ˢ σ₂ ]ˢ
+\providecommand{\SFECompositionalityRS}{\AFun{Compositionality\ARS}}
+% Agda: Compositionalityˢᴿ : ζ₂ ∣ (η₁ ∣ e [ σ₁ ]ˢ) [ ρ₂ ]ᴿ ≡ (η₁ ⨟ˢ ⟨ ζ₂ ⟩) ∣ e [ (η₁ , ⟨ ζ₂ ⟩ ∣ σ₁ ⨾ˢ (ζ₂ ∣⟪ ρ₂ ⟫)) ]ˢ
+\providecommand{\SFECompositionalitySR}{\AFun{Compositionality\ASR}}
+% Agda: Compositionalityˢˢ : η₂ ∣ (η₁ ∣ e [ σ₁ ]ˢ) [ σ₂ ]ˢ ≡ (η₁ ⨟ˢ η₂) ∣ e [ η₁ , η₂ ∣ σ₁ ⨾ˢ σ₂ ]ˢ
+\providecommand{\SFECompositionalitySS}{\AFun{Compositionality\ASS}}
+
+% Agda: Lift-Dist-Compᴿᴿ : (ρ₁ ⇑ᴿ T) ⨾ᴿ (ρ₂ ⇑ᴿ (T [ ζ₁ ]ᴿ)) ≡ ((ρ₁ ⨾ᴿ ρ₂) ⇑ᴿ T)
+\providecommand{\SFLiftDistCompRR}{\AFun{Lift\text{-}Dist\text{-}Comp\ARR}}
+% Agda: Lift-Dist-Compᴿˢ : (ζ₁ ∣⟪ ρ₁ ⇑ᴿ T ⟫) ⨾ˢ (σ₂ ⇑ˢ (T [ ζ₁ ]ᴿ)) ≡ ((ζ₁ ∣⟪ ρ₁ ⟫ ⨾ˢ σ₂) ⇑ˢ T)
+\providecommand{\SFLiftDistCompRS}{\AFun{Lift\text{-}Dist\text{-}Comp\ARS}}
+% Agda: Lift-Dist-Compˢᴿ : (σ₁ ⇑ˢ T) ⨾ˢ (ζ₂ ∣⟪ ρ₂ ⇑ᴿ (T [ η₁ ]ˢ) ⟫) ≡ ((σ₁ ⨾ˢ (ζ₂ ∣⟪ ρ₂ ⟫)) ⇑ˢ T)
+\providecommand{\SFLiftDistCompSR}{\AFun{Lift\text{-}Dist\text{-}Comp\ASR}}
+% Agda: Lift-Dist-Compˢˢ : (σ₁ ⇑ˢ T) ⨾ˢ (σ₂ ⇑ˢ (T [ η₁ ]ˢ)) ≡ ((σ₁ ⨾ˢ σ₂) ⇑ˢ T)
+\providecommand{\SFLiftDistCompSS}{\AFun{Lift\text{-}Dist\text{-}Comp\ASS}}
+
+% Agda: lift*-dist-Compᴿᴿ : (ρ₁ ↑ᴿ*) ⨾ᴿ (ρ₂ ↑ᴿ*) ≡ ((ρ₁ ⨾ᴿ ρ₂) ↑ᴿ*)
+\providecommand{\SFLiftStarDistCompRR}{\AFun{lift^{\ast}\text{-}dist\text{-}Comp\ARR}}
+% Agda: lift*-dist-Compᴿˢ : ((ρ₁ ↑ᴿ*) ∣⟪ … ⟫) ⨾ˢ (σ₂ ↑ˢ*) ≡ ((⟨ ζ₁ ⟩ ⨟ˢ η₂) ∣ ζ₁ ∣⟪ ρ₁ ⟫ ⨾ˢ σ₂) ↑ˢ*
+\providecommand{\SFLiftStarDistCompRS}{\AFun{lift^{\ast}\text{-}dist\text{-}Comp\ARS}}
+% Agda: lift*-dist-Compˢᴿ : (σ₁ ↑ˢ*) ⨾ˢ ((ζ₂ ↑ᴿ) ∣⟪ ρ₂ ↑ᴿ* ⟫) ≡ (σ₁ ⨾ˢ (ζ₂ ∣⟪ ρ₂ ⟫)) ↑ˢ*
+\providecommand{\SFLiftStarDistCompSR}{\AFun{lift^{\ast}\text{-}dist\text{-}Comp\ASR}}
+% Agda: lift*-dist-Compˢˢ : (σ₁ ↑ˢ*) ⨾ˢ (σ₂ ↑ˢ*) ≡ ((σ₁ ⨾ˢ σ₂) ↑ˢ*)
+\providecommand{\SFLiftStarDistCompSS}{\AFun{lift^{\ast}\text{-}dist\text{-}Comp\ASS}}
+
+% Agda: Coincidence : ∀ (e : Expr Γ₁ T) (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) → ⟨ ζ ⟩ ∣ e [ ζ ∣⟪ ρ ⟫ ]ˢ ≡ (ζ ∣ e [ ρ ]ᴿ)
+\providecommand{\SFCoincidence}{\AFun{\mathsf{Coincidence}}}
+
+% Agda: η-Idᴿ : idᴿ ∣ (zero) ∙ᴿ (Wkᴿ T) ≡ (Idᴿ {Γ = Γ ▷ T})
+\providecommand{\SFEetaIdR}{\AFun{\eta\text{-}\mathsf{Id}^{R}}}
+% Agda: η*-Idᴿ : idᴿ ∣ (Idᴿ {Γ = Γ}) ↑ᴿ* ≡ Idᴿ
+\providecommand{\SFEetaIdRStar}{\AFun{\eta^{\ast}\text{-}\mathsf{Id}^{R}}}
+% Agda: η-Id : ⟨ idᴿ ⟩ ∣ (` zero) ∙ˢ (Wkˢ T) ≡ (Idˢ {Γ = Γ ▷ T})
+\providecommand{\SFEetaId}{\AFun{\eta\text{-}\mathsf{Id}}}
+% Agda: η*-Id : ⟨ idᴿ ⟩ ∣ (Idˢ {Γ = Γ}) ↑ˢ* ≡ Idˢ
+\providecommand{\SFEetaIdStar}{\AFun{\eta^{\ast}\text{-}\mathsf{Id}}}
+
+% ---------- 3.12 Single substitution at the term level ----------
+% Agda: _[_] : Expr (Γ ▷ T′) T → Expr Γ T′ → Expr Γ T
+%       e [ e′ ] = idˢ ∣ e [ idˢ ∣ e′ ∙ˢ Idˢ ]ˢ
+\providecommand{\SFEsingle}{\AFun{\_[\_]}}
+% Agda: _[*_*] : Expr (Γ ▷*) T → (T′ : Type n) → Expr Γ (T [ T′ ]*)
+%       e [* T′ *] = (T′ ∙ˢ idˢ) ∣ e [ idˢ ∣ T′ ∙ˢ* Idˢ ]ˢ
+\providecommand{\SFETsingle}{\AFun{\_[^{\ast}\_^{\ast}]}}
+
+% ---------- 3.13 Reduction & semantics ----------
+% Agda: data _⟶_ : Expr Γ T → Expr Γ T → Set where
+%         β-λ  : (λx e₁ · e₂) ⟶ (e₁ [ e₂ ])
+%         β-Λ  : (Λα e ·* T′) ⟶ (e [* T′ *])
+%         ξ-·  : e₁ ⟶ e₁′ → (e₁ · e₂) ⟶ (e₁′ · e₂)
+%         ξ-·* : e ⟶ e′ → (e ·* T) ⟶ (e′ ·* T)
+%         ξ-Λ  : e ⟶ e′ → (Λα e) ⟶ (Λα e′)
+\providecommand{\SFstep}{\AData{\_\longrightarrow\_}}
+% Agda: data _⟶*_ : Expr Γ T → Expr Γ T → Set where
+%         ⟶refl  : e ⟶* e
+%         ⟶trans : e₁ ⟶ e₂ → e₂ ⟶* e₃ → e₁ ⟶* e₃
+\providecommand{\SFsteps}{\AData{\_\longrightarrow^{\ast}\_}}
+\providecommand{\SFbetalam}{\ACtor{\beta\text{-}\lambda}}
+\providecommand{\SFbetaLam}{\ACtor{\beta\text{-}\Lambda}}
+\providecommand{\SFxiapp}{\ACtor{\xi\text{-}{\cdot}}}
+\providecommand{\SFxiTApp}{\ACtor{\xi\text{-}{\cdot}^{\ast}}}
+\providecommand{\SFxiLam}{\ACtor{\xi\text{-}\Lambda}}
+\providecommand{\SFstepRefl}{\ACtor{\longrightarrow\text{-}\mathsf{refl}}}
+\providecommand{\SFstepTrans}{\ACtor{\longrightarrow\text{-}\mathsf{trans}}}
+
+% ---------- 3.14 Progress ----------
+% Agda: data Value : Expr Γ T → Set where
+%         λx : (e : Expr (Γ ▷ T₁) T₂) → Value (λx e)
+%         Λα : Value e → Value (Λα e)
+\providecommand{\SFValue}{\AData{\mathsf{Value}}}
+\providecommand{\SFValueLam}{\ACtor{\lambda x}}
+\providecommand{\SFValueTLam}{\ACtor{\Lambda\alpha}}
+% Agda: data Progress : Expr Γ T → Set where
+%         done : (v : Value e) → Progress e
+%         step : (e⟶e′ : e ⟶ e′) → Progress e
+\providecommand{\SFProgress}{\AData{\mathsf{Progress}}}
+\providecommand{\SFdone}{\ACtor{\mathsf{done}}}
+\providecommand{\SFstepC}{\ACtor{\mathsf{step}}}
+% Agda: NoVar : Ctx n → Set
+%       NoVar ∅       = ⊤
+%       NoVar (Γ ▷ T) = ⊥
+%       NoVar (Γ ▷*)  = NoVar Γ
+\providecommand{\SFNoVar}{\AFun{\mathsf{NoVar}}}
+% Agda: noVar : NoVar Γ → ¬ (Γ ∋ T)
+%       noVar nv (suc* x) = noVar nv x
+\providecommand{\SFnoVar}{\AFun{\mathsf{noVar}}}
+% Agda: progress : NoVar Γ → (e : Expr Γ T) → Progress e
+\providecommand{\SFprogress}{\AFun{\mathsf{progress}}}
+
+% =====================================================================
+% 4. SystemFo.agda  (System F omega: full higher-kinded system)
+% =====================================================================
+
+% ---------- 4.1 Kinds ----------
+% Agda: data Kind : Set where
+%         ∗   : Kind
+%         _⇒_ : Kind → Kind → Kind
+\providecommand{\SFOKind}{\AData{\mathsf{Kind}}}
+\providecommand{\SFOStar}{\ACtor{\ast}}
+\providecommand{\SFOKArr}{\ACtor{\_\Rightarrow\_}}
+\providecommand{\SFOI}{\ABound{I}}
+\providecommand{\SFOJ}{\ABound{J}}
+\providecommand{\SFOK}{\ABound{K}}
+
+% ---------- 4.2 Type contexts and variables ----------
+% Agda: data Ctx* : Set where
+%         ∅    : Ctx*
+%         _▷*_ : Ctx* → Kind → Ctx*
+\providecommand{\SFOTyCtx}{\AData{\mathsf{Ctx}^{\ast}}}
+\providecommand{\SFOTyEmpty}{\ACtor{\emptyset}}
+\providecommand{\SFOTyExt}{\ACtor{\_\rhd^{\ast}\_}}
+
+% Agda: data _∋*_ : Ctx* → Kind → Set where
+%         zero : (Φ ▷* K) ∋* K
+%         suc  : Φ ∋* K → (Φ ▷* J) ∋* K
+\providecommand{\SFOTyVar}{\AData{\_\ni^{\ast}\_}}
+\providecommand{\SFOPhi}{\ABound{\Phi}}
+\providecommand{\SFOPsi}{\ABound{\Psi}}
+\providecommand{\SFOTheta}{\ABound{\Theta}}
+
+% ---------- 4.3 Types ----------
+% Agda: data Type Φ : Kind → Set where
+%         `_   : Φ ∋* K → Type Φ K
+%         λα   : Type (Φ ▷* J) K → Type Φ (J ⇒ K)
+%         ∀α   : Type (Φ ▷* J) ∗ → Type Φ ∗
+%         _⇒_  : Type Φ ∗ → Type Φ ∗ → Type Φ ∗
+\providecommand{\SFOType}{\AData{\mathsf{Type}}}
+\providecommand{\SFOTyVarC}{\ACtor{`}}
+\providecommand{\SFOTyLam}{\ACtor{\lambda\alpha}}
+\providecommand{\SFOTyForall}{\ACtor{\forall\alpha}}
+\providecommand{\SFOTyArr}{\ACtor{\_\Rightarrow\_}}
+
+% Agda: postulate _$_ : Type Φ (J ⇒ K) → Type Φ J → Type Φ K
+\providecommand{\SFOTyApp}{\APost{\_\$\_}}
+
+% Agda: postulate β≡* : (λα T₁) $ T₂ ≡ T₁ [ T₂ ]*
+\providecommand{\SFOBetaEq}{\APost{\beta\equiv^{\ast}}}
+
+% ---------- 4.4 Type renamings ----------
+% Agda: _→ᴿ_ : Ctx* → Ctx* → Set
+%       Φ →ᴿ Ψ = (K : Kind) → Φ ∋* K → Ψ ∋* K
+\providecommand{\SFORen}{\AFun{\_\to^{R}\_}}
+% Agda: wkᴿ : ∀ J → Φ →ᴿ (Φ ▷* J)   --  wkᴿ _ _ α = suc α
+\providecommand{\SFOwkR}{\AFun{\mathsf{wk}^{R}}}
+% Agda: idᴿ : Φ →ᴿ Φ                --  idᴿ _ α = α
+\providecommand{\SFOidR}{\AFun{\mathsf{id}^{R}}}
+% Agda: _∙ᴿ_ : Ψ ∋* K → Φ →ᴿ Ψ → (Φ ▷* K) →ᴿ Ψ
+\providecommand{\SFOconsR}{\AFun{\_\bullet^{R}\_}}
+% Agda: _&ᴿ_ : Φ ∋* K → Φ →ᴿ Ψ → Ψ ∋* K
+\providecommand{\SFOvarR}{\AFun{\_\&^{R}\_}}
+% Agda: _⨟ᴿ_ : Φ →ᴿ Ψ → Ψ →ᴿ Θ → Φ →ᴿ Θ
+\providecommand{\SFOcompR}{\AFun{\_\fatsemi^{R}\_}}
+% Agda: _↑ᴿ_ : Φ →ᴿ Ψ → ∀ J → (Φ ▷* J) →ᴿ (Ψ ▷* J)
+%       ζ ↑ᴿ J = zero ∙ᴿ (ζ ⨟ᴿ wkᴿ J)
+\providecommand{\SFOliftR}{\AFun{\_\uparrow^{R}\_}}
+% Agda: _[_]ᴿ : Type Φ K → Φ →ᴿ Ψ → Type Ψ K
+\providecommand{\SFOappR}{\AFun{\_[\_]^{R}}}
+
+% ---------- 4.5 Type substitutions ----------
+% Agda: _→ˢ_ : Ctx* → Ctx* → Set
+%       Φ →ˢ Ψ = (K : Kind) → Φ ∋* K → Type Ψ K
+\providecommand{\SFOSub}{\AFun{\_\to^{S}\_}}
+% Agda: ⟨_⟩ : Φ →ᴿ Ψ → Φ →ˢ Ψ        --  ⟨ ζ ⟩ K α = ` (α &ᴿ ζ)
+\providecommand{\SFOembed}{\AFun{\langle\_\rangle}}
+% Agda: _∙ˢ_ : Type Ψ K → Φ →ˢ Ψ → (Φ ▷* K) →ˢ Ψ
+\providecommand{\SFOconsS}{\AFun{\_\bullet^{S}\_}}
+% Agda: _&ˢ_ : Φ ∋* K → Φ →ˢ Ψ → Type Ψ K
+\providecommand{\SFOvarS}{\AFun{\_\&^{S}\_}}
+% Agda: _↑ˢ_ : Φ →ˢ Ψ → ∀ J → (Φ ▷* J) →ˢ (Ψ ▷* J)
+%       η ↑ˢ J = (` zero) ∙ˢ λ K α → (η K α) [ wkᴿ J ]ᴿ
+\providecommand{\SFOliftS}{\AFun{\_\uparrow^{S}\_}}
+% Agda: _[_]ˢ : Type Φ K → Φ →ˢ Ψ → Type Ψ K
+\providecommand{\SFOappS}{\AFun{\_[\_]^{S}}}
+% Agda: _⨟ˢ_ : Φ →ˢ Ψ → Ψ →ˢ Θ → Φ →ˢ Θ
+%       (η₁ ⨟ˢ η₂) K α = (η₁ K α) [ η₂ ]ˢ
+\providecommand{\SFOcompS}{\AFun{\_\fatsemi^{S}\_}}
+
+% Agda: postulate traversal-$ᴿ : (T₁ $ T₂) [ ζ ]ᴿ ≡ (T₁ [ ζ ]ᴿ) $ (T₂ [ ζ ]ᴿ)
+\providecommand{\SFOtraversalAppR}{\APost{traversal\text{-}\$^{R}}}
+% Agda: postulate traversal-$ˢ : (T₁ $ T₂) [ η ]ˢ ≡ (T₁ [ η ]ˢ) $ (T₂ [ η ]ˢ)
+\providecommand{\SFOtraversalAppS}{\APost{traversal\text{-}\$^{S}}}
+
+% ---------- 4.6 Sigma-calculus laws (mirrors SystemF.agda) ----------
+% Agda: `beta-ext-zero  : zero  &ᴿ (α ∙ᴿ ζ) ≡ α
+\providecommand{\SFObetaExtZeroR}{\APost{`\beta\text{-}ext\text{-}zero}}
+% Agda: `beta-ext-suc   : suc α &ᴿ (α′ ∙ᴿ ζ) ≡ α &ᴿ ζ
+\providecommand{\SFObetaExtSucR}{\APost{`\beta\text{-}ext\text{-}suc}}
+% Agda: `beta-id        : α &ᴿ idᴿ ≡ α
+\providecommand{\SFObetaIdR}{\APost{`\beta\text{-}id}}
+% Agda: `beta-wk        : α &ᴿ wkᴿ J ≡ suc {J = J} α
+\providecommand{\SFObetaWkR}{\APost{`\beta\text{-}wk}}
+% Agda: `beta-comp      : α &ᴿ (ζ₁ ⨟ᴿ ζ₂) ≡ (α &ᴿ ζ₁) &ᴿ ζ₂
+\providecommand{\SFObetaCompR}{\APost{`\beta\text{-}comp}}
+% Agda: `associativity, `distributivity, `interact, `comp-id*, `η-*  -- SystemF-shaped
+\providecommand{\SFOassocR}{\APost{`associativity}}
+\providecommand{\SFOdistR}{\APost{`distributivity}}
+\providecommand{\SFOinteractR}{\APost{`interact}}
+\providecommand{\SFOcompIdrR}{\APost{`comp\text{-}id_r}}
+\providecommand{\SFOcompIdlR}{\APost{`comp\text{-}id_l}}
+\providecommand{\SFOetaIdR}{\APost{`\eta\text{-}id}}
+\providecommand{\SFOetaLawR}{\APost{`\eta\text{-}law}}
+
+% Agda: beta-ext-zero, beta-ext-suc, beta-rename, beta-comp, beta-lift  -- substitution β-laws
+\providecommand{\SFObetaExtZero}{\APost{\beta\text{-}ext\text{-}zero}}
+\providecommand{\SFObetaExtSuc}{\APost{\beta\text{-}ext\text{-}suc}}
+\providecommand{\SFObetaRename}{\APost{\beta\text{-}rename}}
+\providecommand{\SFObetaComp}{\APost{\beta\text{-}comp}}
+\providecommand{\SFObetaLift}{\APost{\beta\text{-}lift}}
+\providecommand{\SFOassoc}{\APost{associativity}}
+\providecommand{\SFOdist}{\APost{distributivity}}
+\providecommand{\SFOinteract}{\APost{interact}}
+\providecommand{\SFOcompIdr}{\APost{comp\text{-}id_r}}
+\providecommand{\SFOcompIdl}{\APost{comp\text{-}id_l}}
+\providecommand{\SFOetaId}{\APost{\eta\text{-}id}}
+\providecommand{\SFOetaLaw}{\APost{\eta\text{-}law}}
+
+% Agda: identityᵣ      : T [ idᴿ ]ᴿ        ≡ T
+\providecommand{\SFOidentity}{\APost{identity_r}}
+% Agda: identityᵣˢ     : T [ ⟨ idᴿ ⟩ ]ˢ    ≡ T
+\providecommand{\SFOidentityRS}{\APost{identity_{rs}}}
+% Agda: compositionalityᴿᴿ : (T [ ζ₁ ]ᴿ) [ ζ₂ ]ᴿ ≡ T [ ζ₁ ⨟ᴿ ζ₂ ]ᴿ   (and ᴿˢ/ˢᴿ/ˢˢ analogues)
+\providecommand{\SFOcompositionalityRR}{\APost{compositionality\ARR}}
+\providecommand{\SFOcompositionalityRS}{\APost{compositionality\ARS}}
+\providecommand{\SFOcompositionalitySR}{\APost{compositionality\ASR}}
+\providecommand{\SFOcompositionalitySS}{\APost{compositionality\ASS}}
+% Agda: coincidence       : T [ ⟨ ζ ⟩ ]ˢ      ≡ T [ ζ ]ᴿ
+\providecommand{\SFOcoincidence}{\APost{coincidence}}
+% Agda: coincidence-comp  : ⟨ ζ₁ ⟩ ⨟ˢ ⟨ ζ₂ ⟩ ≡ ⟨ ζ₁ ⨟ᴿ ζ₂ ⟩
+\providecommand{\SFOcoincidenceComp}{\APost{coincidence\text{-}comp}}
+
+% Agda: coincidence-pop-ᴿ, coincidence-pop-ᴿ-⨟, coincidence-↑ᴿ-↑ˢ, coincidence-pop-ˢ
+\providecommand{\SFOcoincPopR}{\APost{coincidence\text{-}pop\text{-}{R}}}
+\providecommand{\SFOcoincPopRComp}{\APost{coincidence\text{-}pop\text{-}{R}\text{-}\fatsemi}}
+\providecommand{\SFOcoincLiftRS}{\APost{coincidence\text{-}\uparrow^{R}\text{-}\uparrow^{S}}}
+\providecommand{\SFOcoincPopS}{\APost{coincidence\text{-}pop\text{-}{S}}}
+
+% Lift helpers used inside proofs
+% Agda: lift-idᴿ : (idᴿ {Φ}) ↑ᴿ J ≡ idᴿ
+\providecommand{\SFOliftIdR}{\AFun{lift\text{-}id^{R}}}
+% Agda: lift-coincidence : ⟨ ζ ⟩ ↑ˢ J ≡ ⟨ ζ ↑ᴿ J ⟩
+\providecommand{\SFOliftCoincidence}{\AFun{lift\text{-}coincidence}}
+\providecommand{\SFOliftCompositionalityRR}{\AFun{lift\text{-}compositionality\ARR}}
+\providecommand{\SFOliftCompositionalityRS}{\AFun{lift\text{-}compositionality\ARS}}
+\providecommand{\SFOliftCompositionalitySR}{\AFun{lift\text{-}compositionality\ASR}}
+\providecommand{\SFOliftCompositionalitySS}{\AFun{lift\text{-}compositionality\ASS}}
+
+% Functorial-action sanity checks
+% Agda: lift*-id : (idᴿ {Φ}) ↑ᴿ J ≡ idᴿ
+\providecommand{\SFOlifttId}{\AFun{lift^{\ast}\text{-}id}}
+% Agda: lift*-comp : (ζ′ ⨟ᴿ ζ) ↑ᴿ J ≡ (ζ′ ↑ᴿ J) ⨟ᴿ (ζ ↑ᴿ J)
+\providecommand{\SFOlifttComp}{\AFun{lift^{\ast}\text{-}comp}}
+% Agda: ren*-id : T [ idᴿ ]ᴿ ≡ T
+\providecommand{\SFOrenStarId}{\AFun{ren^{\ast}\text{-}id}}
+% Agda: ren*-comp : T [ ζ′ ⨟ᴿ ζ ]ᴿ ≡ (T [ ζ′ ]ᴿ) [ ζ ]ᴿ
+\providecommand{\SFOrenStarComp}{\AFun{ren^{\ast}\text{-}comp}}
+% Agda: lifts*-id : (idˢ {Φ}) ↑ˢ J ≡ idˢ
+\providecommand{\SFOliftsStarId}{\AFun{lifts^{\ast}\text{-}id}}
+% Agda: lifts*-comp : (η′ ⨟ˢ η) ↑ˢ J ≡ (η′ ↑ˢ J) ⨟ˢ (η ↑ˢ J)
+\providecommand{\SFOliftsStarComp}{\AFun{lifts^{\ast}\text{-}comp}}
+% Agda: sub*-id : T [ idˢ ]ˢ ≡ T
+\providecommand{\SFOsubStarId}{\AFun{sub^{\ast}\text{-}id}}
+% Agda: sub*-var : (` α) [ η ]ˢ ≡ α &ˢ η
+\providecommand{\SFOsubStarVar}{\AFun{sub^{\ast}\text{-}var}}
+% Agda: sub*-comp : T [ η ⨟ˢ η′ ]ˢ ≡ (T [ η ]ˢ) [ η′ ]ˢ
+\providecommand{\SFOsubStarComp}{\AFun{sub^{\ast}\text{-}comp}}
+
+% ---------- 4.7 Single substitution + weakening ----------
+% Agda: weaken : ∀ J → Type Φ K → Type (Φ ▷* J) K   --  weaken J T = T [ wkᴿ J ]ᴿ
+\providecommand{\SFOweaken}{\AFun{weaken}}
+% Agda: _[_]* : Type (Φ ▷* J) K → Type Φ J → Type Φ K
+%       T [ T′ ]* = T [ T′ ∙ˢ idˢ ]ˢ
+\providecommand{\SFOsubzero}{\AFun{\_[\_]^{\ast}}}
+% Agda: idˢ : Φ →ˢ Φ   --  idˢ = ⟨ idᴿ ⟩
+\providecommand{\SFOidS}{\AFun{\mathsf{id}^{S}}}
+
+% ---------- 4.8 Term contexts and variables ----------
+% Agda: data Ctx : Ctx* → Set where
+%         ∅    : Ctx ∅
+%         _▷_  : Ctx Φ → Type Φ ∗ → Ctx Φ
+%         _▷*  : Ctx Φ → ∀ {J} → Ctx (Φ ▷* J)
+\providecommand{\SFOCtx}{\AData{\mathsf{Ctx}}}
+\providecommand{\SFOEmpty}{\ACtor{\emptyset}}
+\providecommand{\SFOExtVar}{\ACtor{\_\rhd\_}}
+\providecommand{\SFOExtTy}{\ACtor{\_\rhd^{\ast}}}
+
+% Agda: data _∋_ : Ctx Φ → Type Φ ∗ → Set where
+%         zero : (Γ ▷ T) ∋ T
+%         suc  : Γ ∋ T → (Γ ▷ T′) ∋ T
+%         suc* : Γ ∋ T → ((Γ ▷*) {J}) ∋ weaken J T
+\providecommand{\SFONi}{\AData{\_\ni\_}}
+\providecommand{\SFOvarZ}{\ACtor{\mathsf{zero}}}
+\providecommand{\SFOvarSucC}{\ACtor{\mathsf{suc}}}
+\providecommand{\SFOvarSucStar}{\ACtor{\mathsf{suc}^{\ast}}}
+
+% ---------- 4.9 Expressions ----------
+% Agda: data Expr {Φ} Γ : Type Φ ∗ → Set where
+%         `_   : Γ ∋ T → Expr Γ T
+%         λx   : Expr (Γ ▷ T₁) T₂ → Expr Γ (T₁ ⇒ T₂)
+%         _·_  : Expr Γ (T₁ ⇒ T₂) → Expr Γ T₁ → Expr Γ T₂
+%         Λα   : Expr (Γ ▷*) T → Expr Γ (∀α T)
+%         _·*_ : Expr Γ (∀α T) → (T′ : Type Φ K) → Expr Γ (T [ T′ ]*)
+\providecommand{\SFOExpr}{\AData{\mathsf{Expr}}}
+\providecommand{\SFOEvar}{\ACtor{`}}
+\providecommand{\SFOElam}{\ACtor{\lambda x}}
+\providecommand{\SFOEapp}{\ACtor{\_\cdot\_}}
+\providecommand{\SFOETLam}{\ACtor{\Lambda\alpha}}
+\providecommand{\SFOETApp}{\ACtor{\_\cdot^{\ast}\_}}
+
+% ---------- 4.10 Expression-level renamings ----------
+% Agda: _∣_⇒ᴿ_ : Φ →ᴿ Ψ → Ctx Φ → Ctx Ψ → Set
+%       ζ ∣ Γ₁ ⇒ᴿ Γ₂ = ∀ T → Γ₁ ∋ T → Γ₂ ∋ (T [ ζ ]ᴿ)
+\providecommand{\SFOERen}{\AFun{\_\mid\_\Rightarrow^{R}\_}}
+% Agda: Idᴿ : idᴿ ∣ Γ ⇒ᴿ Γ
+\providecommand{\SFOEIdR}{\AFun{\mathsf{Id}^{R}}}
+% Agda: Wkᴿ : ∀ T → idᴿ ∣ Γ ⇒ᴿ (Γ ▷ T)
+\providecommand{\SFOEWkR}{\AFun{\mathsf{Wk}^{R}}}
+% Agda: wkᴿ* : ∀ J → wkᴿ J ∣ Γ ⇒ᴿ ((Γ ▷*) {J})
+\providecommand{\SFOEwkstarR}{\AFun{\mathsf{wk}^{R\ast}}}
+% Agda: _,_∣_⨾ᴿ_ : ∀ ζ₁ ζ₂ → ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂ → ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃ → (ζ₁ ⨟ᴿ ζ₂) ∣ Γ₁ ⇒ᴿ Γ₃
+\providecommand{\SFOECompR}{\AFun{\_\,,\_\mid\_\bdot^{R}\_}}
+\providecommand{\SFOECompRBare}{\AFun{\_\bdot^{R}\_}}
+% Agda: _∣_∙ᴿ_ : ∀ ζ → Γ₂ ∋ (T [ ζ ]ᴿ) → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → ζ ∣ (Γ₁ ▷ T) ⇒ᴿ Γ₂
+\providecommand{\SFOEextR}{\AFun{\_\mid\_\bullet^{R}\_}}
+% Agda: _∣_⇑ᴿ_ : ∀ ζ → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → ∀ T → ζ ∣ (Γ₁ ▷ T) ⇒ᴿ (Γ₂ ▷ (T [ ζ ]ᴿ))
+\providecommand{\SFOEliftR}{\AFun{\_\mid\_\Uparrow^{R}\_}}
+\providecommand{\SFOEliftRBare}{\AFun{\_\Uparrow^{R}\_}}
+% Agda: _∣_↑ᴿ*_ : ∀ ζ → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → ∀ J → (ζ ↑ᴿ J) ∣ ((Γ₁ ▷*) {J}) ⇒ᴿ ((Γ₂ ▷*) {J})
+\providecommand{\SFOETliftR}{\AFun{\_\mid\_\uparrow^{R\ast}\_}}
+\providecommand{\SFOETliftRBare}{\AFun{\uparrow^{R\ast}\_}}
+% Agda: _∣_[_]ᴿ : (ζ : Φ →ᴿ Ψ) → Expr Γ₁ T → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → Expr Γ₂ (T [ ζ ]ᴿ)
+\providecommand{\SFOEappR}{\AFun{\_\mid\_[\_]^{R}}}
+% Agda: Weaken : Expr Γ T → Expr (Γ ▷ T′) T   --  Weaken e = idᴿ ∣ e [ Wkᴿ _ ]ᴿ
+\providecommand{\SFOEWeaken}{\AFun{\mathsf{Weaken}}}
+% Agda: weaken* : ∀ J → Expr Γ T → Expr ((Γ ▷*) {J}) (weaken J T)
+\providecommand{\SFOEweakenStar}{\AFun{weaken^{\ast}}}
+
+% ---------- 4.11 Expression-level substitutions ----------
+% Agda: _∣_⇒ˢ_ : Φ →ˢ Ψ → Ctx Φ → Ctx Ψ → Set
+%       η ∣ Γ₁ ⇒ˢ Γ₂ = ∀ T → Γ₁ ∋ T → Expr Γ₂ (T [ η ]ˢ)
+\providecommand{\SFOESub}{\AFun{\_\mid\_\Rightarrow^{S}\_}}
+% Agda: _∣⟪_⟫ : ∀ ζ → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → ⟨ ζ ⟩ ∣ Γ₁ ⇒ˢ Γ₂
+\providecommand{\SFOEemb}{\AFun{\_\mid\langle\!\langle\_\rangle\!\rangle}}
+\providecommand{\SFOEembBare}{\AFun{\langle\!\langle\_\rangle\!\rangle}}
+% Agda: Idˢ : idˢ ∣ Γ ⇒ˢ Γ
+\providecommand{\SFOEIdS}{\AFun{\mathsf{Id}^{S}}}
+% Agda: Wkˢ : ∀ T → ⟨ idᴿ ⟩ ∣ Γ ⇒ˢ (Γ ▷ T)
+\providecommand{\SFOEWkS}{\AFun{\mathsf{Wk}^{S}}}
+% Agda: wkᴿ*ˢ : ∀ J → ⟨ wkᴿ J ⟩ ∣ Γ ⇒ˢ ((Γ ▷*) {J})
+\providecommand{\SFOEwkstarS}{\AFun{\mathsf{wk}^{R\ast S}}}
+% Agda: _∣_∙ˢ_ : ∀ η → Expr Γ₂ (T [ η ]ˢ) → η ∣ Γ₁ ⇒ˢ Γ₂ → η ∣ (Γ₁ ▷ T) ⇒ˢ Γ₂
+\providecommand{\SFOEextS}{\AFun{\_\mid\_\bullet^{S}\_}}
+% Agda: _∣_∙ˢ*_ : ∀ η T → η ∣ Γ₁ ⇒ˢ Γ₂ → (T ∙ˢ η) ∣ ((Γ₁ ▷*) {J}) ⇒ˢ Γ₂
+\providecommand{\SFOEextSstar}{\AFun{\_\mid\_\bullet^{S\ast}\_}}
+% Agda: _∣_⇑ˢ_ : ∀ η → η ∣ Γ₁ ⇒ˢ Γ₂ → ∀ T → η ∣ (Γ₁ ▷ T) ⇒ˢ (Γ₂ ▷ (T [ η ]ˢ))
+\providecommand{\SFOEliftS}{\AFun{\_\mid\_\Uparrow^{S}\_}}
+% Agda: _∣_↑ˢ*_ : ∀ η → η ∣ Γ₁ ⇒ˢ Γ₂ → ∀ J → (η ↑ˢ J) ∣ ((Γ₁ ▷*) {J}) ⇒ˢ ((Γ₂ ▷*) {J})
+\providecommand{\SFOETliftS}{\AFun{\_\mid\_\uparrow^{S\ast}\_}}
+% Agda: _∣_[_]ˢ : (η : Φ →ˢ Ψ) → Expr Γ₁ T → η ∣ Γ₁ ⇒ˢ Γ₂ → Expr Γ₂ (T [ η ]ˢ)
+\providecommand{\SFOEappS}{\AFun{\_\mid\_[\_]^{S}}}
+% Agda: _,_∣_⨾ˢ_ : ∀ η₁ η₂ → η₁ ∣ Γ₁ ⇒ˢ Γ₂ → η₂ ∣ Γ₂ ⇒ˢ Γ₃ → (η₁ ⨟ˢ η₂) ∣ Γ₁ ⇒ˢ Γ₃
+\providecommand{\SFOECompS}{\AFun{\_\,,\_\mid\_\bdot^{S}\_}}
+
+% ---------- 4.12 Reductions, values, progress ----------
+% Agda: _[_] : Expr (Γ ▷ T′) T → Expr Γ T′ → Expr Γ T
+%       e [ e′ ] = idˢ ∣ e [ idˢ ∣ e′ ∙ˢ Idˢ ]ˢ
+\providecommand{\SFOEsingle}{\AFun{\_[\_]}}
+% Agda: _[*_*] : Expr (Γ ▷*) T → (T′ : Type Φ J) → Expr Γ (T [ T′ ]*)
+%       e [* T′ *] = (T′ ∙ˢ idˢ) ∣ e [ idˢ ∣ T′ ∙ˢ* Idˢ ]ˢ
+\providecommand{\SFOETsingle}{\AFun{\_[^{\ast}\_^{\ast}]}}
+
+% Agda: data _⟶_  / data _⟶*_ — same shape as in SystemF.agda
+\providecommand{\SFOstep}{\AData{\_\longrightarrow\_}}
+\providecommand{\SFOsteps}{\AData{\_\longrightarrow^{\ast}\_}}
+\providecommand{\SFObetalam}{\ACtor{\beta\text{-}\lambda}}
+\providecommand{\SFObetaLam}{\ACtor{\beta\text{-}\Lambda}}
+\providecommand{\SFOxiapp}{\ACtor{\xi\text{-}{\cdot}}}
+\providecommand{\SFOxiTApp}{\ACtor{\xi\text{-}{\cdot}^{\ast}}}
+\providecommand{\SFOxiLam}{\ACtor{\xi\text{-}\Lambda}}
+\providecommand{\SFOstepRefl}{\ACtor{\longrightarrow\text{-}\mathsf{refl}}}
+\providecommand{\SFOstepTrans}{\ACtor{\longrightarrow\text{-}\mathsf{trans}}}
+
+% Agda: data Value : Expr Γ T → Set where
+%         λx : (e : Expr (Γ ▷ T₁) T₂) → Value (λx e)
+%         Λα : Value e → Value (Λα e)
+\providecommand{\SFOValue}{\AData{\mathsf{Value}}}
+\providecommand{\SFOValueLam}{\ACtor{\lambda x}}
+\providecommand{\SFOValueTLam}{\ACtor{\Lambda\alpha}}
+% Agda: data Progress : Expr Γ T → Set where
+%         done : (v : Value e) → Progress e
+%         step : (e⟶e′ : e ⟶ e′) → Progress e
+\providecommand{\SFOProgress}{\AData{\mathsf{Progress}}}
+\providecommand{\SFOdone}{\ACtor{\mathsf{done}}}
+\providecommand{\SFOstepC}{\ACtor{\mathsf{step}}}
+% Agda: data NoVar : Ctx Φ → Set where
+%         ∅   : NoVar ∅
+%         _▷* : NoVar Γ → NoVar {Φ ▷* J} (Γ ▷*)
+\providecommand{\SFONoVar}{\AData{\mathsf{NoVar}}}
+% Agda: noVar : NoVar Γ → ¬ (Γ ∋ T)
+%       noVar (nv ▷*) (suc* x) = noVar nv x
+\providecommand{\SFOnoVar}{\AFun{\mathsf{noVar}}}
+% Agda: progress : NoVar Γ → (e : Expr Γ T) → Progress e
+\providecommand{\SFOprogress}{\AFun{\mathsf{progress}}}
+% Agda: run : {T : Type ∅ ∗} → ℕ → (e : Expr ∅ T) → ∃[ e′ ] e ⟶* e′ × Maybe (Value e′)
+\providecommand{\SFOrun}{\AFun{\mathsf{run}}}
+
+% ---------- 4.13 Readability aliases (binders / variables) ----------
+% Agda: ∀β ∀κ : Type (Φ ▷* J) ∗ → Type Φ ∗   --  ∀β = ∀α; ∀κ = ∀α
+\providecommand{\SFOforallBeta}{\AFun{\forall\beta}}
+\providecommand{\SFOforallKappa}{\AFun{\forall\kappa}}
+% Agda: λβ λγ : Type (Φ ▷* J) K → Type Φ (J ⇒ K)   --  λβ = λα; λγ = λα
+\providecommand{\SFOlamBeta}{\AFun{\lambda\beta}}
+\providecommand{\SFOlamGamma}{\AFun{\lambda\gamma}}
+\providecommand{\SFOlamAlpha}{\AFun{\lambda\alpha}}
+% Agda: λf λg λz λy : Expr (Γ ▷ T₁) T₂ → Expr Γ (T₁ ⇒ T₂)   --  all = λx
+\providecommand{\SFOlamF}{\AFun{\lambda f}}
+\providecommand{\SFOlamG}{\AFun{\lambda g}}
+\providecommand{\SFOlamY}{\AFun{\lambda y}}
+\providecommand{\SFOlamZ}{\AFun{\lambda z}}
+% Agda: Λκ Λβ : Expr (Γ ▷*) T → Expr Γ (∀α T)   --  both = Λα
+\providecommand{\SFOLamBeta}{\AFun{\Lambda\beta}}
+\providecommand{\SFOLamKappa}{\AFun{\Lambda\kappa}}
+% Agda: `α `β `κ `γ : Type … K        --  type-variable shorthands at varying depths
+\providecommand{\SFOtyVarAlpha}{\AFun{`\alpha}}
+\providecommand{\SFOtyVarBeta}{\AFun{`\beta}}
+\providecommand{\SFOtyVarKappa}{\AFun{`\kappa}}
+\providecommand{\SFOtyVarGamma}{\AFun{`\gamma}}
+% Agda: `x `y `g `z `f : Expr … T     --  term-variable shorthands at varying depths
+\providecommand{\SFOvarX}{\AFun{`x}}
+\providecommand{\SFOvarY}{\AFun{`y}}
+\providecommand{\SFOvarZuse}{\AFun{`z}}
+\providecommand{\SFOvarF}{\AFun{`f}}
+\providecommand{\SFOvarG}{\AFun{`g}}
+
+% ---------- 4.14 Term-level Church numerals (in SystemFo.agda) ----------
+% Agda: ℕᶜ : Type ∅ ∗
+%       ℕᶜ = ∀α ((`α ⇒ `α) ⇒ (`α ⇒ `α))
+\providecommand{\SFONatC}{\AFun{\mathbb{N}^{c}}}
+% Agda: zeroᶜ : Expr ∅ ℕᶜ
+%       zeroᶜ = Λα (λg (λx `x))
+\providecommand{\SFOzeroC}{\AFun{\mathit{zero}^{c}}}
+% Agda: oneᶜ : Expr ∅ ℕᶜ
+%       oneᶜ = Λα (λg (λx (`g · `x)))
+\providecommand{\SFOoneC}{\AFun{\mathit{one}^{c}}}
+% Agda: succᶜ : Expr ∅ (ℕᶜ ⇒ ℕᶜ)
+%       succᶜ = λx (Λα (λg (λx (`g · ((((` (suc (suc (suc* zero)))) ·* `α) · `g) · `x)))))
+\providecommand{\SFOsuccC}{\AFun{\mathit{succ}^{c}}}
+% Agda: twoᶜ : Expr ∅ ℕᶜ              --  twoᶜ = succᶜ · (succᶜ · zeroᶜ)
+\providecommand{\SFOtwoC}{\AFun{\mathit{two}^{c}}}
+% Agda: fourᶜ : Expr ∅ ℕᶜ             --  fourᶜ = succᶜ · (succᶜ · (succᶜ · (succᶜ · zeroᶜ)))
+\providecommand{\SFOfourC}{\AFun{\mathit{four}^{c}}}
+% Agda: two+twoᶜ : Expr ∅ ℕᶜ          --  two+twoᶜ = ((twoᶜ ·* ℕᶜ) · succᶜ) · twoᶜ
+\providecommand{\SFOtwoPlusTwoC}{\AFun{\mathit{two\!+\!two}^{c}}}
+
+% =====================================================================
+% 5. SystemFo-examples.agda
+% =====================================================================
+% Agda: module example-in-agda where ...
+\providecommand{\SFOExModule}{\AMod{example\text{-}in\text{-}agda}}
+
+% Agda: ty : Set₁
+%       ty = (κ : Set → Set → Set) (β α : Set) (app : κ β α → β → α) (f : κ β α) (x : β) → α
+\providecommand{\SFOExty}{\AFun{\mathit{ty}}}
+% Agda: abst : ty
+%       abst = λ κ β α → λ app f x → app f x
+\providecommand{\SFOExabst}{\AFun{\mathit{abst}}}
+% Agda: inst : ∀ α → ty → α → α
+%       inst = λ α g x → g (λ β α → (β → α)) α α (λ f x → f x) (λ z → z) x
+\providecommand{\SFOExinst}{\AFun{\mathit{inst}}}
+% Agda: use : ∀ α → α → α
+%       use = λ α x → inst α abst x
+\providecommand{\SFOExuse}{\AFun{\mathit{use}}}
+
+% Agda: Funᵏ : Kind   --  Funᵏ = ∗ ⇒ (∗ ⇒ ∗)
+\providecommand{\SFOExFunK}{\AFun{\mathsf{Fun}^{k}}}
+% Agda: ty-enc : Type Φ ∗
+%       ty-enc = ∀κ (∀β (∀α ((((`κ $ `β) $ `α) ⇒ (`β ⇒ `α)) ⇒ (((`κ $ `β) $ `α) ⇒ (`β ⇒ `α)))))
+\providecommand{\SFOExtyEnc}{\AFun{\mathit{ty\text{-}enc}}}
+% Agda: abst-enc : Expr Γ ty-enc
+%       abst-enc = Λκ (Λβ (Λα (λf (λy (λx ((`f · `y) · `x))))))
+\providecommand{\SFOExabstEnc}{\AFun{\mathit{abst\text{-}enc}}}
+% Agda: inst-enc : Expr Γ (∀α (ty-enc ⇒ (`α ⇒ `α)))
+%       inst-enc = Λα (λg (λx ((((((`g  ·* (λβ (λα (`β ⇒ `α)))) ·* `α) ·* `α) · (λy (λx (`y · `x)))) · (λx `x)) · `x)))
+\providecommand{\SFOExinstEnc}{\AFun{\mathit{inst\text{-}enc}}}
+% Agda: use-enc : Expr ∅ (∀α (`α ⇒ `α))
+%       use-enc = Λα (λx (((inst-enc ·* `α) · abst-enc) · `x))
+\providecommand{\SFOExuseEnc}{\AFun{\mathit{use\text{-}enc}}}
+
+% Type-level Church numerals (System Fω)
+% Agda: ℕᵏ : Kind   --  ℕᵏ = (∗ ⇒ ∗) ⇒ (∗ ⇒ ∗)
+\providecommand{\SFOExNatK}{\AFun{\mathbb{N}^{k}}}
+% Agda: zeroᵏ : Type ∅ ℕᵏ
+%       zeroᵏ = λβ (λα `α)
+\providecommand{\SFOExzeroK}{\AFun{\mathit{zero}^{k}}}
+% Agda: oneᵏ : Type ∅ ℕᵏ
+%       oneᵏ = λβ (λα (`β $ `α))
+\providecommand{\SFOExoneK}{\AFun{\mathit{one}^{k}}}
+% Agda: succᵏ : Type ∅ (ℕᵏ ⇒ ℕᵏ)
+%       succᵏ = λγ (λβ (λα (`β $ ((`γ $ `β) $ `α))))
+\providecommand{\SFOExsuccK}{\AFun{\mathit{succ}^{k}}}
+% Agda: twoᵏ : Type ∅ ℕᵏ              --  twoᵏ = succᵏ $ (succᵏ $ zeroᵏ)
+\providecommand{\SFOExtwoK}{\AFun{\mathit{two}^{k}}}
+% Agda: addᵏ : Type ∅ (ℕᵏ ⇒ (ℕᵏ ⇒ ℕᵏ))
+\providecommand{\SFOExaddK}{\AFun{\mathit{add}^{k}}}
+
+% =====================================================================
+% 6. Aliases that match the hand-written occurrences in main.tex
+% =====================================================================
+% Single substitution operator, e.g. \AgdaFunction{$\_[\_]$}
+\providecommand{\AsingleSub}{\SFEsingle}
+% Type renamings/substitutions arrows (\to^{R}, \to^{S})
+\providecommand{\AtoR}{\AFun{\to^{R}}}
+\providecommand{\AtoS}{\AFun{\to^{S}}}
+% ↑^R for renaming-lift
+\providecommand{\AupR}{\AFun{\uparrow^{R}}}
+% comp-id_r postulate
+\providecommand{\AcompIdR}{\APost{comp\text{-}id_r}}
+% NoVar function name
+\providecommand{\ANoVar}{\AFun{\mathsf{NoVar}}}
+% Lift-Dist-Comp^{SS} and lift*-dist-Comp^{SS}
+\providecommand{\ALiftDistCompSS}{\AFun{Lift\text{-}Dist\text{-}Comp^{SS}}}
+\providecommand{\AliftStarDistCompSS}{\AFun{lift^{\ast}\text{-}dist\text{-}Comp^{SS}}}
+
+% Mappings discussed when comparing to prior work
+\providecommand{\AESub}{\AFun{\mathsf{ESub}}}
+\providecommand{\AappSlong}{\AFun{\_\mid\_\cdots^{S}\_}}
+\providecommand{\AfusionTsubTsub}{\AFun{fusion\text{-}Tsub\text{-}Tsub}}
+\providecommand{\AcomposeSS}{\AFun{compose^{SS}}}
+\providecommand{\AcompSSlegacy}{\AFun{\_\circ^{SS}\_}}
+\providecommand{\AfatSemibare}{\AFun{\_\fatsemi\_}}
+\providecommand{\AshiftSSlegacy}{\AFun{\_\!\gg^{SS}\!\_}}
+\providecommand{\AappBarS}{\AFun{\_\mid\_\fatsemi\_}}
+
+% Common variable shorthands used in numerals discussion
+\providecommand{\AcvarAlpha}{\AFun{`\alpha}}
+\providecommand{\AcvarBeta}{\AFun{`\beta}}
+\providecommand{\AcvarZ}{\ACtor{`\,Z}}
+\providecommand{\AcvarSZ}{\ACtor{`\,(S\,Z)}}
+
+% λα, λβ aliases referenced explicitly
+\providecommand{\AlamAlpha}{\AFun{\lambda\alpha}}
+\providecommand{\AlamBeta}{\AFun{\lambda\beta}}
+
+% β≡^* (type-level beta-equality, postulate)
+\providecommand{\AbetaEqStar}{\APost{\beta\!\equiv\!^{\ast}}}
+
+% abst / inst / use as referenced both in prelude prose and encodings
+\providecommand{\Aabst}{\AFun{\mathit{abst}}}
+\providecommand{\Ainst}{\AFun{\mathit{inst}}}
+\providecommand{\Ause}{\AFun{\mathit{use}}}
+
+% =====================================================================
+% 7. Convenience: plain-text fallback wrappers
+% =====================================================================
+\providecommand{\AgdaFun}[1]{\AgdaFunction{#1}}
+\providecommand{\AgdaCtor}[1]{\AgdaInductiveConstructor{#1}}
+\providecommand{\AgdaDT}[1]{\AgdaDatatype{#1}}
+\providecommand{\AgdaPst}[1]{\AgdaPostulate{#1}}
+
+% =====================================================================
+% End of agdacommands.tex
+% =====================================================================

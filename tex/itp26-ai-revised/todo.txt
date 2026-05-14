@@ -1,0 +1,73 @@
+TODO before resubmission (sorted by priority)
+=============================================
+Source: tex/itp26/reviews.txt (3 reviewers; A weak reject, B accept, C weak accept)
+Meta: weak reject overall — three blocking concerns.
+
+P0 — Blocking (called out in meta-review)
+-----------------------------------------
+[ ] Compare against Kaposi & Pujet, "Type Theory in Type Theory using a
+    Strictified Syntax" — currently not even cited, yet seems to overlap
+    significantly. Make the delta explicit. (A, meta)
+[ ] Strengthen evaluation. One System F case study is not enough.
+    Concretely compare to existing F formalizations (e.g. sstucki/
+    system-f-agda) and to Autosubst/Rocq tactics. Quantify: LoC,
+    proof length, painful operations avoided. (A, meta)
+[ ] Fix unsubstantiated / wrong claims, especially around confluence.
+    Confluence is not connected to soundness; do not invoke it as
+    "evidence". Same for the "consistency" remarks on pp. 11 & 14
+    and the Rocq-vs-Agda rewrite-rule argument on p. 14. (A, B, meta)
+
+P1 — Substantive
+----------------
+[ ] Broaden related work: TeaLeaves; deeper Autosubst/Rocq comparison;
+    fix the "previous work has attempted to model substitution with
+    constructors" passage with actual citations and clarify whether
+    that approach really fails. (A, B, C)
+[ ] Justify or remove function-extensionality use — explain why it
+    is needed, and stop calling its addition a conservative extension. (A)
+[ ] Make the "translates to any scoped syntax" claim precise: is it
+    empirical (a few examples) or general? (A)
+[ ] Clarify the parametric-mode design (single ⊢ with V/T modes,
+    Figure 1): which law actually exploits it? Reviewer B argues
+    splitting variable indices into a separate type would be cleaner. (B)
+
+P2 — Notation & accessibility
+-----------------------------
+[ ] Fix Figure 1: ∀ has two "_" but only one argument; Kind is unused.
+    Probably should be Kind → Type (suc n) → Type n. (A, B)
+[ ] Page 7: drop ◯ for forward renaming composition — conflicts with
+    standard meaning and with the paper's own use of ";" elsewhere.
+    Also reduce gratuitous circle variants (⋅, ●, ◯). (B)
+[ ] Make sort arguments implicit in Figure 3 even if Agda doesn't
+    always infer — the paper is for readers, not copy-paste. (B)
+[ ] Figure 5 is unreadable (esp. left side). Rework or replace.
+    Explain "⊢• ⊢e ⊢t ⊢t'", the green vs. black turnstile, double σ
+    binding; consider naming "_⊢ ···S [_]_". (A, B)
+[ ] Figure 4: REWRITE block appears to use identifiers before they
+    are defined — clarify reading order (left column first). (B)
+[ ] Section 2.3: actually show how ⋯ acts on variables (the main
+    case is currently missing). Use only one composition notation. (A)
+[ ] Define terminology on first use: "stuck", "postulate", "pattern
+    position", "struck", "S ∋ s as natural numbers" (membership
+    witnesses, not naturals). State that ≡ is propositional equality. (A, C)
+
+P3 — Polish / typos
+-------------------
+[ ] Add line numbers to the resubmission. (B)
+[ ] Footnote marks after punctuation (esp. the math-mode one on p. 1). (A)
+[ ] Consistent naming: σ-calculus (not "Sigma Calculus"), λ-calculus /
+    λ-abstraction (not "lambda ..."). (A)
+[ ] Cite techniques mentioned in the intro. (C)
+[ ] Typos: "a alias" → "an alias" (p. 7); "is long-standing issue" →
+    "is a long-standing issue" (p. 15); "rewritten rules" → "rewrite
+    rules" (p. 4); "qualifies as rewrite rule" → "as a rewrite rule"
+    (p. 14); "which we were not possible to do earlier" (pp. 9–10);
+    fix "only"s on p. 11; missing space "SystemF" (p. 12); "shortly"
+    → "briefly" (§4.2); fix bibliography capitalization
+    ("de bruijn", "coq", ...). (B, C)
+[ ] Clarify the "coincidence lemmas usually do not affect confluence"
+    claim — empirical? when does it fail? (A)
+[ ] Address de Bruijn readability tradeoff in the intro instead of
+    skipping it. (B)
+[ ] Clarify the QIIT-with-explicit-substitutions caveat around the
+    vector representation (p. ~9). (A)

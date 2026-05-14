@@ -185,8 +185,8 @@ This approach is inspired by the tactics of Autosubst
 but internalized by rewriting \cite{10.1145/3434341}. We build on a
 standard functional representation of renamings and substitutions
 \cite{DBLP:journals/jar/BentonHKM12}, prove the lemmas underlying the
-equational laws of the sigma calculus, and then inject these equations
-into Agda's rewrite engine, i.e., make the sigma calculus equations
+equational laws of the $\sigma$-calculus, and then inject these equations
+into Agda's rewrite engine, i.e., make the $\sigma$-calculus equations
 definitional (for type substitutions). The technical challenge is to
 ensure that the added equations remain terminating and confluent
 together with the proof assistant’s built-in definitional equality. 
@@ -278,7 +278,7 @@ A this point, the astute reader may wonder about the use of
 computational behavior is hidden. Thus, the only normal definition is
 \AgdaFunction{$\uparrow^R$} for lifting a renaming. This selective hiding is
 essential for our approach because we want to establish new definitional
-equalities (i.e., the laws of the sigma calculus with first-class
+equalities (i.e., the laws of the $\sigma$-calculus with first-class
 renamigns) on top of the thus defined symbols. These new equalities 
 interfere in a bad way with the standard definitional equalities, thus
 we hide the latter. To prove these equalities, we open the opaque
@@ -296,38 +296,36 @@ type, and composing two substitutions.
 
 \begin{figure}[tp]
   \begin{flushleft}
+    % TODO: omit renamings for space
     \SFTypeRenamingBeta
     \SFTypeSubstitutionBeta
     \SFTypeMonad
     \SFTypeCoincidence
   \end{flushleft}
-  \caption{Equational laws of the sigma calculus with first class
+  \caption{Equational laws of the $\sigma$-calculus with first class
     renamings}
   \label{fig:system-f-sigma-calculus}
 \end{figure}
 
 \Cref{fig:system-f-sigma-calculus} gives the equational laws of the
-sigma calculus with first-class renamings \cite{schafer2015autosubst}.
+$\sigma$-calculus with first-class renamings \cite{schafer2015autosubst}.
 All of these equalities are supported by proofs using the definitions from
 \cref{fig:system-f-ren-sub}, but the proofs are not included because
 they are standard.
 
-The first group gives computation rules for renamings, in particular,
-how to apply the different forms of renamings to a variable. The
-second group presents interaction laws for renamings. Most of them
-deal with composition.
-
-The third group presents computation rules for substitutions starting
+The first group presents computation rules for substitutions starting
 with the application of a substitution to a variable. There is one
 equation for each possible form of a substitution: extended
 substitution, lifted renaming, and composition of substitutions. The
 final equation in this group characterizes lifting in terms of extension,
 weakening, and composition.
 
-The fourth group contains laws about composition of substitutions,
-which are mostly analogous to the corresponding laws for renamings.
+The second group contains laws about composition of substitutions.
+They describe how composition interacts with the other substitution primitives.
 
-The fifth group presents laws that govern the composition of different
+The analogous rules for renamings from the first two groups were omitted for space reasons. 
+
+The third group presents laws that govern the composition of different
 kinds of term traversal. All four combinations of applying renamings
 and substitutions to a type are covered.
 
@@ -338,12 +336,12 @@ from the figure.
 
 Orienting these equations from left to right results in a confluent
 and terminating rewrite system that we install in Agda using its
-rewrite pragma \cite{10.1145/3434341}. From now on, all equations in
+\AgdaKeyword{REWRITE} pragma \cite{10.1145/3434341}. From now on, all equations in
 \cref{fig:system-f-sigma-calculus} are definitional!
 
 As a sanity check, we show that lifting a renaming as well as the
 action of a renaming satisfy the functor laws. All of these lemmas
-hold definitionally, some correspond directly equations from the sigma
+hold definitionally, some correspond directly equations from the $\sigma$-
 calculus in \cref{fig:system-f-sigma-calculus}. The latter are marked
 with $*$.\footnote{The naming of the lemmas is taken from
   \citet{10.1007/978-3-030-33636-3_10} to enable direct comparisons.} 
@@ -351,6 +349,9 @@ with $*$.\footnote{The naming of the lemmas is taken from
 
 We also show analogous results for substitution.
 \SFTypeSubFunctorial
+
+\subsection{A Note on Safety}
+% @MW: explain confluence + inst for rule set = sound and consistent 
 
 \subsection{Expressions}
 \label{sec:expressions}
@@ -389,6 +390,21 @@ The definition of a small-step operational semantics requires
 expression renamings and substitution to implement beta reduction for
 value abstractions and type abstractions. As before, we aim to define
 a call-by-name semantics for concision.
+
+\subsection{Examples}
+\label{sec:examples-1}
+
+As an example of System~F expressions, we present some definitions for
+Church numerals. We start with their type. For readability, we define aliases for type variables like
+\AgdaFunction{$`\alpha$} for \AgdaInductiveConstructor{` Z}, \AgdaFunction{$`\beta$} for \AgdaInductiveConstructor{` (S Z)}, and analogously for
+expression variables and binders.
+\FCNType
+We give the definitions for some constants and the successor operation.
+\FCNZero
+\FCNOne
+\FCNSucc
+\FCNTwo
+% \FCNFour
 
 \subsection{Expression Renaming and Substitution}
 \label{sec:expr-renam-subst}
@@ -539,7 +555,8 @@ chain'' that stops at the composition properties of renamings with
 renamings and liftings, all with similar issues. The supplemental
 material gives the full story.
 
-\subsection{Comparison to Proof in Transfer Hell}
+
+\section{Comparison to Proof in Transfer Hell}
 \begin{figure}[t]
   \centering
   \small
@@ -589,20 +606,15 @@ thereby avoiding some of the troubles arising from transfer hell.
 % \LambdaEx
 The full proof can be found in Appendix \ref{appendix:appendix-proof}
 
-\subsection{Examples}
-\label{sec:examples-1}
+\section{Practical Guidelines for Mechanizing Intrinsically Typed Syntax}
+We now abstract over the techniques applied in the previous sections 
+to practical guidelines that can be applied to your intrinsically typed 
+syntax. 
 
-As an example of System~F expressions, we present some definitions for
-Church numerals. We start with their type. For readability, we define aliases for type variables like
-\AgdaFunction{$`\alpha$} for \AgdaInductiveConstructor{` Z}, \AgdaFunction{$`\beta$} for \AgdaInductiveConstructor{` (S Z)}, and analogously for
-expression variables and binders.
-\FCNType
-We give the definitions for some constants and the successor operation.
-\FCNZero
-\FCNOne
-\FCNSucc
-\FCNTwo
-% \FCNFour
+To verify our claim we also provide the rewrite system for the sigma caclulus on the \emph{second}
+stage of our index hierarchy, i.e. the $\sigma$-calculus for expressions.
+% todo: explain additional wk lemmas 
+% explain coincidence
 
 \section{System F$\omega$}
 \label{sec:system-fomega}
@@ -617,6 +629,9 @@ Plutus, the language of the Cardano blockchain
 \cite{10.1007/978-3-030-33636-3_10}. 
 
 %TODO @PT: we leave safety land here, i.e. rewrite on a postulated symbol.
+%also: now we are using the σλ theory! (also available in the explicit substitution papers)
+%alsoalso: we need to use --local-confluence-check instead of --confluence-check now, 
+%  which is a kown limitation of λσ! we thus assume that this theory terminates here.. 
 
 \subsection{Definitions}
 \label{sec:definitions}
@@ -686,8 +701,6 @@ namely higher-kinded types! We fill this gap in the following.
 
 \subsubsection{Church Numerals}
 \label{sec:church-numerals}
-
-
 First, we encode (simply-typed) Church numerals \emph{in the type
   language}. As beta reduction on the type level is definitional in
 our development, normalization of Church numerals is performed by
@@ -739,6 +752,7 @@ To use this function, we encode functions \AgdaFunction{inst} and \AgdaFunction{
 The definitions of the encodings require beta conversion at the type
 level. These definitions are not accepted without the rewriting of
 beta reduction \AgdaFunction{$\beta{\equiv}^*$}.
+
 
 \section{Conclusion}
 \label{sec:conclusions}

@@ -1,5 +1,5 @@
 -- rewriting safe, when rewrites terminate, double checked by kernel
-{-# OPTIONS --rewriting --confluence-check --double-check #-}
+{-# OPTIONS --rewriting --local-confluence-check --double-check #-}
 module SystemFo where
 open import Agda.Builtin.Equality.Rewrite public
 
@@ -84,14 +84,6 @@ opaque
 -- lifting (J explicit, postfix-with-arg shape)
 _↑ᴿ_ : Φ →ᴿ Ψ → ∀ J → (Φ ▷* J) →ᴿ (Ψ ▷* J)
 ζ ↑ᴿ J = zero ∙ᴿ (ζ ⨟ᴿ wkᴿ J)
-
--- Leaf : BTree
--- Branch : BTree -> BTree -> BTree
-
--- REWRITE Branch a b -> b
--- f : BTree -> N 
--- Leaf = 1
--- Branch a b = f(a) + f(b) 
 
 -- apply renaming to type
 _[_]ᴿ : Type Φ K → Φ →ᴿ Ψ → Type Ψ K

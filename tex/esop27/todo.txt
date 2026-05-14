@@ -7,6 +7,7 @@ P0 — Critical (raised by multiple reviewers)
 [ ]  Termination & confluence proof outline of the rewrite system.
 {MW} Don't just cite [1,8].
      => explain some meta theory of RTT and how agda checks confluence 
+     => (agda checks confluence without termination)
 
 [ ]  Quantitative comparison vs. prior work: proof-size table and
 {MW} type-check times. Currently the "it works" claim is unsubstantiated. (B, C)
@@ -66,3 +67,4 @@ P2 — Polish
 
 [ ]  explain why coincidence lemmas     
 {MW}
+[ ]  Space: put examples in minipages; exclude eq theory for renamings. 

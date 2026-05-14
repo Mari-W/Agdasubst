@@ -116,7 +116,7 @@ opaque
   -- the specific system here, it is "the same as in Autosubst"
   -- namely the σₛₚ calculus
 
-  -- importantly: it is locally confluent and terminating
+  -- importantly: it is confluent and terminating
   -- (not complete in the presence of first-class renamings)
   -- thus valid rewrite rules
 
@@ -468,6 +468,9 @@ opaque
   (_ ∣ x ∙ᴿ ρ) _ zero     = x
   (_ ∣ _ ∙ᴿ ρ) _ (suc x)  = ρ _ x
 
+  _∣_∙ᴿ*_ : ∀ ξ x → ξ ∣ Γ₁ ⇒ᴿ Γ₂ → (x ∙ᴿ ξ) ∣ (Γ₁ ▷*) ⇒ᴿ Γ₂
+  (_ ∣ _ ∙ᴿ* ρ) _ (suc* x) = ρ _ x
+
   --! Lookup
   -- blocking alias for "apply renaming to variable" — analog of `_&ᴿ_` at type level
   _∣_&ᴿ_ : ∀ ζ → Γ₁ ∋ T → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → Γ₂ ∋ (T [ ζ ]ᴿ)
@@ -488,7 +491,7 @@ _⇑ᴿ_ = _ ∣_⇑ᴿ_
 
 --! TLifting
 _∣_↑ᴿ* : ∀ ζ → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → (ζ ↑ᴿ) ∣ (Γ₁ ▷*) ⇒ᴿ (Γ₂ ▷*)
-(_ ∣ ρ ↑ᴿ*) _ (suc* x) = suc* (ρ _ x)
+(ζ ∣ ρ ↑ᴿ*) = (ζ ⨟ᴿ wkᴿ) ∣ zero ∙ᴿ* (ζ , wkᴿ ∣ ρ ⨾ᴿ wkᴿ*)
 
 ↑ᴿ*_ : ζ ∣ Γ₁ ⇒ᴿ Γ₂ → (ζ ↑ᴿ) ∣ (Γ₁ ▷*) ⇒ᴿ (Γ₂ ▷*)
 ↑ᴿ*_ = _ ∣_↑ᴿ*
@@ -530,8 +533,8 @@ opaque
   Wkˢ : ∀ T → ⟨ idᴿ ⟩ ∣ Γ ⇒ˢ (Γ ▷ T)
   Wkˢ _ = idᴿ ∣⟪ Wkᴿ _ ⟫
 
-  wkᴿ*ˢ : ⟨ wkᴿ ⟩ ∣ Γ ⇒ˢ (Γ ▷*)
-  wkᴿ*ˢ = wkᴿ ∣⟪ wkᴿ* ⟫
+  wkˢ* : ⟨ wkᴿ ⟩ ∣ Γ ⇒ˢ (Γ ▷*)
+  wkˢ* = wkᴿ ∣⟪ wkᴿ* ⟫
 
   -- extending a substitution
   --! Extension
@@ -547,18 +550,19 @@ opaque
   _∣_&ˢ_ : ∀ η → Γ₁ ∋ T → η ∣ Γ₁ ⇒ˢ Γ₂ → Expr Γ₂ (T [ η ]ˢ)
   η ∣ x &ˢ σ = σ _ x
 
+  -- lifting a substitution
+  --! Lifting
+  _∣_⇑ˢ_ : ∀ η → η ∣ Γ₁ ⇒ˢ Γ₂ → ∀ T → η ∣ (Γ₁ ▷ T) ⇒ˢ (Γ₂ ▷ (T [ η ]ˢ))
+  η ∣ σ ⇑ˢ T = η ∣ (` zero) ∙ˢ λ _ x → idᴿ ∣ (σ _ x) [ Wkᴿ _ ]ᴿ
+
+  -- type lifting
+  --! TLifting
+  _∣_↑ˢ* : ∀ η → η ∣ Γ₁ ⇒ˢ Γ₂ → (η ↑ˢ) ∣ (Γ₁ ▷*) ⇒ˢ (Γ₂ ▷*)
+  (η ∣ σ ↑ˢ*) = (η ⨟ˢ ⟨ wkᴿ ⟩) ∣ (` zero) ∙ˢ* λ _ x → wkᴿ ∣ (σ _ x) [ wkᴿ* ]ᴿ
+
 ⟪_⟫ : ζ ∣ Γ₁ ⇒ᴿ Γ₂ → ⟨ ζ ⟩ ∣ Γ₁ ⇒ˢ Γ₂
 ⟪_⟫ = _ ∣⟪_⟫
 
--- lifting a substitution
---! Lifting
-_∣_⇑ˢ_ : ∀ η → η ∣ Γ₁ ⇒ˢ Γ₂ → ∀ T → η ∣ (Γ₁ ▷ T) ⇒ˢ (Γ₂ ▷ (T [ η ]ˢ))
-η ∣ σ ⇑ˢ T = η ∣ (` zero) ∙ˢ λ _ x → idᴿ ∣ (σ _ x) [ Wkᴿ _ ]ᴿ
-
--- type lifting
---! TLifting
-_∣_↑ˢ* : ∀ η → η ∣ Γ₁ ⇒ˢ Γ₂ → (η ↑ˢ) ∣ (Γ₁ ▷*) ⇒ˢ (Γ₂ ▷*)
-(η ∣ σ ↑ˢ*) _ (suc* x) = _ ∣ (σ _ x) [ wkᴿ* ]ᴿ
 
 -- expression substitution - traversal
 -- new symbol?
@@ -580,7 +584,7 @@ _⨾ˢ_ : η₁ ∣ Γ₁ ⇒ˢ Γ₂ → η₂ ∣ Γ₂ ⇒ˢ Γ₃ → (η₁
 _⨾ˢ_ {η₁ = η₁} {η₂ = η₂} σ₁ σ₂ = (η₁ , η₂ ∣ σ₁ ⨾ˢ σ₂)
 
 opaque
-  unfolding Idᴿ Wkᴿ wkᴿ* _,_∣_⨾ᴿ_ _∣_∙ᴿ_ _∣_&ᴿ_ _∣_[_]ᴿ _∣⟪_⟫ Idˢ Wkˢ wkᴿ*ˢ _∣_∙ˢ_ _∣_∙ˢ*_ _,_∣_⨾ˢ_ _∣_&ˢ_ _∣_[_]ˢ
+  unfolding Idᴿ Wkᴿ wkᴿ* _,_∣_⨾ᴿ_ _∣_∙ᴿ_ _∣_&ᴿ_ _∣_[_]ᴿ _∣⟪_⟫ Idˢ Wkˢ wk*ˢ _∣_∙ˢ_ _∣_∙ˢ*_ _,_∣_⨾ˢ_ _∣_&ˢ_ _∣_[_]ˢ
   η-Id : ⟨ idᴿ ⟩ ∣ (` (zero {Γ = Γ} {T = T})) ∙ˢ (Wkˢ T) ≡ (Idˢ {Γ = Γ ▷ T})
   η-Id = fun-ext λ _ → fun-ext λ { zero → refl; (suc x) → refl }
 

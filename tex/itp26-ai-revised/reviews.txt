@@ -1,0 +1,275 @@
+ITP'26 Paper #64 Reviews and Comments
+===========================================================================
+Paper #64 Rewriting the Sigma Calculus
+
+
+Review #64A
+===========================================================================
+
+Overall merit
+-------------
+2. Weak reject
+
+Reviewer expertise
+------------------
+4. Expert
+
+Paper summary
+-------------
+This paper presents a proof-of-concept framework for making the rules of the σ-calculus definitional in Agda. This work essentially mixes the σ-calculus of Autosubst 2 with the user-defined-rewrite-rules feature of Agda. Care is taken to ensure that the rules behave as expected without breaking important properties of the system. In particular, Agda's built-in local confluence checker accepts the rules, meaning that, assuming the overall system (Agda augmented with σ-calculus rewrite rules) is terminating, then it is also confluent. Work-in-progress tooling is shown to support automated generation of syntax and rewrite rules from an Autosubst 2 signature file.
+
+Comments for authors
+--------------------
+This paper tackles the recurrent problem of formalisation of languages with binders in proof assistants, which sadly is still relevant today. Making the rules of the σ-calculus definitional is both natural and desirable to ease proofs manipulating substitutions.
+Unfortunately, I do not think that the paper is quite ready yet for publication. Given that the contribution is mostly a proof engineering effort, the paper should provide a more thorough comparison with existing work, focusing on the advantages granted by the proposed approach. In particular the System F case study would benefit from comparison with other formalisation efforts in Agda and perhaps other proof assistants.
+Additionally, the paper should offer a more careful presentation of the setting of using user-defined rewrite rules in Agda. Currently, it contains erroneous claims which need to be fixed.
+
+I will now go in more details about my suggestions for improvement.
+
+#### Evaluation
+
+The paper should provide a proper evaluation of the approach. Currently, it is done through the System F case study, with a focus on subject reduction in the paper. The main information I am able to gather from it is that the proof is reasonably short, even if a bit hard to read for someone not so used to Agda practice of heavy reliance on Unicode symbols.
+
+There are already plenty of formalisations of subject reduction for System F (and more complex languages) in Agda and other proof assistants. Can the authors confidently say that their proof is more natural, or shorter? Does it avoid painful operations?
+
+For instance, a quick search led me to this proof of subject reduction for System F in Agda: https://github.com/sstucki/system-f-agda/blob/master/src/SystemF/Reduction.agda#L118
+Note that it doesn't look horrendously longer than the one in the paper. I would guess that the problem becomes more apparent when scaling to more complex languages such as dependent type theory, but I would expect the authors to do that work for me.
+
+#### Comparison with related work
+
+In the related work section, one can see mention of paper 19 and their experiment with σ-calculus and rewriting, but if one reads carefully they would find that the relevant section in the cited paper cites another paper: *Type Theory in Type Theory using a Strictified Syntax* by Kaposi and Pujet. The latter introduces a way to encode categories with families in Agda, in such a way that the substitution rules hold definitionally. They use it to provide a short proof of canonicity for a dependent type theory. At least on paper it seems like it supersedes the current proposal. At the very least, it means the paper should build a stronger case for what it proposes.
+
+More generally, I find the related work section lacking. For instance, it makes no mention of other approaches to substitution calculi such as TeaLeaves. Even the comparison with what is done in the Autosubst world is a bit light. Thanks to tactics in Rocq, I would expect already there that the gains we get from the proposed approach are a bit lighter, but I would love to be proved wrong.
+
+#### Wrong claims
+
+Several claims in the paper are not substantiated, and sometimes are simply wrong. For instance, a lot of the talk about confluence is very unclear to me. Confluence is rarely connected to soundness, yet it is claimed in the paper as an evidence. The lack of confluence will cause a lot of problems, most of them having to do with the practice of the proof assistant, but one cannot derive an inconsistency from it.
+
+Once again, I would like to insist on the fact that all claims about practicality need to be substantiated one way or another. If they are empirical, it needs to be clearly stated. One could for instance evaluate the number of lines of code it takes to perform an interesting task, comparing several approaches.
+
+I mention other problematic claims in the tail of the review.
+
+#### Low-level comments
+
+> On paper, substitution is often an operation that replaces just a single variable. However,in proof assistants we commonly use parallel substitutions, which map variables to terms and replace multiple variables simultaneously when a term is instantiated with them.
+
+Both are done in formalisations, actually. So I don't understand this comment.
+
+> Previous work has attempted to model substitution with constructors,
+
+Which previous work? Please be precise. Also, you claim that it cannot be modelled this way, but is that really the case? If one defines the substitutions with constructors and then their action on terms, the equations should still be provable for each concrete instance of syntax, no?
+
+> We also show that this approach translates to any scoped syntax by implementing a code generation script for higher-order abstract syntax descriptions.
+
+Is this claim empirical? It seems that this is only verified on a few examples.
+
+- It might be a good idea to clarify that `≡` is Agda's notation for propositional equality.
+
+- The footnote mark should come after punctuation. This is even more important for the first one because it is mixed with maths mode, which can lead to further confusion since the footnote is on the next page.
+
+- You do not define "struck".
+
+- In Figure 1 (left), could you explain how one interprets `∀[α:_]_`? Because it takes only one argument (of type `Type (suc n)`) but has two underscores in the notation. Did you forget an argument of type `Kind` as you have on the right?
+
+> natural numbers of type S ∋ s
+
+Then they are not natural numbers? They are rather membership witnesses.
+
+- Section 2.3 is a bit funny because you never show how `⋯` is defined on variables, when it's the main thing it's doing.
+
+- You use two distinct, but similar, notations for composition of substitution in Section 2.3. Please use only one to avoid confusion, or clarify that they are different.
+
+> The inclusion of more coincidence lemmas usually does not affect confluence.
+
+Can you clarify this statement? Was this empirically tested? Does this fail sometimes? For what reasons?
+
+- Why do you rely on function extensionality? It is certainly acceptable, but it is not needed if you do things right. Also, adding function extensionality is trivially *not* a conservative extension since its statement is a valid Agda statement and is clearly not provable without the axiom.
+
+- You are not very consistent in naming the σ-calculus, which you sometimes write Sigma Calculus. Similarly, you use "lambda calculus" / "lambda abstraction" instead of λ-calculus / λ-abstraction.
+
+- Is the point of Figure 5 to show that the proof is short? Because it's unreadable, especially on the left.
+
+> However, the vector representation could maybe still be useful if one attempts to formalize type-theory-in-type-theory [ 7 ], where a representation of substitutions as functions is not possible.
+
+Clarify that you mean impossible with a QIIT representation with explicit substitutions. It is not out the question that another approach would work.
+
+- The comparison with Autosubst 2 in §4.1 is a bit misleading. You can certainly encode the mutual structures using index inductive types, but that departs from what a user would typically like to see. There is price to pay that you are too quick to dismiss.
+
+> Inline Agda code (e.g. lists or products of terms) can be encoded using additional sorts, but one loses the support for lemmas from the standard library.
+
+I was not able to understand this sentence.
+
+> and cannot be propositional to maintain consistency in the presence of local rewrite rules
+
+Why are you again talking about consistency? This looks inaccurate to me.
+
+> However, Rocq lacks the ability to instantiate the rewrite rules with proofs, and we would then lose consistency guarantees.
+
+This argument doesn't fly in my opinion. First, Agda also doesn't support *instantiation* of rewrite rules. But it requires a justification in the form of a propositional equality (which in practice is often a postulate). Second, nothing prevents you from also proving the rules you declare in Rocq, propositionally. In both cases the feature is any way unsafe.
+
+
+
+Review #64B
+===========================================================================
+
+Overall merit
+-------------
+4. Accept
+
+Reviewer expertise
+------------------
+3. Knowledgeable
+
+Paper summary
+-------------
+This paper describes an implementation of the sigma calculus into Agda that
+makes use of custom definitional equalities to automate reasoning about
+substitution. As a result, subject reduction of System F can be proven with
+simple proof terms, without complicated manual rewriting.
+
+Comments for authors
+--------------------
+Strengths:
+
+- Clear contribution, solving a well-defined problem.
+- The technique of combining opaque definitions and custom rewrite rules has the
+  potential to generalize to other custom notions of equality one may want to
+  embed in a type theory.
+
+Weaknesses:
+
+- Somewhat heavy on notation, not all of which is standard and some of it is
+  confusingly inconsistent. (See below for some concrete suggestions.)
+- The delta to the encoding [19] is not very clear to me (but that may be a lack
+  of understanding on my part of the details of Agda and local rewrite rules).
+
+Overall, this is a well-written paper solving an interesting and relevant
+problem. The accessibility of the paper could be improved, but even in its
+current form I was able to follow reasonably well with some effort despite not
+being an Agda user.
+
+Notes:
+
+(The paper was unfortunately compiled without line numbers, making it
+unnecessarily cumbersome to pinpoint what a comment refers to.)
+
+- Page 1 "While de Bruijn syntax provides a promising representation,
+  developments based on it still include substantial proof overhead": It also
+  makes terms quite hard to read for humans. The paper does not attack this
+  issue but when comparing representations, this is an odd point to skip.
+- Page 2 "Previous work has attempted to model substitution with constructors,
+  [...] Modeling substitutions as vectors [...]". Does "modeling as
+  constructors" and "modeling as vectors" refer to the same technique? If yes, I
+  would recommend consistently using the same term for the same thing. If not,
+  the constructor-based model needs a brief reference/introduction.  In general,
+  it is odd to say "previous work" without giving a citation.
+- Page 3 "we support the claim that": Why "support"? Does the confluence checker
+  not firmly establish this fact?
+- Page 3 "with distinct variable type parameters": It is unclear to me what this
+  means.
+- Figure 1: The ∀ case on the left has two `_` but that constructor only takes
+  one argument. Also, `Kind` is entirely unused. I assume `∀` should have type
+  `Kind → Type (suc n) → Type n`?
+- Figure 1: Even after reading the entire paper, it is not clear to me why
+  `zero` and `suc` are constructors of this unified `⊢` type. It seems more
+  natural to stratify the T and V modes and have a separate type that just
+  represents "a de Bruijn index of a given sort in a given scope". Which law
+  makes use of this ability to state things parametric in the mode?
+- Page 6: The semicolon used in the "interaction rules" and at the bottom of the
+  page look different. Are they meant to be the same semicolon?
+- Page 7: The use of ◯ for forward composition of renamings is extremely
+  confusing. First of all, that symbol usually is defined as `(f ◯ g) x = f (g
+  x)`, using the opposite order is bound to throw people off. Secondly, the
+  paper uses variants of the semicolon for forward composition everywhere else
+  (which is good, this is a common convention for function compositions in this
+  order). Renamings should therefore also use a semicolon. Thirdly, the paper
+  already uses variants of circles for two other operations that do not usually
+  use circles (`⋅` for cons and for function application, and `●` for type-level
+  application). It takes a lot of effort to wade through syntax one is not used
+  to; the use of ◯ in this way is a bit too much and entirely gratuitous.
+- Page 7: "a alias" → "an alias"
+- Figure 3: To improve readability and accessbility of the paper, I would
+  strongly recommend making the sort implicit, even if it does not always get
+  inferred correctly in Agda. The purpose of a paper is not that one can
+  literally copy-paste the code into Adga, it is to convey an idea to the
+  reader. The idea will be conveyed more effectively if there are fewer `_`
+  cluttering the scene.
+- Page 8 "The definition of instantiation over both modes allows us to perform
+  lookup of a variable": I do not understand the point this paragraph is trying
+  to make. is this referring to having a single type with two "modes" for
+  variable indices and terms? If the two modes were made separate types,
+  everything would still be equally opaque, so what would be the problem with
+  the rewrite rules?
+- Figure 4: I cannot quite make sense of the code here. The REWRITE section
+  seems to be using identifiers before they get defined? I assume that as usual,
+  the left column is to be read as preceding the right column.
+- Figure 5: I cannot parse most of this figure. What does `⊢• ⊢e ⊢t ⊢t’` mean?
+  Why are there just 4 turnstiles in a row? Neither the green turnstile nor the
+  black turnstile have been introduced, I think? Why does every case seem to
+  bind σ twice? I would also recommend not using a notation for `_⊢ ···S [_]_`,
+  and just giving it a name.
+- Page 11 "We argue Agda ought to reject such a construction": Which property is
+  violated by this construction?
+- Page 15 "is long-standing issue": missing "a"
+- Page 14 "This is because in their case the instantiation for the set of
+  equations must hold definitionally and cannot be propositional to maintain
+  consistency in the presence of local rewrite rules": Not being familiar with
+  this work, I was unable to figure out which part of the paper this refers to.
+  A more precise citation and/or discussion would be good. Given that there
+  seems to be a lot of overlap between that work and this, it should be made as
+  easy as possible for the reader to understand the difference between these
+  approaches. Which concrete laws are missing in the Rocq paper but present in
+  this paper?
+
+Meta-Review: Comments for authors
+---------------------------------
+Thank you for submitting your work to ITP! The reviewers agree that this tackles a relevant problem in a promising way. However, there are several major concerns that prevent us from accepting the paper in its current form.
+- The discussion of related work is lacking. In particular, the delta over "Type Theory in Type Theory using a Strictified Syntax" by Kaposi and Pujet (which is not even cited) is unclear; there seems to be significant overlap.
+- The evaluation of the approach should be improved to better expose its benefits with respect to more traditional approaches in related work.
+- The paper contains a number of unsubstantiated claims. In particular, the remarks around confluence confused all reviewers, and the claims of practicality are not all supported by the single case study presented in the paper.
+
+
+
+Review #64C
+===========================================================================
+
+Overall merit
+-------------
+3. Weak accept
+
+Reviewer expertise
+------------------
+2. Some familiarity
+
+Paper summary
+-------------
+This paper presents a formalization of the sigma-calculus in Agda.  A key aspect is the promotion of propositional equalities to definitional ones, which improves proof automation.
+
+Comments for authors
+--------------------
+One of the strengths of the paper is that the encoding of the rules allows for more control over the reduction behavior of symbols with a clever use of opaque definitions.
+
+Another strength is that the infrastructure provided is reusable. Although the paper describes one example, it is clear that the method is more broadly applicable.
+
+The example (System F) is well-chosen, and the illustration of the technique on it helps the readability of the paper.
+
+The paper is quite dense and assumes familiarity with many concepts. As a result, it is hard to read for a non-expert.  Perhaps this aspect needs to be improved before the paper can be published.  As some minor suggestions to get started, it could be improved with a bit more explanation of things such as including what you mean by a "stuck term" up front.  Also, what is a "postulate" in the last sentence on page 3?  What is a "pattern position" mentioned in the first line on page 4?  When Agda code is presented, too much familiarity is assumed, such as in the first example at the top of page 4.
+
+
+Minor comments.
+
+In the beginning of the introduction, many techniques are mentioned. Citations are needed.
+
+In the middle of page 4, when you day "rewritten rules", do you mean "rewrite rules"?
+
+There is a grammar problem in the last line of page 9, going to page 10: "which we were not possible to do earlier".
+
+The last sentence on page 11 is unclear, because of the placement of the "only"s.
+
+In the last line on page 12, there is a missing space in SystemF.
+
+In Section 4.2, "briefly" would be better than "shortly".
+
+In the first paragraph on page 14, missing "a" in "qualifies as rewrite rule".
+
+Capitalization in the bibliography needs correcting, e.g., "de bruijn", "coq", etc.

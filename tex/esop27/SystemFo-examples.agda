@@ -45,18 +45,8 @@ abst-enc = Λκ (Λβ (Λα (λf (λy (λx ((`f · `y) · `x))))))
 inst-enc : Expr Γ (∀α (ty-enc ⇒ (`α ⇒ `α)))
 inst-enc = Λα (λg (λx ((((((`g  ·* (λβ (λα (`β ⇒ `α)))) ·* `α) ·* `α)
                                 · (λy (λx (`y · `x))))
-                                · λx `x) -- (λx `x))
+                                · λx `x) 
                                 · `x)))
-
--- ((` suc (suc zero)) $ (` suc zero) $ (` zero)) [
--- (` zero) ∙ˢ
--- ((` zero) ∙ˢ
---  (λα (λα ((` suc zero) ⇒ (` zero))) ∙ˢ
---   (⟨ wkᴿ ∗ ⨟ᴿ wkᴿ ∗ ⟩ ⨟ˢ
---    ((` zero) ∙ˢ ((` zero) ∙ˢ (λ K z → ⟨ idᴿ ⟩ K z))))))
--- ]ˢ
-
--- ` zero ⇒ ` zero
 
 --! FOUseApp
 use-enc : Expr ∅ (∀α (`α ⇒ `α))
@@ -83,8 +73,6 @@ twoᵏ = succᵏ $ (succᵏ $ zeroᵏ)
 _ : twoᵏ ≡ λβ (λα (`β $ (`β $ `α)))
 _ = refl
 --! }
-
--- this gets *real* slow
 
 --! CNAddition {
 oneᵏ : Type ∅ ℕᵏ

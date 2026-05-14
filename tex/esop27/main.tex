@@ -13,7 +13,7 @@
 \acmYear{2018}
 \acmDOI{XXXXXXX.XXXXXXX}
 
-\acmJournal{JACM}
+\acmJournal{TOPLAS}
 \acmVolume{37}
 \acmNumber{4}
 \acmArticle{111}
@@ -28,7 +28,7 @@
 
 \begin{document}
 
-\title{Intrinisically Typed Syntax That Works (Functional Pearl)}
+\title{Intrinisically Typed Syntax That Works (Fresh Perspective)}
 
 \author{Peter Thiemann}
 \email{thiemann@acm.org}
@@ -80,7 +80,7 @@ assistants.
 \end{abstract}
 
 \maketitle
-\keywords{Intrinisically Typed Syntax, Strictification, Agda}
+\keywords{Intrinisically Typed Syntax, Rewriting, Agda}
 
 \section{Introduction}
 \label{sec:introduction}
@@ -546,30 +546,29 @@ material gives the full story.
   \setlength{\tabcolsep}{8pt}
   \begin{tabular}{|l|rr|rr|}
     \hline
-                                          & \multicolumn{2}{c|}{\textbf{Agdasubst}}
-                                          & \multicolumn{2}{c|}{\textbf{StratF}} \\
+                                          & \multicolumn{2}{c|}{\textbf{Rewriting}}
+                                          & \multicolumn{2}{c|}{\textbf{Transfer Hell}} \\
                                           & LOC & Chars & LOC & Chars \\
     \hline
     Type substitution + proofs            &   217 &  12\,246 &    285 &  12\,584 \\
-    Expression substitution + proofs      &   202 &  11\,675 & 1\,405 &  69\,846 \\
+    Expression substitution + proofs      &   199 &  11\,465 & 1\,405 &  69\,846 \\
     \hline
-    \textbf{Total}                        & \textbf{419} & \textbf{23\,921}
+    \textbf{Total}                        & \textbf{416} & \textbf{23\,711}
                                           & \textbf{1\,690} & \textbf{82\,430} \\
+    \hline
+    Type-check time (wall)                & \multicolumn{2}{c|}{4.49\,s}
+                                          & \multicolumn{2}{c|}{9.51\,s} \\
     \hline
   \end{tabular}
   \caption{%
-    Code required to prove the four expression-level compositionality
-    lemmas (renaming/substitution fusion in all four ren/sub
-    combinations) in two Agda formalizations of System~F.
-    %
-    Both columns are restricted to code transitively used by the four
-    proofs; semantic interpretations, operational semantics, and
-    unreferenced auxiliary lemmas are excluded.
-    %
-    LOC counts non-blank, non-comment-only lines.
+    Code transitively required to prove the four expression-level
+    compositionality lemmas in
+    two Agda formalizations of System~F. LOC counts non-blank,
+    non-comment lines; type-check times are wall-clock, cold cache.
   }
   \label{fig:compositionality-cost}
 \end{figure}
+
 We compare this proof to the one without the additional 
 definitional equalities for type substitutions, provided in the supplement 
 for the aforementioned logical relation construction \cite{10.1145/3678000.3678201}. 

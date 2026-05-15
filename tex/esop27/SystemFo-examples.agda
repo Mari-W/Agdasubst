@@ -1,4 +1,4 @@
-{-# OPTIONS --rewriting --local-confluence-check #-}
+{-# OPTIONS --rewriting --local-confluence-check --double-check #-}
 module SystemFo-examples where
 open import Agda.Builtin.Equality.Rewrite public
 
@@ -7,10 +7,6 @@ open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong;
 open ≡-Reasoning
 
 open import SystemFo
-
---! FORewrite
-{-# REWRITE β≡* #-}
-
 
 -- abstracting over a type constructor
 
@@ -89,3 +85,4 @@ _ = refl
 _ : succᵏ $ zeroᵏ ≡ oneᵏ
 _ = refl
 --! }
+ 

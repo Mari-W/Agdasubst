@@ -1,10 +1,10 @@
 -- rewriting safe, when rewrites terminate, double checked by kernel
-{-# OPTIONS --rewriting --local-confluence-check --double-check #-}
+{-# OPTIONS --rewriting --confluence-check --double-check #-}
 module SystemFo where
 open import Agda.Builtin.Equality.Rewrite public
 
 -- standard equational reasoning
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; trans; module ≡-Reasoning)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; subst; sym; cong; cong₂; trans; module ≡-Reasoning)
 open ≡-Reasoning
 
 -- function extensionality (postulated)
@@ -416,6 +416,47 @@ weaken J T = T [ wkᴿ J ]ᴿ
 _[_]* : Type (Φ ▷* J) K → Type Φ J → Type Φ K
 T [ T′ ]* = T [ T′ ∙ˢ idˢ ]ˢ
 
+data _≡β_ {Φ} : ∀{J} → Type Φ J → Type Φ J → Set where
+  β≡β : ∀{K J}(B : Type (Φ ▷* J) K)(A : Type Φ J) → ((λα B) $ A) ≡β (B [ A ]*)
+  -- structural rules
+
+  refl≡β  : ∀{J}
+    → (A : Type Φ J)
+      ------------
+    → A ≡β A
+    
+  sym≡β   : ∀{J}{A B : Type Φ J}
+    → A ≡β B
+      ------
+    → B ≡β A
+  trans≡β : ∀{J}{A B C : Type Φ J}
+    → A ≡β B
+    → B ≡β C
+      ------
+    → A ≡β C
+ 
+  ⇒≡β : {A A' B B' : Type Φ ∗}
+    → A ≡β A'
+    → B ≡β B'
+      ---------------------
+    → (A ⇒ B) ≡β (A' ⇒ B')
+    
+  Π≡β : ∀{J}{B B' : Type (Φ ▷* J) ∗}
+    → B ≡β B'
+      -------
+    → ∀α B ≡β ∀α B'
+
+  ƛ≡β : ∀{K J}{B B' : Type (Φ ▷* J) K}
+    → B ≡β B'
+      ---------------
+    → λα B ≡β λα B'
+    
+  ·≡β : ∀{K J}{A A' : Type Φ (K ⇒ J)}{B B' : Type Φ K}
+    → A ≡β A'
+    → B ≡β B'
+      --------------------
+    → (A $ B) ≡β (A' $ B') 
+
 -- type equality
 --! FOTypeBeta
 postulate
@@ -457,6 +498,7 @@ data Expr {Φ} Γ : Type Φ ∗ → Set where
   _·*_  : Expr Γ (∀α T) →
           (T′ : Type Φ K) →
           Expr Γ (T [ T′ ]*)
+  conv  : Expr Γ T → T ≡β T′ → Expr Γ T′ 
 
 variable
   e e′ e₁ e₁′ e₂ e₃ : Expr Γ T
@@ -508,6 +550,9 @@ _∣_↑ᴿ*_ : ∀ (ζ : Φ →ᴿ Ψ) → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → ∀ J 
 ↑ᴿ*_ : ζ ∣ Γ₁ ⇒ᴿ Γ₂ → ∀ J → (ζ ↑ᴿ J) ∣ ((Γ₁ ▷*) {J}) ⇒ᴿ ((Γ₂ ▷*) {J})
 ↑ᴿ*_ = _ ∣_↑ᴿ*_
 
+postulate 
+  lemᴿ : T₁ ≡β T → (T₁ [ ζ ]ᴿ) ≡β (T [ ζ ]ᴿ)
+
 --! Traversal
 _∣_[_]ᴿ : (ζ : Φ →ᴿ Ψ) → Expr Γ₁ T → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → Expr Γ₂ (T [ ζ ]ᴿ)
 _  ∣ (` x) [ ρ ]ᴿ      = ` (ρ _ x)
@@ -515,6 +560,7 @@ _  ∣ (λx e) [ ρ ]ᴿ     = λx (_ ∣ e [ ρ ⇑ᴿ _ ]ᴿ)
 _  ∣ (Λα e) [ ρ ]ᴿ     = Λα (_ ∣ e [ _ ∣ ρ ↑ᴿ* _ ]ᴿ)
 _  ∣ (e₁ · e₂) [ ρ ]ᴿ  = (_ ∣ e₁ [ ρ ]ᴿ) · (_ ∣ e₂ [ ρ ]ᴿ)
 ζ  ∣ (e ·* T′) [ ρ ]ᴿ  = (ζ ∣ e [ ρ ]ᴿ) ·* (T′ [ ζ ]ᴿ)
+ζ  ∣ conv e x [ ρ ]ᴿ  = conv (ζ ∣ e [ ρ ]ᴿ) (lemᴿ x)
 
 Weaken : Expr Γ T → Expr (Γ ▷ T′) T
 Weaken e = idᴿ ∣ e [ Wkᴿ _ ]ᴿ
@@ -568,6 +614,11 @@ _∣_⇑ˢ_ : ∀ (η : Φ →ˢ Ψ) → η ∣ Γ₁ ⇒ˢ Γ₂ → ∀ T → 
 _∣_↑ˢ*_ : ∀ (η : Φ →ˢ Ψ) → η ∣ Γ₁ ⇒ˢ Γ₂ → ∀ J → (η ↑ˢ J) ∣ ((Γ₁ ▷*) {J}) ⇒ˢ ((Γ₂ ▷*) {J})
 (η ∣ σ ↑ˢ* J) _ (suc* x) = wkᴿ J ∣ (σ _ x) [ wkᴿ* J ]ᴿ
 
+
+postulate 
+  lemˢ : T₁ ≡β T → (T₁ [ η ]ˢ) ≡β (T [ η ]ˢ)
+
+
 -- expression substitution - traversal
 --! Traversal
 _∣_[_]ˢ : (η : Φ →ˢ Ψ) → Expr Γ₁ T → η ∣ Γ₁ ⇒ˢ Γ₂ → Expr Γ₂ (T [ η ]ˢ)
@@ -576,6 +627,7 @@ _∣_[_]ˢ : (η : Φ →ˢ Ψ) → Expr Γ₁ T → η ∣ Γ₁ ⇒ˢ Γ₂ �
 η  ∣ (Λα e) [ σ ]ˢ     = Λα ((η ↑ˢ _) ∣ e [ η ∣ σ ↑ˢ* _ ]ˢ)
 η  ∣ (e · e₁) [ σ ]ˢ   = (η ∣ e [ σ ]ˢ) · (η ∣ e₁ [ σ ]ˢ)
 η  ∣ (e ·* T′) [ σ ]ˢ  = (η ∣ e [ σ ]ˢ) ·* (T′ [ η ]ˢ)
+η  ∣ conv e x [ σ ]ˢ  = conv (η ∣ e [ σ ]ˢ) (lemˢ {η = η} x)
 
 --! CompDefinition
 _,_∣_⨾ˢ_ : ∀ (η₁ : Φ →ˢ Ψ) (η₂ : Ψ →ˢ Θ) → η₁ ∣ Γ₁ ⇒ˢ Γ₂ → η₂ ∣ Γ₂ ⇒ˢ Γ₃ → (η₁ ⨟ˢ η₂) ∣ Γ₁ ⇒ˢ Γ₃
@@ -599,6 +651,8 @@ data _⟶_ : Expr Γ T → Expr Γ T → Set where
   ξ-·   : e₁ ⟶ e₁′ → (e₁ · e₂) ⟶ (e₁′ · e₂)
   ξ-·*  : e ⟶ e′ → (e ·* T) ⟶ (e′ ·* T)
   ξ-Λ   : e ⟶ e′ → (Λα e) ⟶ (Λα e′)
+  ξ-conv : ∀{eq : T ≡β T′} → e ⟶ e′ → conv e eq ⟶ conv e′ eq
+  β-conv : ∀{eq : T ≡β T} → conv e eq ⟶ e
 
 data _⟶*_ : Expr Γ T → Expr Γ T → Set where
   ⟶refl  : e ⟶* e
@@ -624,6 +678,19 @@ noVar : NoVar Γ → ¬ (Γ ∋ T)
 noVar (nv ▷*) (suc* x) = noVar nv x
 --! }
 
+--! FORewrite
+{-# REWRITE β≡* #-}
+
+admissible : ∀{A B : Type Φ J} → A ≡β B → A ≡ B
+admissible (β≡β B A)      = refl
+admissible (refl≡β A)     = refl
+admissible (sym≡β x)      = sym (admissible x)
+admissible (trans≡β x x₁) = trans (admissible x) (admissible x₁)
+admissible (⇒≡β x x₁)     = cong₂ _⇒_ (admissible x) (admissible x₁)
+admissible (Π≡β x)        = cong ∀α (admissible x)
+admissible (ƛ≡β x)        = cong λα (admissible x)
+admissible (·≡β x x₁)     = cong₂ _$_ (admissible x) (admissible x₁)
+
 --! Progress
 progress : NoVar Γ → (e : Expr Γ T) → Progress e
 progress nv (` x) = ⊥-elim (noVar nv x)
@@ -640,6 +707,11 @@ progress nv (e ·* T′)
   with progress nv e
 ... | done (Λα v) = step β-Λ
 ... | step e⟶e′ = step (ξ-·* e⟶e′)
+progress nv (conv e eq) 
+  with refl ← admissible eq
+  with progress nv e
+... | done v = step β-conv
+... | step e⟶e′ = step (ξ-conv e⟶e′)
 
 -- execution
 

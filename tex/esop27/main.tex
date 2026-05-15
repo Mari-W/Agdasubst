@@ -608,11 +608,34 @@ The full proof can be found in Appendix \ref{appendix:appendix-proof}
 
 \section{Practical Guidelines for Mechanizing Intrinsically Typed Syntax}
 We now abstract over the techniques applied in the previous sections 
-to practical guidelines that can be applied to your intrinsically typed 
-syntax. 
+to practical guidelines that can be applied to other intrinsically typed 
+syntaxes. We will assume a tower $T₁, T₂, \dots, T_n$ of syntactic sorts 
+where $Tᵢ$ indexes $T_{i + 1}$. 
+For instance, in our System F example $n$ is equal to 2 and we have 
+the two sorts \texttt{Type} and \texttt{Expr}, where $\texttt{Type} < \texttt{Expr}$.
+We further assume that all sorts feature variable binding and thereby require substitution. 
+If a  sort does not have binders, it can be excluded from the tower, 
+because it already enjoys all the relevant definitional equalities 
+we require to build an intrinsically typed syntax. We do exactly this in the next section, where 
+we introduce simple kinds to investigate System F$\omega$. We formulate our guidelines iteratively 
+and starting with $i = 1$. We use $j$ for $j < i$ at any given stage.
+We will add inline the code for our System F example, at stage $i = 2$.
+\begin{itemize}
+  \item Define the data type for sort $T_i$.
+  \item Formulate renaming and substitution for $T_i$. Substitution (and renaming resp) will have the 
+        type thats indexed $i$ many substitutions (or renamings resp.), one for all $T_j$. 
+        It will then map a context with explicit weakening for variables of $T_j$ indexed by all the contexts for $T_j$ to another and can be modeled 
+        by a function that uses the $T_j$ substitution operations. 
+  \item Inside an \AgdaKeyword{opaque} block, we define the substitution 
+        (and renaming resp) primitives, lookup  identit and composition follow directly, 
+        but we need $i$ many extension, weakning (only for renaming) and lifiting operations, one for each $T_j$.
+  \item While \AgdaKeyword{unfolding} the previous definitions we prove the sigma caclulus laws, 
+        we will have x many beta laws, we need $i$ many for each extensions of the previous 
+
+\end{itemize}
 
 To verify our claim we also provide the rewrite system for the sigma caclulus on the \emph{second}
-stage of our index hierarchy, i.e. the $\sigma$-calculus for expressions.
+stage of our index hierarchy, i.e. the $\sigma$-calculus for expressions. Due to 
 % todo: explain additional wk lemmas 
 % explain coincidence
 

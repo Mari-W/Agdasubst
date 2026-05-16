@@ -335,7 +335,7 @@ strategy~\cite{10.1145/3293880.3294101} and we have omitted some additionally re
 from the figure.
 
 Orienting these equations from left to right results in a confluent
-and terminating rewrite system that we install in Agda using its
+rewrite system that we install in Agda using its
 \AgdaKeyword{REWRITE} pragma \cite{10.1145/3434341}. From now on, all equations in
 \cref{fig:system-f-sigma-calculus} are definitional!
 
@@ -351,7 +351,73 @@ We also show analogous results for substitution.
 \SFTypeSubFunctorial
 
 \subsection{A Note on Safety}
-% @MW: explain confluence + inst for rule set = sound and consistent 
+\label{sec:safety}
+Turning propositional equalities into definitional ones is a delicate
+act in a proof assistant based on a rich dependent type theory, where we care a lot
+about safety and consistency. Systems like Dedukti~\cite{} are more
+centered on rewrite rules, but do not feature the full computational machinery
+that Agda offers. Combining rewrite rules dependent type theories, such as MLTT~\cite{} or CiC~\cite{} 
+is a recently emerging field, first explored by the
+addition of rewrite rules to Agda and Rocq~\cite{}, and continued by
+ongoing research on \emph{local} rewrite rules~\cite{}.
+
+Rewrite rules and the reductions of a dependently typed
+system interact in non-trivial ways, so having the right notion of
+when it is safe to add them is important. We follow~\cite{} to justify
+making the equations from \cref{fig:system-f-sigma-calculus}
+definitional and recall their reasoning for the safety of the proposed
+Rewriting Type Theory (RTT), which has been successfully implemented
+in Agda. In RTT, the reduction relation is extended by turning
+propositional equalities into reduction rules: a term matched by the
+left-hand side of an equation reduces to the right-hand side, exactly
+what have done in the previous section. The two properties we wish
+to preserve when adding rewrite rules are \emph{soundness} (i.e.,
+subject reduction) and \emph{consistency}. In particular, subject
+reduction is an implicit assumption of the type checker that we 
+need to take care to uphold.
+
+
+To uphold subject reduction, the critical property of the rewriting
+equations is that they are confluent \emph{with respect to the already
+existing reduction rules}. Agda already provides a plethora of
+reduction rules: $\beta$, $\eta$ (function and record expansion),
+$\delta$ (definition unfolding), and $\iota$ (pattern matching). The
+additionally rewritten rules must agree with all of them to be confluent. 
+Agda checks this using a simple syntactic criterion called the triangle
+property. Confluence holds when every critical pair of left-hand sides 
+can be joined in a single rewriting step that lies on a common reduct, 
+This check does not require termination. Notably, termination is \emph{not}
+a critical property, because it does not affect soundness or consistency, 
+it is only observable through never-terminating type checking
+but does no further harm.
+
+Consistency is preserved as long as the equalities we rewrite are
+instantiated with proofs. This is easy to see, because RTT can be
+translated to extensional type theory~\cite{}, a theory known to be
+consistent. The translation simply turns each rewrite rule reduction
+into an application of the \emph{equality reflection} rule, which
+internalizes arbitrary propositional equalities as definitional ones,
+at the cost of decidability of type checking. Due to this lack of
+decidability, extensional type theory is not a common candidate for
+a basis of a proof assistant.
+
+At present, Agda is the only mainstream proof assistant that supports
+the full feature set we require: functions whose reduction can be
+hidden inside \AgdaKeyword{opaque} blocks, so they can be treated as symbols, 
+instantiation of the rewrite equations over these symbols with proofs, 
+and termination-independent confluence checking via the triangle property. 
+Rocq currently lacks the ability to use defined functions as symbols inside rewrite equations 
+and the ability to instantiate these equations with
+proofs, but aside from these differences our method transfers to Rocq
+directly using its own rewrite rule implementation~\cite{}.
+
+In our formalization, we enable the \AgdaKeyword{OPTIONS}
+\texttt{--rewriting} together with \texttt{--confluence-check},
+which makes the use of rewriting safe, provided we trust the
+implementation of the confluence checker. With these newly and
+safely gained definitional equalities in place, we can continue
+to define expressions and expression substitution without ending
+up in transfer hell.
 
 \subsection{Expressions}
 \label{sec:expressions}
@@ -369,7 +435,6 @@ We also show analogous results for substitution.
   \caption{Type contexts, variables, and expressions}
   \label{fig:system-f-expressions}
 \end{figure}
-
 
 Working towards intrinsically-typed expressions,
 \Cref{fig:system-f-expressions} defines type weakening and
@@ -395,15 +460,28 @@ a call-by-name semantics for concision.
 \label{sec:examples-1}
 
 As an example of System~F expressions, we present some definitions for
-Church numerals. We start with their type. For readability, we define aliases for type variables like
+Church numerals. We start with their type, alongside the constant
+zero. For readability, we define aliases for type variables like
 \AgdaFunction{$`\alpha$} for \AgdaInductiveConstructor{` Z}, \AgdaFunction{$`\beta$} for \AgdaInductiveConstructor{` (S Z)}, and analogously for
 expression variables and binders.
-\FCNType
-We give the definitions for some constants and the successor operation.
-\FCNZero
-\FCNOne
+
+\noindent\begin{minipage}[t]{0.49\linewidth}
+  \FCNType
+\end{minipage}\hfill\begin{minipage}[t]{0.49\linewidth}
+  \FCNZero
+\end{minipage}
+
+\noindent We continue with the constant one and the Church numeral for two.
+
+\noindent\begin{minipage}[t]{0.49\linewidth}
+  \FCNOne
+\end{minipage}\hfill\begin{minipage}[t]{0.49\linewidth}
+  \FCNTwo
+\end{minipage}
+
+\noindent The successor operation has a longer body and is shown full
+width.
 \FCNSucc
-\FCNTwo
 % \FCNFour
 
 \subsection{Expression Renaming and Substitution}
@@ -557,13 +635,18 @@ material gives the full story.
 
 
 \section{Comparison to Proof in Transfer Hell}
-\begin{figure}[t]
-  \centering
-  \small
-  \setlength{\tabcolsep}{8pt}
-  \begin{tabular}{|l|rr|rr|}
+We compare this proof to the one without the additional 
+definitional equalities for type substitutions, provided in the supplement 
+for the aforementioned logical relation construction \cite{10.1145/3678000.3678201}. 
+The authors use heterogeneous equality~\cite{} to proof the lemma, 
+thereby already avoiding some of the troubles arising from transfer hell.
+Without the use of heterogeneous equalities this proof gets even worse, and requires
+multiple lemmas that shuffle the application of \AgdaFunction{subst} explicitly.
+
+We extracted the 
+\begin{tabular}{|l|rr|rr|}
     \hline
-                                          & \multicolumn{2}{c|}{\textbf{Rewriting}}
+                                          & \multicolumn{2}{c|}{\textbf{With Rewriting}}
                                           & \multicolumn{2}{c|}{\textbf{Transfer Hell}} \\
                                           & LOC & Chars & LOC & Chars \\
     \hline
@@ -576,35 +659,8 @@ material gives the full story.
     Type-check time (wall)                & \multicolumn{2}{c|}{4.49\,s}
                                           & \multicolumn{2}{c|}{9.51\,s} \\
     \hline
-  \end{tabular}
-  \caption{%
-    Code transitively required to prove the four expression-level
-    compositionality lemmas in
-    two Agda formalizations of System~F. LOC counts non-blank,
-    non-comment lines; type-check times are wall-clock, cold cache.
-  }
-  \label{fig:compositionality-cost}
-\end{figure}
-
-We compare this proof to the one without the additional 
-definitional equalities for type substitutions, provided in the supplement 
-for the aforementioned logical relation construction \cite{10.1145/3678000.3678201}. 
-Here we only state the \emph{type} of the proof and the induction case for application, 
-which is among the short ones.
-% \EFFusionSubSub
-% The mapping from their to our syntax (in order) is
-% \begin{itemize}
-%   \item $\Delta$ $\mapsto$ $n$
-%   \item \AgdaFunction{ESub} $\mapsto$ \AgdaFunction{$\_∣\_⋯ˢ\_$}
-%   \item $\sigma^*$ $\mapsto$ $\eta$
-%   \item \AgdaFunction{fusion-Tsub-Tsub} $\mapsto$ \AgdaFunction{compose$^{SS}$}
-%   \item \AgdaFunction{$\_∘^{SS}$} $\mapsto$ \AgdaFunction{$\_⨟\_$}
-%   \item \AgdaFunction{$\_$>>$^{SS}\_$} $\mapsto$ \AgdaFunction{$\_∣\_⨟\_$}
-% \end{itemize}
-The authors use heterogeneous equality to proof the lemma, 
-thereby avoiding some of the troubles arising from transfer hell.
-% \LambdaEx
-The full proof can be found in Appendix \ref{appendix:appendix-proof}
+\end{tabular}
+  
 
 \section{Practical Guidelines for Mechanizing Intrinsically Typed Syntax}
 We now abstract over the techniques applied in the previous sections 
@@ -638,6 +694,11 @@ To verify our claim we also provide the rewrite system for the sigma caclulus on
 stage of our index hierarchy, i.e. the $\sigma$-calculus for expressions. Due to 
 % todo: explain additional wk lemmas 
 % explain coincidence
+We have already compared this two levels that use subsitution example with one
+that does not use rewriting, and noticed the fast growing additional effort required 
+to prove manage tranfer hell. When ones has even more levels, then this problem would 
+get substantially worse, but with rewriting, it does only require a few more lines per 
+definition and laws for formalizing substitution on each level.
 
 \section{System F$\omega$}
 \label{sec:system-fomega}
@@ -729,17 +790,21 @@ First, we encode (simply-typed) Church numerals \emph{in the type
 our development, normalization of Church numerals is performed by
 Agda's type checker.
 
-The kind of type level Church numerals is as expected.
-\CNKind
-
-We define zero and successor for Church numerals in the usual way. For readability, we
+The kind of type level Church numerals is as expected, and zero and
+successor are defined in the usual way. For readability, we
 define aliases like \AgdaFunction{$\lambda\beta$} and so on for the type level lambda
 \AgdaFunction{$\lambda\alpha$}. Analogously, we define aliases for type variables like
 \AgdaFunction{$`\alpha$} for \AgdaInductiveConstructor{` Z}, \AgdaFunction{$`\beta$} for \AgdaInductiveConstructor{` (S Z)}, and so on.
-\CNZeroSucc
 
-We construct the Church numeral for $2$ by applying the successor
-twice to zero. The proof that this term is equal to is normal form is definitional.
+\noindent\begin{minipage}[t]{0.35\linewidth}
+  \CNKind
+\end{minipage}\hfill\begin{minipage}[t]{0.6\linewidth}
+  \CNZeroSucc
+\end{minipage}
+
+\noindent We construct the Church numeral for $2$ by applying the successor
+twice to zero. The proof that this term is equal to its normal form is
+definitional.
 \CNTwoProof
 
 Finally, we define addition and construct $2$ by adding $1+1$. The
@@ -764,11 +829,17 @@ argument $x$. Function \AgdaFunction{inst} instantiates this function. It
 acts like an eliminator for \AgdaFunction{abst}. The function
 \AgdaFunction{use} puts both together.
 \FOPrelude
-We start by defining the type in our encoding.
-\FOTyApp
-Next, we encode the defining expression equivalent to \AgdaFunction{abst}.
-\FOAbstApp
-To use this function, we encode functions \AgdaFunction{inst} and \AgdaFunction{use}.
+
+We start by defining the type in our encoding, then encode the
+defining expression equivalent to \AgdaFunction{abst}.
+
+\noindent\begin{minipage}[t]{0.49\linewidth}
+  \FOTyApp
+\end{minipage}\hfill\begin{minipage}[t]{0.49\linewidth}
+  \FOAbstApp
+\end{minipage}
+
+\noindent To use this function, we encode functions \AgdaFunction{inst} and \AgdaFunction{use}.
 \FOInstApp
 \FOUseApp
 

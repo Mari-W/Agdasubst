@@ -703,16 +703,25 @@ opaque
 
   --! CompositionalityBody
   Compositionalityˢˢ (` x)      η₁ η₂ σ₁ σ₂  = refl
-  Compositionalityˢˢ (λx e)     η₁ η₂ σ₁ σ₂  = cong λx (begin
-      _  ≡⟨ Compositionalityˢˢ e η₁ η₂ (η₁ ∣ σ₁ ⇑ˢ _) (η₂ ∣ σ₂ ⇑ˢ _) ⟩
-      _  ≡⟨ cong ((η₁ ⨟ˢ η₂) ∣ e [_]ˢ) (Lift-Dist-Compˢˢ σ₁ σ₂) ⟩
-      _  ∎)
+  Compositionalityˢˢ (λx {T₁ = T₁} e)     η₁ η₂ σ₁ σ₂  = cong λx (begin
+        η₂ ∣ η₁ ∣ e [ η₁ ∣ σ₁ ⇑ˢ T₁ ]ˢ [ η₂ ∣ σ₂ ⇑ˢ (T₁ [ η₁ ]ˢ) ]ˢ
+      ≡⟨ Compositionalityˢˢ e η₁ η₂ (η₁ ∣ σ₁ ⇑ˢ T₁) (η₂ ∣ σ₂ ⇑ˢ (T₁ [ η₁ ]ˢ)) ⟩
+        (η₁ ⨟ˢ η₂) ∣ e [  η₁ , η₂ ∣ η₁ ∣ σ₁ ⇑ˢ T₁ ⨾ˢ (η₂ ∣ σ₂ ⇑ˢ (T₁ [ η₁ ]ˢ)) ]ˢ
+      ≡⟨ cong ((η₁ ⨟ˢ η₂) ∣ e [_]ˢ) (Lift-Dist-Compˢˢ σ₁ σ₂) ⟩
+        (η₁ ⨟ˢ η₂) ∣ e [ (η₁ ⨟ˢ η₂) ∣ η₁ , η₂ ∣ σ₁ ⨾ˢ σ₂ ⇑ˢ T₁ ]ˢ
+      ∎)
   Compositionalityˢˢ (Λα e)     η₁ η₂ σ₁ σ₂  = cong Λα (begin
-      _  ≡⟨ Compositionalityˢˢ e (η₁ ↑ˢ) (η₂ ↑ˢ) (η₁ ∣ σ₁ ↑ˢ*) (η₂ ∣ σ₂ ↑ˢ*) ⟩
-      _  ≡⟨ cong (((η₁ ⨟ˢ η₂) ↑ˢ) ∣ e [_]ˢ) (lift*-dist-Compˢˢ η₁ η₂ σ₁ σ₂) ⟩
-      _  ∎)
-  Compositionalityˢˢ (e₁ · e₂)  η₁ η₂ σ₁ σ₂  = cong₂ _·_ (Compositionalityˢˢ e₁ η₁ η₂ σ₁ σ₂) (Compositionalityˢˢ e₂ η₁ η₂ σ₁ σ₂)
-  Compositionalityˢˢ (e ·* T′)  η₁ η₂ σ₁ σ₂  = cong (_·* (T′ [ η₁ ⨟ˢ η₂ ]ˢ)) (Compositionalityˢˢ e η₁ η₂ σ₁ σ₂)
+        (η₂ ↑ˢ) ∣ (η₁ ↑ˢ) ∣ e [ η₁ ∣ σ₁ ↑ˢ* ]ˢ [ η₂ ∣ σ₂ ↑ˢ* ]ˢ
+      ≡⟨ Compositionalityˢˢ e (η₁ ↑ˢ) (η₂ ↑ˢ) (η₁ ∣ σ₁ ↑ˢ*) (η₂ ∣ σ₂ ↑ˢ*) ⟩
+        ((η₁ ⨟ˢ η₂) ↑ˢ) ∣ e [ (η₁ ↑ˢ) , η₂ ↑ˢ ∣ η₁ ∣ σ₁ ↑ˢ* ⨾ˢ (η₂ ∣ σ₂ ↑ˢ*) ]ˢ
+      ≡⟨ cong (((η₁ ⨟ˢ η₂) ↑ˢ) ∣ e [_]ˢ) (lift*-dist-Compˢˢ η₁ η₂ σ₁ σ₂) ⟩
+        ((η₁ ⨟ˢ η₂) ↑ˢ) ∣ e [ (η₁ ⨟ˢ η₂) ∣ η₁ , η₂ ∣ σ₁ ⨾ˢ σ₂ ↑ˢ* ]ˢ
+      ∎)
+  Compositionalityˢˢ (e₁ · e₂)  η₁ η₂ σ₁ σ₂  = cong₂ _·_ 
+      (Compositionalityˢˢ e₁ η₁ η₂ σ₁ σ₂) 
+      (Compositionalityˢˢ e₂ η₁ η₂ σ₁ σ₂)
+  Compositionalityˢˢ (e ·* T′)  η₁ η₂ σ₁ σ₂  = cong (_·* (T′ [ η₁ ⨟ˢ η₂ ]ˢ)) 
+    (Compositionalityˢˢ e η₁ η₂ σ₁ σ₂)
 
 -- expression-level σ-calculus laws (mirroring the type-level laws above)
 opaque

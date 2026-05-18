@@ -31,6 +31,8 @@ P1 — Substantive gaps
      those tactics could yield similar simplifications. (A)
 {PT} => this is easy, they dont yield def eqs
      => what about strictification paper?
+        => Easy! they work in OTT, which they strictly require to make the laws strict.
+        There is no production proof assistant based on OTT yet, but on RTT there is (Agda and Rocq).
 
 
 [ ]  Deliver on the abstract's promise of "practical guidelines" and

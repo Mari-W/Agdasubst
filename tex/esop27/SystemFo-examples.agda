@@ -8,8 +8,10 @@ open ≡-Reasoning
 
 open import SystemFo
 
--- abstracting over a type constructor
+--! FORewrite
+{-# REWRITE β≡* #-}
 
+-- abstracting over a type constructor
 module example-in-agda where
   --! FOPrelude {
   ty : Set₁

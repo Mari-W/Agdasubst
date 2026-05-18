@@ -567,8 +567,8 @@ opaque
 
 -- expression substitution - traversal
 -- new symbol?
---! Traversal
 opaque
+  --! Traversal
   _∣_[_]ˢ : (η : n₁ →ˢ n₂) → Expr Γ₁ T → η ∣ Γ₁ ⇒ˢ Γ₂ → Expr Γ₂ (T [ η ]ˢ)
   η  ∣ (` x) [ σ ]ˢ      = η ∣ x &ˢ σ
   η  ∣ (λx e) [ σ ]ˢ     = λx (η ∣ e [ η ∣ σ ⇑ˢ _ ]ˢ)
@@ -576,8 +576,8 @@ opaque
   η  ∣ (e · e₁) [ σ ]ˢ   = (η ∣ e [ σ ]ˢ) · (η ∣ e₁ [ σ ]ˢ)
   η  ∣ (e ·* T′) [ σ ]ˢ  = (η ∣ e [ σ ]ˢ) ·* (T′ [ η ]ˢ)
 
---! CompDefinition
 opaque
+  --! CompDefinition
   _,_∣_⨾ˢ_ : ∀ η₁ η₂ → η₁ ∣ Γ₁ ⇒ˢ Γ₂ → η₂ ∣ Γ₂ ⇒ˢ Γ₃ → (η₁ ⨟ˢ η₂) ∣ Γ₁ ⇒ˢ Γ₃
   (_ , _ ∣ σ₁ ⨾ˢ σ₂) _ x = _ ∣ (σ₁ _ x) [ σ₂ ]ˢ
 

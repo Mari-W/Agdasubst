@@ -416,7 +416,7 @@ weaken J T = T [ wkᴿ J ]ᴿ
 _[_]* : Type (Φ ▷* J) K → Type Φ J → Type Φ K
 T [ T′ ]* = T [ T′ ∙ˢ idˢ ]ˢ
 
-data _≡β_ {Φ} : ∀{J} → Type Φ J → Type Φ J → Set where
+data _≡β_ : Type Φ J → Type Φ J → Set where
   β≡β : ∀{K J}(B : Type (Φ ▷* J) K)(A : Type Φ J) → ((λα B) $ A) ≡β (B [ A ]*)
   -- structural rules
 
@@ -614,119 +614,29 @@ _∣_⇑ˢ_ : ∀ (η : Φ →ˢ Ψ) → η ∣ Γ₁ ⇒ˢ Γ₂ → ∀ T → 
 _∣_↑ˢ*_ : ∀ (η : Φ →ˢ Ψ) → η ∣ Γ₁ ⇒ˢ Γ₂ → ∀ J → (η ↑ˢ J) ∣ ((Γ₁ ▷*) {J}) ⇒ˢ ((Γ₂ ▷*) {J})
 (η ∣ σ ↑ˢ* J) _ (suc* x) = wkᴿ J ∣ (σ _ x) [ wkᴿ* J ]ᴿ
 
-
-postulate 
-  lemˢ : T₁ ≡β T → (T₁ [ η ]ˢ) ≡β (T [ η ]ˢ)
-
+lemˢ : ∀ {J} {Φ : Ctx*} {T₁ T₂ : Type Φ J} (η : Φ →ˢ Ψ) → T₁ ≡β T₂ → (T₁ [ η ]ˢ) ≡β (T₂ [ η ]ˢ)
+lemˢ η (β≡β B A) = β≡β (B [ η ↑ˢ _ ]ˢ) (A [ η ]ˢ)
+lemˢ η (refl≡β A) = refl≡β (A [ η ]ˢ)
+lemˢ {Φ = Φ} η (sym≡β x) = sym≡β (lemˢ η x)
+lemˢ η (trans≡β x₁ x₂) = trans≡β (lemˢ η x₁) (lemˢ η x₂)
+lemˢ η (⇒≡β x₁ x₂) = ⇒≡β (lemˢ η x₁) (lemˢ η x₂)
+lemˢ η (Π≡β x) = Π≡β (lemˢ (η ↑ˢ _) x)
+lemˢ η (ƛ≡β x) = ƛ≡β (lemˢ (η ↑ˢ _) x)
+lemˢ η (·≡β x₁ x₂) = ·≡β (lemˢ η x₁) (lemˢ η x₂)
 
 -- expression substitution - traversal
 --! Traversal
 _∣_[_]ˢ : (η : Φ →ˢ Ψ) → Expr Γ₁ T → η ∣ Γ₁ ⇒ˢ Γ₂ → Expr Γ₂ (T [ η ]ˢ)
-η  ∣ (` x) [ σ ]ˢ      = σ _ x
-η  ∣ (λx e) [ σ ]ˢ     = λx (η ∣ e [ η ∣ σ ⇑ˢ _ ]ˢ)
-η  ∣ (Λα e) [ σ ]ˢ     = Λα ((η ↑ˢ _) ∣ e [ η ∣ σ ↑ˢ* _ ]ˢ)
-η  ∣ (e · e₁) [ σ ]ˢ   = (η ∣ e [ σ ]ˢ) · (η ∣ e₁ [ σ ]ˢ)
-η  ∣ (e ·* T′) [ σ ]ˢ  = (η ∣ e [ σ ]ˢ) ·* (T′ [ η ]ˢ)
-η  ∣ conv e x [ σ ]ˢ  = conv (η ∣ e [ σ ]ˢ) (lemˢ {η = η} x)
+η  ∣ (` x)     [ σ ]ˢ = σ _ x
+η  ∣ (λx e)    [ σ ]ˢ = λx (η ∣ e [ η ∣ σ ⇑ˢ _ ]ˢ)
+η  ∣ (Λα e)    [ σ ]ˢ = Λα ((η ↑ˢ _) ∣ e [ η ∣ σ ↑ˢ* _ ]ˢ)
+η  ∣ (e · e₁)  [ σ ]ˢ = (η ∣ e [ σ ]ˢ) · (η ∣ e₁ [ σ ]ˢ)
+η  ∣ (e ·* T′) [ σ ]ˢ = (η ∣ e [ σ ]ˢ) ·* (T′ [ η ]ˢ)
+η  ∣ conv e x  [ σ ]ˢ = conv (η ∣ e [ σ ]ˢ) (lemˢ η x)
 
 --! CompDefinition
 _,_∣_⨾ˢ_ : ∀ (η₁ : Φ →ˢ Ψ) (η₂ : Ψ →ˢ Θ) → η₁ ∣ Γ₁ ⇒ˢ Γ₂ → η₂ ∣ Γ₂ ⇒ˢ Γ₃ → (η₁ ⨟ˢ η₂) ∣ Γ₁ ⇒ˢ Γ₃
 (_ , _ ∣ σ₁ ⨾ˢ σ₂) _ x = _ ∣ (σ₁ _ x) [ σ₂ ]ˢ
-
--- single substitution, semantics, and progress
---! <
---! Sem >
---! SingleSub {
-_[_] : Expr (Γ ▷ T′) T → Expr Γ T′ → Expr Γ T
-e [ e′ ] = idˢ ∣ e [ idˢ ∣ e′ ∙ˢ Idˢ ]ˢ
-
-_[*_*] : Expr (Γ ▷*) T → (T′ : Type Φ J) → Expr Γ (T [ T′ ]*)
-e [* T′ *] = (T′ ∙ˢ idˢ) ∣ e [ idˢ ∣ T′ ∙ˢ* Idˢ ]ˢ
---! }
-
---! Definition
-data _⟶_ : Expr Γ T → Expr Γ T → Set where
-  β-λ   : (λx e₁ · e₂) ⟶ (e₁ [ e₂ ])
-  β-Λ   : (Λα e ·* T′) ⟶ (e [* T′ *])
-  ξ-·   : e₁ ⟶ e₁′ → (e₁ · e₂) ⟶ (e₁′ · e₂)
-  ξ-·*  : e ⟶ e′ → (e ·* T) ⟶ (e′ ·* T)
-  ξ-Λ   : e ⟶ e′ → (Λα e) ⟶ (Λα e′)
-  ξ-conv : ∀{eq : T ≡β T′} → e ⟶ e′ → conv e eq ⟶ conv e′ eq
-  β-conv : ∀{eq : T ≡β T} → conv e eq ⟶ e
-
-data _⟶*_ : Expr Γ T → Expr Γ T → Set where
-  ⟶refl  : e ⟶* e
-  ⟶trans : e₁ ⟶ e₂ → e₂ ⟶* e₃ → e₁ ⟶* e₃
-
-open import Data.Empty using (⊥; ⊥-elim)
-open import Relation.Nullary using (¬_; contradiction)
-
---! ProgressDefs {
-data Value : Expr Γ T → Set where
-  λx : (e : Expr (Γ ▷ T₁) T₂) → Value (λx e)
-  Λα : Value e → Value (Λα e)
-
-data Progress : Expr Γ T → Set where
-  done : (v : Value e) → Progress e
-  step : (e⟶e′ : e ⟶ e′) → Progress e
-
-data NoVar : Ctx Φ → Set where
-  ∅   : NoVar ∅
-  _▷* : NoVar Γ → NoVar {Φ ▷* J} (Γ ▷*)
-
-noVar : NoVar Γ → ¬ (Γ ∋ T)
-noVar (nv ▷*) (suc* x) = noVar nv x
---! }
-
---! FORewrite
-{-# REWRITE β≡* #-}
-
-admissible : ∀{A B : Type Φ J} → A ≡β B → A ≡ B
-admissible (β≡β B A)      = refl
-admissible (refl≡β A)     = refl
-admissible (sym≡β x)      = sym (admissible x)
-admissible (trans≡β x x₁) = trans (admissible x) (admissible x₁)
-admissible (⇒≡β x x₁)     = cong₂ _⇒_ (admissible x) (admissible x₁)
-admissible (Π≡β x)        = cong ∀α (admissible x)
-admissible (ƛ≡β x)        = cong λα (admissible x)
-admissible (·≡β x x₁)     = cong₂ _$_ (admissible x) (admissible x₁)
-
---! Progress
-progress : NoVar Γ → (e : Expr Γ T) → Progress e
-progress nv (` x) = ⊥-elim (noVar nv x)
-progress nv (λx e) = done (λx e)
-progress nv (e · e′)
-  with progress nv e
-... | done (λx e₁) = step β-λ
-... | step e⟶e′ = step (ξ-· e⟶e′)
-progress nv (Λα e)
-  with progress (nv ▷*) e
-... | done v = done (Λα v)
-... | step e⟶e′ = step (ξ-Λ e⟶e′)
-progress nv (e ·* T′)
-  with progress nv e
-... | done (Λα v) = step β-Λ
-... | step e⟶e′ = step (ξ-·* e⟶e′)
-progress nv (conv e eq) 
-  with refl ← admissible eq
-  with progress nv e
-... | done v = step β-conv
-... | step e⟶e′ = step (ξ-conv e⟶e′)
-
--- execution
-
-open import Data.Nat using (ℕ; zero; suc)
-open import Data.Maybe using (Maybe; nothing; just)
-open import Data.Product using (Σ; ∃-syntax; _,_; _×_)
-
-run : {T : Type ∅ ∗} → ℕ → (e : Expr ∅ T) → ∃[ e′ ] e ⟶* e′ × Maybe (Value e′)
-run zero e = e , ⟶refl , nothing
-run (suc n) e
-  with progress ∅ e
-... | done v = e , ⟶refl , just v
-... | step {e′ = e′} e⟶e′
-  with run n e′
-... | e″ , e′⟶e″ , mve″ = e″ , ⟶trans e⟶e′ e′⟶e″ , mve″
 
 -- examples
 -- readability

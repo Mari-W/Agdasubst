@@ -22,6 +22,7 @@
 \input{SystemF}
 \input{STLC}
 \input{SystemFo}
+\input{TransferHell}
 \input{unicodeletters}
 \input{agdacommands}
 
@@ -130,7 +131,6 @@ transport reasoning arises in this development as only definitional
 properties of substitutions are required. The remainder of this paper
 explains why the same approach breaks down for polymorphic calculi and
 how to recover some of its simplicity.
-
 
 Transfer hell is the colloquial term for being forced to apply
 type-changing lemmas to terms that are already known to be equal.
@@ -495,6 +495,10 @@ expression substitutions; nevertheless, we define the primitives analogously.
 \subsubsection{Renaming}
 \label{sec:renamings}
 
+% ===============================================
+% TODO: cut renamings? this is analogous to subst
+% ===============================================
+
 Expression renamings are indexed by type renamings because type
 variables in expression may have to be renamed at the same time as
 expression variables. This complication makes the types of the
@@ -630,20 +634,83 @@ is equal to composing their liftings) and
 over type bindings), where the statement and proof would require
 explicit transfers. Essentially, these properties form a ``food
 chain'' that stops at the composition properties of renamings with
-renamings and liftings, all with similar issues. The supplemental
+renamings and liftings, all of which follow similarly. The supplemental
 material gives the full story.
 
+\subsection{Comparison to a Proof in Transfer Hell}
+\label{sec:comparison-transfer-hell}
 
-\section{Comparison to Proof in Transfer Hell}
-We compare this proof to the one without the additional 
-definitional equalities for type substitutions, provided in the supplement 
-for the aforementioned logical relation construction \cite{10.1145/3678000.3678201}. 
-The authors use heterogeneous equality~\cite{} to proof the lemma, 
-thereby already avoiding some of the troubles arising from transfer hell.
-Without the use of heterogeneous equalities this proof gets even worse, and requires
-multiple lemmas that shuffle the application of \AgdaFunction{subst} explicitly.
+We now contrast our development with the same proof carried out without
+installing the $\sigma$-calculus equations as definitional equalities. As a
+point of comparison, we take the supplement of the logical relation
+construction of \citet{10.1145/3678000.3678201}, which
+also mechanizes the compositionality properties for System~F. To enable a direct
+comparison, we have aligned the surface syntax of their definitions
+with ours.
 
-We extracted the 
+Inspecting the type of the compositionality lemma already exposes the
+core issue: because the $\sigma$-calculus equations are only
+propositional, the statement of the theorem must itself rely on
+\AgdaFunction{subst} to bridge equal-but-not-definitionally-equal indices.
+\ExportCompositionalityHom
+
+\noindent Every recursive call to the induction hypothesis introduces a
+fresh application of \AgdaFunction{subst}, which then has to be
+distributed to the outside of the term and combined with the
+\AgdaFunction{subst}s arising from neighboring subterms before the goal
+can be closed. This bookkeeping is further complicated by the fact that
+the other appearances of type substitution lemmas required in the proof interact with the
+transported equalities in non-trivial ways. We illustrate the resulting
+complexity by zooming in on a single induction case---type
+application---of their compositionality lemma.
+
+A first observation is that our development already saves one
+\AgdaFunction{subst} in the very definition of substitution application.
+Without the definitional $\sigma$-calculus, this saving is no longer
+available: the type application case requires the swap lemma of type
+\ExportSwap.
+\noindent to coerce the term to the expected type, leading to the following
+definition.
+\ExportSubstInDef
+
+\noindent With this in place, we can examine the type application case
+of the compositionality proof itself. The authors employ heterogeneous
+equality~\cite{DBLP:conf/types/McBride00} to avoid some of the
+administrative reasoning otherwise forced by transfer hell. Without
+heterogeneous equality, the proof would be considerably worse still,
+requiring several auxiliary lemmas that explicitly shuffle applications
+of \AgdaFunction{subst} around. Thus, the version below already
+constitutes one of the simplest forms of the argument.
+\ExportProofTerm
+
+\noindent The proof proceeds in six steps. Of these, steps~(2), (3), and~(5),
+as well as the translation into heterogeneous equality, are entirely
+absent from our rewriting-based proof; only the application of the
+induction hypothesis and the implicit (un)folding of definitions remain.
+\begin{enumerate}
+  \item Unfold the definition of expression substitution at the inner
+        application of $\sigma_1$, exposing the \AgdaFunction{subst}
+        inside.
+  \item Remove the \AgdaFunction{subst} that sits inside the term under
+        consideration, justified by heterogeneous equality.
+  \item Reveal yet another \AgdaFunction{subst} introduced by the substitution application of $\sigma_2$
+  \item Remove the \AgdaFunction{subst} on the outside.
+  \item Apply the induction hypothesis while simultaneously coercing
+        the index according to the compositionality law for type
+        substitutions.
+  \item Reinsert the \AgdaFunction{subst} demanded by the proof goal on
+        the outside.
+  \item Fold the definition of expression substitution to conclude the
+        proof.
+\end{enumerate}
+
+We complement this qualitative comparison with a quantitative one. The
+following table records the lines of code and number of characters
+required to mechanize the compositionality law for expression
+substitutions, together with the cold type-checking time of the
+respective developments.
+
+\begin{center}
 \begin{tabular}{|l|rr|rr|}
     \hline
                                           & \multicolumn{2}{c|}{\textbf{With Rewriting}}
@@ -656,49 +723,57 @@ We extracted the
     \textbf{Total}                        & \textbf{416} & \textbf{23\,711}
                                           & \textbf{1\,690} & \textbf{82\,430} \\
     \hline
-    Type-check time (wall)                & \multicolumn{2}{c|}{4.49\,s}
+    Type-check time (cold)                & \multicolumn{2}{c|}{4.49\,s}
                                           & \multicolumn{2}{c|}{9.51\,s} \\
     \hline
 \end{tabular}
-  
+\end{center}
 
-\section{Practical Guidelines for Mechanizing Intrinsically Typed Syntax}
-We now abstract over the techniques applied in the previous sections 
-to practical guidelines that can be applied to other intrinsically typed 
-syntaxes. We will assume a tower $T₁, T₂, \dots, T_n$ of syntactic sorts 
-where $Tᵢ$ indexes $T_{i + 1}$. 
-For instance, in our System F example $n$ is equal to 2 and we have 
-the two sorts \texttt{Type} and \texttt{Expr}, where $\texttt{Type} < \texttt{Expr}$.
-We further assume that all sorts feature variable binding and thereby require substitution. 
-If a  sort does not have binders, it can be excluded from the tower, 
-because it already enjoys all the relevant definitional equalities 
-we require to build an intrinsically typed syntax. We do exactly this in the next section, where 
-we introduce simple kinds to investigate System F$\omega$. We formulate our guidelines iteratively 
-and starting with $i = 1$. We use $j$ for $j < i$ at any given stage.
-We will add inline the code for our System F example, at stage $i = 2$.
-\begin{itemize}
-  \item Define the data type for sort $T_i$.
-  \item Formulate renaming and substitution for $T_i$. Substitution (and renaming resp) will have the 
-        type thats indexed $i$ many substitutions (or renamings resp.), one for all $T_j$. 
-        It will then map a context with explicit weakening for variables of $T_j$ indexed by all the contexts for $T_j$ to another and can be modeled 
-        by a function that uses the $T_j$ substitution operations. 
-  \item Inside an \AgdaKeyword{opaque} block, we define the substitution 
-        (and renaming resp) primitives, lookup  identit and composition follow directly, 
-        but we need $i$ many extension, weakning (only for renaming) and lifiting operations, one for each $T_j$.
-  \item While \AgdaKeyword{unfolding} the previous definitions we prove the sigma caclulus laws, 
-        we will have x many beta laws, we need $i$ many for each extensions of the previous 
+As expected, the amount of code required to formalize type
+substitution is roughly the same in both developments. For
+expression substitutions, however, the picture changes:
+the transfer-hell version requires more than five times as many lines
+of code as the rewriting-based one. As a welcome side effect, the cold
+type-checking time is also reduced by roughly half when the
+$\sigma$-calculus equations are installed as rewrite rules.
 
-\end{itemize}
-
-To verify our claim we also provide the rewrite system for the sigma caclulus on the \emph{second}
-stage of our index hierarchy, i.e. the $\sigma$-calculus for expressions. Due to 
-% todo: explain additional wk lemmas 
-% explain coincidence
-We have already compared this two levels that use subsitution example with one
-that does not use rewriting, and noticed the fast growing additional effort required 
-to prove manage tranfer hell. When ones has even more levels, then this problem would 
-get substantially worse, but with rewriting, it does only require a few more lines per 
-definition and laws for formalizing substitution on each level.
+% \section{Practical Guidelines for Mechanizing Intrinsically Typed Syntax}
+% We now abstract over the techniques applied in the previous sections 
+% to practical guidelines that can be applied to other intrinsically typed 
+% syntaxes. We will assume a tower $T₁, T₂, \dots, T_n$ of syntactic sorts 
+% where $Tᵢ$ indexes $T_{i + 1}$. 
+% For instance, in our System F example $n$ is equal to 2 and we have 
+% the two sorts \texttt{Type} and \texttt{Expr}, where $\texttt{Type} < \texttt{Expr}$.
+% We further assume that all sorts feature variable binding and thereby require substitution. 
+% If a  sort does not have binders, it can be excluded from the tower, 
+% because it already enjoys all the relevant definitional equalities 
+% we require to build an intrinsically typed syntax. We do exactly this in the next section, where 
+% we introduce simple kinds to investigate System F$\omega$. We formulate our guidelines iteratively 
+% and starting with $i = 1$. We use $j$ for $j < i$ at any given stage.
+% We will add inline the code for our System F example, at stage $i = 2$.
+% \begin{itemize}
+%   \item Define the data type for sort $T_i$.
+%   \item Formulate renaming and substitution for $T_i$. Substitution (and renaming resp) will have the 
+%         type thats indexed $i$ many substitutions (or renamings resp.), one for all $T_j$. 
+%         It will then map a context with explicit weakening for variables of $T_j$ indexed by all the contexts for $T_j$ to another and can be modeled 
+%         by a function that uses the $T_j$ substitution operations. 
+%   \item Inside an \AgdaKeyword{opaque} block, we define the substitution 
+%         (and renaming resp) primitives, lookup  identit and composition follow directly, 
+%         but we need $i$ many extension, weakning (only for renaming) and lifiting operations, one for each $T_j$.
+%   \item While \AgdaKeyword{unfolding} the previous definitions we prove the sigma caclulus laws, 
+%         we will have x many beta laws, we need $i$ many for each extensions of the previous 
+% 
+% \end{itemize}
+% 
+% To verify our claim we also provide the rewrite system for the sigma caclulus on the \emph{second}
+% stage of our index hierarchy, i.e. the $\sigma$-calculus for expressions. Due to 
+% % todo: explain additional wk lemmas 
+% % explain coincidence
+% We have already compared this two levels that use subsitution example with one
+% that does not use rewriting, and noticed the fast growing additional effort required 
+% to prove manage tranfer hell. When ones has even more levels, then this problem would 
+% get substantially worse, but with rewriting, it does only require a few more lines per 
+% definition and laws for formalizing substitution on each level.
 
 \section{System F$\omega$}
 \label{sec:system-fomega}
@@ -872,17 +947,6 @@ introduce additional lemmas or automation.
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}
-
-\appendix
-
-\section{Proof for Compose Monad Law in Transfer Hell}\label{appendix:appendix-proof}
-
-\AgdaNoSpaceAroundCode{}
-\setlength{\mathindent}{0pt}
-\footnotesize{}
-% \EFExampleProofPrelude
-% \ExampleProof
-
 
 \end{document}
 \endinput

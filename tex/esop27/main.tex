@@ -57,7 +57,7 @@ equal types that are not definitionally equal. This
 phenomenon---informally known as transfer hell---causes even routine
 metatheoretic arguments to be dominated by administrative reasoning.  
 
-This functional pearl shows how to make intrinsically typed syntax
+This fresh perspective shows how to make intrinsically typed syntax
 work in practice for polymorphic calculi. We give extacts of a
 mechanization of the metatheory of System F and extend
 it to System F$\omega$ in Agda while avoiding transfer reasoning almost
@@ -68,7 +68,7 @@ install them into Agda’s rewrite mechanism, obtaining canonical
 behavior for substitution and renaming without explicit
 transports. The main technical challenge is ensuring that the
 resulting rewrite system remains terminating and confluent together
-with Agda’s built-in definitional equality. 
+with Agda’s built-in reductions. 
  
 The resulting development dramatically simplifies proofs: typing
 preservation becomes definitional, substitution lemmas disappear, and 
@@ -79,6 +79,10 @@ lemmas but better definitional equality. We distill practical
 guidelines for mechanizing typed calculi in dependently typed proof
 assistants. 
 \end{abstract}
+
+% TODO[PT]: somehwere insert related work, namely comapre with propositonal tools and 
+%           with stricification paper
+% TODO[PT]: explain agda syntax at relevant places: 
 
 \maketitle
 \keywords{Intrinisically Typed Syntax, Rewriting, Agda}
@@ -132,6 +136,7 @@ properties of substitutions are required. The remainder of this paper
 explains why the same approach breaks down for polymorphic calculi and
 how to recover some of its simplicity.
 
+% TODO[PT]: define transfer hell precisely and what propositional vs definitional means
 Transfer hell is the colloquial term for being forced to apply
 type-changing lemmas to terms that are already known to be equal.
 The root problem is that substitutions that are propositionally equal
@@ -187,10 +192,12 @@ standard functional representation of renamings and substitutions
 \cite{DBLP:journals/jar/BentonHKM12}, prove the lemmas underlying the
 equational laws of the $\sigma$-calculus, and then inject these equations
 into Agda's rewrite engine, i.e., make the $\sigma$-calculus equations
-definitional (for type substitutions). The technical challenge is to
+definitional. The technical challenge is to
 ensure that the added equations remain terminating and confluent
 together with the proof assistant’s built-in definitional equality. 
+% TODO[PT]: explain that definitional equality is determined by reduction and normal forms
 
+% TODO[PT]: update to current section structure
 We first exercise this program for plain System~F in
 \cref{sec:system-f}, significantly simplifying the transfer-ridden approach used by
 \citet{10.1145/3678000.3678201}, 
@@ -205,7 +212,6 @@ reduction holds by construction, and type conversion in System F$\omega$ is hand
 In summary, intrinsically typed syntax fails for polymorphic calculi
 because substitutions lack canonical equality; making them compute
 canonically restores the original promise of intrinsic typing.
-
 
 \subsection*{Contributions}
 This functional pearl demonstrates how to mechanize polymorphic
@@ -237,12 +243,20 @@ reasoning.
   intrinsically typed syntax in dependently typed proof assistants.
 \end{itemize}
 
-\section{System F}
+\section{Types for System F}
 \label{sec:system-f}
 
-\subsection{Types}
+\subsection{Syntax}
 \label{sec:types}
+The syntax of System~F types uses the standard de Bruijn encoding of
+variables by natural numbers. The index $n$ stands for the number of
+type variables in scope. Variables are drawn from the type $\AgdaDatatype{Fin}\ n$, i.e.,
+the set $\{0,\dots, n-1\}$. The  \AgdaInductiveConstructor{$\forall\alpha$}-binder introduces a new type
+variable, and \AgdaInductiveConstructor{$\Rightarrow$} is the infix function type constructor.
+\SFTypeDefinition
 
+\subsection{Renaming and Substitution}
+\label{sec:types}
 \begin{figure}[tp]
   \begin{minipage}[t]{0.49\linewidth}
     \SFTypeRenaming
@@ -255,14 +269,6 @@ reasoning.
   \caption{Renamings and substitutions on types}
   \label{fig:system-f-ren-sub}
 \end{figure}
-
-The syntax of System~F types uses the standard de Bruijn encoding of
-variables by natural numbers. The index $n$ stands for the number of
-type variables in scope. Variables are drawn from the type $\AgdaDatatype{Fin}\ n$, i.e.,
-the set $\{0,\dots, n-1\}$. The  \AgdaInductiveConstructor{$\forall\alpha$}-binder introduces a new type
-variable, and \AgdaInductiveConstructor{$\Rightarrow$} is the infix function type constructor.
-\SFTypeDefinition
-
 \Cref{fig:system-f-ren-sub} contains the first step in defining
 type renamings (left column) and substitutions (right column).
 A type renaming $\zeta$ maps variables from one scope $n_1$ to
@@ -294,16 +300,16 @@ substitution, applying a substitution to variable, lifting a
 substitution (to move under a binder), applying a substitution to a
 type, and composing two substitutions.
 
+\subsection{Laws for Renaming and Substitution}
 \begin{figure}[tp]
   \begin{flushleft}
-    % TODO: omit renamings for space
-    \SFTypeRenamingBeta
+    % TODO[PT]: omitted renamings for space (need to update paragraph below)
+    % \SFTypeRenamingBeta
     \SFTypeSubstitutionBeta
     \SFTypeMonad
     \SFTypeCoincidence
   \end{flushleft}
-  \caption{Equational laws of the $\sigma$-calculus with first class
-    renamings}
+  \caption{Equational laws of the $\sigma$-calculus}
   \label{fig:system-f-sigma-calculus}
 \end{figure}
 
@@ -339,18 +345,23 @@ rewrite system that we install in Agda using its
 \AgdaKeyword{REWRITE} pragma \cite{10.1145/3434341}. From now on, all equations in
 \cref{fig:system-f-sigma-calculus} are definitional!
 
-As a sanity check, we show that lifting a renaming as well as the
-action of a renaming satisfy the functor laws. All of these lemmas
-hold definitionally, some correspond directly equations from the $\sigma$-
+As a sanity check, we show that lifting a substitution and the
+action of a substitution satisfy the functor laws. All of these lemmas
+hold definitionally, some correspond directly to equations from the $\sigma$-
 calculus in \cref{fig:system-f-sigma-calculus}. The latter are marked
 with $*$.\footnote{The naming of the lemmas is taken from
-  \citet{10.1007/978-3-030-33636-3_10} to enable direct comparisons.} 
-\SFTypeRenFunctorial
+  \citet{10.1007/978-3-030-33636-3_10} to enable direct comparisons.}
+The lifting laws are shown on the left, the application laws on the right.
+The analogous results for renamings follow exactly the same pattern.
 
-We also show analogous results for substitution.
-\SFTypeSubFunctorial
+\noindent\begin{minipage}[t]{0.49\linewidth}
+  \SFTypeSubFunctorialLift
+\end{minipage}\hfill\begin{minipage}[t]{0.49\linewidth}
+  \SFTypeSubFunctorialApply
+\end{minipage}
 
 \subsection{A Note on Safety}
+% TODO[MW]: insert citations
 \label{sec:safety}
 Turning propositional equalities into definitional ones is a delicate
 act in a proof assistant based on a rich dependent type theory, where we care a lot
@@ -376,13 +387,12 @@ subject reduction) and \emph{consistency}. In particular, subject
 reduction is an implicit assumption of the type checker that we 
 need to take care to uphold.
 
-
 To uphold subject reduction, the critical property of the rewriting
 equations is that they are confluent \emph{with respect to the already
 existing reduction rules}. Agda already provides a plethora of
 reduction rules: $\beta$, $\eta$ (function and record expansion),
-$\delta$ (definition unfolding), and $\iota$ (pattern matching). The
-additionally rewritten rules must agree with all of them to be confluent. 
+$\delta$ (definition unfolding), and $\iota$ (dependent pattern matching clauses). 
+The additionally rewritten rules must agree with all of them to be confluent. 
 Agda checks this using a simple syntactic criterion called the triangle
 property. Confluence holds when every critical pair of left-hand sides 
 can be joined in a single rewriting step that lies on a common reduct, 
@@ -390,6 +400,13 @@ This check does not require termination. Notably, termination is \emph{not}
 a critical property, because it does not affect soundness or consistency, 
 it is only observable through never-terminating type checking
 but does no further harm.
+
+Some $\beta$ and $\iota$ reductions arising from our functional
+definitions of renamings and substitutions in the previous section
+interfere with the intended rewrite equalities. This is why we
+explicitly hide these definitions inside an \AgdaKeyword{opaque} block,
+so that only the equations we install with \AgdaKeyword{REWRITE} drive
+their reduction behaviour.
 
 Consistency is preserved as long as the equalities we rewrite are
 instantiated with proofs. This is easy to see, because RTT can be
@@ -412,14 +429,16 @@ proofs, but aside from these differences our method transfers to Rocq
 directly using its own rewrite rule implementation~\cite{}.
 
 In our formalization, we enable the \AgdaKeyword{OPTIONS}
-\texttt{--rewriting} together with \texttt{--confluence-check},
+\texttt{-{}-rewriting} together with \texttt{-{}-confluence-check},
 which makes the use of rewriting safe, provided we trust the
 implementation of the confluence checker. With these newly and
 safely gained definitional equalities in place, we can continue
 to define expressions and expression substitution without ending
 up in transfer hell.
 
-\subsection{Expressions}
+\section{Expressions for System F}
+\label{sec:system-f-expressions}
+\subsection{Syntax}
 \label{sec:expressions}
 
 \begin{figure}[tp]
@@ -484,46 +503,49 @@ width.
 \FCNSucc
 % \FCNFour
 
-\subsection{Expression Renaming and Substitution}
+\subsection{Renaming and Substitution}
 \label{sec:expr-renam-subst}
 
-For expressions, we represent renamings and substitutions directly by
-suitable functions, rather than axiomatic as with type renamings and
-substitutions. Hence, we cannot automate the simplification of
-expression substitutions; nevertheless, we define the primitives analogously.
+% TODO[PT]: wrong! we do exactly this!
+% For expressions, we represent renamings and substitutions directly by
+% suitable functions, rather than axiomatic as with type renamings and
+% substitutions. Hence, we cannot automate the simplification of
+% expression substitutions; nevertheless, we define the primitives analogously.
 
-\subsubsection{Renaming}
-\label{sec:renamings}
+% TODO[PT]: i removed renamings, they are analogous
 
-% ===============================================
-% TODO: cut renamings? this is analogous to subst
-% ===============================================
+% \subsubsection{Renaming}
+% \label{sec:renamings}
+% 
+% 
+% Expression renamings are indexed by type renamings because type
+% variables in expression may have to be renamed at the same time as
+% expression variables. This complication makes the types of the
+% operations quite involved, although the actual operations are not that
+% complicated. 
+% \SFExprRenaming
+% Defining the identity renaming is straightforward due to the presence
+% of rewriting for type substitutions.
+% \SFExprRenIdr
+% Weakening of a renaming by a value binding. 
+% \SFExprRenWeakening
+% Weakening of a renaming by a type binding.
+% \SFExprRenTWeakening
+% Extension of a renaming.
+% \SFExprRenExtension
+% Lifting of a renaming over a value binding.
+% \SFExprRenLifting
+% Lifting of a renaming over a type binding.
+% \SFExprRenTLifting
+% Inductive definition of a renaming on expressions. The last case of
+% the definition requires rewriting to type check.
+% \SFExprRenTraversal
 
-Expression renamings are indexed by type renamings because type
-variables in expression may have to be renamed at the same time as
-expression variables. This complication makes the types of the
-operations quite involved, although the actual operations are not that
-complicated. 
-\SFExprRenaming
-Defining the identity renaming is straightforward due to the presence
-of rewriting for type substitutions.
-\SFExprRenIdr
-Weakening of a renaming by a value binding. 
-\SFExprRenWeakening
-Weakening of a renaming by a type binding.
-\SFExprRenTWeakening
-Extension of a renaming.
-\SFExprRenExtension
-Lifting of a renaming over a value binding.
-\SFExprRenLifting
-Lifting of a renaming over a type binding.
-\SFExprRenTLifting
-Inductive definition of a renaming on expressions. The last case of
-the definition requires rewriting to type check.
-\SFExprRenTraversal
+% \subsubsection{Substitution}
+% \label{sec:substitution}
 
-\subsubsection{Substitution}
-\label{sec:substitution}
+
+% TODO[PT]: this is very dry, improve writing 
 
 Expression substitutions are indexed by type substitutions.
 \SFExprSubstitution
@@ -587,7 +609,7 @@ structure of this proof closely follows the corresponding proof by
 because their semantics is call-by-value and their language supports
 isorecursive types.
 
-\subsection{Laws for Renamings and Substitutions}
+\section{Laws for Renaming and Substitution}
 \label{sec:laws-renam-subst}
 
 Proving type safety for System~F \emph{requires} exercising the
@@ -596,6 +618,7 @@ laws as definitional equalities, many definitions become more
 cumbersome because transport lemmas have to be inserted to equalize
 the types of (Agda) expressions.
 
+% TODO[PT]: give a better motivation than this
 While proving type safety does \emph{not} require exercising same
 theory at the \emph{expression level}, it is still good practice to
 verify functorial and monadic properties of expression
@@ -683,10 +706,7 @@ of \AgdaFunction{subst} around. Thus, the version below already
 constitutes one of the simplest forms of the argument.
 \ExportProofTerm
 
-\noindent The proof proceeds in six steps. Of these, steps~(2), (3), and~(5),
-as well as the translation into heterogeneous equality, are entirely
-absent from our rewriting-based proof; only the application of the
-induction hypothesis and the implicit (un)folding of definitions remain.
+\noindent The proof proceeds in seven steps.
 \begin{enumerate}
   \item Unfold the definition of expression substitution at the inner
         application of $\sigma_1$, exposing the \AgdaFunction{subst}
@@ -703,6 +723,10 @@ induction hypothesis and the implicit (un)folding of definitions remain.
   \item Fold the definition of expression substitution to conclude the
         proof.
 \end{enumerate}
+Of these, steps~(2), (4), the type coercion in~(5), and~(5),
+as well as the translation into heterogeneous equality, are entirely
+absent from our rewriting-based proof; only the application of the
+induction hypothesis and the implicit (un)folding of definitions remain.
 
 We complement this qualitative comparison with a quantitative one. The
 following table records the lines of code and number of characters
@@ -737,7 +761,13 @@ of code as the rewriting-based one. As a welcome side effect, the cold
 type-checking time is also reduced by roughly half when the
 $\sigma$-calculus equations are installed as rewrite rules.
 
-% \section{Practical Guidelines for Mechanizing Intrinsically Typed Syntax}
+\subsection{Equational Laws for Renaming and Substitution}
+% TODO[MW]: explain the second layer equalitonal theory on expression substitution
+
+\subsection{Practical Guidelines for Mechanizing Intrinsically Typed Substitutions}
+% TODO[MW]: explain how this generalizes to other syntaxes.
+% cite paper with multiple hierarchies
+
 % We now abstract over the techniques applied in the previous sections 
 % to practical guidelines that can be applied to other intrinsically typed 
 % syntaxes. We will assume a tower $T₁, T₂, \dots, T_n$ of syntactic sorts 
@@ -778,6 +808,11 @@ $\sigma$-calculus equations are installed as rewrite rules.
 \section{System F$\omega$}
 \label{sec:system-fomega}
 
+% TODO[PT]: update to changes with the conversion relation
+% TOOO[PT]: make clear this is an unsafe "encore"
+
+% OR: decide to remove this. then the intro / contributions need to be updated
+
 System~F$\omega$ extends System~F with higher-kinded types, that is,
 abstraction over type functions. This calculus is the basis of
 Haskell's type system where type functions are limited to partial
@@ -787,9 +822,9 @@ extension of F$\omega$ with isorecursive types is the basis for
 Plutus, the language of the Cardano blockchain
 \cite{10.1007/978-3-030-33636-3_10}. 
 
-%TODO @PT: we leave safety land here, i.e. rewrite on a postulated symbol.
+%TODO[PT]: we leave safety land here, i.e. rewrite on a postulated symbol.
 %also: now we are using the σλ theory! (also available in the explicit substitution papers)
-%alsoalso: we need to use --local-confluence-check instead of --confluence-check now, 
+% also: we need to use --local-confluence-check instead of --confluence-check now, 
 %  which is a kown limitation of λσ! we thus assume that this theory terminates here.. 
 
 \subsection{Definitions}
@@ -878,14 +913,16 @@ define aliases like \AgdaFunction{$\lambda\beta$} and so on for the type level l
 \end{minipage}
 
 \noindent We construct the Church numeral for $2$ by applying the successor
-twice to zero. The proof that this term is equal to its normal form is
-definitional.
-\CNTwoProof
+twice to zero (left). The proof that this term is equal to its normal form is
+definitional. We further define addition and construct $2$ by adding $1+1$
+(right). The corresponding equality proof puts a significant load on the type
+checker and takes more than a minute to complete on the authors' machine.
 
-Finally, we define addition and construct $2$ by adding $1+1$. The
-corresponding equality proof puts a significant load on the type checker and
-takes more than a minute to complete on the authors' machine.
-\CNAddition
+\noindent\begin{minipage}[t]{0.4\linewidth}
+  \CNTwoProof
+\end{minipage}\hfill\begin{minipage}[t]{0.55\linewidth}
+  \CNAddition
+\end{minipage}
 
 \subsubsection{Arrows}
 \label{sec:arrows}
@@ -915,8 +952,12 @@ defining expression equivalent to \AgdaFunction{abst}.
 \end{minipage}
 
 \noindent To use this function, we encode functions \AgdaFunction{inst} and \AgdaFunction{use}.
-\FOInstApp
-\FOUseApp
+
+\noindent\begin{minipage}[t]{0.65\linewidth}
+  \FOInstApp
+\end{minipage}\hfill\begin{minipage}[t]{0.34\linewidth}
+  \FOUseApp
+\end{minipage}
 
 The definitions of the encodings require beta conversion at the type
 level. These definitions are not accepted without the rewriting of
@@ -925,6 +966,8 @@ beta reduction \AgdaFunction{$\beta{\equiv}^*$}.
 
 \section{Conclusion}
 \label{sec:conclusions}
+
+%TODO[PT]: does this need update?
 
 Intrinsically typed syntax promises elegant mechanizations by making
 well-typed programs representable only as well-typed data, but for

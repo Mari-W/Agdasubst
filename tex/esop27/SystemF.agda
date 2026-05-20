@@ -361,27 +361,15 @@ lifts*-comp1 {α = zero} = refl
 lifts*-comp1 {α = suc α} = refl
 
 
---! RenFunctorial {
-lift*-id : (idᴿ {n} ↑ᴿ) ≡ idᴿ
-lift*-id = refl
-
-lift*-comp : (ζ′ ⨟ᴿ ζ) ↑ᴿ ≡ (ζ′ ↑ᴿ) ⨟ᴿ (ζ ↑ᴿ)
-lift*-comp  = refl
-
-ren*-id : T [ idᴿ ]ᴿ ≡ T
-ren*-id = refl                  -- *
-
-ren*-comp : T [ ζ′ ⨟ᴿ ζ ]ᴿ ≡ (T [ ζ′ ]ᴿ) [ ζ ]ᴿ
-ren*-comp = refl                -- *
---! }
-
---! SubFunctorial {
+--! SubFunctorialLift {
 lifts*-id : (idˢ {n} ↑ˢ) ≡ idˢ
 lifts*-id = refl
 
 lifts*-comp : (η′ ⨟ˢ η) ↑ˢ ≡ (η′ ↑ˢ) ⨟ˢ (η ↑ˢ)
 lifts*-comp = refl
+--! }
 
+--! SubFunctorialApply {
 sub*-id : T [ idˢ ]ˢ ≡ T
 sub*-id = refl
 

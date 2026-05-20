@@ -4,17 +4,18 @@ Source: tex/icfp26/reviews.txt
 
 P0 — Critical (raised by multiple reviewers)
 --------------------------------------------
-[ ]  Termination & confluence proof outline of the rewrite system.
+[X]  Termination & confluence proof outline of the rewrite system.
 {MW} Don't just cite [1,8].
      => explain some meta theory of RTT and how agda checks confluence 
      => (agda checks confluence without termination)
 
-[ ]  Quantitative comparison vs. prior work: proof-size table and
+[X]  Quantitative comparison vs. prior work: proof-size table and
 {MW} type-check times. Currently the "it works" claim is unsubstantiated. (B, C)
      => will compare with out proof from the log rel. 
 
-[ ]  Address the performance elephant: Explain
+[X]  Address the performance elephant: Explain
      cause, scaling, and tradeoffs. Does it scale beyond System F/Fω? (B, C)
+     => NO! is not true.
 
 [ ]  Rewrite for pearl style. Pages 4,6,7,8,9 are code dumps with
 {PT} caption-prose. Add motivation/insight per definition; cut dryness
@@ -36,7 +37,7 @@ P1 — Substantive gaps
 
 
 [ ]  Deliver on the abstract's promise of "practical guidelines" and
-     "general methodology".
+{MW} "general methodology".
      give a roadmap others can reuse. (A, B)
      [what is a good example for demonstrating index^n substitutions]
     
@@ -44,7 +45,7 @@ P1 — Substantive gaps
 [ ]  Give other examples where strengthening
 {PT} definitional equality helps (or might). (B)
 
-[ ]  Make Section 2.6 comparison concrete: explicit proof-size numbers,
+[X]  Make Section 2.6 comparison concrete: explicit proof-size numbers,
 {MW} visibly identify what counts as "transfer hell" in the appendix
      proof, and show clearly that Compose Monad Law ≡ Compose^SS. (B)
      => add more text and define transfer hell formaly: 
@@ -61,12 +62,13 @@ P2 — Polish
      lists) to broaden the demonstration beyond F/Fω. (B)
      => ??? [PT: not clear if free theorems on lists is an appropriate showcase]
 [ ]  Strengthen takeaways for non-Agda readers — what should a
-     Rocq/Lean/Isabelle user learn from this pearl? (B)
+{PT} Rocq/Lean/Isabelle user learn from this pearl? (B)
      => rewrite rules with instantiated proofs are good when working 
         with intrinisically typed syntax 
-[x]  Update to Phil syntax (standard syntax from published papers, e.g. ACC or Autosubst)
+[X]  Update to Phil syntax (standard syntax from published papers, e.g. ACC or Autosubst)
 {MW} => hopefully claude code does this.
 
 [ ]  explain why coincidence lemmas     
 {MW}
-[ ]  Space: put examples in minipages; exclude eq theory for renamings. 
+[X]  Space: put examples in minipages; exclude eq theory for renamings. 
+{MW}

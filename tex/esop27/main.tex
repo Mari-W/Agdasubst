@@ -263,12 +263,12 @@ variables by numbers. The type
 $\AgdaDatatype{Type}~n$  (\cref{fig:system-f-types}) stands for the 
 set of types with $n$ type variables in scope. Henceforth, we call
 such $n$  a \emph{scope}.
-Variables for scope $n$ are drawn from the type $\AgdaDatatype{Fin}\ n$, i.e.,
+Variables for scope $n$ are drawn from the type $\AgdaDatatype{Var}\ n$, i.e.,
 the set $\{0,\dots, n-1\}$, written as
 \AgdaInductiveConstructor{zero},
 $\AgdaInductiveConstructor{suc}~\AgdaInductiveConstructor{zero}$,
 $\AgdaInductiveConstructor{suc}~(\AgdaInductiveConstructor{suc}~\AgdaInductiveConstructor{zero})$,
-\dots 
+\dots and ranged over by {$\alpha$}.
 The  \AgdaInductiveConstructor{$\forall\alpha$}-binder introduces a new type
 variable, and \AgdaInductiveConstructor{$\Rightarrow$} is the infix
 function type constructor. We let \AgdaFunction{T} range over types.
@@ -291,8 +291,15 @@ The most important operations on types are consistent renaming of
 type variables and substitution.
 \Cref{fig:system-f-ren-sub} contains the first step in defining
 renamings (left column) and substitutions (right column).
+Our definitions of renamings and substitutions in functional style are
+standard \cite{ren-sub,DBLP:journals/jar/BentonHKM12,DBLP:journals/scp/KokkeSW20}. 
+For now, we
+ignore the use of \AgdaKeyword{opaque}. We  defer the
+discussion of using it to \cref{sec:laws-renam-subst-1}.
+
 A type renaming $\zeta$ maps variables from one scope $n_1$ to
-another $n_2$. We write the type of type renamings as $n_1$ \AgdaFunction{$\to^R$} $n_2$.
+another $n_2$. We write the type of type renamings as
+$\AgdaFunction{Ren}~n_1~n_2$.
 The definitions comprise (in order) weakening (\AgdaFunction{wkᴿ}), the
 identity renaming (\AgdaFunction{idᴿ}),
 extending a renaming with variable \AgdaFunction{α}
@@ -300,87 +307,129 @@ extending a renaming with variable \AgdaFunction{α}
 composing two renamings (\AgdaFunction{ζ₁ ⨟ᴿ ζ₂}), lifting a renaming (to move under a
 binder) (\AgdaFunction{ζ ↑ᴿ}), and applying a renaming to a type (\AgdaFunction{T [ ζ ]ᴿ}).
 
-A this point, the astute reader may wonder about the use of
-\AgdaKeyword{opaque} in the definitions. The function symbols defined in an
-\AgdaKeyword{opaque} block are usable from outside, but their
-computational behavior is hidden. Thus, the only normal definition is
-\AgdaFunction{$\uparrow^R$} for lifting a renaming. This selective hiding is
-essential for our approach because we want to establish new definitional
-equalities (i.e., the laws of the $\sigma$-calculus with first-class
-renamigns) on top of the thus defined symbols. These new equalities 
-interfere in a bad way with the standard definitional equalities, thus
-we hide the latter. To prove these equalities, we open the opaque
-definitions locally and proceed as usual.
-
 For substitutions (right column of \cref{fig:system-f-ren-sub}) we
-proceed analogously. A type substitution $\eta$ maps variables from scope
-$n_1$ to types defined over scope $n_2$. We write the type of type
-substitutions as $n_1$ \AgdaFunction{$\to^S$} $n_2$. The definitions (in order)
-comprise
-lifting a renaming to a substitution, extending a
-substitution, applying a substitution to variable, lifting a
-substitution (to move under a binder), applying a substitution to a
-type, and composing two substitutions.
+proceed analogously. A type substitution $\eta :
+\AgdaFunction{Sub}~n_1~n_2$ maps variables from scope 
+$n_1$ to types defined over scope $n_2$.
+% We write the type of type substitutions as $n_1$ \AgdaFunction{$\to^S$} $n_2$.
+The definitions (in order) comprise
+lifting a renaming to a substitution (\AgdaFunction{⟨ ζ ⟩}), extending a
+substitution with a new type $T$ (\AgdaFunction{T ∙ˢ η}), applying a
+substitution to variable (\AgdaFunction{α \&ˢ η}), lifting a
+substitution (to move under a binder) (\AgdaFunction{η ↑ˢ}), applying
+a substitution to a type (\AgdaFunction{T [ η ]ˢ}), and composing two
+substitutions (\AgdaFunction{η₁ ⨟ˢ η₂}).
+
 
 \subsection{Laws for Renaming and Substitution}
-\begin{figure}[tp]
-  \begin{flushleft}
-    % TODO[PT]: omitted renamings for space (need to update paragraph below)
-    % \SFTypeRenamingBeta
-    \SFTypeSubstitutionBeta
-    \SFTypeMonad
-    \SFTypeCoincidence
-  \end{flushleft}
-  \caption{Equational laws of the $\sigma$-calculus}
-  \label{fig:system-f-sigma-calculus}
-\end{figure}
+\label{sec:laws-renam-subst-1}
+% \begin{figure}[tp]
+%   \begin{flushleft}
+%     % TODO[PT]: omitted renamings for space (need to update paragraph below)
+%     % \SFTypeRenamingBeta
+%     \SFTypeSubstitutionBeta
+%     \SFTypeSubstitutionInteraction
+%     \SFTypeMonad
+%     \SFTypeCoincidence
+%   \end{flushleft}
+%   \caption{Equational laws of the $\sigma$-calculus}
+%   \label{fig:system-f-sigma-calculus}
+% \end{figure}
 
-\Cref{fig:system-f-sigma-calculus} gives the equational laws of the
+This section presents the equalities that we \emph{actually} use to compute
+with renamings and substitutions, rather than their defining equations
+in \cref{fig:system-f-ren-sub}. The \AgdaKeyword{opaque} blocks enable
+us to control this behavior: Function symbols defined in an 
+\AgdaKeyword{opaque} block are usable outside the block, but they do
+not reduce! That is, the only reducing definitions in the renaming
+block are \AgdaFunction{$\zeta~ \uparrow^R$} for lifting a renaming and
+application of a renaming to a type; in the substitution block, only
+the application of a substitution to a type reduces.
+
+This selective reduction behavior is
+essential for our approach because we want to compute using the laws
+of the $\sigma$-calculus with first-class renamings  on top of the
+thus defined symbols, rather than their definitions. Blocking their
+reduction is necessary because the equalities from $\sigma$-calculus 
+interfere in a bad way with the standard definitional equalities.
+The original defining equalities are available for proofs: 
+We can open the opaque definitions locally and proceed as usual.
+
+
+Next we introduce equational laws of the
 $\sigma$-calculus with first-class renamings \cite{schafer2015autosubst}.
-All of these equalities are supported by proofs using the definitions from
-\cref{fig:system-f-ren-sub}, but the proofs are not included because
-they are standard.
+All of these equalities are supported by proofs using the definitions in
+\cref{fig:system-f-ren-sub}. The proofs are available in the
+supplement, but they are not included here for space reasons.
 
-The first group presents computation rules for substitutions starting
-with the application of a substitution to a variable. There is one
+The first group presents computation rules for substitutions.
+\SFTypeSubstitutionBeta
+Starting with the application of a substitution to a variable, there is one
 equation for each possible form of a substitution: extended
 substitution, lifted renaming, and composition of substitutions. The
 final equation in this group characterizes lifting in terms of extension,
-weakening, and composition.
+weakening, and composition. It is \emph{not} possible to use this
+equation to define lifting in \cref{fig:system-f-ren-sub} as it would
+lead to circularity.
 
-The second group contains laws about composition of substitutions.
-They describe how composition interacts with the other substitution primitives.
+The second group contains laws about interactions between substitutions.
+\SFTypeSubstitutionInteraction
+Composition is assoziative, it distributes over extension, weakening
+cancels extension, the identity substitution is an identity, and two
+$\eta$-laws about the interaction of extension and
+weakening.\footnote{In the statement of \AgdaFunction{$\eta$-id}, we
+  write $\AgdaInductiveConstructor{zero}~ \{n\}$ to tell Agda's type
+  checker that $n$ is the scope of type variable
+  \AgdaInductiveConstructor{zero}. This notation supplies an
+  \emph{implicit argument} that Agda can usually infer.}
 
-The analogous rules for renamings from the first two groups were omitted for space reasons. 
+There are analogous rules for renamings corresponding to the first two
+groups. These rules are omitted for space reasons. 
 
 The third group presents laws that govern the composition of different
-kinds of term traversal. All four combinations of applying renamings
-and substitutions to a type are covered.
+kinds of term traversal.
+\SFTypeMonad
+We start with applying the identity renaming.
+Then all four combinations of composing renamings
+and substitutions and applying them to a type are covered. 
 
-The final group contains covers laws that mediate between substitutions and renamings.
-The extraction of renamings from substitutions in general requires a dedicated solving
-strategy~\cite{10.1145/3293880.3294101} and we have omitted some additionally required coincidence laws
-from the figure.
+The final group contains contains laws that mediate
+between substitutions and renamings.
+\SFTypeCoincidence
+The extraction of renamings from
+substitutions in general requires a dedicated solving
+strategy~\cite{10.1145/3293880.3294101} and we have omitted some
+further required coincidence laws from the figure.
 
 Orienting these equations from left to right results in a confluent
-rewrite system that we install in Agda using its
-\AgdaKeyword{REWRITE} pragma \cite{10.1145/3434341}. From now on, all equations in
-\cref{fig:system-f-sigma-calculus} are definitional!
+rewrite system that we install in Agda's computation engine using the
+\AgdaKeyword{REWRITE} pragma \cite{10.1145/3434341}. Confluence of
+these rewrite equations is mechanically checked by Agda through using
+the flags \texttt{--rewriting --confluence-check}. From now on, all
+equations shown in this section \cref{sec:laws-renam-subst-1} are
+definitional! 
 
-As a sanity check, we show that lifting a substitution and the
-action of a substitution satisfy the functor laws. All of these lemmas
-hold definitionally, some correspond directly to equations from the $\sigma$-
-calculus in \cref{fig:system-f-sigma-calculus}. The latter are marked
-with $*$.\footnote{The naming of the lemmas is taken from
-  \citet{10.1007/978-3-030-33636-3_10} to enable direct comparisons.}
-The lifting laws are shown on the left, the application laws on the right.
-The analogous results for renamings follow exactly the same pattern.
-
+\begin{figure}[t]
 \noindent\begin{minipage}[t]{0.49\linewidth}
   \SFTypeSubFunctorialLift
 \end{minipage}\hfill\begin{minipage}[t]{0.49\linewidth}
   \SFTypeSubFunctorialApply
 \end{minipage}
+  \caption{Functor laws for substitution}
+  \label{fig:functor-laws-substitution}
+\end{figure}
+
+As a sanity check, we show in \cref{fig:functor-laws-substitution}
+that lifting a substitution and the action of a substitution satisfy
+the functor laws. With the $\sigma$-calculus rewriting installed, all these lemmas 
+hold definitionally as evidenced by their proof using reflexivity
+(\AgdaInductiveConstructor{refl}). Some correspond directly to laws from the
+$\sigma$-calculus. The latter are marked 
+with $*$.\footnote{The naming of the lemmas is taken from
+  \citet{10.1007/978-3-030-33636-3_10} to enable direct comparisons.}
+The lifting laws are shown on the left, the application laws on the right.
+The analogous results for renamings follow exactly the same pattern.
+
 
 \subsection{A Note on Safety}
 % TODO[MW]: insert citations
@@ -395,50 +444,52 @@ addition of rewrite rules to Agda and Rocq~\cite{}, and continued by
 ongoing research on \emph{local} rewrite rules~\cite{}.
 
 Rewrite rules and the reductions of a dependently typed
-system interact in non-trivial ways, so having the right notion of
-when it is safe to add them is important. We follow~\cite{} to justify
-making the equations from \cref{fig:system-f-sigma-calculus}
-definitional and recall their reasoning for the safety of the proposed
-Rewriting Type Theory (RTT), which has been successfully implemented
+system interact in non-trivial ways. Hence, it is important to have criteria
+when it is safe to add rewrites. We justify
+making the equations from \cref{sec:laws-renam-subst-1}
+definitional by appealing to the approach put forward for Rewriting
+Type Theory (RTT) \cite{RTT}, which is implemented
 in Agda. In RTT, the reduction relation is extended by turning
 propositional equalities into reduction rules: a term matched by the
 left-hand side of an equation reduces to the right-hand side, exactly
-what have done in the previous section. The two properties we wish
+like in \cref{sec:laws-renam-subst-1}. The two properties we wish
 to preserve when adding rewrite rules are \emph{soundness} (i.e.,
-subject reduction) and \emph{consistency}. In particular, subject
-reduction is an implicit assumption of the type checker that we 
-need to take care to uphold.
+subject reduction) and \emph{consistency}. In particular, the type
+checker assumes subject reduction and it would break without it.
 
 To uphold subject reduction, the critical property of the rewriting
 equations is that they are confluent \emph{with respect to the already
 existing reduction rules}. Agda already provides a plethora of
-reduction rules: $\beta$, $\eta$ (function and record expansion),
+reduction rules, which are proved confluent: $\beta$, $\eta$ (function and record expansion),
 $\delta$ (definition unfolding), and $\iota$ (dependent pattern matching clauses). 
-The additionally rewritten rules must agree with all of them to be confluent. 
+Additional rewrite rules must interact nicely with all of them to retain confluence. 
 Agda checks this using a simple syntactic criterion called the triangle
 property. Confluence holds when every critical pair of left-hand sides 
 can be joined in a single rewriting step that lies on a common reduct, 
-This check does not require termination. Notably, termination is \emph{not}
-a critical property, because it does not affect soundness or consistency, 
-it is only observable through never-terminating type checking
-but does no further harm.
+%% PT: not our business in this paper
+% This check does not require termination. Notably, termination is \emph{not}
+% a critical property, because it does not affect soundness or consistency, 
+% it is only observable through never-terminating type checking
+% but does no further harm.
 
-Some $\beta$ and $\iota$ reductions arising from our functional
-definitions of renamings and substitutions in the previous section
-interfere with the intended rewrite equalities. This is why we
+Some $\beta$ and $\iota$ reductions arising from the functional
+definitions of renamings and substitutions in \cref{fig:system-f-ren-sub}
+interfere with the intended rewrite equalities. For this reason, we
 explicitly hide these definitions inside an \AgdaKeyword{opaque} block,
-so that only the equations we install with \AgdaKeyword{REWRITE} drive
+so that only the equations we install with \AgdaKeyword{REWRITE} defines
 their reduction behaviour.
 
+%% PT: is this excursion to ETT important?
 Consistency is preserved as long as the equalities we rewrite are
-instantiated with proofs. This is easy to see, because RTT can be
-translated to extensional type theory~\cite{}, a theory known to be
-consistent. The translation simply turns each rewrite rule reduction
+instantiated with proofs.
+This is easy to see, because RTT can be translated to extensional type
+theory~\cite{}, a theory known to be consistent. 
+The translation simply turns each rewrite rule reduction
 into an application of the \emph{equality reflection} rule, which
 internalizes arbitrary propositional equalities as definitional ones,
-at the cost of decidability of type checking. Due to this lack of
-decidability, extensional type theory is not a common candidate for
-a basis of a proof assistant.
+at the cost of decidability of type checking.
+Due to this lack of decidability, extensional type theory is not a
+common candidate for a basis of a proof assistant.
 
 At present, Agda is the only mainstream proof assistant that supports
 the full feature set we require: functions whose reduction can be
@@ -450,6 +501,7 @@ and the ability to instantiate these equations with
 proofs, but aside from these differences our method transfers to Rocq
 directly using its own rewrite rule implementation~\cite{}.
 
+%% PT: remove forward reference to transfer hell!
 In our formalization, we enable the \AgdaKeyword{OPTIONS}
 \texttt{-{}-rewriting} together with \texttt{-{}-confluence-check},
 which makes the use of rewriting safe, provided we trust the

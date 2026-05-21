@@ -12,8 +12,8 @@ open import Axiom.Extensionality.Propositional using (Extensionality)
 postulate
   fun-ext : ∀ {ℓ₁ ℓ₂} → Extensionality ℓ₁ ℓ₂
 
-open import Agda.Builtin.Nat using (Nat; zero; suc)
-open import Data.Fin using (Fin; zero; suc)
+open import Agda.Builtin.Nat using (Nat; zero; suc; _+_)
+open import Data.Fin using (zero; suc) renaming (Fin to Var)
 
 infixr 5 _⇒_
 infix 6 `_
@@ -22,8 +22,8 @@ infix 6 `_
 --! Type >
 --! Definition
 data Type (n : Nat) : Set where
-  `_   : Fin n → Type n
-  ∀α   : Type (suc n) → Type n
+  `_   : Var n → Type n
+  ∀α   : Type (1 + n) → Type n
   _⇒_  : Type n → Type n → Type n
 
 --! Example
@@ -34,89 +34,89 @@ _ = ∀α (∀α (` suc zero ⇒ ` zero ⇒ ` suc zero))
 
 variable
   n n′ n₁ n₂ n₃ : Nat
-  α α′ α₁ α₂ α₃ : Fin n
+  α α′ α₁ α₂ α₃ : Var n
   T T′ T₁ T₂ T₃ : Type n
 
 --! Renaming
 -- renamings
-_→ᴿ_ : Nat → Nat → Set
-n₁ →ᴿ n₂ = Fin n₁ → Fin n₂
+Ren : Nat → Nat → Set
+Ren n₁ n₂ = Var n₁ → Var n₂
 
 --! RenamingOpaque {
 opaque
   -- weakening
-  wkᴿ : n →ᴿ suc n
+  wkᴿ : Ren n (1 + n)
   wkᴿ = suc
 
   -- identity renaming
-  idᴿ : n →ᴿ n
+  idᴿ : Ren n n
   idᴿ α = α
 
   -- extend with new variable
-  _∙ᴿ_ : Fin n₂ → n₁ →ᴿ n₂ → suc n₁ →ᴿ n₂
+  _∙ᴿ_ : Var n₂ → Ren n₁ n₂ → Ren (1 + n₁) n₂
   (α ∙ᴿ ζ) zero    = α
   (_ ∙ᴿ ζ) (suc α) = ζ α
 
   -- apply renaming to variable
-  _&ᴿ_ : Fin n₁ → n₁ →ᴿ n₂ → Fin n₂
+  _&ᴿ_ : Var n₁ → Ren n₁ n₂ → Var n₂
   α &ᴿ ζ = ζ α
 
   -- left-to-right composition
-  _⨟ᴿ_ : n₁ →ᴿ n₂ → n₂ →ᴿ n₃ → n₁ →ᴿ n₃
+  _⨟ᴿ_ : Ren n₁ n₂ → Ren n₂ n₃ → Ren n₁ n₃
   (ζ₁ ⨟ᴿ ζ₂) α = ζ₂ (ζ₁ α)
 
 -- lifting
-_↑ᴿ : n₁ →ᴿ n₂ → suc n₁ →ᴿ suc n₂
+_↑ᴿ : Ren n₁ n₂ → Ren (1 + n₁) (1 + n₂)
 _↑ᴿ ζ = zero ∙ᴿ (ζ ⨟ᴿ wkᴿ)
 
 -- apply renaming to type
-_[_]ᴿ : Type n₁ → n₁ →ᴿ n₂ → Type n₂
+_[_]ᴿ : Type n₁ → Ren n₁ n₂ → Type n₂
 (` α) [ ζ ]ᴿ = ` (α &ᴿ ζ)
 (∀α T) [ ζ ]ᴿ = ∀α (T [ ζ ↑ᴿ ]ᴿ)
 (T₁ ⇒ T₂) [ ζ ]ᴿ = (T₁ [ ζ ]ᴿ) ⇒ (T₂ [ ζ ]ᴿ)
 --! }
 
 variable
-  ζ ζ′ ζ₁ ζ₂ ζ₃ : n₁ →ᴿ n₂
+  ζ ζ′ ζ₁ ζ₂ ζ₃ : Ren n₁ n₂
 
 --! Substitution
 -- substitutions
-_→ˢ_ : Nat → Nat → Set
-n₁ →ˢ n₂ = Fin n₁ → Type n₂
+Sub : Nat → Nat → Set
+Sub n₁ n₂ = Var n₁ → Type n₂
 
 --! SubstitutionOpaque {
 opaque
   -- lift renaming to substitution
-  ⟨_⟩ : n₁ →ᴿ n₂ → n₁ →ˢ n₂
+  ⟨_⟩ : Ren n₁ n₂ → Sub n₁ n₂
   ⟨ ζ ⟩ α = ` (α &ᴿ ζ)
 
   -- extend with new type
-  _∙ˢ_ : Type n₂ → n₁ →ˢ n₂ → suc n₁ →ˢ n₂
+  _∙ˢ_ : Type n₂ → Sub n₁ n₂ → Sub (1 + n₁) n₂
   (T ∙ˢ η) zero    = T
   (T ∙ˢ η) (suc α) = η α
 
   -- apply substitution to variable
-  _&ˢ_ : Fin n₁ → n₁ →ˢ n₂ → Type n₂
+  _&ˢ_ : Var n₁ → Sub n₁ n₂ → Type n₂
   α &ˢ η = η α
 
   -- lifting
-  _↑ˢ : n₁ →ˢ n₂ → suc n₁ →ˢ suc n₂
+  _↑ˢ : Sub n₁ n₂ → Sub (1 + n₁) (1 + n₂)
   _↑ˢ η = (` zero) ∙ˢ λ α → (η α) [ wkᴿ ]ᴿ
 
 -- apply substitution to type
-_[_]ˢ : Type n₁ → n₁ →ˢ n₂ → Type n₂
+_[_]ˢ : Type n₁ → Sub n₁ n₂ → Type n₂
 (` α) [ η ]ˢ = α &ˢ η
 (∀α T) [ η ]ˢ = ∀α (T [ η ↑ˢ ]ˢ)
 (T₁ ⇒ T₂) [ η ]ˢ = (T₁ [ η ]ˢ) ⇒ (T₂ [ η ]ˢ)
 
 opaque
   -- left-to-right composition
-  _⨟ˢ_ : n₁ →ˢ n₂ → n₂ →ˢ n₃ → n₁ →ˢ n₃
+  _⨟ˢ_ : Sub n₁ n₂ → Sub n₂ n₃ → Sub n₁ n₃
   (η₁ ⨟ˢ η₂) α = (η₁ α) [ η₂ ]ˢ
 --! }
 
 variable
-  η η′ η₁ η₂ η₃ : n₁ →ˢ n₂
+  η η′ η₁ η₂ η₃ : Sub n₁ n₂
 
 opaque
   unfolding wkᴿ ⟨_⟩ _⨟ˢ_
@@ -136,53 +136,55 @@ opaque
   -- on which we can rewrite the sigma laws!
 
   -- first-class renamings
-  --! RenamingBeta {
   -- computing renamings
-  `beta-ext-zero    : zero  &ᴿ (α ∙ᴿ ζ)         ≡ α
-  `beta-ext-suc     : suc α &ᴿ (α′ ∙ᴿ ζ)        ≡ α &ᴿ ζ
-  `beta-id          : α &ᴿ idᴿ                  ≡ α
-  `beta-wk          : α &ᴿ wkᴿ                  ≡ suc α
+  --! RenamingBeta {
+  `beta-ext-zero    : zero  &ᴿ (α ∙ᴿ ζ)          ≡ α
+  `beta-ext-suc     : suc α &ᴿ (α′ ∙ᴿ ζ)         ≡ α &ᴿ ζ
+  `beta-id          : α &ᴿ idᴿ                   ≡ α
+  `beta-wk          : α &ᴿ wkᴿ                   ≡ suc α
   `beta-comp        : α &ᴿ (ζ₁ ⨟ᴿ ζ₂)            ≡ (α &ᴿ ζ₁) &ᴿ ζ₂
   -- interaction between renamings
-  `associativity    : (ζ₁ ⨟ᴿ ζ₂) ⨟ᴿ ζ₃            ≡ ζ₁ ⨟ᴿ (ζ₂ ⨟ᴿ ζ₃)
+  `associativity    : (ζ₁ ⨟ᴿ ζ₂) ⨟ᴿ ζ₃           ≡ ζ₁ ⨟ᴿ (ζ₂ ⨟ᴿ ζ₃)
   `distributivity   : (α ∙ᴿ ζ₁) ⨟ᴿ ζ₂            ≡ (α &ᴿ ζ₂) ∙ᴿ (ζ₁ ⨟ᴿ ζ₂)
   `interact         : wkᴿ ⨟ᴿ (α ∙ᴿ ζ)            ≡ ζ
   `comp-idᵣ         : ζ ⨟ᴿ idᴿ                   ≡ ζ
   `comp-idₗ         : idᴿ ⨟ᴿ ζ                   ≡ ζ
-  `η-id             : zero {n} ∙ᴿ wkᴿ           ≡ idᴿ
+  `η-id             : zero {n} ∙ᴿ wkᴿ            ≡ idᴿ
   `η-law            : (zero &ᴿ ζ) ∙ᴿ (wkᴿ ⨟ᴿ ζ)  ≡ ζ
   --! }
 
-  --! SubstitutionBeta {
   -- computing substitutions
+  --! SubstitutionBeta {
   beta-ext-zero     : zero  &ˢ (T ∙ˢ η)              ≡ T
   beta-ext-suc      : suc α &ˢ (T ∙ˢ η)              ≡ α &ˢ η
   beta-rename       : α &ˢ ⟨ ζ ⟩                     ≡ ` (α &ᴿ ζ)
-  beta-comp         : α &ˢ (η₁ ⨟ˢ η₂)                 ≡ (α &ˢ η₁) [ η₂ ]ˢ
+  beta-comp         : α &ˢ (η₁ ⨟ˢ η₂)                ≡ (α &ˢ η₁) [ η₂ ]ˢ
   beta-lift         : η ↑ˢ                           ≡ (` zero) ∙ˢ (η ⨟ˢ ⟨ wkᴿ ⟩)
+  --! }
   -- interaction between substitutions
-  associativity     : (η₁ ⨟ˢ η₂) ⨟ˢ η₃                 ≡ η₁ ⨟ˢ (η₂ ⨟ˢ η₃)
-  distributivity    : (T ∙ˢ η₁) ⨟ˢ η₂                 ≡ (T [ η₂ ]ˢ) ∙ˢ (η₁ ⨟ˢ η₂)
-  interact          : ⟨ wkᴿ ⟩ ⨟ˢ (T ∙ˢ η)             ≡ η
-  comp-idᵣ          : η ⨟ˢ ⟨ idᴿ ⟩                    ≡ η
-  comp-idₗ          : ⟨ idᴿ ⟩ ⨟ˢ η                    ≡ η
+  --! SubstitutionInteraction {
+  associativity     : (η₁ ⨟ˢ η₂) ⨟ˢ η₃               ≡ η₁ ⨟ˢ (η₂ ⨟ˢ η₃)
+  distributivity    : (T ∙ˢ η₁) ⨟ˢ η₂                ≡ (T [ η₂ ]ˢ) ∙ˢ (η₁ ⨟ˢ η₂)
+  interact          : ⟨ wkᴿ ⟩ ⨟ˢ (T ∙ˢ η)            ≡ η
+  comp-idᵣ          : η ⨟ˢ ⟨ idᴿ ⟩                   ≡ η
+  comp-idₗ          : ⟨ idᴿ ⟩ ⨟ˢ η                   ≡ η
   η-id              : (` zero {n}) ∙ˢ ⟨ wkᴿ ⟩        ≡ ⟨ idᴿ ⟩
-  η-law             : (zero &ˢ η) ∙ˢ (⟨ wkᴿ ⟩ ⨟ˢ η)   ≡ η
+  η-law             : (zero &ˢ η) ∙ˢ (⟨ wkᴿ ⟩ ⨟ˢ η)  ≡ η
   --! }
 
   -- monad laws
-  --! Monad
   -- composing renamings and substitutions
-  identityᵣ         : T [ idᴿ ]ᴿ        ≡ T
+  --! Monad
+  identityᵣ                  : T [ idᴿ ]ᴿ           ≡ T
   compositionalityᴿˢ         : (T [ ζ₁ ]ᴿ) [ η₂ ]ˢ  ≡ T [ ⟨ ζ₁ ⟩ ⨟ˢ η₂ ]ˢ
   compositionalityᴿᴿ         : (T [ ζ₁ ]ᴿ) [ ζ₂ ]ᴿ  ≡ T [ ζ₁ ⨟ᴿ ζ₂ ]ᴿ
   compositionalityˢᴿ         : (T [ η₁ ]ˢ) [ ζ₂ ]ᴿ  ≡ T [ η₁ ⨟ˢ ⟨ ζ₂ ⟩ ]ˢ
   compositionalityˢˢ         : (T [ η₁ ]ˢ) [ η₂ ]ˢ  ≡ T [ η₁ ⨟ˢ η₂ ]ˢ
 
   -- coincidence laws
-  --! Coincidence
   -- transforming substitutions to renamings
-  coincidence       : T [ ⟨ ζ ⟩ ]ˢ       ≡ T [ ζ ]ᴿ
+  --! Coincidence
+  coincidence       : T [ ⟨ ζ ⟩ ]ˢ      ≡ T [ ζ ]ᴿ
   coincidence-comp  : ⟨ ζ₁ ⟩ ⨟ˢ ⟨ ζ₂ ⟩  ≡ ⟨ ζ₁ ⨟ᴿ ζ₂ ⟩
 
   identityᵣˢ        : T [ ⟨ idᴿ ⟩ ]ˢ     ≡ T
@@ -222,7 +224,7 @@ opaque
   identityᵣ {T = (∀α T)}     = cong ∀α (trans (cong (T [_]ᴿ) lift-idᴿ) (identityᵣ {T = T}))
   identityᵣ {T = (T₁ ⇒ T₂)}  = cong₂ _⇒_ (identityᵣ {T = T₁}) (identityᵣ {T = T₂})
 
-  lift-coincidence : ∀ {n₁ n₂} {ζ : n₁ →ᴿ n₂} → (⟨ ζ ⟩ ↑ˢ) ≡ ⟨ ζ ↑ᴿ ⟩
+  lift-coincidence : ∀ {n₁ n₂} {ζ : Ren n₁ n₂} → (⟨ ζ ⟩ ↑ˢ) ≡ ⟨ ζ ↑ᴿ ⟩
   lift-coincidence = fun-ext λ { zero → refl; (suc α) → refl }
 
   coincidence {T = ` α}            = refl
@@ -231,21 +233,21 @@ opaque
 
   coincidence-comp = fun-ext λ α → refl
 
-  lift-compositionalityᴿᴿ : ∀ {n₁ n₂ n₃} {ζ₁ : n₁ →ᴿ n₂} {ζ₂ : n₂ →ᴿ n₃} → (ζ₁ ↑ᴿ) ⨟ᴿ (ζ₂ ↑ᴿ) ≡ (ζ₁ ⨟ᴿ ζ₂) ↑ᴿ
+  lift-compositionalityᴿᴿ : ∀ {n₁ n₂ n₃} {ζ₁ : Ren n₁ n₂} {ζ₂ : Ren n₂ n₃} → (ζ₁ ↑ᴿ) ⨟ᴿ (ζ₂ ↑ᴿ) ≡ (ζ₁ ⨟ᴿ ζ₂) ↑ᴿ
   lift-compositionalityᴿᴿ = fun-ext λ { zero → refl; (suc α) → refl }
 
   compositionalityᴿᴿ {T = ` α}      = refl
   compositionalityᴿᴿ {T = ∀α T}     = cong ∀α (trans compositionalityᴿᴿ (cong (T [_]ᴿ) lift-compositionalityᴿᴿ))
   compositionalityᴿᴿ {T = T₁ ⇒ T₂}  = cong₂ _⇒_ compositionalityᴿᴿ compositionalityᴿᴿ
 
-  lift-compositionalityᴿˢ : ∀ {n₁ n₂ n₃} {ζ₁ : n₁ →ᴿ n₂} {η₂ : n₂ →ˢ n₃} → (⟨ ζ₁ ↑ᴿ ⟩ ⨟ˢ (η₂ ↑ˢ)) ≡ ((⟨ ζ₁ ⟩ ⨟ˢ η₂) ↑ˢ)
+  lift-compositionalityᴿˢ : ∀ {n₁ n₂ n₃} {ζ₁ : Ren n₁ n₂} {η₂ : Sub n₂ n₃} → (⟨ ζ₁ ↑ᴿ ⟩ ⨟ˢ (η₂ ↑ˢ)) ≡ ((⟨ ζ₁ ⟩ ⨟ˢ η₂) ↑ˢ)
   lift-compositionalityᴿˢ = fun-ext λ { zero → refl; (suc α) → refl }
 
   compositionalityᴿˢ {T = ` α}      = refl
   compositionalityᴿˢ {T = ∀α T}     = cong ∀α (trans (compositionalityᴿˢ {T = T}) (cong (T [_]ˢ) lift-compositionalityᴿˢ))
   compositionalityᴿˢ {T = T₁ ⇒ T₂}  = cong₂ _⇒_ (compositionalityᴿˢ {T = T₁}) (compositionalityᴿˢ {T = T₂})
 
-  lift-compositionalityˢᴿ : ∀ {n₁ n₂ n₃} {η₁ : n₁ →ˢ n₂} {ζ₂ : n₂ →ᴿ n₃} → ((η₁ ↑ˢ) ⨟ˢ ⟨ ζ₂ ↑ᴿ ⟩) ≡ ((η₁ ⨟ˢ ⟨ ζ₂ ⟩) ↑ˢ)
+  lift-compositionalityˢᴿ : ∀ {n₁ n₂ n₃} {η₁ : Sub n₁ n₂} {ζ₂ : Ren n₂ n₃} → ((η₁ ↑ˢ) ⨟ˢ ⟨ ζ₂ ↑ᴿ ⟩) ≡ ((η₁ ⨟ˢ ⟨ ζ₂ ⟩) ↑ˢ)
   lift-compositionalityˢᴿ {η₁ = η₁} {ζ₂ = ζ₂} = fun-ext λ { zero → refl; (suc α) →
     let T = η₁ α in
     begin
@@ -259,7 +261,7 @@ opaque
   compositionalityˢᴿ {T = ∀α T}     = cong ∀α (trans (compositionalityˢᴿ {T = T}) (cong (T [_]ˢ) lift-compositionalityˢᴿ))
   compositionalityˢᴿ {T = T₁ ⇒ T₂}  = cong₂ _⇒_ (compositionalityˢᴿ {T = T₁}) (compositionalityˢᴿ {T = T₂})
 
-  lift-compositionalityˢˢ : ∀ {n₁ n₂ n₃} {η₁ : n₁ →ˢ n₂} {η₂ : n₂ →ˢ n₃} → ((η₁ ↑ˢ) ⨟ˢ (η₂ ↑ˢ)) ≡ ((η₁ ⨟ˢ η₂) ↑ˢ)
+  lift-compositionalityˢˢ : ∀ {n₁ n₂ n₃} {η₁ : Sub n₁ n₂} {η₂ : Sub n₂ n₃} → ((η₁ ↑ˢ) ⨟ˢ (η₂ ↑ˢ)) ≡ ((η₁ ⨟ˢ η₂) ↑ˢ)
   lift-compositionalityˢˢ {η₁ = η₁} {η₂ = η₂} = fun-ext λ { zero → refl; (suc α) →
     let T = η₁ α in
     begin
@@ -351,7 +353,7 @@ opaque
   coincidence-pop-ˢ
 #-}
 
-idˢ : n →ˢ n
+idˢ : Sub n n
 idˢ = ⟨ idᴿ ⟩
 
 -- functorial action
@@ -390,18 +392,18 @@ sub*-comp = refl                -- *
 --! }
 
 --! Weaken
-weaken : Type n → Type (suc n)
+weaken : Type n → Type (1 + n)
 weaken T = T [ wkᴿ ]ᴿ
 
 --! Subzero
-_[_]* : Type (suc n) → Type n → Type n
+_[_]* : Type (1 + n) → Type n → Type n
 T [ T′ ]* = T [ T′ ∙ˢ idˢ ]ˢ
 
 --! Ctx
 data Ctx : Nat → Set where
   ∅    : Ctx zero
   _▷_  : Ctx n → Type n → Ctx n
-  _▷*  : Ctx n → Ctx (suc n)
+  _▷*  : Ctx n → Ctx (1 + n)
 
 variable
   Γ Γ′ Γ₁ Γ₂ Γ₃ : Ctx n
@@ -436,7 +438,7 @@ variable
   e e′ e₁ e₁′ e₂ e₃ : Expr Γ T
 
 --! Renaming
-_∣_⇒ᴿ_ : n₁ →ᴿ n₂ → Ctx n₁ → Ctx n₂ → Set
+_∣_⇒ᴿ_ : Ren n₁ n₂ → Ctx n₁ → Ctx n₂ → Set
 ζ ∣ Γ₁ ⇒ᴿ Γ₂ = ∀ T → Γ₁ ∋ T → Γ₂ ∋ (T [ ζ ]ᴿ)
 
 variable
@@ -497,7 +499,7 @@ _⇑ᴿ_ = _ ∣_⇑ᴿ_
 -- new symbol?
 --! Traversal
 opaque
-  _∣_[_]ᴿ : (ζ : n₁ →ᴿ n₂) → Expr Γ₁ T → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → Expr Γ₂ (T [ ζ ]ᴿ)
+  _∣_[_]ᴿ : (ζ : Ren n₁ n₂) → Expr Γ₁ T → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → Expr Γ₂ (T [ ζ ]ᴿ)
   ζ  ∣ (` x) [ ρ ]ᴿ  = ` (ζ ∣ x &ᴿ ρ)
   _  ∣ (λx e) [ ρ ]ᴿ  = λx (_ ∣ e [ ρ ⇑ᴿ _ ]ᴿ)
   _  ∣ (Λα e) [ ρ ]ᴿ  = Λα (_ ∣ e [ ↑ᴿ* ρ ]ᴿ)
@@ -512,7 +514,7 @@ weaken* e = wkᴿ ∣ e [ wkᴿ* ]ᴿ
 
 --! <
 --! Substitution
-_∣_⇒ˢ_ : n₁ →ˢ n₂ → Ctx n₁ → Ctx n₂ → Set
+_∣_⇒ˢ_ : Sub n₁ n₂ → Ctx n₁ → Ctx n₂ → Set
 η ∣ Γ₁ ⇒ˢ Γ₂ = ∀ T → Γ₁ ∋ T → Expr Γ₂ (T [ η ]ˢ)
 
 --! Sub >
@@ -566,7 +568,7 @@ opaque
 -- new symbol?
 opaque
   --! Traversal
-  _∣_[_]ˢ : (η : n₁ →ˢ n₂) → Expr Γ₁ T → η ∣ Γ₁ ⇒ˢ Γ₂ → Expr Γ₂ (T [ η ]ˢ)
+  _∣_[_]ˢ : (η : Sub n₁ n₂) → Expr Γ₁ T → η ∣ Γ₁ ⇒ˢ Γ₂ → Expr Γ₂ (T [ η ]ˢ)
   η  ∣ (` x) [ σ ]ˢ      = η ∣ x &ˢ σ
   η  ∣ (λx e) [ σ ]ˢ     = λx (η ∣ e [ η ∣ σ ⇑ˢ _ ]ˢ)
   η  ∣ (Λα e) [ σ ]ˢ     = Λα ((η ↑ˢ) ∣ e [ η ∣ σ ↑ˢ* ]ˢ)
@@ -600,11 +602,11 @@ opaque
     ζ₁ , ζ₂ ∣ (ζ₁ ∣ ρ₁ ⇑ᴿ T) ⨾ᴿ (ζ₂ ∣ ρ₂ ⇑ᴿ (T [ ζ₁ ]ᴿ)) ≡ ((ζ₁ ⨟ᴿ ζ₂) ∣ (ζ₁ , ζ₂ ∣ ρ₁ ⨾ᴿ ρ₂) ⇑ᴿ T)
   Lift-Dist-Compᴿᴿ _ _ = fun-ext λ _ → fun-ext λ { zero → refl; (suc x) → refl }
 
-  lift*-dist-Compᴿᴿ : (ζ₁ : n₁ →ᴿ n₂) (ζ₂ : n₂ →ᴿ n₃) (ρ₁ : ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (ρ₂ : ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃) →
+  lift*-dist-Compᴿᴿ : (ζ₁ : Ren n₁ n₂) (ζ₂ : Ren n₂ n₃) (ρ₁ : ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (ρ₂ : ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃) →
     (ζ₁ ↑ᴿ) , (ζ₂ ↑ᴿ) ∣ (ζ₁ ∣ ρ₁ ↑ᴿ*) ⨾ᴿ (ζ₂ ∣ ρ₂ ↑ᴿ*) ≡ ((ζ₁ ⨟ᴿ ζ₂) ∣ (ζ₁ , ζ₂ ∣ ρ₁ ⨾ᴿ ρ₂) ↑ᴿ*)
   lift*-dist-Compᴿᴿ _ _ _ _ = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
 
-  Compositionalityᴿᴿ : ∀ (e : Expr Γ₁ T) (ζ₁ : n₁ →ᴿ n₂) (ζ₂ : n₂ →ᴿ n₃) (ρ₁ : ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (ρ₂ : ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃) →
+  Compositionalityᴿᴿ : ∀ (e : Expr Γ₁ T) (ζ₁ : Ren n₁ n₂) (ζ₂ : Ren n₂ n₃) (ρ₁ : ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (ρ₂ : ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃) →
     ζ₂ ∣ (ζ₁ ∣ e [ ρ₁ ]ᴿ) [ ρ₂ ]ᴿ ≡ (ζ₁ ⨟ᴿ ζ₂) ∣ e [ ζ₁ , ζ₂ ∣ ρ₁ ⨾ᴿ ρ₂ ]ᴿ
   Compositionalityᴿᴿ (` x)     _  _  _  _  = refl
   Compositionalityᴿᴿ (λx e)    _  _  _  _  = cong λx (trans (Compositionalityᴿᴿ e _ _ _ _) (cong (_ ∣ e [_]ᴿ) (Lift-Dist-Compᴿᴿ _ _)))
@@ -616,11 +618,11 @@ opaque
     ⟨ ζ₁ ⟩ , η₂ ∣ (ζ₁ ∣⟪ ζ₁ ∣ ρ₁ ⇑ᴿ T ⟫) ⨾ˢ (η₂ ∣ σ₂ ⇑ˢ (T [ ζ₁ ]ᴿ)) ≡ ((⟨ ζ₁ ⟩ ⨟ˢ η₂) ∣ (⟨ ζ₁ ⟩ , η₂ ∣ ζ₁ ∣⟪ ρ₁ ⟫ ⨾ˢ σ₂) ⇑ˢ T)
   Lift-Dist-Compᴿˢ _ _ = fun-ext λ _ → fun-ext λ { zero → refl; (suc x) → refl }
 
-  lift*-dist-Compᴿˢ : (ζ₁ : n₁ →ᴿ n₂) (η₂ : n₂ →ˢ n₃) (ρ₁ : ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (σ₂ : η₂ ∣ Γ₂ ⇒ˢ Γ₃) →
+  lift*-dist-Compᴿˢ : (ζ₁ : Ren n₁ n₂) (η₂ : Sub n₂ n₃) (ρ₁ : ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (σ₂ : η₂ ∣ Γ₂ ⇒ˢ Γ₃) →
     ⟨ ζ₁ ↑ᴿ ⟩ , (η₂ ↑ˢ) ∣ ((ζ₁ ↑ᴿ ∣⟪ ζ₁ ∣ ρ₁ ↑ᴿ* ⟫)) ⨾ˢ (η₂ ∣ σ₂ ↑ˢ*) ≡ ((⟨ ζ₁ ⟩ ⨟ˢ η₂) ∣ (⟨ ζ₁ ⟩ , η₂ ∣ ζ₁ ∣⟪ ρ₁ ⟫ ⨾ˢ σ₂) ↑ˢ*)
   lift*-dist-Compᴿˢ _ _ _ _ = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
 
-  Compositionalityᴿˢ : ∀ (e : Expr Γ₁ T) (ζ₁ : n₁ →ᴿ n₂) (η₂ : n₂ →ˢ n₃) (ρ₁ : ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (σ₂ : η₂ ∣ Γ₂ ⇒ˢ Γ₃) →
+  Compositionalityᴿˢ : ∀ (e : Expr Γ₁ T) (ζ₁ : Ren n₁ n₂) (η₂ : Sub n₂ n₃) (ρ₁ : ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (σ₂ : η₂ ∣ Γ₂ ⇒ˢ Γ₃) →
     η₂ ∣ (ζ₁ ∣ e [ ρ₁ ]ᴿ) [ σ₂ ]ˢ ≡ (⟨ ζ₁ ⟩ ⨟ˢ η₂) ∣ e [ ⟨ ζ₁ ⟩ , η₂ ∣ ζ₁ ∣⟪ ρ₁ ⟫ ⨾ˢ σ₂ ]ˢ
   Compositionalityᴿˢ (` x)     _  _  _  _  = refl
   Compositionalityᴿˢ (λx e)    ζ₁ η₂ ρ₁ σ₂ = cong λx (trans (Compositionalityᴿˢ e _ _ _ _) (cong ((⟨ ζ₁ ⟩ ⨟ˢ η₂) ∣ e [_]ˢ) (Lift-Dist-Compᴿˢ ρ₁ σ₂)))
@@ -655,7 +657,7 @@ opaque
         _  ≡⟨ cong (idᴿ ∣_[ Wkᴿ _ ]ᴿ) (sym (Coincidence e _)) ⟩
         _  ∎ }
 
-  lift*-dist-Compˢᴿ : (η₁ : n₁ →ˢ n₂) (ζ₂ : n₂ →ᴿ n₃) (σ₁ : η₁ ∣ Γ₁ ⇒ˢ Γ₂) (ρ₂ : ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃) →
+  lift*-dist-Compˢᴿ : (η₁ : Sub n₁ n₂) (ζ₂ : Ren n₂ n₃) (σ₁ : η₁ ∣ Γ₁ ⇒ˢ Γ₂) (ρ₂ : ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃) →
     (η₁ ↑ˢ) , ⟨ ζ₂ ↑ᴿ ⟩ ∣ (η₁ ∣ σ₁ ↑ˢ*) ⨾ˢ ((ζ₂ ↑ᴿ) ∣⟪ ζ₂ ∣ ρ₂ ↑ᴿ* ⟫) ≡ (η₁ ⨟ˢ ⟨ ζ₂ ⟩) ∣ (η₁ , ⟨ ζ₂ ⟩ ∣ σ₁ ⨾ˢ (ζ₂ ∣⟪ ρ₂ ⟫)) ↑ˢ*
   lift*-dist-Compˢᴿ η₁ ζ₂ σ₁ ρ₂ = fun-ext λ _ → fun-ext λ
     { (suc* x) →
@@ -666,7 +668,7 @@ opaque
         _  ≡⟨ cong (wkᴿ ∣_[ wkᴿ* ]ᴿ) (sym (Coincidence e _)) ⟩
         _  ∎ }
 
-  Compositionalityˢᴿ : ∀ (e : Expr Γ₁ T) (η₁ : n₁ →ˢ n₂) (ζ₂ : n₂ →ᴿ n₃) (σ₁ : η₁ ∣ Γ₁ ⇒ˢ Γ₂) (ρ₂ : ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃) →
+  Compositionalityˢᴿ : ∀ (e : Expr Γ₁ T) (η₁ : Sub n₁ n₂) (ζ₂ : Ren n₂ n₃) (σ₁ : η₁ ∣ Γ₁ ⇒ˢ Γ₂) (ρ₂ : ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃) →
     ζ₂ ∣ (η₁ ∣ e [ σ₁ ]ˢ) [ ρ₂ ]ᴿ ≡ (η₁ ⨟ˢ ⟨ ζ₂ ⟩) ∣ e [ (η₁ , ⟨ ζ₂ ⟩ ∣ σ₁ ⨾ˢ (ζ₂ ∣⟪ ρ₂ ⟫)) ]ˢ
   Compositionalityˢᴿ (` x)     _  _  σ₁ _  = sym (Coincidence (σ₁ _ x) _)
   Compositionalityˢᴿ (λx e)    η₁ ζ₂ σ₁ ρ₂ = cong λx (trans (Compositionalityˢᴿ e _ _ _ _) (cong ((η₁ ⨟ˢ ⟨ ζ₂ ⟩) ∣ e [_]ˢ) (Lift-Dist-Compˢᴿ σ₁ ρ₂)))
@@ -684,7 +686,7 @@ opaque
         _  ≡⟨ sym (Compositionalityˢᴿ e _ idᴿ σ₂ (Wkᴿ _)) ⟩
         _  ∎ }
 
-  lift*-dist-Compˢˢ : (η₁ : n₁ →ˢ n₂) (η₂ : n₂ →ˢ n₃) (σ₁ : η₁ ∣ Γ₁ ⇒ˢ Γ₂) (σ₂ : η₂ ∣ Γ₂ ⇒ˢ Γ₃) →
+  lift*-dist-Compˢˢ : (η₁ : Sub n₁ n₂) (η₂ : Sub n₂ n₃) (σ₁ : η₁ ∣ Γ₁ ⇒ˢ Γ₂) (σ₂ : η₂ ∣ Γ₂ ⇒ˢ Γ₃) →
     (η₁ ↑ˢ) , (η₂ ↑ˢ) ∣ (η₁ ∣ σ₁ ↑ˢ*) ⨾ˢ (η₂ ∣ σ₂ ↑ˢ*) ≡ ((η₁ ⨟ˢ η₂) ∣ (η₁ , η₂ ∣ σ₁ ⨾ˢ σ₂) ↑ˢ*)
   lift*-dist-Compˢˢ _ η₂ σ₁ σ₂ = fun-ext λ _ → fun-ext λ
     { (suc* x) →
@@ -695,7 +697,7 @@ opaque
         _  ∎ }
 
   --! CompositionalityType
-  Compositionalityˢˢ : ∀ (e : Expr Γ₁ T) (η₁ : n₁ →ˢ n₂) (η₂ : n₂ →ˢ n₃) (σ₁ : η₁ ∣ Γ₁ ⇒ˢ Γ₂) (σ₂ : η₂ ∣ Γ₂ ⇒ˢ Γ₃) →
+  Compositionalityˢˢ : ∀ (e : Expr Γ₁ T) (η₁ : Sub n₁ n₂) (η₂ : Sub n₂ n₃) (σ₁ : η₁ ∣ Γ₁ ⇒ˢ Γ₂) (σ₂ : η₂ ∣ Γ₂ ⇒ˢ Γ₃) →
     η₂ ∣ (η₁ ∣ e [ σ₁ ]ˢ) [ σ₂ ]ˢ ≡ (η₁ ⨟ˢ η₂) ∣ e [ η₁ , η₂ ∣ σ₁ ⨾ˢ σ₂ ]ˢ
 
   --! CompositionalityBody
@@ -726,27 +728,27 @@ opaque
 
   --! ExprRenamingTraversal {
   -- traversal clauses on expressions as rewrite rules (analog of traversal-* type-level)
-  Traversal-Varᴿ : ∀ {ζ : n₁ →ᴿ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  Traversal-Varᴿ : ∀ {ζ : Ren n₁ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                    (x : Γ₁ ∋ T) (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
                    ζ ∣ (` x) [ ρ ]ᴿ ≡ ` (ζ ∣ x &ᴿ ρ)
   Traversal-Varᴿ _ _ = refl
 
-  Traversal-λxᴿ : ∀ {ζ : n₁ →ᴿ n₂} {T₁ T₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  Traversal-λxᴿ : ∀ {ζ : Ren n₁ n₂} {T₁ T₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                   (e : Expr (Γ₁ ▷ T₁) T₂) (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
                   ζ ∣ (λx e) [ ρ ]ᴿ ≡ λx (ζ ∣ e [ ρ ⇑ᴿ T₁ ]ᴿ)
   Traversal-λxᴿ _ _ = refl
 
-  Traversal-Λαᴿ : ∀ {ζ : n₁ →ᴿ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  Traversal-Λαᴿ : ∀ {ζ : Ren n₁ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                   (e : Expr (Γ₁ ▷*) T) (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
                   ζ ∣ (Λα e) [ ρ ]ᴿ ≡ Λα ((ζ ↑ᴿ) ∣ e [ ↑ᴿ* ρ ]ᴿ)
   Traversal-Λαᴿ _ _ = refl
 
-  Traversal-·ᴿ : ∀ {ζ : n₁ →ᴿ n₂} {T₁ T₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  Traversal-·ᴿ : ∀ {ζ : Ren n₁ n₂} {T₁ T₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                  (e₁ : Expr Γ₁ (T₁ ⇒ T₂)) (e₂ : Expr Γ₁ T₁) (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
                  ζ ∣ (e₁ · e₂) [ ρ ]ᴿ ≡ (ζ ∣ e₁ [ ρ ]ᴿ) · (ζ ∣ e₂ [ ρ ]ᴿ)
   Traversal-·ᴿ _ _ _ = refl
 
-  Traversal-·*ᴿ : ∀ {ζ : n₁ →ᴿ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  Traversal-·*ᴿ : ∀ {ζ : Ren n₁ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                   (e : Expr Γ₁ (∀α T)) (T′ : Type n₁) (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
                   ζ ∣ (e ·* T′) [ ρ ]ᴿ ≡ (ζ ∣ e [ ρ ]ᴿ) ·* (T′ [ ζ ]ᴿ)
   Traversal-·*ᴿ _ _ _ = refl
@@ -754,27 +756,27 @@ opaque
 
   --! ExprSubstitutionTraversal {
   -- traversal clauses on expressions for substitutions
-  Traversal-Varˢ : ∀ {η : n₁ →ˢ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  Traversal-Varˢ : ∀ {η : Sub n₁ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                    (x : Γ₁ ∋ T) (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
                    η ∣ (` x) [ σ ]ˢ ≡ η ∣ x &ˢ σ
   Traversal-Varˢ _ _ = refl
 
-  Traversal-λxˢ : ∀ {η : n₁ →ˢ n₂} {T₁ T₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  Traversal-λxˢ : ∀ {η : Sub n₁ n₂} {T₁ T₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                   (e : Expr (Γ₁ ▷ T₁) T₂) (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
                   η ∣ (λx e) [ σ ]ˢ ≡ λx (η ∣ e [ η ∣ σ ⇑ˢ T₁ ]ˢ)
   Traversal-λxˢ _ _ = refl
 
-  Traversal-Λαˢ : ∀ {η : n₁ →ˢ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  Traversal-Λαˢ : ∀ {η : Sub n₁ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                   (e : Expr (Γ₁ ▷*) T) (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
                   η ∣ (Λα e) [ σ ]ˢ ≡ Λα ((η ↑ˢ) ∣ e [ η ∣ σ ↑ˢ* ]ˢ)
   Traversal-Λαˢ _ _ = refl
 
-  Traversal-·ˢ : ∀ {η : n₁ →ˢ n₂} {T₁ T₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  Traversal-·ˢ : ∀ {η : Sub n₁ n₂} {T₁ T₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                  (e₁ : Expr Γ₁ (T₁ ⇒ T₂)) (e₂ : Expr Γ₁ T₁) (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
                  η ∣ (e₁ · e₂) [ σ ]ˢ ≡ (η ∣ e₁ [ σ ]ˢ) · (η ∣ e₂ [ σ ]ˢ)
   Traversal-·ˢ _ _ _ = refl
 
-  Traversal-·*ˢ : ∀ {η : n₁ →ˢ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  Traversal-·*ˢ : ∀ {η : Sub n₁ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                   (e : Expr Γ₁ (∀α T)) (T′ : Type n₁) (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
                   η ∣ (e ·* T′) [ σ ]ˢ ≡ (η ∣ e [ σ ]ˢ) ·* (T′ [ η ]ˢ)
   Traversal-·*ˢ _ _ _ = refl
@@ -791,22 +793,22 @@ opaque
   Beta-wk*ᴿ : ∀ {T} {Γ : Ctx n} (x : Γ ∋ T) → wkᴿ ∣ x &ᴿ wkᴿ* ≡ suc* x
   Beta-wk*ᴿ _ = refl
 
-  Beta-ext-zeroᴿ : ∀ {ζ : n₁ →ᴿ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  Beta-ext-zeroᴿ : ∀ {ζ : Ren n₁ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                    (x : Γ₂ ∋ (T [ ζ ]ᴿ)) (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
                    ζ ∣ zero &ᴿ (_∣_∙ᴿ_ {T = T} ζ x ρ) ≡ x
   Beta-ext-zeroᴿ _ _ = refl
 
-  Beta-ext-sucᴿ : ∀ {ζ : n₁ →ᴿ n₂} {T T''} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  Beta-ext-sucᴿ : ∀ {ζ : Ren n₁ n₂} {T T''} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                   (x' : Γ₁ ∋ T'') (x : Γ₂ ∋ (T [ ζ ]ᴿ)) (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
                   ζ ∣ (suc x') &ᴿ (_∣_∙ᴿ_ {T = T} ζ x ρ) ≡ ζ ∣ x' &ᴿ ρ
   Beta-ext-sucᴿ _ _ _ = refl
 
-  Beta-ext-suc*ᴿ : ∀ {ζ : n₁ →ᴿ n₂} {T''} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
-                   (α : Fin n₂) (x : Γ₁ ∋ T'') (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
+  Beta-ext-suc*ᴿ : ∀ {ζ : Ren n₁ n₂} {T''} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+                   (α : Var n₂) (x : Γ₁ ∋ T'') (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
                    (α ∙ᴿ ζ) ∣ (suc* x) &ᴿ (ζ ∣ α ∙ᴿ* ρ) ≡ ζ ∣ x &ᴿ ρ
   Beta-ext-suc*ᴿ _ _ _ = refl
 
-  Beta-compᴿ : ∀ {ζ₁ : n₁ →ᴿ n₂} {ζ₂ : n₂ →ᴿ n₃} {T}
+  Beta-compᴿ : ∀ {ζ₁ : Ren n₁ n₂} {ζ₂ : Ren n₂ n₃} {T}
                {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} {Γ₃ : Ctx n₃}
                (x : Γ₁ ∋ T) (ρ₁ : ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (ρ₂ : ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃) →
                (ζ₁ ⨟ᴿ ζ₂) ∣ x &ᴿ (ζ₁ , ζ₂ ∣ ρ₁ ⨾ᴿ ρ₂) ≡ ζ₂ ∣ (ζ₁ ∣ x &ᴿ ρ₁) &ᴿ ρ₂
@@ -815,27 +817,27 @@ opaque
 
   --! ExprSubstitutionBeta {
   -- computing substitutions on expressions (analog of beta-* on type level)
-  Beta-ext-zeroˢ : ∀ {η : n₁ →ˢ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  Beta-ext-zeroˢ : ∀ {η : Sub n₁ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                    (e : Expr Γ₂ (T [ η ]ˢ)) (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
                    η ∣ zero &ˢ (_∣_∙ˢ_ {T = T} η e σ) ≡ e
   Beta-ext-zeroˢ _ _ = refl
 
-  Beta-ext-sucˢ : ∀ {η : n₁ →ˢ n₂} {T T''} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  Beta-ext-sucˢ : ∀ {η : Sub n₁ n₂} {T T''} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                   (x' : Γ₁ ∋ T'') (e : Expr Γ₂ (T [ η ]ˢ)) (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
                   η ∣ (suc x') &ˢ (_∣_∙ˢ_ {T = T} η e σ) ≡ η ∣ x' &ˢ σ
   Beta-ext-sucˢ _ _ _ = refl
 
-  Beta-ext-suc*ˢ : ∀ {η : n₁ →ˢ n₂} {T''} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  Beta-ext-suc*ˢ : ∀ {η : Sub n₁ n₂} {T''} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                    (T' : Type n₂) (x : Γ₁ ∋ T'') (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
                    (T' ∙ˢ η) ∣ (suc* x) &ˢ (η ∣ T' ∙ˢ* σ) ≡ η ∣ x &ˢ σ
   Beta-ext-suc*ˢ _ _ _ = refl
 
-  Beta-renameˢ : ∀ {ζ : n₁ →ᴿ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  Beta-renameˢ : ∀ {ζ : Ren n₁ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                  (x : Γ₁ ∋ T) (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
                  ⟨ ζ ⟩ ∣ x &ˢ (ζ ∣⟪ ρ ⟫) ≡ ` (ζ ∣ x &ᴿ ρ)
   Beta-renameˢ _ _ = refl
 
-  Beta-compˢ : ∀ {η₁ : n₁ →ˢ n₂} {η₂ : n₂ →ˢ n₃} {T}
+  Beta-compˢ : ∀ {η₁ : Sub n₁ n₂} {η₂ : Sub n₂ n₃} {T}
                {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} {Γ₃ : Ctx n₃}
                (x : Γ₁ ∋ T) (σ₁ : η₁ ∣ Γ₁ ⇒ˢ Γ₂) (σ₂ : η₂ ∣ Γ₂ ⇒ˢ Γ₃) →
                (η₁ ⨟ˢ η₂) ∣ x &ˢ (η₁ , η₂ ∣ σ₁ ⨾ˢ σ₂) ≡ η₂ ∣ (η₁ ∣ x &ˢ σ₁) [ σ₂ ]ˢ
@@ -845,14 +847,14 @@ opaque
   --! ExprRenLaws {
   -- interaction between expression-renamings (analog of `associativity, etc.)
   Associativityᴿ : ∀ {n₁ n₂ n₃ n₄}
-                   (ζ₁ : n₁ →ᴿ n₂) (ζ₂ : n₂ →ᴿ n₃) (ζ₃ : n₃ →ᴿ n₄)
+                   (ζ₁ : Ren n₁ n₂) (ζ₂ : Ren n₂ n₃) (ζ₃ : Ren n₃ n₄)
                    {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} {Γ₃ : Ctx n₃} {Γ₄ : Ctx n₄}
                    (ρ₁ : ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (ρ₂ : ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃) (ρ₃ : ζ₃ ∣ Γ₃ ⇒ᴿ Γ₄) →
                    ((ζ₁ ⨟ᴿ ζ₂) , ζ₃ ∣ (ζ₁ , ζ₂ ∣ ρ₁ ⨾ᴿ ρ₂) ⨾ᴿ ρ₃) ≡
                    (ζ₁ , (ζ₂ ⨟ᴿ ζ₃) ∣ ρ₁ ⨾ᴿ (ζ₂ , ζ₃ ∣ ρ₂ ⨾ᴿ ρ₃))
   Associativityᴿ _ _ _ _ _ _ = fun-ext λ _ → fun-ext λ _ → refl
 
-  Distributivityᴿ : ∀ {n₁ n₂ n₃} (ζ : n₁ →ᴿ n₂) (ζ′ : n₂ →ᴿ n₃)
+  Distributivityᴿ : ∀ {n₁ n₂ n₃} (ζ : Ren n₁ n₂) (ζ′ : Ren n₂ n₃)
                     {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} {Γ₃ : Ctx n₃}
                     (T : Type n₁) (x : Γ₂ ∋ (T [ ζ ]ᴿ))
                     (ρ₁ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) (ρ₂ : ζ′ ∣ Γ₂ ⇒ᴿ Γ₃) →
@@ -860,37 +862,37 @@ opaque
                     (_∣_∙ᴿ_ {T = T} (ζ ⨟ᴿ ζ′) (ρ₂ (T [ ζ ]ᴿ) x) (ζ , ζ′ ∣ ρ₁ ⨾ᴿ ρ₂))
   Distributivityᴿ _ _ _ _ _ _ = fun-ext λ _ → fun-ext λ { zero → refl; (suc x) → refl }
 
-  Distributivity*ᴿ : ∀ {n₁ n₂ n₃} (ζ : n₁ →ᴿ n₂) (ζ′ : n₂ →ᴿ n₃)
+  Distributivity*ᴿ : ∀ {n₁ n₂ n₃} (ζ : Ren n₁ n₂) (ζ′ : Ren n₂ n₃)
                      {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} {Γ₃ : Ctx n₃}
-                     (α : Fin n₂) (ρ₁ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) (ρ₂ : ζ′ ∣ Γ₂ ⇒ᴿ Γ₃) →
+                     (α : Var n₂) (ρ₁ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) (ρ₂ : ζ′ ∣ Γ₂ ⇒ᴿ Γ₃) →
                      ((α ∙ᴿ ζ) , ζ′ ∣ (ζ ∣ α ∙ᴿ* ρ₁) ⨾ᴿ ρ₂) ≡
                      ((ζ ⨟ᴿ ζ′) ∣ (α &ᴿ ζ′) ∙ᴿ* (ζ , ζ′ ∣ ρ₁ ⨾ᴿ ρ₂))
   Distributivity*ᴿ _ _ _ _ _ = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
 
-  Interactᴿ : ∀ {n₁ n₂} (ζ : n₁ →ᴿ n₂) {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  Interactᴿ : ∀ {n₁ n₂} (ζ : Ren n₁ n₂) {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
               {x : Γ₂ ∋ (T [ ζ ]ᴿ)} (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
               (idᴿ , ζ ∣ (Wkᴿ T) ⨾ᴿ (ζ ∣ x ∙ᴿ ρ)) ≡ ρ
   Interactᴿ _ _ = fun-ext λ _ → fun-ext λ _ → refl
 
-  Interact*ᴿ : ∀ {n₁ n₂} (ζ : n₁ →ᴿ n₂) {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
-               {α : Fin n₂} (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
+  Interact*ᴿ : ∀ {n₁ n₂} (ζ : Ren n₁ n₂) {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+               {α : Var n₂} (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
                (wkᴿ , (α ∙ᴿ ζ) ∣ wkᴿ* ⨾ᴿ (ζ ∣ α ∙ᴿ* ρ)) ≡ ρ
   Interact*ᴿ _ _ = fun-ext λ _ → fun-ext λ _ → refl
 
-  Comp-idᵣᴿ : ∀ {ζ : n₁ →ᴿ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
+  Comp-idᵣᴿ : ∀ {ζ : Ren n₁ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
               (ζ , idᴿ ∣ ρ ⨾ᴿ Idᴿ) ≡ ρ
   Comp-idᵣᴿ _ = fun-ext λ _ → fun-ext λ _ → refl
 
-  Comp-idₗᴿ : ∀ {ζ : n₁ →ᴿ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
+  Comp-idₗᴿ : ∀ {ζ : Ren n₁ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
               (idᴿ , ζ ∣ Idᴿ ⨾ᴿ ρ) ≡ ρ
   Comp-idₗᴿ _ = fun-ext λ _ → fun-ext λ _ → refl
 
-  η-lawᴿ : ∀ {n₁ n₂} {ζ : n₁ →ᴿ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  η-lawᴿ : ∀ {n₁ n₂} {ζ : Ren n₁ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
            (ρ : ζ ∣ (Γ₁ ▷ T) ⇒ᴿ Γ₂) →
            (ζ ∣ ρ T zero ∙ᴿ (idᴿ , ζ ∣ (Wkᴿ T) ⨾ᴿ ρ)) ≡ ρ
   η-lawᴿ _ = fun-ext λ _ → fun-ext λ { zero → refl; (suc x) → refl }
 
-  η-law*ᴿ : ∀ {n₁ n₂} {ζ : suc n₁ →ᴿ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  η-law*ᴿ : ∀ {n₁ n₂} {ζ : Ren (1 + n₁) n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
             (ρ : ζ ∣ (Γ₁ ▷*) ⇒ᴿ Γ₂) →
             ((wkᴿ ⨟ᴿ ζ) ∣ (zero &ᴿ ζ) ∙ᴿ* (wkᴿ , ζ ∣ wkᴿ* ⨾ᴿ ρ)) ≡ ρ
   η-law*ᴿ _ = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
@@ -903,7 +905,7 @@ opaque
   --! ExprSubLaws {
   -- interaction between expression-substitutions (analog of `associativity, etc.)
   Associativityˢ : ∀ {n₁ n₂ n₃ n₄}
-                   (η₁ : n₁ →ˢ n₂) (η₂ : n₂ →ˢ n₃) (η₃ : n₃ →ˢ n₄)
+                   (η₁ : Sub n₁ n₂) (η₂ : Sub n₂ n₃) (η₃ : Sub n₃ n₄)
                    {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} {Γ₃ : Ctx n₃} {Γ₄ : Ctx n₄}
                    (σ₁ : η₁ ∣ Γ₁ ⇒ˢ Γ₂) (σ₂ : η₂ ∣ Γ₂ ⇒ˢ Γ₃) (σ₃ : η₃ ∣ Γ₃ ⇒ˢ Γ₄) →
                    ((η₁ ⨟ˢ η₂) , η₃ ∣ (η₁ , η₂ ∣ σ₁ ⨾ˢ σ₂) ⨾ˢ σ₃) ≡
@@ -911,7 +913,7 @@ opaque
   Associativityˢ _ _ _ σ₁ σ₂ σ₃ =
     fun-ext λ _ → fun-ext λ x → Compositionalityˢˢ (σ₁ _ x) _ _ σ₂ σ₃
 
-  Distributivityˢ : ∀ {n₁ n₂ n₃} (η : n₁ →ˢ n₂) (η′ : n₂ →ˢ n₃)
+  Distributivityˢ : ∀ {n₁ n₂ n₃} (η : Sub n₁ n₂) (η′ : Sub n₂ n₃)
                     {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} {Γ₃ : Ctx n₃}
                     (T : Type n₁) (e : Expr Γ₂ (T [ η ]ˢ))
                     (σ₁ : η ∣ Γ₁ ⇒ˢ Γ₂) (σ₂ : η′ ∣ Γ₂ ⇒ˢ Γ₃) →
@@ -919,37 +921,37 @@ opaque
                     (_∣_∙ˢ_ {T = T} (η ⨟ˢ η′) (η′ ∣ e [ σ₂ ]ˢ) (η , η′ ∣ σ₁ ⨾ˢ σ₂))
   Distributivityˢ _ _ _ _ _ _ = fun-ext λ _ → fun-ext λ { zero → refl; (suc x) → refl }
 
-  Distributivity*ˢ : ∀ {n₁ n₂ n₃} (η : n₁ →ˢ n₂) (η′ : n₂ →ˢ n₃)
+  Distributivity*ˢ : ∀ {n₁ n₂ n₃} (η : Sub n₁ n₂) (η′ : Sub n₂ n₃)
                      {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} {Γ₃ : Ctx n₃}
                      (T : Type n₂) (σ₁ : η ∣ Γ₁ ⇒ˢ Γ₂) (σ₂ : η′ ∣ Γ₂ ⇒ˢ Γ₃) →
                      ((T ∙ˢ η) , η′ ∣ (η ∣ T ∙ˢ* σ₁) ⨾ˢ σ₂) ≡
                      ((η ⨟ˢ η′) ∣ (T [ η′ ]ˢ) ∙ˢ* (η , η′ ∣ σ₁ ⨾ˢ σ₂))
   Distributivity*ˢ _ _ _ _ _ = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
 
-  Interactˢ : ∀ {n₁ n₂} (η : n₁ →ˢ n₂) {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  Interactˢ : ∀ {n₁ n₂} (η : Sub n₁ n₂) {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
               {e : Expr Γ₂ (T [ η ]ˢ)} (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
               (⟨ idᴿ ⟩ , η ∣ (Wkˢ T) ⨾ˢ (η ∣ e ∙ˢ σ)) ≡ σ
   Interactˢ _ _ = fun-ext λ _ → fun-ext λ _ → refl
 
-  Interact*ˢ : ∀ {n₁ n₂} (η : n₁ →ˢ n₂) {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  Interact*ˢ : ∀ {n₁ n₂} (η : Sub n₁ n₂) {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                {T : Type n₂} (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
                (⟨ wkᴿ ⟩ , (T ∙ˢ η) ∣ wkᴿ*ˢ ⨾ˢ (η ∣ T ∙ˢ* σ)) ≡ σ
   Interact*ˢ _ _ = fun-ext λ _ → fun-ext λ _ → refl
 
-  Comp-idᵣˢ : ∀ {η : n₁ →ˢ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
+  Comp-idᵣˢ : ∀ {η : Sub n₁ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
               (η , ⟨ idᴿ ⟩ ∣ σ ⨾ˢ Idˢ) ≡ σ
   Comp-idᵣˢ σ = fun-ext λ _ → fun-ext λ x → Identityᵣ (σ _ x)
 
-  Comp-idₗˢ : ∀ {η : n₁ →ˢ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
+  Comp-idₗˢ : ∀ {η : Sub n₁ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
               (⟨ idᴿ ⟩ , η ∣ Idˢ ⨾ˢ σ) ≡ σ
   Comp-idₗˢ _ = fun-ext λ _ → fun-ext λ _ → refl
 
-  η-lawˢ : ∀ {n₁ n₂} {η : n₁ →ˢ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  η-lawˢ : ∀ {n₁ n₂} {η : Sub n₁ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
            (σ : η ∣ (Γ₁ ▷ T) ⇒ˢ Γ₂) →
            (η ∣ σ T zero ∙ˢ (⟨ idᴿ ⟩ , η ∣ (Wkˢ T) ⨾ˢ σ)) ≡ σ
   η-lawˢ _ = fun-ext λ _ → fun-ext λ { zero → refl; (suc x) → refl }
 
-  η-law*ˢ : ∀ {n₁ n₂} {η : suc n₁ →ˢ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  η-law*ˢ : ∀ {n₁ n₂} {η : Sub (1 + n₁) n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
             (σ : η ∣ (Γ₁ ▷*) ⇒ˢ Γ₂) →
             ((⟨ wkᴿ ⟩ ⨟ˢ η) ∣ (zero &ˢ η) ∙ˢ* (⟨ wkᴿ ⟩ , η ∣ wkᴿ*ˢ ⨾ˢ σ)) ≡ σ
   η-law*ˢ _ = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
@@ -962,17 +964,17 @@ opaque
   --! ExprLiftBeta {
   -- σ-calculus form of lifts (analog of type-level `beta-lift`):
   -- ρ ⇑ᴿ T is the σ-form ` zero ∙ᴿ (ρ ⨾ᴿ Wkᴿ); similarly for ↑ᴿ*, ⇑ˢ, ↑ˢ*.
-  Beta-liftᴿ : ∀ {ζ : n₁ →ᴿ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} {T : Type n₁}
+  Beta-liftᴿ : ∀ {ζ : Ren n₁ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} {T : Type n₁}
                (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
                (ζ ∣ ρ ⇑ᴿ T) ≡ (ζ ∣ zero ∙ᴿ (ζ , idᴿ ∣ ρ ⨾ᴿ Wkᴿ (T [ ζ ]ᴿ)))
   Beta-liftᴿ _ = refl
 
-  Beta-lift*ᴿ : ∀ {ζ : n₁ →ᴿ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  Beta-lift*ᴿ : ∀ {ζ : Ren n₁ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                 (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
                 (ζ ∣ ρ ↑ᴿ*) ≡ ((ζ ⨟ᴿ wkᴿ) ∣ zero ∙ᴿ* (ζ , wkᴿ ∣ ρ ⨾ᴿ wkᴿ*))
   Beta-lift*ᴿ _ = refl
 
-  Beta-liftˢ : ∀ {η : n₁ →ˢ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} {T : Type n₁}
+  Beta-liftˢ : ∀ {η : Sub n₁ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} {T : Type n₁}
                (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
                (η ∣ σ ⇑ˢ T) ≡ (η ∣ (` zero) ∙ˢ (η , ⟨ idᴿ ⟩ ∣ σ ⨾ˢ Wkˢ (T [ η ]ˢ)))
   Beta-liftˢ σ = fun-ext λ _ → fun-ext λ
@@ -980,7 +982,7 @@ opaque
     ; (suc x) → sym (Coincidence (σ _ x) (Wkᴿ _))
     }
 
-  Beta-lift*ˢ : ∀ {η : n₁ →ˢ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  Beta-lift*ˢ : ∀ {η : Sub n₁ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                 (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
                 (η ∣ σ ↑ˢ*) ≡ ((η ⨟ˢ ⟨ wkᴿ ⟩) ∣ (` zero) ∙ˢ* (η , ⟨ wkᴿ ⟩ ∣ σ ⨾ˢ wkᴿ*ˢ))
   Beta-lift*ˢ σ = fun-ext λ _ → fun-ext λ

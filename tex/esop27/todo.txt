@@ -2,6 +2,8 @@ TODO
 =============================================
 Source: tex/icfp26/reviews.txt
 
+[ ]  Say somewhere that all code shown in the paper is an excerpt of a checked Agda program.
+
 P0 — Critical (raised by multiple reviewers)
 --------------------------------------------
 [X]  Termination & confluence proof outline of the rewrite system.

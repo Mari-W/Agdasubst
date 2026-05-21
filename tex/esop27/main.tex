@@ -60,9 +60,9 @@ metatheoretic arguments to be dominated by administrative reasoning.
 This fresh perspective shows how to make intrinsically typed syntax
 work in practice for polymorphic calculi. We give extacts of a
 mechanization of the metatheory of System F and extend
-it to System F$\omega$ in Agda while avoiding transfer reasoning almost
-entirely. The key idea is to internalize the equational theory of the
-$\sigma$-calculus for substitutions as definitional equality. We rely
+it to System F$\omega$ in Agda while avoiding explicit reasoning about transports almost 
+entirely. The key is to internalize the equational theory of the
+$\sigma$-calculus for substitutions and make it definitional. We rely
 on proved $\sigma$-calculus laws for a functional representation of substitutions and
 install them into Agda’s rewrite mechanism, obtaining canonical
 behavior for substitution and renaming without explicit
@@ -70,14 +70,14 @@ transports. The main technical challenge is ensuring that the
 resulting rewrite system remains terminating and confluent together
 with Agda’s built-in reductions. 
  
-The resulting development dramatically simplifies proofs: typing
-preservation becomes definitional, substitution lemmas disappear, and 
-type conversion in System F$\omega$ can be handled intrinsically. Our
+The use of rewriting dramatically simplifies proofs of metatheoretic
+properties: typing 
+preservation becomes definitional, substitution lemmas disappear, and
+even well-behaved type conversions can be handled intrinsically. Our
 experience suggests a general methodology: when intrinsically typed
 syntax generates transports, the correct solution is often not more
-lemmas but better definitional equality. We distill practical
-guidelines for mechanizing typed calculi in dependently typed proof
-assistants. 
+lemmas but better definitional equality. We propose some practical
+guidelines towards this methodology. 
 \end{abstract}
 
 % TODO[PT]: somehwere insert related work, namely comapre with propositonal tools and 

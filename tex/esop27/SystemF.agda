@@ -15,6 +15,9 @@ postulate
 open import Agda.Builtin.Nat using (Nat; zero; suc)
 open import Data.Fin using (Fin; zero; suc)
 
+infixr 5 _⇒_
+infix 6 `_
+
 --! SF >
 --! Type >
 --! Definition
@@ -22,6 +25,12 @@ data Type (n : Nat) : Set where
   `_   : Fin n → Type n
   ∀α   : Type (suc n) → Type n
   _⇒_  : Type n → Type n → Type n
+
+--! Example
+_ : Type 0                      -- a closed type:  ∀α. α→α
+_ = ∀α (` zero ⇒ ` zero)
+_ : Type 0 -- ∀αβ. α→β→α
+_ = ∀α (∀α (` suc zero ⇒ ` zero ⇒ ` suc zero))
 
 variable
   n n′ n₁ n₂ n₃ : Nat
@@ -52,7 +61,7 @@ opaque
   _&ᴿ_ : Fin n₁ → n₁ →ᴿ n₂ → Fin n₂
   α &ᴿ ζ = ζ α
 
-  -- composition
+  -- left-to-right composition
   _⨟ᴿ_ : n₁ →ᴿ n₂ → n₂ →ᴿ n₃ → n₁ →ᴿ n₃
   (ζ₁ ⨟ᴿ ζ₂) α = ζ₂ (ζ₁ α)
 
@@ -101,7 +110,7 @@ _[_]ˢ : Type n₁ → n₁ →ˢ n₂ → Type n₂
 (T₁ ⇒ T₂) [ η ]ˢ = (T₁ [ η ]ˢ) ⇒ (T₂ [ η ]ˢ)
 
 opaque
-  -- composition
+  -- left-to-right composition
   _⨟ˢ_ : n₁ →ˢ n₂ → n₂ →ˢ n₃ → n₁ →ˢ n₃
   (η₁ ⨟ˢ η₂) α = (η₁ α) [ η₂ ]ˢ
 --! }

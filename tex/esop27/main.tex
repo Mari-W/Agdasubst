@@ -248,12 +248,30 @@ reasoning.
 
 \subsection{Syntax}
 \label{sec:types}
+\begin{figure}[t]
+\begin{minipage}[t]{0.49\linewidth}
+  \SFTypeDefinition
+\end{minipage}
+\begin{minipage}[t]{0.49\linewidth}
+  \SFTypeExample
+\end{minipage}
+  \caption{Syntax of System~F types (Agda definition left, examples right)}
+  \label{fig:system-f-types}
+\end{figure}
 The syntax of System~F types uses the standard de Bruijn encoding of
-variables by natural numbers. The index $n$ stands for the number of
-type variables in scope. Variables are drawn from the type $\AgdaDatatype{Fin}\ n$, i.e.,
-the set $\{0,\dots, n-1\}$. The  \AgdaInductiveConstructor{$\forall\alpha$}-binder introduces a new type
-variable, and \AgdaInductiveConstructor{$\Rightarrow$} is the infix function type constructor.
-\SFTypeDefinition
+variables by numbers. The type
+$\AgdaDatatype{Type}~n$  (\cref{fig:system-f-types}) stands for the 
+set of types with $n$ type variables in scope. Henceforth, we call
+such $n$  a \emph{scope}.
+Variables for scope $n$ are drawn from the type $\AgdaDatatype{Fin}\ n$, i.e.,
+the set $\{0,\dots, n-1\}$, written as
+\AgdaInductiveConstructor{zero},
+$\AgdaInductiveConstructor{suc}~\AgdaInductiveConstructor{zero}$,
+$\AgdaInductiveConstructor{suc}~(\AgdaInductiveConstructor{suc}~\AgdaInductiveConstructor{zero})$,
+\dots 
+The  \AgdaInductiveConstructor{$\forall\alpha$}-binder introduces a new type
+variable, and \AgdaInductiveConstructor{$\Rightarrow$} is the infix
+function type constructor. We let \AgdaFunction{T} range over types.
 
 \subsection{Renaming and Substitution}
 \label{sec:types}
@@ -269,14 +287,18 @@ variable, and \AgdaInductiveConstructor{$\Rightarrow$} is the infix function typ
   \caption{Renamings and substitutions on types}
   \label{fig:system-f-ren-sub}
 \end{figure}
+The most important operations on types are consistent renaming of
+type variables and substitution.
 \Cref{fig:system-f-ren-sub} contains the first step in defining
-type renamings (left column) and substitutions (right column).
+renamings (left column) and substitutions (right column).
 A type renaming $\zeta$ maps variables from one scope $n_1$ to
 another $n_2$. We write the type of type renamings as $n_1$ \AgdaFunction{$\to^R$} $n_2$.
-The definitions comprise (in order) weakening, the identity renaming,
-extending a renaming, applying a renaming to a variable,
-composing two renamings, lifting a renaming (to move under a
-binder), and applying a renaming to a type.
+The definitions comprise (in order) weakening (\AgdaFunction{wkᴿ}), the
+identity renaming (\AgdaFunction{idᴿ}),
+extending a renaming with variable \AgdaFunction{α}
+(\AgdaFunction{α ∙ᴿ ζ}), applying a renaming to a variable (\AgdaFunction{α \&ᴿ ζ}), 
+composing two renamings (\AgdaFunction{ζ₁ ⨟ᴿ ζ₂}), lifting a renaming (to move under a
+binder) (\AgdaFunction{ζ ↑ᴿ}), and applying a renaming to a type (\AgdaFunction{T [ ζ ]ᴿ}).
 
 A this point, the astute reader may wonder about the use of
 \AgdaKeyword{opaque} in the definitions. The function symbols defined in an

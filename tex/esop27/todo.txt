@@ -36,6 +36,7 @@ P1 — Substantive gaps
      => what about strictification paper?
         => Easy! they work in OTT, which they strictly require to make the laws strict.
         There is no production proof assistant based on OTT yet, but on RTT there is (Agda and Rocq).
+        => Important (extracted from LLM): They don't use OTT to avoid postulating funext; they use it because their construction needs definitional equalities that no axiom can provide, specifically definitional η for Π/Σ/⊤"
 
 
 [ ]  Deliver on the abstract's promise of "practical guidelines" and

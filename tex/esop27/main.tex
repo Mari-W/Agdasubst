@@ -835,10 +835,89 @@ of code as the rewriting-based one. As a welcome side effect, the cold
 type-checking time is also reduced by roughly half when the
 $\sigma$-calculus equations are installed as rewrite rules.
 
-\subsection{Equational Laws for Renaming and Substitution}
-% TODO[MW]: explain the second layer equalitonal theory on expression substitution
+\subsection{Equational Theory for Expression Substitution}
+Having proven the functor laws for expression substitution, the
+hardest result has already been established. A natural question is
+whether we can go further and install a full equational theory for
+expression substitution as definitional equalities, just as we did at
+the type level. And in fact, we can. The $\sigma$-calculus for type-substitution-indexed
+expression substitutions looks essentially the same as the one for
+type substitutions in \cref{fig:system-f-sigma-calculus}, and the
+same holds analogously for expression renamings. The only additions
+are a handful of laws that govern weakening by \emph{type} variables
+on the expression level. Rather than reproducing the full rule set,
+we display only the \emph{new} laws that have no analog at the type level.
+% TODO[MW] ADD CODE
 
-\subsection{Practical Guidelines for Mechanizing Intrinsically Typed Substitutions}
+The full equational system is included in the supplement, and Agda
+verifies its confluence.
+For the confluence check to go through, we had to artificially block
+reduction of the traversal functions \AgdaFunction{\_∣\_[\_]ᴿ}
+and \AgdaFunction{\_∣\_[\_]ˢ} and re-install each of their
+defining clauses as a rewrite rule. This is necessary because, in
+the case of type application, the rewriting must perform two
+reduction steps simultaneously, as required by the triangle
+criterion: one step normalizes the type
+index, and one step reduces the expression itself, pushing the
+substitution inside.
+
+\subsection{Practical Guidelines for Other Intrinsic Developments}
+\label{sec:tower}
+
+We have now made the equations of the $\sigma$-calculus definitional
+at two levels of the syntactic hierarchy: at the type level and at
+the expression level, where the latter \emph{depends} on the former.
+This points to a more general recipe. The same strategy applies to
+arbitrarily tall \emph{towers} of intrinsically typed syntaxes, in
+which each level's type indices themselves support substitution.
+
+More precisely, consider a tower $T_0, T_1, \dots, T_n$ of syntactic
+sorts in which the variables and substitutions of $T_{i+1}$ are
+indexed by the contexts and substitutions of $T_0, \dots, T_i$. The
+recipe proceeds bottom-up:
+\begin{enumerate}
+  \item Define $T_0$ together with its renamings and substitutions,
+        and install the $\sigma$-calculus equations for $T_0$ as
+        rewrite rules.
+  \item For each $i$ from $1$ to $n$, define $T_i$ \emph{on top of}
+        the already-definitional substitution machinery of
+        $T_0, \dots, T_{i-1}$, prove the corresponding
+        $\sigma$-calculus laws for $T_i$, and install them as
+        rewrite rules.
+\end{enumerate}
+The key precondition is that, when we define and prove the laws for
+level $i$, the laws for all lower levels are already definitional.
+Without this, the types of the level-$i$ operations would no longer
+match up on the nose, and we would be back in transfer hell. The
+ordering of the recipe is therefore essential, not merely
+methodological.
+
+The size of the equational theory grows with each level. A
+substitution at level $i$ can be lifted under a binder of any sort
+$T_0, \dots, T_{i-1}$, and each kind of binder induces its own
+family of laws, for weakening and extension, and the
+corresponding interactions with composition and traversal. At the
+type level this contributes no additional laws; at the expression
+level we already saw one new family, namely the laws governing
+weakening by \emph{type} variables; at level three one would add
+two further families, and so on. The rule count therefore grows
+linearly with the level, but each new family follows the same
+template as the previous one, so the proof effort per family stays
+constant.
+
+Confluence of the extended equational theory is easy to see: the
+additional laws follow the same shapes as their type-level
+counterparts, so their critical pairs join by exactly the same
+triangle argument. Termination is not a
+concern: as discussed in \cref{sec:safety}, it does not affect
+soundness, and termination of the $\sigma$-calculus is well
+established.
+
+As a concrete instance, the development of~\cite{TODO} requires
+three such substitution hierarchies. We believe our approach would
+allow it to be mechanized intrinsically without any transfer reasoning.
+
+% TODO[MW]: explain the second layer equalitonal theory on expression substitution
 % TODO[MW]: explain how this generalizes to other syntaxes.
 % cite paper with multiple hierarchies
 

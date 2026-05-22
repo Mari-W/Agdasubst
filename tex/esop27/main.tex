@@ -434,11 +434,14 @@ The analogous results for renamings follow exactly the same pattern.
 \subsection{A Note on Safety}
 % TODO[MW]: insert citations
 \label{sec:safety}
-Turning propositional equalities into definitional ones is a delicate
-act in a proof assistant based on a rich dependent type theory, where we care a lot
-about safety and consistency. Systems like Dedukti~\cite{} are more
-centered on rewrite rules, but do not feature the full computational machinery
-that Agda offers. Combining rewrite rules dependent type theories, such as MLTT~\cite{} or CiC~\cite{} 
+% Turning propositional equalities into definitional ones is a delicate
+% act in a proof assistant based on a rich dependent type theory, where we care a lot
+% about soundness and consistency. 
+The theory underlying a proof assistant must be sound and consistent.
+Hence, it is a delicate act turning propositional equalities into definitional ones, 
+for example by adding rewrite rules, because 
+it can endanger both soundness and consistency.
+Such a combination of rewrite rules and rich dependent type theories, such as MLTT~\cite{} or CiC~\cite{} 
 is a recently emerging field, first explored by the
 addition of rewrite rules to Agda and Rocq~\cite{}, and continued by
 ongoing research on \emph{local} rewrite rules~\cite{}.
@@ -453,19 +456,17 @@ in Agda. In RTT, the reduction relation is extended by turning
 propositional equalities into reduction rules: a term matched by the
 left-hand side of an equation reduces to the right-hand side, exactly
 like in \cref{sec:laws-renam-subst-1}. The two properties we wish
-to preserve when adding rewrite rules are \emph{soundness} (i.e.,
-subject reduction) and \emph{consistency}. In particular, the type
+to preserve when adding rewrite rules are subject reduction and consistency. In particular, the type
 checker assumes subject reduction and it would break without it.
 
 To uphold subject reduction, the critical property of the rewriting
 equations is that they are confluent \emph{with respect to the already
 existing reduction rules}. Agda already provides a plethora of
 reduction rules, which are proved confluent: $\beta$, $\eta$ (function and record expansion),
-$\delta$ (definition unfolding), and $\iota$ (dependent pattern matching clauses). 
-Additional rewrite rules must interact nicely with all of them to retain confluence. 
-Agda checks this using a simple syntactic criterion called the triangle
-property. Confluence holds when every critical pair of left-hand sides 
-can be joined in a single rewriting step that lies on a common reduct, 
+$\delta$ (definition unfolding), and $\iota$ (dependent pattern matching clauses).  
+Agda checks confluence of the extended system using a simple syntactic criterion called the triangle
+property~\cite{}.
+
 %% PT: not our business in this paper
 % This check does not require termination. Notably, termination is \emph{not}
 % a critical property, because it does not affect soundness or consistency, 
@@ -477,19 +478,20 @@ definitions of renamings and substitutions in \cref{fig:system-f-ren-sub}
 interfere with the intended rewrite equalities. For this reason, we
 explicitly hide these definitions inside an \AgdaKeyword{opaque} block,
 so that only the equations we install with \AgdaKeyword{REWRITE} defines
-their reduction behaviour.
+their reduction behaviour. 
+% EXAMPLE: comp-id
 
 %% PT: is this excursion to ETT important?
 Consistency is preserved as long as the equalities we rewrite are
 instantiated with proofs.
 This is easy to see, because RTT can be translated to extensional type
 theory~\cite{}, a theory known to be consistent. 
-The translation simply turns each rewrite rule reduction
-into an application of the \emph{equality reflection} rule, which
-internalizes arbitrary propositional equalities as definitional ones,
-at the cost of decidability of type checking.
-Due to this lack of decidability, extensional type theory is not a
-common candidate for a basis of a proof assistant.
+% The translation simply turns each rewrite rule reduction
+% into an application of the \emph{equality reflection} rule, which
+% internalizes arbitrary propositional equalities as definitional ones,
+% at the cost of decidability of type checking.
+% Due to this lack of decidability, extensional type theory is not a
+% common candidate for a basis of a proof assistant.
 
 At present, Agda is the only mainstream proof assistant that supports
 the full feature set we require: functions whose reduction can be
@@ -502,13 +504,13 @@ proofs, but aside from these differences our method transfers to Rocq
 directly using its own rewrite rule implementation~\cite{}.
 
 %% PT: remove forward reference to transfer hell!
-In our formalization, we enable the \AgdaKeyword{OPTIONS}
-\texttt{-{}-rewriting} together with \texttt{-{}-confluence-check},
-which makes the use of rewriting safe, provided we trust the
-implementation of the confluence checker. With these newly and
-safely gained definitional equalities in place, we can continue
-to define expressions and expression substitution without ending
-up in transfer hell.
+% In our formalization, we enable the \AgdaKeyword{OPTIONS}
+% \texttt{-{}-rewriting} together with \texttt{-{}-confluence-check},
+% which makes the use of rewriting safe, provided we trust the
+% implementation of the confluence checker. With these newly and
+% safely gained definitional equalities in place, we can continue
+% to define expressions and expression substitution without ending
+% up in transfer hell.
 
 \section{Expressions for System F}
 \label{sec:system-f-expressions}
@@ -693,7 +695,7 @@ cumbersome because transport lemmas have to be inserted to equalize
 the types of (Agda) expressions.
 
 % TODO[PT]: give a better motivation than this
-While proving type safety does \emph{not} require exercising same
+While proving type safety does \emph{not} require exercising the same
 theory at the \emph{expression level}, it is still good practice to
 verify functorial and monadic properties of expression
 substitutions. Moreover, if we were to move on to constructing and
@@ -714,6 +716,7 @@ same as applying their composition. This statement is a very prominent
 example of transfer hell: the types of the left and right side of the
 equality are different and would require a transfer without our
 rewriting machinery in place.
+% TODO[PT]: needs tranfer with compositonalityˢˢ on type level
 \SFExprSubCompositionalityType
 We show the proof of this property just do demonstrate that type
 adjustments for type substitutions can be ignored and we can
@@ -736,7 +739,7 @@ material gives the full story.
 
 \subsection{Comparison to a Proof in Transfer Hell}
 \label{sec:comparison-transfer-hell}
-
+% make very clear this is not our code and not WITHOUT rewriting.
 We now contrast our development with the same proof carried out without
 installing the $\sigma$-calculus equations as definitional equalities. As a
 point of comparison, we take the supplement of the logical relation
@@ -763,10 +766,10 @@ application---of their compositionality lemma.
 
 A first observation is that our development already saves one
 \AgdaFunction{subst} in the very definition of substitution application.
-Without the definitional $\sigma$-calculus, this saving is no longer
-available: the type application case requires the swap lemma of type
-\ExportSwap.
-\noindent to coerce the term to the expected type, leading to the following
+%Without the definitional $\sigma$-calculus, this saving is no longer
+%available: 
+The type application case requires the swap lemma of type
+\ExportSwap\ to coerce the term to the expected type, leading to the following
 definition.
 \ExportSubstInDef
 
@@ -797,15 +800,15 @@ constitutes one of the simplest forms of the argument.
   \item Fold the definition of expression substitution to conclude the
         proof.
 \end{enumerate}
-Of these, steps~(2), (4), the type coercion in~(5), and~(5),
+Of these, steps~(2), (4), the type coercion in~(5), and~(6),
 as well as the translation into heterogeneous equality, are entirely
-absent from our rewriting-based proof; only the application of the
+absent from our rewriting-based proof, only the application of the
 induction hypothesis and the implicit (un)folding of definitions remain.
 
 We complement this qualitative comparison with a quantitative one. The
 following table records the lines of code and number of characters
 required to mechanize the compositionality law for expression
-substitutions, together with the cold type-checking time of the
+substitutions, together with the type-checking time of the
 respective developments.
 
 \begin{center}
@@ -821,7 +824,7 @@ respective developments.
     \textbf{Total}                        & \textbf{416} & \textbf{23\,711}
                                           & \textbf{1\,690} & \textbf{82\,430} \\
     \hline
-    Type-check time (cold)                & \multicolumn{2}{c|}{4.49\,s}
+    Type-check time                       & \multicolumn{2}{c|}{4.49\,s}
                                           & \multicolumn{2}{c|}{9.51\,s} \\
     \hline
 \end{tabular}
@@ -831,8 +834,8 @@ As expected, the amount of code required to formalize type
 substitution is roughly the same in both developments. For
 expression substitutions, however, the picture changes:
 the transfer-hell version requires more than five times as many lines
-of code as the rewriting-based one. As a welcome side effect, the cold
-type-checking time is also reduced by roughly half when the
+of code as the rewriting-based one. As a welcome side effect, the
+type-checking time is also reduced by about 50\% when the
 $\sigma$-calculus equations are installed as rewrite rules.
 
 \subsection{Equational Theory for Expression Substitution}
@@ -848,7 +851,7 @@ are a handful of laws that govern weakening by \emph{type} variables
 on the expression level. Rather than reproducing the full rule set,
 we display only the \emph{new} laws that have no analog at the type level.
 % TODO[MW] ADD CODE
-
+INSERT LAWS
 The full equational system is included in the supplement, and Agda
 verifies its confluence.
 For the confluence check to go through, we had to artificially block
@@ -867,7 +870,7 @@ substitution inside.
 We have now made the equations of the $\sigma$-calculus definitional
 at two levels of the syntactic hierarchy: at the type level and at
 the expression level, where the latter \emph{depends} on the former.
-This points to a more general recipe. The same strategy applies to
+In general, this strategy applies to
 arbitrarily tall \emph{towers} of intrinsically typed syntaxes, in
 which each level's type indices themselves support substitution.
 
@@ -885,19 +888,17 @@ recipe proceeds bottom-up:
         $\sigma$-calculus laws for $T_i$, and install them as
         rewrite rules.
 \end{enumerate}
-The key precondition is that, when we define and prove the laws for
-level $i$, the laws for all lower levels are already definitional.
-Without this, the types of the level-$i$ operations would no longer
-match up on the nose, and we would be back in transfer hell. The
-ordering of the recipe is therefore essential, not merely
-methodological.
+The key is that the laws for all lower levels are already definitional, when we define and prove the laws for
+level $i$.
+Otherwise, the types of the level-$i$ operations would no longer
+match up on the nose, and we would be back in transfer hell. 
 
 The size of the equational theory grows with each level. A
 substitution at level $i$ can be lifted under a binder of any sort
 $T_0, \dots, T_{i-1}$, and each kind of binder induces its own
 family of laws, for weakening and extension, and the
 corresponding interactions with composition and traversal. At the
-type level this contributes no additional laws; at the expression
+type level this contributes no additional laws. At the expression
 level we already saw one new family, namely the laws governing
 weakening by \emph{type} variables; at level three one would add
 two further families, and so on. The rule count therefore grows
@@ -908,14 +909,14 @@ constant.
 Confluence of the extended equational theory is easy to see: the
 additional laws follow the same shapes as their type-level
 counterparts, so their critical pairs join by exactly the same
-triangle argument. Termination is not a
-concern: as discussed in \cref{sec:safety}, it does not affect
-soundness, and termination of the $\sigma$-calculus is well
-established.
+triangle argument. 
+% Termination is not a
+% concern: as discussed in \cref{sec:safety}, it does not affect
+% soundness, and termination of the $\sigma$-calculus is well
+% established.
 
-As a concrete instance, the development of~\cite{TODO} requires
-three such substitution hierarchies. We believe our approach would
-allow it to be mechanized intrinsically without any transfer reasoning.
+As a concrete instance, the blabla calculus~\cite{TODO} has three 
+levels: kinds, types and expressions, all of which support substitution. Using our approach, it would be possible to construct an intrinsically typed representation for it, and establish the substitution theory without any transfer reasoning.
 
 % TODO[MW]: explain the second layer equalitonal theory on expression substitution
 % TODO[MW]: explain how this generalizes to other syntaxes.

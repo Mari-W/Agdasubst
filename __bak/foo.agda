@@ -290,12 +290,12 @@ opaque
     (t ⋯ᴿ ρ₂) ⋯ᴿ wk _          ≡⟨ cong1 (_⋯ᴿ (wk _)) (sym coincidence) ⟩ 
     (t ⋯ˢ ⟨ ρ₂ ⟩) ⋯ᴿ wk _      ∎ }
 
-  lift-dist-comp*ˢᴿ : ∀ S → ((σ₁ ↑ˢ* S) ⨟ ⟨ ρ₂ ↑ᴿ* S ⟩) ≡ ((σ₁ ⨟ ⟨ ρ₂ ⟩) ↑ˢ* S )
-  lift-dist-comp*ˢᴿ []      = refl 
-  lift-dist-comp*ˢᴿ (_ ∷ S) =  trans lift-dist-compˢᴿ (cong1 (_↑ˢ _) (lift-dist-comp*ˢᴿ S))
+  lift-dist-compˢ*ᴿ : ∀ S → ((σ₁ ↑ˢ* S) ⨟ ⟨ ρ₂ ↑ᴿ* S ⟩) ≡ ((σ₁ ⨟ ⟨ ρ₂ ⟩) ↑ˢ* S )
+  lift-dist-compˢ*ᴿ []      = refl 
+  lift-dist-compˢ*ᴿ (_ ∷ S) =  trans lift-dist-compˢᴿ (cong1 (_↑ˢ _) (lift-dist-compˢ*ᴿ S))
 
   compositionalityˢᴿ (arr ty0 ty1)         = cong2 arr (compositionalityˢᴿ ty0) (compositionalityˢᴿ ty1)
-  compositionalityˢᴿ (all ty0)             = cong1 all (trans (compositionalityˢᴿ ty0) (cong1 (ty0 ⋯ˢ_) (lift-dist-comp*ˢᴿ (ty ∷ []))))
+  compositionalityˢᴿ (all ty0)             = cong1 all (trans (compositionalityˢᴿ ty0) (cong1 (ty0 ⋯ˢ_) (lift-dist-compˢ*ᴿ (ty ∷ []))))
 
   lift-dist-compˢˢ : ((σ₁ ↑ˢ s) ⨟ (σ₂ ↑ˢ s)) ≡ ((σ₁ ⨟ σ₂) ↑ˢ s)
   lift-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂} = ext λ { zero → refl; (suc x) → 
@@ -306,9 +306,9 @@ opaque
     t ⋯ˢ (σ₂ ⨟ ⟨ (wk _) ⟩)        ≡⟨ sym (compositionalityˢᴿ t) ⟩ 
     (t ⋯ˢ σ₂) ⋯ᴿ (wk _)           ∎ }
   
-  lift-dist-comp*ˢˢ : ∀ S →  ((σ₁ ↑ˢ* S) ⨟ (σ₂ ↑ˢ* S)) ≡ ((σ₁ ⨟ σ₂) ↑ˢ* S)
-  lift-dist-comp*ˢˢ []      = refl 
-  lift-dist-comp*ˢˢ (_ ∷ S) =  trans lift-dist-compˢˢ (cong1 (_↑ˢ _) (lift-dist-comp*ˢˢ S))
+  lift-dist-compˢ*ˢ : ∀ S →  ((σ₁ ↑ˢ* S) ⨟ (σ₂ ↑ˢ* S)) ≡ ((σ₁ ⨟ σ₂) ↑ˢ* S)
+  lift-dist-compˢ*ˢ []      = refl 
+  lift-dist-compˢ*ˢ (_ ∷ S) =  trans lift-dist-compˢˢ (cong1 (_↑ˢ _) (lift-dist-compˢ*ˢ S))
 
 {-# REWRITE 
 lift-id def-ext-zero def-ext-suc def-lift    

@@ -332,18 +332,18 @@ opaque
     (t ⋯ᴿ ρ₂) ⋯ᴿ wkᴿ _          ≡⟨ cong1 (_⋯ᴿ (wkᴿ _)) (sym (coincidence {t = t})) ⟩ 
     (t ⋯ˢ ⟨ ρ₂ ⟩) ⋯ᴿ wkᴿ _      ∎ }
 
-  lift-dist-comp*ˢᴿ : ∀ S → ((σ₁ ↑ˢ* S) ⨟ ⟨ ρ₂ ↑ᴿ* S ⟩) ≡ ((σ₁ ⨟ ⟨ ρ₂ ⟩) ↑ˢ* S )
-  lift-dist-comp*ˢᴿ []      = refl 
-  lift-dist-comp*ˢᴿ {σ₁ = σ₁} (_ ∷ S) =  trans (lift-dist-compˢᴿ {σ₁ = σ₁ ↑ˢ* S}) (cong1 (_↑ˢ _) (lift-dist-comp*ˢᴿ {σ₁ = σ₁} S))
+  lift-dist-compˢ*ᴿ : ∀ S → ((σ₁ ↑ˢ* S) ⨟ ⟨ ρ₂ ↑ᴿ* S ⟩) ≡ ((σ₁ ⨟ ⟨ ρ₂ ⟩) ↑ˢ* S )
+  lift-dist-compˢ*ᴿ []      = refl 
+  lift-dist-compˢ*ᴿ {σ₁ = σ₁} (_ ∷ S) =  trans (lift-dist-compˢᴿ {σ₁ = σ₁ ↑ˢ* S}) (cong1 (_↑ˢ _) (lift-dist-compˢ*ᴿ {σ₁ = σ₁} S))
  
   compositionalityˢᴿ {σ₁ = σ₁} (var x)  = sym (coincidence {t = σ₁ _ x})
   compositionalityˢᴿ {σ₁ = σ₁} (arr ty0 ty1)  = cong2 arr (compositionalityˢᴿ ty0) (compositionalityˢᴿ ty1)
-  compositionalityˢᴿ {σ₁ = σ₁} (all ty0)      = cong1 all (trans (compositionalityˢᴿ ty0) (cong1 (ty0 ⋯ˢ_) (lift-dist-comp*ˢᴿ {σ₁ = σ₁} (ty ∷ []))))
+  compositionalityˢᴿ {σ₁ = σ₁} (all ty0)      = cong1 all (trans (compositionalityˢᴿ ty0) (cong1 (ty0 ⋯ˢ_) (lift-dist-compˢ*ᴿ {σ₁ = σ₁} (ty ∷ []))))
   compositionalityˢᴿ {σ₁ = σ₁} (app tm0 tm1)  = cong2 app (compositionalityˢᴿ tm0) (compositionalityˢᴿ tm1)
   compositionalityˢᴿ {σ₁ = σ₁} (tapp tm0 ty0) = cong2 tapp (compositionalityˢᴿ tm0) (compositionalityˢᴿ ty0)
   compositionalityˢᴿ {σ₁ = σ₁} (vt vl0)       = cong1 vt (compositionalityˢᴿ vl0)
-  compositionalityˢᴿ {σ₁ = σ₁} (lam ty0 tm0)  = cong2 lam (compositionalityˢᴿ ty0) (trans (compositionalityˢᴿ tm0) (cong1 (tm0 ⋯ˢ_) (lift-dist-comp*ˢᴿ {σ₁ = σ₁} (vl ∷ []))))
-  compositionalityˢᴿ {σ₁ = σ₁} (tlam tm0)     = cong1 tlam (trans (compositionalityˢᴿ tm0) (cong1 (tm0 ⋯ˢ_) (lift-dist-comp*ˢᴿ {σ₁ = σ₁} (ty ∷ []))))
+  compositionalityˢᴿ {σ₁ = σ₁} (lam ty0 tm0)  = cong2 lam (compositionalityˢᴿ ty0) (trans (compositionalityˢᴿ tm0) (cong1 (tm0 ⋯ˢ_) (lift-dist-compˢ*ᴿ {σ₁ = σ₁} (vl ∷ []))))
+  compositionalityˢᴿ {σ₁ = σ₁} (tlam tm0)     = cong1 tlam (trans (compositionalityˢᴿ tm0) (cong1 (tm0 ⋯ˢ_) (lift-dist-compˢ*ᴿ {σ₁ = σ₁} (ty ∷ []))))
   lift-dist-compˢˢ : ((σ₁ ↑ˢ s) ⨟ (σ₂ ↑ˢ s)) ≡ ((σ₁ ⨟ σ₂) ↑ˢ s)
   lift-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂} = ext λ { zero → refl; (suc x) → 
     let t = σ₁ _ x in
@@ -353,18 +353,18 @@ opaque
     t ⋯ˢ (σ₂ ⨟ ⟨ (wkᴿ _) ⟩)        ≡⟨ sym (compositionalityˢᴿ t) ⟩ 
     (t ⋯ˢ σ₂) ⋯ᴿ (wkᴿ _)           ∎ }
   
-  lift-dist-comp*ˢˢ : ∀ S →  ((σ₁ ↑ˢ* S) ⨟ (σ₂ ↑ˢ* S)) ≡ ((σ₁ ⨟ σ₂) ↑ˢ* S)
-  lift-dist-comp*ˢˢ []      = refl 
-  lift-dist-comp*ˢˢ  {σ₁ = σ₁} {σ₂ = σ₂} (_ ∷ S) =  trans (lift-dist-compˢˢ {σ₁ = σ₁ ↑ˢ* S} {σ₂ = σ₂ ↑ˢ* S}) (cong1 (_↑ˢ _) (lift-dist-comp*ˢˢ {σ₁ = σ₁} {σ₂ = σ₂} S))
+  lift-dist-compˢ*ˢ : ∀ S →  ((σ₁ ↑ˢ* S) ⨟ (σ₂ ↑ˢ* S)) ≡ ((σ₁ ⨟ σ₂) ↑ˢ* S)
+  lift-dist-compˢ*ˢ []      = refl 
+  lift-dist-compˢ*ˢ  {σ₁ = σ₁} {σ₂ = σ₂} (_ ∷ S) =  trans (lift-dist-compˢˢ {σ₁ = σ₁ ↑ˢ* S} {σ₂ = σ₂ ↑ˢ* S}) (cong1 (_↑ˢ _) (lift-dist-compˢ*ˢ {σ₁ = σ₁} {σ₂ = σ₂} S))
 
   compositionalityˢˢ (var x)  = refl
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (arr ty0 ty1)  = cong2 arr (compositionalityˢˢ ty0) (compositionalityˢˢ ty1)
-  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (all ty0)      = cong1 all (trans (compositionalityˢˢ ty0) (cong1 (ty0 ⋯ˢ_) (lift-dist-comp*ˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (ty ∷ []))))
+  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (all ty0)      = cong1 all (trans (compositionalityˢˢ ty0) (cong1 (ty0 ⋯ˢ_) (lift-dist-compˢ*ˢ {σ₁ = σ₁} {σ₂ = σ₂} (ty ∷ []))))
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (app tm0 tm1)  = cong2 app (compositionalityˢˢ tm0) (compositionalityˢˢ tm1)
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (tapp tm0 ty0) = cong2 tapp (compositionalityˢˢ tm0) (compositionalityˢˢ ty0)
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (vt vl0)       = cong1 vt (compositionalityˢˢ vl0)
-  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (lam ty0 tm0)  = cong2 lam (compositionalityˢˢ ty0) (trans (compositionalityˢˢ tm0) (cong1 (tm0 ⋯ˢ_) (lift-dist-comp*ˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (vl ∷ []))))
-  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (tlam tm0)     = cong1 tlam (trans (compositionalityˢˢ tm0) (cong1 (tm0 ⋯ˢ_) (lift-dist-comp*ˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (ty ∷ []))))
+  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (lam ty0 tm0)  = cong2 lam (compositionalityˢˢ ty0) (trans (compositionalityˢˢ tm0) (cong1 (tm0 ⋯ˢ_) (lift-dist-compˢ*ˢ {σ₁ = σ₁} {σ₂ = σ₂} (vl ∷ []))))
+  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (tlam tm0)     = cong1 tlam (trans (compositionalityˢˢ tm0) (cong1 (tm0 ⋯ˢ_) (lift-dist-compˢ*ˢ {σ₁ = σ₁} {σ₂ = σ₂} (ty ∷ []))))
 
   coincidence {t = t} {ρ = ρ} = 
     t ⋯ˢ (⟨ ρ ⟩ ⨟ idˢ) ≡⟨ sym (compositionalityᴿˢ t) ⟩ 

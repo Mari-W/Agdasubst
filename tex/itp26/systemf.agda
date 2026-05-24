@@ -1,4 +1,4 @@
-{-# OPTIONS --rewriting --double-check --local-confluence-check #-}
+{-# OPTIONS --rewriting --double-check --confluence-check #-}
 module systemf where
 
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; trans; module ≡-Reasoning)

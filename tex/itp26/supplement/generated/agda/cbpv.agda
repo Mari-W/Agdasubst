@@ -525,9 +525,9 @@ opaque
     (t ⋯ᴿ ρ₂) ⋯ᴿ wkᴿ _          ≡⟨ cong1 (_⋯ᴿ (wkᴿ _)) (sym (coincidence {t = t})) ⟩ 
     (t ⋯ˢ ⟨ ρ₂ ⟩) ⋯ᴿ wkᴿ _      ∎ }
 
-  lift-dist-comp*ˢᴿ : ∀ S → ((σ₁ ↑ˢ* S) ⨟ ⟨ ρ₂ ↑ᴿ* S ⟩) ≡ ((σ₁ ⨟ ⟨ ρ₂ ⟩) ↑ˢ* S )
-  lift-dist-comp*ˢᴿ []      = refl 
-  lift-dist-comp*ˢᴿ {σ₁ = σ₁} (_ ∷ S) =  trans (lift-dist-compˢᴿ {σ₁ = σ₁ ↑ˢ* S}) (cong1 (_↑ˢ _) (lift-dist-comp*ˢᴿ {σ₁ = σ₁} S))
+  lift-dist-compˢ*ᴿ : ∀ S → ((σ₁ ↑ˢ* S) ⨟ ⟨ ρ₂ ↑ᴿ* S ⟩) ≡ ((σ₁ ⨟ ⟨ ρ₂ ⟩) ↑ˢ* S )
+  lift-dist-compˢ*ᴿ []      = refl 
+  lift-dist-compˢ*ᴿ {σ₁ = σ₁} (_ ∷ S) =  trans (lift-dist-compˢᴿ {σ₁ = σ₁ ↑ˢ* S}) (cong1 (_↑ˢ _) (lift-dist-compˢ*ᴿ {σ₁ = σ₁} S))
  
   compositionalityˢᴿ {σ₁ = σ₁} (var x)  = sym (coincidence {t = σ₁ _ x})
   compositionalityˢᴿ zeroo                                = refl
@@ -545,15 +545,15 @@ opaque
   compositionalityˢᴿ {σ₁ = σ₁} (thunk comp0)              = cong1 thunk (compositionalityˢᴿ comp0)
   compositionalityˢᴿ cu                                   = refl
   compositionalityˢᴿ {σ₁ = σ₁} (force value0)             = cong1 force (compositionalityˢᴿ value0)
-  compositionalityˢᴿ {σ₁ = σ₁} (lambda comp0)             = cong1 lambda (trans (compositionalityˢᴿ comp0) (cong1 (comp0 ⋯ˢ_) (lift-dist-comp*ˢᴿ {σ₁ = σ₁} (value ∷ []))))
+  compositionalityˢᴿ {σ₁ = σ₁} (lambda comp0)             = cong1 lambda (trans (compositionalityˢᴿ comp0) (cong1 (comp0 ⋯ˢ_) (lift-dist-compˢ*ᴿ {σ₁ = σ₁} (value ∷ []))))
   compositionalityˢᴿ {σ₁ = σ₁} (app comp0 value0)         = cong2 app (compositionalityˢᴿ comp0) (compositionalityˢᴿ value0)
   compositionalityˢᴿ {σ₁ = σ₁} (tuple comp0 comp1)        = cong2 tuple (compositionalityˢᴿ comp0) (compositionalityˢᴿ comp1)
   compositionalityˢᴿ {σ₁ = σ₁} (ret value0)               = cong1 ret (compositionalityˢᴿ value0)
-  compositionalityˢᴿ {σ₁ = σ₁} (letin comp0 comp1)        = cong2 letin (compositionalityˢᴿ comp0) (trans (compositionalityˢᴿ comp1) (cong1 (comp1 ⋯ˢ_) (lift-dist-comp*ˢᴿ {σ₁ = σ₁} (value ∷ []))))
+  compositionalityˢᴿ {σ₁ = σ₁} (letin comp0 comp1)        = cong2 letin (compositionalityˢᴿ comp0) (trans (compositionalityˢᴿ comp1) (cong1 (comp1 ⋯ˢ_) (lift-dist-compˢ*ᴿ {σ₁ = σ₁} (value ∷ []))))
   compositionalityˢᴿ {σ₁ = σ₁} (proj bool0 comp0)         = cong2 proj (compositionalityˢᴿ bool0) (compositionalityˢᴿ comp0)
   compositionalityˢᴿ {σ₁ = σ₁} (caseZ value0)             = cong1 caseZ (compositionalityˢᴿ value0)
-  compositionalityˢᴿ {σ₁ = σ₁} (caseS value0 comp0 comp1) = cong3 caseS (compositionalityˢᴿ value0) (trans (compositionalityˢᴿ comp0) (cong1 (comp0 ⋯ˢ_) (lift-dist-comp*ˢᴿ {σ₁ = σ₁} (value ∷ [])))) (trans (compositionalityˢᴿ comp1) (cong1 (comp1 ⋯ˢ_) (lift-dist-comp*ˢᴿ {σ₁ = σ₁} (value ∷ []))))
-  compositionalityˢᴿ {σ₁ = σ₁} (caseP value0 comp0)       = cong2 caseP (compositionalityˢᴿ value0) (trans (compositionalityˢᴿ comp0) (cong1 (comp0 ⋯ˢ_) (lift-dist-comp*ˢᴿ {σ₁ = σ₁} (value ∷ value ∷ []))))
+  compositionalityˢᴿ {σ₁ = σ₁} (caseS value0 comp0 comp1) = cong3 caseS (compositionalityˢᴿ value0) (trans (compositionalityˢᴿ comp0) (cong1 (comp0 ⋯ˢ_) (lift-dist-compˢ*ᴿ {σ₁ = σ₁} (value ∷ [])))) (trans (compositionalityˢᴿ comp1) (cong1 (comp1 ⋯ˢ_) (lift-dist-compˢ*ᴿ {σ₁ = σ₁} (value ∷ []))))
+  compositionalityˢᴿ {σ₁ = σ₁} (caseP value0 comp0)       = cong2 caseP (compositionalityˢᴿ value0) (trans (compositionalityˢᴿ comp0) (cong1 (comp0 ⋯ˢ_) (lift-dist-compˢ*ᴿ {σ₁ = σ₁} (value ∷ value ∷ []))))
   lift-dist-compˢˢ : ((σ₁ ↑ˢ s) ⨟ (σ₂ ↑ˢ s)) ≡ ((σ₁ ⨟ σ₂) ↑ˢ s)
   lift-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂} = ext λ { zero → refl; (suc x) → 
     let t = σ₁ _ x in
@@ -563,9 +563,9 @@ opaque
     t ⋯ˢ (σ₂ ⨟ ⟨ (wkᴿ _) ⟩)        ≡⟨ sym (compositionalityˢᴿ t) ⟩ 
     (t ⋯ˢ σ₂) ⋯ᴿ (wkᴿ _)           ∎ }
   
-  lift-dist-comp*ˢˢ : ∀ S →  ((σ₁ ↑ˢ* S) ⨟ (σ₂ ↑ˢ* S)) ≡ ((σ₁ ⨟ σ₂) ↑ˢ* S)
-  lift-dist-comp*ˢˢ []      = refl 
-  lift-dist-comp*ˢˢ  {σ₁ = σ₁} {σ₂ = σ₂} (_ ∷ S) =  trans (lift-dist-compˢˢ {σ₁ = σ₁ ↑ˢ* S} {σ₂ = σ₂ ↑ˢ* S}) (cong1 (_↑ˢ _) (lift-dist-comp*ˢˢ {σ₁ = σ₁} {σ₂ = σ₂} S))
+  lift-dist-compˢ*ˢ : ∀ S →  ((σ₁ ↑ˢ* S) ⨟ (σ₂ ↑ˢ* S)) ≡ ((σ₁ ⨟ σ₂) ↑ˢ* S)
+  lift-dist-compˢ*ˢ []      = refl 
+  lift-dist-compˢ*ˢ  {σ₁ = σ₁} {σ₂ = σ₂} (_ ∷ S) =  trans (lift-dist-compˢˢ {σ₁ = σ₁ ↑ˢ* S} {σ₂ = σ₂ ↑ˢ* S}) (cong1 (_↑ˢ _) (lift-dist-compˢ*ˢ {σ₁ = σ₁} {σ₂ = σ₂} S))
 
   compositionalityˢˢ (var x)  = refl
   compositionalityˢˢ zeroo                                          = refl
@@ -583,15 +583,15 @@ opaque
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (thunk comp0)              = cong1 thunk (compositionalityˢˢ comp0)
   compositionalityˢˢ cu                                             = refl
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (force value0)             = cong1 force (compositionalityˢˢ value0)
-  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (lambda comp0)             = cong1 lambda (trans (compositionalityˢˢ comp0) (cong1 (comp0 ⋯ˢ_) (lift-dist-comp*ˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (value ∷ []))))
+  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (lambda comp0)             = cong1 lambda (trans (compositionalityˢˢ comp0) (cong1 (comp0 ⋯ˢ_) (lift-dist-compˢ*ˢ {σ₁ = σ₁} {σ₂ = σ₂} (value ∷ []))))
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (app comp0 value0)         = cong2 app (compositionalityˢˢ comp0) (compositionalityˢˢ value0)
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (tuple comp0 comp1)        = cong2 tuple (compositionalityˢˢ comp0) (compositionalityˢˢ comp1)
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (ret value0)               = cong1 ret (compositionalityˢˢ value0)
-  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (letin comp0 comp1)        = cong2 letin (compositionalityˢˢ comp0) (trans (compositionalityˢˢ comp1) (cong1 (comp1 ⋯ˢ_) (lift-dist-comp*ˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (value ∷ []))))
+  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (letin comp0 comp1)        = cong2 letin (compositionalityˢˢ comp0) (trans (compositionalityˢˢ comp1) (cong1 (comp1 ⋯ˢ_) (lift-dist-compˢ*ˢ {σ₁ = σ₁} {σ₂ = σ₂} (value ∷ []))))
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (proj bool0 comp0)         = cong2 proj (compositionalityˢˢ bool0) (compositionalityˢˢ comp0)
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (caseZ value0)             = cong1 caseZ (compositionalityˢˢ value0)
-  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (caseS value0 comp0 comp1) = cong3 caseS (compositionalityˢˢ value0) (trans (compositionalityˢˢ comp0) (cong1 (comp0 ⋯ˢ_) (lift-dist-comp*ˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (value ∷ [])))) (trans (compositionalityˢˢ comp1) (cong1 (comp1 ⋯ˢ_) (lift-dist-comp*ˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (value ∷ []))))
-  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (caseP value0 comp0)       = cong2 caseP (compositionalityˢˢ value0) (trans (compositionalityˢˢ comp0) (cong1 (comp0 ⋯ˢ_) (lift-dist-comp*ˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (value ∷ value ∷ []))))
+  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (caseS value0 comp0 comp1) = cong3 caseS (compositionalityˢˢ value0) (trans (compositionalityˢˢ comp0) (cong1 (comp0 ⋯ˢ_) (lift-dist-compˢ*ˢ {σ₁ = σ₁} {σ₂ = σ₂} (value ∷ [])))) (trans (compositionalityˢˢ comp1) (cong1 (comp1 ⋯ˢ_) (lift-dist-compˢ*ˢ {σ₁ = σ₁} {σ₂ = σ₂} (value ∷ []))))
+  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (caseP value0 comp0)       = cong2 caseP (compositionalityˢˢ value0) (trans (compositionalityˢˢ comp0) (cong1 (comp0 ⋯ˢ_) (lift-dist-compˢ*ˢ {σ₁ = σ₁} {σ₂ = σ₂} (value ∷ value ∷ []))))
 
   coincidence {t = t} {ρ = ρ} = 
     t ⋯ˢ (⟨ ρ ⟩ ⨟ idˢ) ≡⟨ sym (compositionalityᴿˢ t) ⟩ 

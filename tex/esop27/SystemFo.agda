@@ -591,8 +591,8 @@ Idˢ _ = `_
 Wkˢ : ∀ T → ⟨ idᴿ ⟩ ∣ Γ ⇒ˢ (Γ ▷ T)
 Wkˢ _ = idᴿ ∣⟪ Wkᴿ _ ⟫
 
-wkᴿ*ˢ : ∀ J → ⟨ wkᴿ J ⟩ ∣ Γ ⇒ˢ ((Γ ▷*) {J})
-wkᴿ*ˢ J = wkᴿ J ∣⟪ wkᴿ* J ⟫
+wkˢ* : ∀ J → ⟨ wkᴿ J ⟩ ∣ Γ ⇒ˢ ((Γ ▷*) {J})
+wkˢ* J = wkᴿ J ∣⟪ wkᴿ* J ⟫
 
 -- extending a substitution
 --! Extension

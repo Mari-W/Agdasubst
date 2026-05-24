@@ -734,9 +734,9 @@ opaque
     (t ⋯ᴿ ρ₂) ⋯ᴿ wk _          ≡⟨ cong1 (_⋯ᴿ (wk _)) (sym coincidence) ⟩ 
     (t ⋯ˢ ⟨ ρ₂ ⟩) ⋯ᴿ wk _      ∎ }
 
-  lift-dist-comp*ˢᴿ : ∀ S → ((σ₁ ↑ˢ* S) ⨟ ⟨ ρ₂ ↑ᴿ* S ⟩) ≡ ((σ₁ ⨟ ⟨ ρ₂ ⟩) ↑ˢ* S )
-  lift-dist-comp*ˢᴿ []      = refl 
-  lift-dist-comp*ˢᴿ (_ ∷ S) =  trans lift-dist-compˢᴿ (cong1 (_↑ˢ _) (lift-dist-comp*ˢᴿ S))
+  lift-dist-compˢ*ᴿ : ∀ S → ((σ₁ ↑ˢ* S) ⨟ ⟨ ρ₂ ↑ᴿ* S ⟩) ≡ ((σ₁ ⨟ ⟨ ρ₂ ⟩) ↑ˢ* S )
+  lift-dist-compˢ*ᴿ []      = refl 
+  lift-dist-compˢ*ᴿ (_ ∷ S) =  trans lift-dist-compˢᴿ (cong1 (_↑ˢ _) (lift-dist-compˢ*ᴿ S))
  
   compositionalityˢᴿ {m = V} x  = sym coincidence
   compositionalityˢᴿ (var x)  = sym coincidence
@@ -752,9 +752,9 @@ opaque
     t ⋯ˢ (σ₂ ⨟ ⟨ (wk _) ⟩)        ≡⟨ sym (compositionalityˢᴿ t) ⟩ 
     (t ⋯ˢ σ₂) ⋯ᴿ (wk _)           ∎ }
   
-  lift-dist-comp*ˢˢ : ∀ S →  ((σ₁ ↑ˢ* S) ⨟ (σ₂ ↑ˢ* S)) ≡ ((σ₁ ⨟ σ₂) ↑ˢ* S)
-  lift-dist-comp*ˢˢ []      = refl 
-  lift-dist-comp*ˢˢ (_ ∷ S) =  trans lift-dist-compˢˢ (cong1 (_↑ˢ _) (lift-dist-comp*ˢˢ S))
+  lift-dist-compˢ*ˢ : ∀ S →  ((σ₁ ↑ˢ* S) ⨟ (σ₂ ↑ˢ* S)) ≡ ((σ₁ ⨟ σ₂) ↑ˢ* S)
+  lift-dist-compˢ*ˢ []      = refl 
+  lift-dist-compˢ*ˢ (_ ∷ S) =  trans lift-dist-compˢˢ (cong1 (_↑ˢ _) (lift-dist-compˢ*ˢ S))
 
   compositionalityˢˢ {m = V} x  = refl
   compositionalityˢˢ (var x)  = refl
@@ -817,8 +817,8 @@ def generate_agda(sig: Signature) -> str:
         right_id=generate_id_lemma(sig, "right-id", "⋯ᴿ_", "beta-lift-id*"),
         compositionality_rr=generate_compositionality_lemma(sig, "compositionalityᴿᴿ", "⋯ᴿ_", "lift-dist-comp*ᴿᴿ"),
         compositionality_rs=generate_compositionality_lemma(sig, "compositionalityᴿˢ", "⋯ˢ_", "lift-dist-comp*ᴿˢ"),
-        compositionality_sr=generate_compositionality_lemma(sig, "compositionalityˢᴿ", "⋯ˢ_", "lift-dist-comp*ˢᴿ"),
-        compositionality_ss=generate_compositionality_lemma(sig, "compositionalityˢˢ", "⋯ˢ_", "lift-dist-comp*ˢˢ"),
+        compositionality_sr=generate_compositionality_lemma(sig, "compositionalityˢᴿ", "⋯ˢ_", "lift-dist-compˢ*ᴿ"),
+        compositionality_ss=generate_compositionality_lemma(sig, "compositionalityˢˢ", "⋯ˢ_", "lift-dist-compˢ*ˢ"),
         rewrite_block=generate_rewrite_block(sig)
     )
 

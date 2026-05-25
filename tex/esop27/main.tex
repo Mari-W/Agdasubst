@@ -432,40 +432,37 @@ The analogous results for renamings follow exactly the same pattern.
 
 
 \subsection{A Note on Safety}
-% TODO[MW]: insert citations
 \label{sec:safety}
-Turning propositional equalities into definitional ones is a delicate
-act in a proof assistant based on a rich dependent type theory, where we care a lot
-about safety and consistency. Systems like Dedukti~\cite{} are more
-centered on rewrite rules, but do not feature the full computational machinery
-that Agda offers. Combining rewrite rules dependent type theories, such as MLTT~\cite{} or CiC~\cite{} 
-is a recently emerging field, first explored by the
-addition of rewrite rules to Agda and Rocq~\cite{}, and continued by
-ongoing research on \emph{local} rewrite rules~\cite{}.
+The theory underlying a proof assistant must be sound and consistent.
+Hence, it is a delicate act turning propositional equalities into definitional ones, 
+for example by adding rewrite rules, because 
+it can endanger both soundness and consistency.
+Such a combination of rewrite rules and rich dependent type theories
+is recently explored by the
+addition of rewrite rules to Agda~\cite{cockx:LIPIcs.TYPES.2019.2} and Rocq~\cite{leray_et_al:LIPIcs.ITP.2024.26}, and continued by
+ongoing research on \emph{local} rewrite rules~\cite{10.1145/3776704}.
 
 Rewrite rules and the reductions of a dependently typed
 system interact in non-trivial ways. Hence, it is important to have criteria
 when it is safe to add rewrites. We justify
 making the equations from \cref{sec:laws-renam-subst-1}
 definitional by appealing to the approach put forward for Rewriting
-Type Theory (RTT) \cite{RTT}, which is implemented
+Type Theory (RTT)~\cite{10.1145/3434341}, which is implemented
 in Agda. In RTT, the reduction relation is extended by turning
 propositional equalities into reduction rules: a term matched by the
 left-hand side of an equation reduces to the right-hand side, exactly
 like in \cref{sec:laws-renam-subst-1}. The two properties we wish
-to preserve when adding rewrite rules are \emph{soundness} (i.e.,
-subject reduction) and \emph{consistency}. In particular, the type
+to preserve when adding rewrite rules are subject reduction and consistency. In particular, the type
 checker assumes subject reduction and it would break without it.
 
 To uphold subject reduction, the critical property of the rewriting
 equations is that they are confluent \emph{with respect to the already
 existing reduction rules}. Agda already provides a plethora of
 reduction rules, which are proved confluent: $\beta$, $\eta$ (function and record expansion),
-$\delta$ (definition unfolding), and $\iota$ (dependent pattern matching clauses). 
-Additional rewrite rules must interact nicely with all of them to retain confluence. 
-Agda checks this using a simple syntactic criterion called the triangle
-property. Confluence holds when every critical pair of left-hand sides 
-can be joined in a single rewriting step that lies on a common reduct, 
+$\delta$ (definition unfolding), and $\iota$ (dependent pattern matching clauses).  
+Agda checks confluence of the extended system using a
+conservative set of simple syntactic criterions~\cite{cockx2021taming}.
+
 %% PT: not our business in this paper
 % This check does not require termination. Notably, termination is \emph{not}
 % a critical property, because it does not affect soundness or consistency, 
@@ -474,22 +471,48 @@ can be joined in a single rewriting step that lies on a common reduct,
 
 Some $\beta$ and $\iota$ reductions arising from the functional
 definitions of renamings and substitutions in \cref{fig:system-f-ren-sub}
-interfere with the intended rewrite equalities. For this reason, we
+interfere with the intended rewrite equalities by breaking confluence. For this reason, we
 explicitly hide these definitions inside an \AgdaKeyword{opaque} block,
 so that only the equations we install with \AgdaKeyword{REWRITE} defines
 their reduction behaviour.
+
+As a concrete example, consider the substitution
+$\eta$-law: \AgdaSymbol{(}\AgdaInductiveConstructor{zero}\,\AgdaFunction{\&ˢ}\,\AgdaBound{η}\AgdaSymbol{)}\,\AgdaFunction{∙ˢ}\,\AgdaSymbol{(}\AgdaFunction{⟨}\,\AgdaFunction{wkᴿ}\,\AgdaFunction{⟩}\,\AgdaFunction{⨟ˢ}\,\AgdaBound{η}\AgdaSymbol{)}\,\AgdaDatatype{≡}\,\AgdaBound{η}.
+Without the \AgdaKeyword{opaque} block, the underlying definition
+\AgdaSymbol{(}\AgdaBound{η₁}\,\AgdaFunction{⨟ˢ}\,\AgdaBound{η₂}\AgdaSymbol{)}\,\AgdaBound{α}\,\AgdaSymbol{=}\,\AgdaSymbol{(}\AgdaBound{η₁}\,\AgdaBound{α}\AgdaSymbol{)}\,\AgdaFunction{[}\,\AgdaBound{η₂}\,\AgdaFunction{]ˢ}
+would $\delta$-unfold the inner composition
+\AgdaFunction{⟨}\,\AgdaFunction{wkᴿ}\,\AgdaFunction{⟩}\,\AgdaFunction{⨟ˢ}\,\AgdaBound{η}
+into the lambda
+\AgdaSymbol{$\lambda$}\,\AgdaBound{α}\,\AgdaSymbol{$\to$}\,\AgdaBound{η}\,\AgdaSymbol{(}\AgdaInductiveConstructor{suc}\,\AgdaBound{α}\AgdaSymbol{)},
+so that the entire left-hand side reduces to
+\AgdaSymbol{(}\AgdaBound{η}\,\AgdaInductiveConstructor{zero}\AgdaSymbol{)}\,\AgdaFunction{∙ˢ}\,\AgdaSymbol{(}\AgdaSymbol{$\lambda$}\,\AgdaBound{α}\,\AgdaSymbol{$\to$}\,\AgdaBound{η}\,\AgdaSymbol{(}\AgdaInductiveConstructor{suc}\,\AgdaBound{α}\AgdaSymbol{)}\AgdaSymbol{)}.
+Two issues arise. First, the rewrite engine would no longer be able to match the
+left-hand side syntactically during reduction\footnote{To see why, note that $\eta$ does not appear in pattern position here. A precise definition for pattern position is available in the Agda Wiki: \url{https://agda.readthedocs.io/en/latest/language/rewriting.html\#general-shape-of-rewrite-rules}}.
+Second, even if the rewrite rule were admitted, confluence would fail, because the two
+reducts \AgdaBound{η} (via the rewrite) and
+\AgdaSymbol{(}\AgdaBound{η}\,\AgdaInductiveConstructor{zero}\AgdaSymbol{)}\,\AgdaFunction{∙ˢ}\,\AgdaSymbol{(}\AgdaSymbol{$\lambda$}\,\AgdaBound{α}\,\AgdaSymbol{$\to$}\,\AgdaBound{η}\,\AgdaSymbol{(}\AgdaInductiveConstructor{suc}\,\AgdaBound{α}\AgdaSymbol{)}\AgdaSymbol{)}
+(via $\delta$-unfolding) are propositionally but not definitionally
+equal. Agda has $\eta$-equality for function types, but
+\AgdaFunction{∙ˢ} is defined by case analysis on its variable
+argument. The case-split therefore
+remains stuck on a neutral variable and cannot be collapsed back to
+\AgdaBound{η}.
+Hiding \AgdaFunction{⨟ˢ} (together with \AgdaFunction{∙ˢ} and the
+other operators) inside an \AgdaKeyword{opaque} block turns them into
+stuck symbols, restoring both matchability and
+confluence.
 
 %% PT: is this excursion to ETT important?
 Consistency is preserved as long as the equalities we rewrite are
 instantiated with proofs.
 This is easy to see, because RTT can be translated to extensional type
-theory~\cite{}, a theory known to be consistent. 
-The translation simply turns each rewrite rule reduction
-into an application of the \emph{equality reflection} rule, which
-internalizes arbitrary propositional equalities as definitional ones,
-at the cost of decidability of type checking.
-Due to this lack of decidability, extensional type theory is not a
-common candidate for a basis of a proof assistant.
+theory~\cite{cockx2021taming}, a theory known to be consistent. 
+% The translation simply turns each rewrite rule reduction
+% into an application of the \emph{equality reflection} rule, which
+% internalizes arbitrary propositional equalities as definitional ones,
+% at the cost of decidability of type checking.
+% Due to this lack of decidability, extensional type theory is not a
+% common candidate for a basis of a proof assistant.
 
 At present, Agda is the only mainstream proof assistant that supports
 the full feature set we require: functions whose reduction can be
@@ -499,16 +522,16 @@ and termination-independent confluence checking via the triangle property.
 Rocq currently lacks the ability to use defined functions as symbols inside rewrite equations 
 and the ability to instantiate these equations with
 proofs, but aside from these differences our method transfers to Rocq
-directly using its own rewrite rule implementation~\cite{}.
+directly using their rewrite rule implementation.
 
 %% PT: remove forward reference to transfer hell!
-In our formalization, we enable the \AgdaKeyword{OPTIONS}
-\texttt{-{}-rewriting} together with \texttt{-{}-confluence-check},
-which makes the use of rewriting safe, provided we trust the
-implementation of the confluence checker. With these newly and
-safely gained definitional equalities in place, we can continue
-to define expressions and expression substitution without ending
-up in transfer hell.
+% In our formalization, we enable the \AgdaKeyword{OPTIONS}
+% \texttt{-{}-rewriting} together with \texttt{-{}-confluence-check},
+% which makes the use of rewriting safe, provided we trust the
+% implementation of the confluence checker. With these newly and
+% safely gained definitional equalities in place, we can continue
+% to define expressions and expression substitution without ending
+% up in transfer hell.
 
 \section{System F Expressions}
 \label{sec:system-f-expressions}
@@ -695,7 +718,7 @@ cumbersome because transport lemmas have to be inserted to equalize
 the types of (Agda) expressions.
 
 % TODO[PT]: give a better motivation than this
-While proving type safety does \emph{not} require exercising same
+While proving type safety does \emph{not} require exercising the same
 theory at the \emph{expression level}, it is still good practice to
 verify functorial and monadic properties of expression
 substitutions. Moreover, if we were to move on to constructing and
@@ -716,6 +739,7 @@ same as applying their composition. This statement is a very prominent
 example of transfer hell: the types of the left and right side of the
 equality are different and would require a transfer without our
 rewriting machinery in place.
+% TODO[PT]: needs tranfer with compositonalityˢˢ on type level
 \SFExprSubCompositionalityType
 We show the proof of this property just do demonstrate that type
 adjustments for type substitutions can be ignored and we can
@@ -738,7 +762,7 @@ material gives the full story.
 
 \subsection{Comparison to a Proof in Transfer Hell}
 \label{sec:comparison-transfer-hell}
-
+% make very clear this is not our code and not WITHOUT rewriting.
 We now contrast our development with the same proof carried out without
 installing the $\sigma$-calculus equations as definitional equalities. As a
 point of comparison, we take the supplement of the logical relation
@@ -765,10 +789,10 @@ application---of their compositionality lemma.
 
 A first observation is that our development already saves one
 \AgdaFunction{subst} in the very definition of substitution application.
-Without the definitional $\sigma$-calculus, this saving is no longer
-available: the type application case requires the swap lemma of type
-\ExportSwap.
-\noindent to coerce the term to the expected type, leading to the following
+%Without the definitional $\sigma$-calculus, this saving is no longer
+%available: 
+The type application case requires the swap lemma of type
+\ExportSwap\ to coerce the term to the expected type, leading to the following
 definition.
 \ExportSubstInDef
 
@@ -799,15 +823,15 @@ constitutes one of the simplest forms of the argument.
   \item Fold the definition of expression substitution to conclude the
         proof.
 \end{enumerate}
-Of these, steps~(2), (4), the type coercion in~(5), and~(5),
+Of these, steps~(2), (4), the type coercion in~(5), and~(6),
 as well as the translation into heterogeneous equality, are entirely
-absent from our rewriting-based proof; only the application of the
+absent from our rewriting-based proof, only the application of the
 induction hypothesis and the implicit (un)folding of definitions remain.
 
 We complement this qualitative comparison with a quantitative one. The
 following table records the lines of code and number of characters
 required to mechanize the compositionality law for expression
-substitutions, together with the cold type-checking time of the
+substitutions, together with the type-checking time of the
 respective developments.
 
 \begin{center}
@@ -823,7 +847,7 @@ respective developments.
     \textbf{Total}                        & \textbf{416} & \textbf{23\,711}
                                           & \textbf{1\,690} & \textbf{82\,430} \\
     \hline
-    Type-check time (cold)                & \multicolumn{2}{c|}{4.49\,s}
+    Type-check time                       & \multicolumn{2}{c|}{4.49\,s}
                                           & \multicolumn{2}{c|}{9.51\,s} \\
     \hline
 \end{tabular}
@@ -833,8 +857,8 @@ As expected, the amount of code required to formalize type
 substitution is roughly the same in both developments. For
 expression substitutions, however, the picture changes:
 the transfer-hell version requires more than five times as many lines
-of code as the rewriting-based one. As a welcome side effect, the cold
-type-checking time is also reduced by roughly half when the
+of code as the rewriting-based one. As a welcome side effect, the
+type-checking time is also reduced by about 50\% when the
 $\sigma$-calculus equations are installed as rewrite rules.
 
 \subsection{Equational Theory for Expression Substitution}
@@ -843,13 +867,29 @@ hardest result has already been established. A natural question is
 whether we can go further and install a full equational theory for
 expression substitution as definitional equalities, just as we did at
 the type level. And in fact, we can. The $\sigma$-calculus for type-substitution-indexed
-expression substitutions looks essentially the same as the one for
+expression substitutions is an extension of the one for
 type substitutions in \cref{fig:system-f-sigma-calculus}, and the
-same holds analogously for expression renamings. The only additions
-are a handful of laws that govern weakening by \emph{type} variables
-on the expression level. Rather than reproducing the full rule set,
-we display only the \emph{new} laws that have no analog at the type level.
-% TODO[MW] ADD CODE
+same holds analogously for expression renamings.
+
+Expression substitutions carry additional operators that have no
+counterpart at the type level. 
+As a result, every substitution law from the
+type level that mentions extension or weakening splits into \emph{two}
+expression-level laws: one for the \emph{expression} variants
+(\AgdaFunction{\_∙ˢ\_}, \AgdaFunction{wkˢ}), which is a direct
+transcription of the corresponding rule from
+\cref{sec:laws-renam-subst-1}, and one for the \emph{type} variants
+(\AgdaFunction{\_∙ˢ*\_}, \AgdaFunction{wkˢ*}), which is genuinely
+new. We illustrate this pattern on the $\eta$-id law. The expression
+variant
+\SFExprSubEtaIdSub
+is a direct transcription of \AgdaFunction{$\eta$-id} from
+\cref{sec:laws-renam-subst-1}, whereas the type variant
+\SFExprSubEtaIdSubStar
+asserts that extending the type-binding weakening with the topmost
+type variable \AgdaInductiveConstructor{`\,zero} yields the identity
+expression substitution. The same doubling applies to the remaining
+laws in which extension or weakening appears ($\eta$, interact, distributivity and some $\beta$ laws).
 
 The full equational system is included in the supplement, and Agda
 verifies its confluence.
@@ -869,7 +909,7 @@ substitution inside.
 We have now made the equations of the $\sigma$-calculus definitional
 at two levels of the syntactic hierarchy: at the type level and at
 the expression level, where the latter \emph{depends} on the former.
-This points to a more general recipe. The same strategy applies to
+In general, this strategy applies to
 arbitrarily tall \emph{towers} of intrinsically typed syntaxes, in
 which each level's type indices themselves support substitution.
 
@@ -887,236 +927,190 @@ recipe proceeds bottom-up:
         $\sigma$-calculus laws for $T_i$, and install them as
         rewrite rules.
 \end{enumerate}
-The key precondition is that, when we define and prove the laws for
-level $i$, the laws for all lower levels are already definitional.
-Without this, the types of the level-$i$ operations would no longer
-match up on the nose, and we would be back in transfer hell. The
-ordering of the recipe is therefore essential, not merely
-methodological.
+The key is that the laws for all lower levels are already definitional, when we define and prove the laws for
+level $i$.
+Otherwise, the types of the level-$i$ operations would no longer
+match up on the nose, and we would be back in transfer hell. 
 
 The size of the equational theory grows with each level. A
 substitution at level $i$ can be lifted under a binder of any sort
 $T_0, \dots, T_{i-1}$, and each kind of binder induces its own
 family of laws, for weakening and extension, and the
 corresponding interactions with composition and traversal. At the
-type level this contributes no additional laws; at the expression
-level we already saw one new family, namely the laws governing
-weakening by \emph{type} variables; at level three one would add
-two further families, and so on. The rule count therefore grows
+type level this contributes no additional laws. At the expression
+level we already saw a few new laws, namely the laws governing
+weakening and extension by types. At level three one would add
+even more laws, and so on. The rule count therefore grows
 linearly with the level, but each new family follows the same
 template as the previous one, so the proof effort per family stays
 constant.
 
-Confluence of the extended equational theory is easy to see: the
-additional laws follow the same shapes as their type-level
-counterparts, so their critical pairs join by exactly the same
-triangle argument. Termination is not a
-concern: as discussed in \cref{sec:safety}, it does not affect
-soundness, and termination of the $\sigma$-calculus is well
-established.
+As a concrete instance, the System
+$\mathrm{F}^{\uparrow}_{C}$~\cite{10.1145/2103786.2103795} language
+features three levels: kinds, types, and
+expressions. Each level carries its own variables
+and substitution. Using our approach, it would be possible to construct
+an intrinsically typed representation for it and establish the
+substitution theory for all three levels uniformly, without any transfer
+reasoning.
 
-As a concrete instance, the development of~\cite{TODO} requires
-three such substitution hierarchies. We believe our approach would
-allow it to be mechanized intrinsically without any transfer reasoning.
-
-% TODO[MW]: explain the second layer equalitonal theory on expression substitution
-% TODO[MW]: explain how this generalizes to other syntaxes.
-% cite paper with multiple hierarchies
-
-% We now abstract over the techniques applied in the previous sections 
-% to practical guidelines that can be applied to other intrinsically typed 
-% syntaxes. We will assume a tower $T₁, T₂, \dots, T_n$ of syntactic sorts 
-% where $Tᵢ$ indexes $T_{i + 1}$. 
-% For instance, in our System F example $n$ is equal to 2 and we have 
-% the two sorts \texttt{Type} and \texttt{Expr}, where $\texttt{Type} < \texttt{Expr}$.
-% We further assume that all sorts feature variable binding and thereby require substitution. 
-% If a  sort does not have binders, it can be excluded from the tower, 
-% because it already enjoys all the relevant definitional equalities 
-% we require to build an intrinsically typed syntax. We do exactly this in the next section, where 
-% we introduce simple kinds to investigate System F$\omega$. We formulate our guidelines iteratively 
-% and starting with $i = 1$. We use $j$ for $j < i$ at any given stage.
-% We will add inline the code for our System F example, at stage $i = 2$.
-% \begin{itemize}
-%   \item Define the data type for sort $T_i$.
-%   \item Formulate renaming and substitution for $T_i$. Substitution (and renaming resp) will have the 
-%         type thats indexed $i$ many substitutions (or renamings resp.), one for all $T_j$. 
-%         It will then map a context with explicit weakening for variables of $T_j$ indexed by all the contexts for $T_j$ to another and can be modeled 
-%         by a function that uses the $T_j$ substitution operations. 
-%   \item Inside an \AgdaKeyword{opaque} block, we define the substitution 
-%         (and renaming resp) primitives, lookup  identit and composition follow directly, 
-%         but we need $i$ many extension, weakning (only for renaming) and lifiting operations, one for each $T_j$.
-%   \item While \AgdaKeyword{unfolding} the previous definitions we prove the sigma caclulus laws, 
-%         we will have x many beta laws, we need $i$ many for each extensions of the previous 
+% \section{System F$\omega$}
+% \label{sec:system-fomega}
 % 
-% \end{itemize}
+% % TODO[PT]: update to changes with the conversion relation
+% % TOOO[PT]: make clear this is an unsafe "encore"
 % 
-% To verify our claim we also provide the rewrite system for the sigma caclulus on the \emph{second}
-% stage of our index hierarchy, i.e. the $\sigma$-calculus for expressions. Due to 
-% % todo: explain additional wk lemmas 
-% % explain coincidence
-% We have already compared this two levels that use subsitution example with one
-% that does not use rewriting, and noticed the fast growing additional effort required 
-% to prove manage tranfer hell. When ones has even more levels, then this problem would 
-% get substantially worse, but with rewriting, it does only require a few more lines per 
-% definition and laws for formalizing substitution on each level.
-
-\section{System F$\omega$}
-\label{sec:system-fomega}
-
-% TODO[PT]: update to changes with the conversion relation
-% TOOO[PT]: make clear this is an unsafe "encore"
-
-% OR: decide to remove this. then the intro / contributions need to be updated
-
-System~F$\omega$ extends System~F with higher-kinded types, that is,
-abstraction over type functions. This calculus is the basis of
-Haskell's type system where type functions are limited to partial
-application of type constructors. Abstraction of higher-kinded types
-is key to defining type classes for functors, monads, etc. An
-extension of F$\omega$ with isorecursive types is the basis for
-Plutus, the language of the Cardano blockchain
-\cite{10.1007/978-3-030-33636-3_10}. 
-
-%TODO[PT]: we leave safety land here, i.e. rewrite on a postulated symbol.
-%also: now we are using the σλ theory! (also available in the explicit substitution papers)
-% also: we need to use --local-confluence-check instead of --confluence-check now, 
-%  which is a kown limitation of λσ! we thus assume that this theory terminates here.. 
-
-\subsection{Definitions}
-\label{sec:definitions}
-
-We only give a glimpse of the definitions of the syntax of types and
-expressions, which are taken from \cite{10.1007/978-3-030-33636-3_10}
-and hence generalize the definitions for System~F from
-\cref{sec:system-f}. We do not reiterate the development of renamings
-and substitutions, as it transfers mutatis mutandis: the typings get
-more involved, but the equational laws remain exactly the same.
-
-For System~F$\omega$, type variables have more structure as in
-System~F, as there are arrow kinds in addition to plain types. We use
-$I, J, K$ to range over types.
-\FOKind
-Consequently, kind contexts are not mere numbers, but lists of kinds
-that grow to the right. Kind contexts are ranged over by $\Phi, \Psi, \Theta$.
-\FOTypeCtx
-Type variables have the same structure as plain variables in the
-simply-typed lambda calculus (see \cref{fig:simply-typed-syntax}).
-\FOTypeVar
-
-The definition of the type syntax also mimicks the expressions of the
-simply-typed lambda calculus, but with an important
-twist, which deviates from the prior work. 
-\FOType
-As System~F$\omega$ enjoys full beta reduction at the type level, we
-do not define application (with symbol $\$$) as a data
-constructor. Instead, we introduce it as a symbol and use rewriting
-to extend functions on the type syntax to include application.
-
-As an example, we show the definition of applying a renaming to an
-expression. We elide the preceding definitions of lifting, extension,
-and the type substitution machinery because they are identical to the
-ones for System~F in \cref{sec:types}, save for the more elaborate type signatures.
-\FORenTraversal
-
-On top of the rewriting theory for type substitutions, we install type-level beta reduction as a rewrite rule,
-using single type substitution on the right side:
-\FOTypeBeta
-\FORewrite
-The combined theory is still confluent and terminating \cite{10.1145/96709.96712,10.1145/226643.226675}.
-
-Surprisingly, type-level beta reduction is not required to define the
-syntax of expressions, expression renamings and substitutions,
-defining the operational semantics, as well as the proof of
-type safety. Thanks to definitional beta conversion at the type level,
-the expression syntax does \emph{not} require an explicit type conversion
-rule as it was the case in prior work \cite{10.1007/978-3-030-33636-3_10}.
-Hence, the proof presented in
-\cref{fig:system-f-progress} for System~F carries over, mutatis
-mutandis (i.e., adapting the type signatures).
-
-In the next section, we develop some examples that genuinely rely on
-type conversion.
-
-\subsection{Examples}
-\label{sec:examples}
-
-\citet{10.1007/978-3-030-33636-3_10} consider several examples
-to demonstrate their encoding of System~F$\omega\mu$. Their first group
-of examples covers Church numerals in System~F. These are covered in
-\cref{sec:examples-1}. Their second group of example covers recursive
-types. We have no counterpart for them. Unfortunately, they do not
-provide examples that exercise the full power of System~F$\omega$,
-namely higher-kinded types! We fill this gap in the following.
-
-\subsubsection{Church Numerals}
-\label{sec:church-numerals}
-First, we encode (simply-typed) Church numerals \emph{in the type
-  language}. As beta reduction on the type level is definitional in
-our development, normalization of Church numerals is performed by
-Agda's type checker.
-
-The kind of type level Church numerals is as expected, and zero and
-successor are defined in the usual way. For readability, we
-define aliases like \AgdaFunction{$\lambda\beta$} and so on for the type level lambda
-\AgdaFunction{$\lambda\alpha$}. Analogously, we define aliases for type variables like
-\AgdaFunction{$`\alpha$} for \AgdaInductiveConstructor{` Z}, \AgdaFunction{$`\beta$} for \AgdaInductiveConstructor{` (S Z)}, and so on.
-
-\noindent\begin{minipage}[t]{0.35\linewidth}
-  \CNKind
-\end{minipage}\hfill\begin{minipage}[t]{0.6\linewidth}
-  \CNZeroSucc
-\end{minipage}
-
-\noindent We construct the Church numeral for $2$ by applying the successor
-twice to zero (left). The proof that this term is equal to its normal form is
-definitional. We further define addition and construct $2$ by adding $1+1$
-(right). The corresponding equality proof puts a significant load on the type
-checker and takes more than a minute to complete on the authors' machine.
-
-\noindent\begin{minipage}[t]{0.4\linewidth}
-  \CNTwoProof
-\end{minipage}\hfill\begin{minipage}[t]{0.55\linewidth}
-  \CNAddition
-\end{minipage}
-
-\subsubsection{Arrows}
-\label{sec:arrows}
-
-The final example is inspired by the work on arrows
-\cite{DBLP:journals/scp/Hughes00}. This work uses type classes to
-abstract over different instantiations of the function arrow. For
-clarity, we start with an Agda version of the function that we wish to
-implement in System~F$\omega$. 
-
-The function \AgdaFunction{abst} is a glorified identity function. It abstracts over a
-binary type constructor $\kappa$, two types $\beta$ and $\alpha$, then
-it takes an abstract application function $app$ and applies it to an
-abstract function $f$ and a suitable
-argument $x$. Function \AgdaFunction{inst} instantiates this function. It
-acts like an eliminator for \AgdaFunction{abst}. The function
-\AgdaFunction{use} puts both together.
-\FOPrelude
-
-We start by defining the type in our encoding, then encode the
-defining expression equivalent to \AgdaFunction{abst}.
-
-\noindent\begin{minipage}[t]{0.49\linewidth}
-  \FOTyApp
-\end{minipage}\hfill\begin{minipage}[t]{0.49\linewidth}
-  \FOAbstApp
-\end{minipage}
-
-\noindent To use this function, we encode functions \AgdaFunction{inst} and \AgdaFunction{use}.
-
-\noindent\begin{minipage}[t]{0.65\linewidth}
-  \FOInstApp
-\end{minipage}\hfill\begin{minipage}[t]{0.34\linewidth}
-  \FOUseApp
-\end{minipage}
-
-The definitions of the encodings require beta conversion at the type
-level. These definitions are not accepted without the rewriting of
-beta reduction \AgdaFunction{$\beta{\equiv}^*$}.
+% % OR: decide to remove this. then the intro / contributions need to be updated
+% 
+% System~F$\omega$ extends System~F with higher-kinded types, that is,
+% abstraction over type functions. This calculus is the basis of
+% Haskell's type system where type functions are limited to partial
+% application of type constructors. Abstraction of higher-kinded types
+% is key to defining type classes for functors, monads, etc. An
+% extension of F$\omega$ with isorecursive types is the basis for
+% Plutus, the language of the Cardano blockchain
+% \cite{10.1007/978-3-030-33636-3_10}. 
+% 
+% %TODO[PT]: we leave safety land here, i.e. rewrite on a postulated symbol.
+% %also: now we are using the σλ theory! (also available in the explicit substitution papers)
+% % also: we need to use --local-confluence-check instead of --confluence-check now, 
+% %  which is a kown limitation of λσ! we thus assume that this theory terminates here.. 
+% 
+% \subsection{Definitions}
+% \label{sec:definitions}
+% 
+% We only give a glimpse of the definitions of the syntax of types and
+% expressions, which are taken from \cite{10.1007/978-3-030-33636-3_10}
+% and hence generalize the definitions for System~F from
+% \cref{sec:system-f}. We do not reiterate the development of renamings
+% and substitutions, as it transfers mutatis mutandis: the typings get
+% more involved, but the equational laws remain exactly the same.
+% 
+% For System~F$\omega$, type variables have more structure as in
+% System~F, as there are arrow kinds in addition to plain types. We use
+% $I, J, K$ to range over types.
+% \FOKind
+% Consequently, kind contexts are not mere numbers, but lists of kinds
+% that grow to the right. Kind contexts are ranged over by $\Phi, \Psi, \Theta$.
+% \FOTypeCtx
+% Type variables have the same structure as plain variables in the
+% simply-typed lambda calculus (see \cref{fig:simply-typed-syntax}).
+% \FOTypeVar
+% 
+% The definition of the type syntax also mimicks the expressions of the
+% simply-typed lambda calculus, but with an important
+% twist, which deviates from the prior work. 
+% \FOType
+% As System~F$\omega$ enjoys full beta reduction at the type level, we
+% do not define application (with symbol $\$$) as a data
+% constructor. Instead, we introduce it as a symbol and use rewriting
+% to extend functions on the type syntax to include application.
+% 
+% As an example, we show the definition of applying a renaming to an
+% expression. We elide the preceding definitions of lifting, extension,
+% and the type substitution machinery because they are identical to the
+% ones for System~F in \cref{sec:types}, save for the more elaborate type signatures.
+% \FORenTraversal
+% 
+% On top of the rewriting theory for type substitutions, we install type-level beta reduction as a rewrite rule,
+% using single type substitution on the right side:
+% \FOTypeBeta
+% \FORewrite
+% The combined theory is still confluent and terminating \cite{10.1145/96709.96712,10.1145/226643.226675}.
+% 
+% Surprisingly, type-level beta reduction is not required to define the
+% syntax of expressions, expression renamings and substitutions,
+% defining the operational semantics, as well as the proof of
+% type safety. Thanks to definitional beta conversion at the type level,
+% the expression syntax does \emph{not} require an explicit type conversion
+% rule as it was the case in prior work \cite{10.1007/978-3-030-33636-3_10}.
+% Hence, the proof presented in
+% \cref{fig:system-f-progress} for System~F carries over, mutatis
+% mutandis (i.e., adapting the type signatures).
+% 
+% In the next section, we develop some examples that genuinely rely on
+% type conversion.
+% 
+% \subsection{Examples}
+% \label{sec:examples}
+% 
+% \citet{10.1007/978-3-030-33636-3_10} consider several examples
+% to demonstrate their encoding of System~F$\omega\mu$. Their first group
+% of examples covers Church numerals in System~F. These are covered in
+% \cref{sec:examples-1}. Their second group of example covers recursive
+% types. We have no counterpart for them. Unfortunately, they do not
+% provide examples that exercise the full power of System~F$\omega$,
+% namely higher-kinded types! We fill this gap in the following.
+% 
+% \subsubsection{Church Numerals}
+% \label{sec:church-numerals}
+% First, we encode (simply-typed) Church numerals \emph{in the type
+%   language}. As beta reduction on the type level is definitional in
+% our development, normalization of Church numerals is performed by
+% Agda's type checker.
+% 
+% The kind of type level Church numerals is as expected, and zero and
+% successor are defined in the usual way. For readability, we
+% define aliases like \AgdaFunction{$\lambda\beta$} and so on for the type level lambda
+% \AgdaFunction{$\lambda\alpha$}. Analogously, we define aliases for type variables like
+% \AgdaFunction{$`\alpha$} for \AgdaInductiveConstructor{` Z}, \AgdaFunction{$`\beta$} for \AgdaInductiveConstructor{` (S Z)}, and so on.
+% 
+% \noindent\begin{minipage}[t]{0.35\linewidth}
+%   \CNKind
+% \end{minipage}\hfill\begin{minipage}[t]{0.6\linewidth}
+%   \CNZeroSucc
+% \end{minipage}
+% 
+% \noindent We construct the Church numeral for $2$ by applying the successor
+% twice to zero (left). The proof that this term is equal to its normal form is
+% definitional. We further define addition and construct $2$ by adding $1+1$
+% (right). The corresponding equality proof puts a significant load on the type
+% checker and takes more than a minute to complete on the authors' machine.
+% 
+% \noindent\begin{minipage}[t]{0.4\linewidth}
+%   \CNTwoProof
+% \end{minipage}\hfill\begin{minipage}[t]{0.55\linewidth}
+%   \CNAddition
+% \end{minipage}
+% 
+% \subsubsection{Arrows}
+% \label{sec:arrows}
+% 
+% The final example is inspired by the work on arrows
+% \cite{DBLP:journals/scp/Hughes00}. This work uses type classes to
+% abstract over different instantiations of the function arrow. For
+% clarity, we start with an Agda version of the function that we wish to
+% implement in System~F$\omega$. 
+% 
+% The function \AgdaFunction{abst} is a glorified identity function. It abstracts over a
+% binary type constructor $\kappa$, two types $\beta$ and $\alpha$, then
+% it takes an abstract application function $app$ and applies it to an
+% abstract function $f$ and a suitable
+% argument $x$. Function \AgdaFunction{inst} instantiates this function. It
+% acts like an eliminator for \AgdaFunction{abst}. The function
+% \AgdaFunction{use} puts both together.
+% \FOPrelude
+% 
+% We start by defining the type in our encoding, then encode the
+% defining expression equivalent to \AgdaFunction{abst}.
+% 
+% \noindent\begin{minipage}[t]{0.49\linewidth}
+%   \FOTyApp
+% \end{minipage}\hfill\begin{minipage}[t]{0.49\linewidth}
+%   \FOAbstApp
+% \end{minipage}
+% 
+% \noindent To use this function, we encode functions \AgdaFunction{inst} and \AgdaFunction{use}.
+% 
+% \noindent\begin{minipage}[t]{0.65\linewidth}
+%   \FOInstApp
+% \end{minipage}\hfill\begin{minipage}[t]{0.34\linewidth}
+%   \FOUseApp
+% \end{minipage}
+% 
+% The definitions of the encodings require beta conversion at the type
+% level. These definitions are not accepted without the rewriting of
+% beta reduction \AgdaFunction{$\beta{\equiv}^*$}.
 
 
 \section{Conclusion}

@@ -521,8 +521,8 @@ Idˢ _ = `_
 Wkˢ : ∀ T → ⟨ idᴿ ⟩ ∣ Γ ⇒ˢ (Γ ▷ T)
 Wkˢ _ = idᴿ ∣⟪ Wkᴿ _ ⟫
 
-wkᴿ*ˢ : ⟨ wkᴿ ⟩ ∣ Γ ⇒ˢ (Γ ▷*)
-wkᴿ*ˢ = wkᴿ ∣⟪ wkᴿ* ⟫
+wkˢ* : ⟨ wkᴿ ⟩ ∣ Γ ⇒ˢ (Γ ▷*)
+wkˢ* = wkᴿ ∣⟪ wkᴿ* ⟫
 
 -- extending a substitution
 -- new symbol?

@@ -302,8 +302,8 @@ Idˢ _ = `_ -- no subst right-idˢ
 Wkˢ : ∀ T → idˢ ∣ Γ ⇒ˢ (Γ , T) 
 Wkˢ _ = idᴿ ∣⟪ Wk ⟫
 
-wk*ˢ : sucˢ ∣ Γ ⇒ˢ (Γ ,*) 
-wk*ˢ = suc ∣⟪ wk* ⟫
+wkˢ* : sucˢ ∣ Γ ⇒ˢ (Γ ,*) 
+wkˢ* = suc ∣⟪ wk* ⟫
 
 -- new symbol?
 _∣_∙_ : ∀ σ → Expr Γ₂ (T ⋯ˢ σ) → σ ∣ Γ₁ ⇒ˢ Γ₂ → σ ∣ (Γ₁ , T) ⇒ˢ Γ₂

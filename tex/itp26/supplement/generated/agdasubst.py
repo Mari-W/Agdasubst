@@ -21,15 +21,29 @@ class SortDecl:
 class Argument:
     binder_types: list[str]
     target_type: str
+    external: bool = False
 
     @property
     def is_binder(self) -> bool:
         return len(self.binder_types) > 0
 
+    @property
+    def var_base(self) -> str:
+        if not self.external:
+            return self.target_type
+        sanitized = "".join(ch for ch in self.target_type if ch.isalnum() or ch == "_")
+        if not sanitized:
+            return "ext"
+        if sanitized[0].isdigit():
+            sanitized = "_" + sanitized
+        return sanitized[0].lower() + sanitized[1:]
+
     def __repr__(self) -> str:
         if self.is_binder:
             binders = " -> ".join(self.binder_types)
             return f"({binders} -> {self.target_type})"
+        if self.external:
+            return f'"{self.target_type}"'
         return self.target_type
 
 
@@ -61,6 +75,7 @@ class TokenType(Enum):
     LPAREN = auto()  # (
     RPAREN = auto()  # )
     TYPE_KW = auto()  # Type
+    STRING_LITERAL = auto()  # "..."
     EOF = auto()
 
 
@@ -80,7 +95,8 @@ TOKEN_SPEC: list[tuple[TokenType | None, str]] = [
     (TokenType.RPAREN, r"\)"),
     (TokenType.COLON, r":"),
     (TokenType.TYPE_KW, r"\bType\b"),
-    (TokenType.ID, r"[a-zA-Z_][a-zA-Z0-9_]*"),
+    (TokenType.STRING_LITERAL, r'"[^"\n]*"'),
+    (TokenType.ID, r"[^\s():\"\-\d][^\s():\"\-]*"),
     (None, r"\s+"),
     (None, r"--[^\n]*"),
 ]
@@ -172,6 +188,10 @@ def parse_signature(tokens: list[Token]) -> Signature:
                 raise SyntaxError(
                     f"Constructor {id_token.value} cannot return a function/binder. Found: {parts[-1]}"
                 )
+            if parts[-1].external:
+                raise SyntaxError(
+                    f"Constructor {id_token.value} cannot return an external (quoted) type."
+                )
 
             arguments = parts[:-1]
             sig.constructors.append(
@@ -198,12 +218,18 @@ def parse_type_chain(tokens: list[Token], pos: int) -> tuple[list[Argument], int
 
 def parse_argument(tokens: list[Token], pos: int) -> tuple[Argument, int]:
     if peek(tokens, pos).type == TokenType.LPAREN:
+        lparen = peek(tokens, pos)
         _, pos = consume(tokens, pos, TokenType.LPAREN)
         inner_chain, pos = parse_type_chain(tokens, pos)
         _, pos = consume(tokens, pos, TokenType.RPAREN)
 
         if not inner_chain:
             raise SyntaxError("Empty parentheses in type signature.")
+
+        if any(a.external for a in inner_chain):
+            raise SyntaxError(
+                f"External (quoted) types are not allowed inside binders at line {lparen.line}:{lparen.column}"
+            )
 
         target = inner_chain[-1].target_type
         binder_types: list[str] = []
@@ -215,6 +241,10 @@ def parse_argument(tokens: list[Token], pos: int) -> tuple[Argument, int]:
     elif peek(tokens, pos).type == TokenType.ID:
         token, pos = consume(tokens, pos, TokenType.ID)
         return Argument(binder_types=[], target_type=token.value), pos
+    elif peek(tokens, pos).type == TokenType.STRING_LITERAL:
+        token, pos = consume(tokens, pos, TokenType.STRING_LITERAL)
+        inner = token.value[1:-1]
+        return Argument(binder_types=[], target_type=inner, external=True), pos
     else:
         raise SyntaxError(
             f"Unexpected token in type signature: {peek(tokens, pos).value} at line {peek(tokens, pos).line}"
@@ -275,6 +305,8 @@ def generate_constructors(sig: Signature) -> str:
                 reversed_binders = reversed(arg.binder_types)
                 context_ext = " ∷ ".join(reversed_binders)
                 arg_strs.append(f"({context_ext} ∷ S) ⊢ {arg.target_type}")
+            elif arg.external:
+                arg_strs.append(arg.target_type)
             else:
                 arg_strs.append(f"S ⊢ {arg.target_type}")
         res_str = f"S ⊢ {c.target_sort}"
@@ -298,14 +330,16 @@ def generate_map_clauses(
         counts: dict[str, int] = {}
 
         for arg in c.arguments:
-            base_name = arg.target_type
+            base_name = arg.var_base
             idx = counts.get(base_name, 0)
             counts[base_name] = idx + 1
             var_name: str = f"{base_name}{idx}"
 
             arg_vars.append(var_name)
 
-            if arg.is_binder:
+            if arg.external:
+                rhs_args.append(var_name)
+            elif arg.is_binder:
                 rhs_args.append(f"({var_name} {op_symbol} ({map_var} {lift_op} _))")
             else:
                 rhs_args.append(f"({var_name} {op_symbol} {map_var})")
@@ -326,29 +360,43 @@ def generate_map_clauses(
 
 def generate_variables(sig: Signature) -> str:
     used_vars: set[str] = set()
-    used_vars_sorts: dict[str, str] = {}
+    used_vars_type: dict[str, str] = {}
+    used_vars_external: dict[str, bool] = {}
 
     for c in sig.constructors:
         counts: dict[str, int] = {}
         for arg in c.arguments:
-            base_name = arg.target_type
+            base_name = arg.var_base
             idx = counts.get(base_name, 0)
             counts[base_name] = idx + 1
             var_name = f"{base_name}{idx}"
+            if var_name in used_vars and (
+                used_vars_type[var_name] != arg.target_type
+                or used_vars_external[var_name] != arg.external
+            ):
+                raise SyntaxError(
+                    f"Variable name '{var_name}' would be declared with conflicting "
+                    f"types: '{used_vars_type[var_name]}' and '{arg.target_type}'. "
+                    f"Rename one of the external types or sorts."
+                )
             used_vars.add(var_name)
-            used_vars_sorts[var_name] = arg.target_type
+            used_vars_type[var_name] = arg.target_type
+            used_vars_external[var_name] = arg.external
 
-    vars_by_sort: dict[str, list[str]] = {}
+    vars_by_type: dict[tuple[str, bool], list[str]] = {}
     for v in sorted(list(used_vars)):
-        s = used_vars_sorts[v]
-        if s not in vars_by_sort:
-            vars_by_sort[s] = []
-        vars_by_sort[s].append(v)
+        key = (used_vars_type[v], used_vars_external[v])
+        if key not in vars_by_type:
+            vars_by_type[key] = []
+        vars_by_type[key].append(v)
 
     variable_block_lines = ["variable"]
-    for s, vs in vars_by_sort.items():
+    for (t, external), vs in vars_by_type.items():
         v_str = " ".join(vs)
-        variable_block_lines.append(f"  {v_str} : S ⊢ {s}")
+        if external:
+            variable_block_lines.append(f"  {v_str} : {t}")
+        else:
+            variable_block_lines.append(f"  {v_str} : S ⊢ {t}")
 
     return "\n".join(variable_block_lines)
 
@@ -365,13 +413,15 @@ def generate_traversal(sig: Signature, lemma_name: str, op_symbol: str, map_var:
         rhs_args: list[str] = []
         counts: dict[str, int] = {}
         for arg in c.arguments:
-            base_name = arg.target_type
+            base_name = arg.var_base
             idx = counts.get(base_name, 0)
             counts[base_name] = idx + 1
             var_name = f"{base_name}{idx}"
             arg_vars.append(var_name)
 
-            if arg.is_binder:
+            if arg.external:
+                rhs_args.append(var_name)
+            elif arg.is_binder:
                 binders = " ∷ ".join(reversed(arg.binder_types))
                 explicit_list = f"({binders} ∷ [])"
                 rhs_args.append(f"({var_name} {op_symbol} ({map_var} {lift_op} {explicit_list}))")
@@ -421,13 +471,15 @@ def generate_id_lemma(
         counts: dict[str, int] = {}
 
         for arg in c.arguments:
-            base_name = arg.target_type
+            base_name = arg.var_base
             idx = counts.get(base_name, 0)
             counts[base_name] = idx + 1
             var_name = f"{base_name}{idx}"
             arg_vars.append(var_name)
 
-            if arg.is_binder:
+            if arg.external:
+                proofs.append("refl")
+            elif arg.is_binder:
                 binders = " ∷ ".join(reversed(arg.binder_types))
                 explicit_list = f"({binders} ∷ [])"
                 proof = f"(trans (cong1 ({var_name} {op_symbol}) ({lift_lemma} {explicit_list})) ({lemma_name} {var_name}))"
@@ -471,13 +523,15 @@ def generate_compositionality_lemma(
         counts: dict[str, int] = {}
 
         for arg in c.arguments:
-            base_name = arg.target_type
+            base_name = arg.var_base
             idx = counts.get(base_name, 0)
             counts[base_name] = idx + 1
             var_name = f"{base_name}{idx}"
             arg_vars.append(var_name)
 
-            if arg.is_binder:
+            if arg.external:
+                proofs.append("refl")
+            elif arg.is_binder:
                 binders = " ∷ ".join(reversed(arg.binder_types))
                 explicit_list = f"({binders} ∷ [])"
                 proof = f"(trans ({lemma_name} {var_name}) (cong1 ({var_name} {map_op}) ({comp_lemma} {implicits} {explicit_list})))"
@@ -554,7 +608,7 @@ def render_template(
     rewrite_block: str,
 ) -> str:
     part1 = (
-        """{-# OPTIONS --rewriting --local-confluence-check --double-check #-}
+        """{-# OPTIONS --rewriting --confluence-check --double-check #-}
 module """
         + module_name
         + """ where
@@ -829,9 +883,9 @@ opaque
     (t ⋯ᴿ ρ₂) ⋯ᴿ wkᴿ _          ≡⟨ cong1 (_⋯ᴿ (wkᴿ _)) (sym (coincidence {t = t})) ⟩ 
     (t ⋯ˢ ⟨ ρ₂ ⟩) ⋯ᴿ wkᴿ _      ∎ }
 
-  lift-dist-comp*ˢᴿ : ∀ S → ((σ₁ ↑ˢ* S) ⨟ ⟨ ρ₂ ↑ᴿ* S ⟩) ≡ ((σ₁ ⨟ ⟨ ρ₂ ⟩) ↑ˢ* S )
-  lift-dist-comp*ˢᴿ []      = refl 
-  lift-dist-comp*ˢᴿ {σ₁ = σ₁} (_ ∷ S) =  trans (lift-dist-compˢᴿ {σ₁ = σ₁ ↑ˢ* S}) (cong1 (_↑ˢ _) (lift-dist-comp*ˢᴿ {σ₁ = σ₁} S))
+  lift-dist-compˢ*ᴿ : ∀ S → ((σ₁ ↑ˢ* S) ⨟ ⟨ ρ₂ ↑ᴿ* S ⟩) ≡ ((σ₁ ⨟ ⟨ ρ₂ ⟩) ↑ˢ* S )
+  lift-dist-compˢ*ᴿ []      = refl 
+  lift-dist-compˢ*ᴿ {σ₁ = σ₁} (_ ∷ S) =  trans (lift-dist-compˢᴿ {σ₁ = σ₁ ↑ˢ* S}) (cong1 (_↑ˢ _) (lift-dist-compˢ*ᴿ {σ₁ = σ₁} S))
  
   compositionalityˢᴿ {σ₁ = σ₁} (var x)  = sym (coincidence {t = σ₁ _ x})
 """
@@ -846,9 +900,9 @@ opaque
     t ⋯ˢ (σ₂ ⨟ ⟨ (wkᴿ _) ⟩)        ≡⟨ sym (compositionalityˢᴿ t) ⟩ 
     (t ⋯ˢ σ₂) ⋯ᴿ (wkᴿ _)           ∎ }
   
-  lift-dist-comp*ˢˢ : ∀ S →  ((σ₁ ↑ˢ* S) ⨟ (σ₂ ↑ˢ* S)) ≡ ((σ₁ ⨟ σ₂) ↑ˢ* S)
-  lift-dist-comp*ˢˢ []      = refl 
-  lift-dist-comp*ˢˢ  {σ₁ = σ₁} {σ₂ = σ₂} (_ ∷ S) =  trans (lift-dist-compˢˢ {σ₁ = σ₁ ↑ˢ* S} {σ₂ = σ₂ ↑ˢ* S}) (cong1 (_↑ˢ _) (lift-dist-comp*ˢˢ {σ₁ = σ₁} {σ₂ = σ₂} S))
+  lift-dist-compˢ*ˢ : ∀ S →  ((σ₁ ↑ˢ* S) ⨟ (σ₂ ↑ˢ* S)) ≡ ((σ₁ ⨟ σ₂) ↑ˢ* S)
+  lift-dist-compˢ*ˢ []      = refl 
+  lift-dist-compˢ*ˢ  {σ₁ = σ₁} {σ₂ = σ₂} (_ ∷ S) =  trans (lift-dist-compˢˢ {σ₁ = σ₁ ↑ˢ* S} {σ₂ = σ₂ ↑ˢ* S}) (cong1 (_↑ˢ _) (lift-dist-compˢ*ˢ {σ₁ = σ₁} {σ₂ = σ₂} S))
 
   compositionalityˢˢ (var x)  = refl
 """
@@ -921,10 +975,10 @@ def generate_agda(sig: Signature, module_name: str) -> str:
             sig, "{σ₂ = σ₂}", "compositionalityᴿˢ", "⋯ˢ_", "lift-dist-comp*ᴿˢ"
         ),
         compositionality_sr=generate_compositionality_lemma(
-            sig, "{σ₁ = σ₁}", "compositionalityˢᴿ", "⋯ˢ_", "lift-dist-comp*ˢᴿ"
+            sig, "{σ₁ = σ₁}", "compositionalityˢᴿ", "⋯ˢ_", "lift-dist-compˢ*ᴿ"
         ),
         compositionality_ss=generate_compositionality_lemma(
-            sig, "{σ₁ = σ₁} {σ₂ = σ₂}", "compositionalityˢˢ", "⋯ˢ_", "lift-dist-comp*ˢˢ"
+            sig, "{σ₁ = σ₁} {σ₂ = σ₂}", "compositionalityˢˢ", "⋯ˢ_", "lift-dist-compˢ*ˢ"
         ),
         rewrite_block=generate_rewrite_block(sig),
     )

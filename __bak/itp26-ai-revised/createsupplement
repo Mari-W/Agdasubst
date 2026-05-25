@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+cp -r ../../agda/ supplement/
+rm -rf supplement/*.agdai
+zip -r supplement.zip supplement
+rm -rf supplement/

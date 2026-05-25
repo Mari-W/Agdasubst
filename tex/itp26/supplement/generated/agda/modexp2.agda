@@ -414,13 +414,13 @@ opaque
     (t ⋯ᴿ ρ₂) ⋯ᴿ wkᴿ _          ≡⟨ cong1 (_⋯ᴿ (wkᴿ _)) (sym (coincidence {t = t})) ⟩ 
     (t ⋯ˢ ⟨ ρ₂ ⟩) ⋯ᴿ wkᴿ _      ∎ }
 
-  lift-dist-comp*ˢᴿ : ∀ S → ((σ₁ ↑ˢ* S) ⨟ ⟨ ρ₂ ↑ᴿ* S ⟩) ≡ ((σ₁ ⨟ ⟨ ρ₂ ⟩) ↑ˢ* S )
-  lift-dist-comp*ˢᴿ []      = refl 
-  lift-dist-comp*ˢᴿ {σ₁ = σ₁} (_ ∷ S) =  trans (lift-dist-compˢᴿ {σ₁ = σ₁ ↑ˢ* S}) (cong1 (_↑ˢ _) (lift-dist-comp*ˢᴿ {σ₁ = σ₁} S))
+  lift-dist-compˢ*ᴿ : ∀ S → ((σ₁ ↑ˢ* S) ⨟ ⟨ ρ₂ ↑ᴿ* S ⟩) ≡ ((σ₁ ⨟ ⟨ ρ₂ ⟩) ↑ˢ* S )
+  lift-dist-compˢ*ᴿ []      = refl 
+  lift-dist-compˢ*ᴿ {σ₁ = σ₁} (_ ∷ S) =  trans (lift-dist-compˢᴿ {σ₁ = σ₁ ↑ˢ* S}) (cong1 (_↑ˢ _) (lift-dist-compˢ*ᴿ {σ₁ = σ₁} S))
  
   compositionalityˢᴿ {σ₁ = σ₁} (var x)  = sym (coincidence {t = σ₁ _ x})
   compositionalityˢᴿ {σ₁ = σ₁} (arr ty0 ty1)            = cong2 arr (compositionalityˢᴿ ty0) (compositionalityˢᴿ ty1)
-  compositionalityˢᴿ {σ₁ = σ₁} (ab ty0 exp0)            = cong2 ab (compositionalityˢᴿ ty0) (trans (compositionalityˢᴿ exp0) (cong1 (exp0 ⋯ˢ_) (lift-dist-comp*ˢᴿ {σ₁ = σ₁} (exp ∷ []))))
+  compositionalityˢᴿ {σ₁ = σ₁} (ab ty0 exp0)            = cong2 ab (compositionalityˢᴿ ty0) (trans (compositionalityˢᴿ exp0) (cong1 (exp0 ⋯ˢ_) (lift-dist-compˢ*ᴿ {σ₁ = σ₁} (exp ∷ []))))
   compositionalityˢᴿ {σ₁ = σ₁} (app exp0 exp1)          = cong2 app (compositionalityˢᴿ exp0) (compositionalityˢᴿ exp1)
   compositionalityˢᴿ boolTy                             = refl
   compositionalityˢᴿ {σ₁ = σ₁} (constBool bool0)        = cong1 constBool (compositionalityˢᴿ bool0)
@@ -428,9 +428,9 @@ opaque
   compositionalityˢᴿ natTy                              = refl
   compositionalityˢᴿ {σ₁ = σ₁} (plus exp0 exp1)         = cong2 plus (compositionalityˢᴿ exp0) (compositionalityˢᴿ exp1)
   compositionalityˢᴿ {σ₁ = σ₁} (constNat nat0)          = cong1 constNat (compositionalityˢᴿ nat0)
-  compositionalityˢᴿ {σ₁ = σ₁} (natCase exp0 exp1 exp2) = cong3 natCase (compositionalityˢᴿ exp0) (compositionalityˢᴿ exp1) (trans (compositionalityˢᴿ exp2) (cong1 (exp2 ⋯ˢ_) (lift-dist-comp*ˢᴿ {σ₁ = σ₁} (exp ∷ []))))
+  compositionalityˢᴿ {σ₁ = σ₁} (natCase exp0 exp1 exp2) = cong3 natCase (compositionalityˢᴿ exp0) (compositionalityˢᴿ exp1) (trans (compositionalityˢᴿ exp2) (cong1 (exp2 ⋯ˢ_) (lift-dist-compˢ*ᴿ {σ₁ = σ₁} (exp ∷ []))))
   compositionalityˢᴿ {σ₁ = σ₁} (sum ty0 ty1)            = cong2 sum (compositionalityˢᴿ ty0) (compositionalityˢᴿ ty1)
-  compositionalityˢᴿ {σ₁ = σ₁} (sumCase exp0 exp1 exp2) = cong3 sumCase (compositionalityˢᴿ exp0) (trans (compositionalityˢᴿ exp1) (cong1 (exp1 ⋯ˢ_) (lift-dist-comp*ˢᴿ {σ₁ = σ₁} (exp ∷ [])))) (trans (compositionalityˢᴿ exp2) (cong1 (exp2 ⋯ˢ_) (lift-dist-comp*ˢᴿ {σ₁ = σ₁} (exp ∷ []))))
+  compositionalityˢᴿ {σ₁ = σ₁} (sumCase exp0 exp1 exp2) = cong3 sumCase (compositionalityˢᴿ exp0) (trans (compositionalityˢᴿ exp1) (cong1 (exp1 ⋯ˢ_) (lift-dist-compˢ*ᴿ {σ₁ = σ₁} (exp ∷ [])))) (trans (compositionalityˢᴿ exp2) (cong1 (exp2 ⋯ˢ_) (lift-dist-compˢ*ᴿ {σ₁ = σ₁} (exp ∷ []))))
   compositionalityˢᴿ {σ₁ = σ₁} (inl exp0)               = cong1 inl (compositionalityˢᴿ exp0)
   compositionalityˢᴿ {σ₁ = σ₁} (inr exp0)               = cong1 inr (compositionalityˢᴿ exp0)
   lift-dist-compˢˢ : ((σ₁ ↑ˢ s) ⨟ (σ₂ ↑ˢ s)) ≡ ((σ₁ ⨟ σ₂) ↑ˢ s)
@@ -442,13 +442,13 @@ opaque
     t ⋯ˢ (σ₂ ⨟ ⟨ (wkᴿ _) ⟩)        ≡⟨ sym (compositionalityˢᴿ t) ⟩ 
     (t ⋯ˢ σ₂) ⋯ᴿ (wkᴿ _)           ∎ }
   
-  lift-dist-comp*ˢˢ : ∀ S →  ((σ₁ ↑ˢ* S) ⨟ (σ₂ ↑ˢ* S)) ≡ ((σ₁ ⨟ σ₂) ↑ˢ* S)
-  lift-dist-comp*ˢˢ []      = refl 
-  lift-dist-comp*ˢˢ  {σ₁ = σ₁} {σ₂ = σ₂} (_ ∷ S) =  trans (lift-dist-compˢˢ {σ₁ = σ₁ ↑ˢ* S} {σ₂ = σ₂ ↑ˢ* S}) (cong1 (_↑ˢ _) (lift-dist-comp*ˢˢ {σ₁ = σ₁} {σ₂ = σ₂} S))
+  lift-dist-compˢ*ˢ : ∀ S →  ((σ₁ ↑ˢ* S) ⨟ (σ₂ ↑ˢ* S)) ≡ ((σ₁ ⨟ σ₂) ↑ˢ* S)
+  lift-dist-compˢ*ˢ []      = refl 
+  lift-dist-compˢ*ˢ  {σ₁ = σ₁} {σ₂ = σ₂} (_ ∷ S) =  trans (lift-dist-compˢˢ {σ₁ = σ₁ ↑ˢ* S} {σ₂ = σ₂ ↑ˢ* S}) (cong1 (_↑ˢ _) (lift-dist-compˢ*ˢ {σ₁ = σ₁} {σ₂ = σ₂} S))
 
   compositionalityˢˢ (var x)  = refl
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (arr ty0 ty1)            = cong2 arr (compositionalityˢˢ ty0) (compositionalityˢˢ ty1)
-  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (ab ty0 exp0)            = cong2 ab (compositionalityˢˢ ty0) (trans (compositionalityˢˢ exp0) (cong1 (exp0 ⋯ˢ_) (lift-dist-comp*ˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (exp ∷ []))))
+  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (ab ty0 exp0)            = cong2 ab (compositionalityˢˢ ty0) (trans (compositionalityˢˢ exp0) (cong1 (exp0 ⋯ˢ_) (lift-dist-compˢ*ˢ {σ₁ = σ₁} {σ₂ = σ₂} (exp ∷ []))))
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (app exp0 exp1)          = cong2 app (compositionalityˢˢ exp0) (compositionalityˢˢ exp1)
   compositionalityˢˢ boolTy                                       = refl
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (constBool bool0)        = cong1 constBool (compositionalityˢˢ bool0)
@@ -456,9 +456,9 @@ opaque
   compositionalityˢˢ natTy                                        = refl
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (plus exp0 exp1)         = cong2 plus (compositionalityˢˢ exp0) (compositionalityˢˢ exp1)
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (constNat nat0)          = cong1 constNat (compositionalityˢˢ nat0)
-  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (natCase exp0 exp1 exp2) = cong3 natCase (compositionalityˢˢ exp0) (compositionalityˢˢ exp1) (trans (compositionalityˢˢ exp2) (cong1 (exp2 ⋯ˢ_) (lift-dist-comp*ˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (exp ∷ []))))
+  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (natCase exp0 exp1 exp2) = cong3 natCase (compositionalityˢˢ exp0) (compositionalityˢˢ exp1) (trans (compositionalityˢˢ exp2) (cong1 (exp2 ⋯ˢ_) (lift-dist-compˢ*ˢ {σ₁ = σ₁} {σ₂ = σ₂} (exp ∷ []))))
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (sum ty0 ty1)            = cong2 sum (compositionalityˢˢ ty0) (compositionalityˢˢ ty1)
-  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (sumCase exp0 exp1 exp2) = cong3 sumCase (compositionalityˢˢ exp0) (trans (compositionalityˢˢ exp1) (cong1 (exp1 ⋯ˢ_) (lift-dist-comp*ˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (exp ∷ [])))) (trans (compositionalityˢˢ exp2) (cong1 (exp2 ⋯ˢ_) (lift-dist-comp*ˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (exp ∷ []))))
+  compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (sumCase exp0 exp1 exp2) = cong3 sumCase (compositionalityˢˢ exp0) (trans (compositionalityˢˢ exp1) (cong1 (exp1 ⋯ˢ_) (lift-dist-compˢ*ˢ {σ₁ = σ₁} {σ₂ = σ₂} (exp ∷ [])))) (trans (compositionalityˢˢ exp2) (cong1 (exp2 ⋯ˢ_) (lift-dist-compˢ*ˢ {σ₁ = σ₁} {σ₂ = σ₂} (exp ∷ []))))
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (inl exp0)               = cong1 inl (compositionalityˢˢ exp0)
   compositionalityˢˢ {σ₁ = σ₁} {σ₂ = σ₂} (inr exp0)               = cong1 inr (compositionalityˢˢ exp0)
 

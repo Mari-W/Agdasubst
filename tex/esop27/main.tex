@@ -243,7 +243,7 @@ reasoning.
   intrinsically typed syntax in dependently typed proof assistants.
 \end{itemize}
 
-\section{Types for System F}
+\section{System F Types}
 \label{sec:system-f}
 
 \subsection{Syntax}
@@ -510,7 +510,7 @@ safely gained definitional equalities in place, we can continue
 to define expressions and expression substitution without ending
 up in transfer hell.
 
-\section{Expressions for System F}
+\section{System F Expressions}
 \label{sec:system-f-expressions}
 \subsection{Syntax}
 \label{sec:expressions}
@@ -531,11 +531,13 @@ up in transfer hell.
 
 Working towards intrinsically-typed expressions,
 \Cref{fig:system-f-expressions} defines type weakening and
-single substitution along with type contexts, expression variables, and the syntax of
-expressions. Type contexts and expression variables follow the work of
-\citet{10.1007/978-3-030-33636-3_10}. Type contexts \AgdaDatatype{Ctx}
-keep track of expression variables and type
-variables. Correspondingly, variables are implemented as typed de Bruijn
+single substitution \AgdaFunction{T [ T′ ]*} of a type $T'$ for the
+innermost variable of $T$ along with type contexts $\Gamma$, expression
+variables $x$, and the syntax of  
+expressions $e$. Type contexts and expression variables follow the work of
+\citet{10.1007/978-3-030-33636-3_10}. A type context $\Gamma : \AgdaDatatype{Ctx}~n$
+keeps track of expression variables and type
+variables from scope $n$. Correspondingly, variables are implemented as typed de Bruijn
 indices with an extra case \AgdaInductiveConstructor{suc*} to skip
 over type variables in the context. Skipping requires weakening of the
 type as it is used under one more type binding.

@@ -375,7 +375,7 @@ lead to circularity.
 The second group contains laws about interactions between substitutions.
 \SFTypeSubstitutionInteraction
 Composition is assoziative, it distributes over extension, weakening
-cancels extension, the identity substitution is an identity, and two
+cancels extension, the identity substitution is a right and left identity, and we give two
 $\eta$-laws about the interaction of extension and
 weakening.\footnote{In the statement of \AgdaFunction{$\eta$-id}, we
   write $\AgdaInductiveConstructor{zero}~ \{n\}$ to tell Agda's type
@@ -387,22 +387,23 @@ There are analogous rules for renamings corresponding to the first two
 groups. These rules are omitted for space reasons. 
 
 The third group presents laws that govern the composition of different
-kinds of term traversal.
+kinds of term traversal, that is, the behavior of the identity
+renaming and the four possible compositions of renamings and
+substitutions.
 \SFTypeMonad
-We start with applying the identity renaming.
-Then all four combinations of composing renamings
-and substitutions and applying them to a type are covered. 
 
 The final group contains contains laws that mediate
-between substitutions and renamings.
+between substitutions and renamings: A substitution which applies a
+lifted renaming is just applying the renaming; the composition of two
+lifted renamings is the lifting of their composition as renamings.
 \SFTypeCoincidence
-The extraction of renamings from
-substitutions in general requires a dedicated solving
+In general ,the extraction of renamings from
+substitutions requires a dedicated solving
 strategy~\cite{10.1145/3293880.3294101} and we have omitted some
-further required coincidence laws from the figure.
+further coincidence laws for brevity.
 
 Orienting these equations from left to right results in a confluent
-rewrite system that we install in Agda's computation engine using the
+rewrite system for the $\sigma$-calculus that we install in Agda's computation engine using the
 \AgdaKeyword{REWRITE} pragma \cite{10.1145/3434341}. Confluence of
 these rewrite equations is mechanically checked by Agda through using
 the flags \texttt{--rewriting --confluence-check}. From now on, all
@@ -415,17 +416,16 @@ definitional!
 \end{minipage}\hfill\begin{minipage}[t]{0.49\linewidth}
   \SFTypeSubFunctorialApply
 \end{minipage}
-  \caption{Functor laws for substitution}
+  \caption{Functor laws for substitution proved}
   \label{fig:functor-laws-substitution}
 \end{figure}
 
-As a sanity check, we show in \cref{fig:functor-laws-substitution}
+As a sanity check for the definitions, we prove in \cref{fig:functor-laws-substitution}
 that lifting a substitution and the action of a substitution satisfy
-the functor laws. With the $\sigma$-calculus rewriting installed, all these lemmas 
+the functor laws. With $\sigma$-calculus rewriting installed, all these lemmas 
 hold definitionally as evidenced by their proof using reflexivity
-(\AgdaInductiveConstructor{refl}). Some correspond directly to laws from the
-$\sigma$-calculus. The latter are marked 
-with $*$.\footnote{The naming of the lemmas is taken from
+(\AgdaInductiveConstructor{refl}). The lemmas marked with $*$ correspond directly to laws from the
+$\sigma$-calculus.\footnote{The naming of the lemmas is taken from
   \citet{10.1007/978-3-030-33636-3_10} to enable direct comparisons.}
 The lifting laws are shown on the left, the application laws on the right.
 The analogous results for renamings follow exactly the same pattern.
@@ -437,9 +437,10 @@ The theory underlying a proof assistant must be sound and consistent.
 Hence, it is a delicate act turning propositional equalities into definitional ones, 
 for example by adding rewrite rules, because 
 it can endanger both soundness and consistency.
-Such a combination of rewrite rules and rich dependent type theories
-is recently explored by the
-addition of rewrite rules to Agda~\cite{cockx:LIPIcs.TYPES.2019.2} and Rocq~\cite{leray_et_al:LIPIcs.ITP.2024.26}, and continued by
+The combination of rewrite rules and rich dependent type theories
+has recently been explored by the
+addition of rewrite rules to Agda~\cite{cockx:LIPIcs.TYPES.2019.2} and
+Rocq~\cite{leray_et_al:LIPIcs.ITP.2024.26}, and there is
 ongoing research on \emph{local} rewrite rules~\cite{10.1145/3776704}.
 
 Rewrite rules and the reductions of a dependently typed
@@ -455,13 +456,13 @@ like in \cref{sec:laws-renam-subst-1}. The two properties we wish
 to preserve when adding rewrite rules are subject reduction and consistency. In particular, the type
 checker assumes subject reduction and it would break without it.
 
-To uphold subject reduction, the critical property of the rewriting
-equations is that they are confluent \emph{with respect to the already
-existing reduction rules}. Agda already provides a plethora of
-reduction rules, which are proved confluent: $\beta$, $\eta$ (function and record expansion),
+To uphold subject reduction, the critical property of the newly added rewriting
+equations is that their \emph{union with the existing reduction
+  relation} is confluent. Agda already provides a plethora of confluent 
+reduction rules: $\beta$, $\eta$ (function and record expansion),
 $\delta$ (definition unfolding), and $\iota$ (dependent pattern matching clauses).  
 Agda checks confluence of the extended system using a
-conservative set of simple syntactic criterions~\cite{cockx2021taming}.
+conservative set of simple syntactic criteria~\cite{cockx2021taming}.
 
 %% PT: not our business in this paper
 % This check does not require termination. Notably, termination is \emph{not}
@@ -471,12 +472,12 @@ conservative set of simple syntactic criterions~\cite{cockx2021taming}.
 
 Some $\beta$ and $\iota$ reductions arising from the functional
 definitions of renamings and substitutions in \cref{fig:system-f-ren-sub}
-interfere with the intended rewrite equalities by breaking confluence. For this reason, we
+interfere with the intended rewrite equalities so that confluence breaks. For this reason, we
 explicitly hide these definitions inside an \AgdaKeyword{opaque} block,
-so that only the equations we install with \AgdaKeyword{REWRITE} defines
+so that only the equations we install with \AgdaKeyword{REWRITE} define
 their reduction behaviour.
 
-As a concrete example, consider the substitution
+As a concrete example, consider the equation
 $\eta$-law: \AgdaSymbol{(}\AgdaInductiveConstructor{zero}\,\AgdaFunction{\&ˢ}\,\AgdaBound{η}\AgdaSymbol{)}\,\AgdaFunction{∙ˢ}\,\AgdaSymbol{(}\AgdaFunction{⟨}\,\AgdaFunction{wkᴿ}\,\AgdaFunction{⟩}\,\AgdaFunction{⨟ˢ}\,\AgdaBound{η}\AgdaSymbol{)}\,\AgdaDatatype{≡}\,\AgdaBound{η}.
 Without the \AgdaKeyword{opaque} block, the underlying definition
 \AgdaSymbol{(}\AgdaBound{η₁}\,\AgdaFunction{⨟ˢ}\,\AgdaBound{η₂}\AgdaSymbol{)}\,\AgdaBound{α}\,\AgdaSymbol{=}\,\AgdaSymbol{(}\AgdaBound{η₁}\,\AgdaBound{α}\AgdaSymbol{)}\,\AgdaFunction{[}\,\AgdaBound{η₂}\,\AgdaFunction{]ˢ}
@@ -487,7 +488,7 @@ into the lambda
 so that the entire left-hand side reduces to
 \AgdaSymbol{(}\AgdaBound{η}\,\AgdaInductiveConstructor{zero}\AgdaSymbol{)}\,\AgdaFunction{∙ˢ}\,\AgdaSymbol{(}\AgdaSymbol{$\lambda$}\,\AgdaBound{α}\,\AgdaSymbol{$\to$}\,\AgdaBound{η}\,\AgdaSymbol{(}\AgdaInductiveConstructor{suc}\,\AgdaBound{α}\AgdaSymbol{)}\AgdaSymbol{)}.
 Two issues arise. First, the rewrite engine would no longer be able to match the
-left-hand side syntactically during reduction\footnote{To see why, note that $\eta$ does not appear in pattern position here. A precise definition for pattern position is available in the Agda Wiki: \url{https://agda.readthedocs.io/en/latest/language/rewriting.html\#general-shape-of-rewrite-rules}}.
+left-hand side of \AgdaFunction{$\eta$-law} syntactically during reduction\footnote{To see why, note that $\eta$ does not appear in pattern position here. A precise definition of pattern position is available in the Agda Wiki: \url{https://agda.readthedocs.io/en/latest/language/rewriting.html\#general-shape-of-rewrite-rules}}.
 Second, even if the rewrite rule were admitted, confluence would fail, because the two
 reducts \AgdaBound{η} (via the rewrite) and
 \AgdaSymbol{(}\AgdaBound{η}\,\AgdaInductiveConstructor{zero}\AgdaSymbol{)}\,\AgdaFunction{∙ˢ}\,\AgdaSymbol{(}\AgdaSymbol{$\lambda$}\,\AgdaBound{α}\,\AgdaSymbol{$\to$}\,\AgdaBound{η}\,\AgdaSymbol{(}\AgdaInductiveConstructor{suc}\,\AgdaBound{α}\AgdaSymbol{)}\AgdaSymbol{)}
@@ -497,7 +498,7 @@ equal. Agda has $\eta$-equality for function types, but
 argument. The case-split therefore
 remains stuck on a neutral variable and cannot be collapsed back to
 \AgdaBound{η}.
-Hiding \AgdaFunction{⨟ˢ} (together with \AgdaFunction{∙ˢ} and the
+Hiding the definition of the symbol \AgdaFunction{⨟ˢ} (together with \AgdaFunction{∙ˢ} and the
 other operators) inside an \AgdaKeyword{opaque} block turns them into
 stuck symbols, restoring both matchability and
 confluence.
@@ -553,32 +554,35 @@ directly using their rewrite rule implementation.
 \end{figure}
 
 Working towards intrinsically-typed expressions,
-\Cref{fig:system-f-expressions} defines type weakening and
+\Cref{fig:system-f-expressions} defines type weakening (\AgdaFunction{weaken}) and
 single substitution \AgdaFunction{T [ T′ ]*} of a type $T'$ for the
 innermost variable of $T$ along with type contexts $\Gamma$, expression
 variables $x$, and the syntax of  
 expressions $e$. Type contexts and expression variables follow the work of
 \citet{10.1007/978-3-030-33636-3_10}. A type context $\Gamma : \AgdaDatatype{Ctx}~n$
 keeps track of expression variables and type
-variables from scope $n$. Correspondingly, variables are implemented as typed de Bruijn
+variables from scope $n$: the operator
+\AgdaInductiveConstructor{\AgdaUnderscore{}▷\AgdaUnderscore{}} adds an
+expression variable binding and the operator
+\AgdaInductiveConstructor{\AgdaUnderscore{}▷*} adds a type variable
+binding to $\Gamma$. Correspondingly, expression variables are implemented as typed de Bruijn
 indices with an extra case \AgdaInductiveConstructor{suc*} to skip
 over type variables in the context. Skipping requires weakening of the
 type as it is used under one more type binding.
 
-Expressions are indexed by a context and a type. Each expression
+Expressions $e : $ \AgdaDatatype{Expr}\AgdaSpace{}%
+\AgdaBound{Γ}\AgdaSpace{}%
+\AgdaGeneralizable{T} are indexed by a context $\Gamma$ and a type $T$
+with the intended reading as a typing judgment $\Gamma \vdash e :
+T$. As customary in an intrinsically typed setting, each expression
 constructor corresponds to a typing rule in System~F. The rule for
 type application relies on single substitution for types.
-
-The definition of a small-step operational semantics requires
-expression renamings and substitution to implement beta reduction for
-value abstractions and type abstractions. As before, we aim to define
-a call-by-name semantics for concision.
 
 \subsection{Examples}
 \label{sec:examples-1}
 
 As an example of System~F expressions, we present some definitions for
-Church numerals. We start with their type, alongside the constant
+Church numerals. We start with their type and the encoding of
 zero. For readability, we define aliases for type variables like
 \AgdaFunction{$`\alpha$} for \AgdaInductiveConstructor{` Z}, \AgdaFunction{$`\beta$} for \AgdaInductiveConstructor{` (S Z)}, and analogously for
 expression variables and binders.
@@ -597,13 +601,19 @@ expression variables and binders.
   \FCNTwo
 \end{minipage}
 
-\noindent The successor operation has a longer body and is shown full
-width.
+\noindent The successor operation has a longer body and is all its glory.
 \FCNSucc
 % \FCNFour
 
 \subsection{Renaming and Substitution}
 \label{sec:expr-renam-subst}
+
+
+The definition of a small-step operational semantics requires
+expression renamings and substitution to implement beta reduction for
+value abstractions and type abstractions. As in the introduction, we
+define a call-by-name semantics for concision.
+
 
 % TODO[PT]: wrong! we do exactly this!
 % For expressions, we represent renamings and substitutions directly by
@@ -646,14 +656,22 @@ width.
 
 % TODO[PT]: this is very dry, improve writing 
 
-Expression substitutions are indexed by type substitutions.
+Expression substitutions $\sigma$ are indexed by type substitutions
+$\eta$. A substitution takes a variable $x$ of type $T$ in context
+$\Gamma_1$ and maps it to an expression typed in context $\Gamma_2$
+adjusting its type according to the type substitution: $T [ \eta
+]^S$. Notationally, we write $\eta \mid \dots$ for any operation on
+substitutions that is indexed by type substitution $\eta$.
 \SFExprSubstitution
 The identity substitution for expressions is straightforward to
 define. But this simplicity is due to the installed rewriting of type
-substitutions, which avoids an explicit application of a transport
-lemma using \AgdaPostulate{comp-id$_r$}.
+substitutions. Without the rewriting, the right hand side's type is
+$T$, but the expected type is $T[ \AgdaFunction{id}^s ]^S$, which would require the
+transport lemma \AgdaPostulate{comp-id$_r$}.
 \SFExprSubIds
-Extending a substitution is standard.
+Extending a substitution is standard: given an expression $e$ and a
+substitution $\sigma$, we return a substitution that sends variable
+\AgdaInductiveConstructor{zero} to $e$ and otherwise resorts to $\sigma$.
 \SFExprSubExtension
 Due to the structure of contexts, we need two lifting lemmas, one for
 value bindings and another for type bindings. 

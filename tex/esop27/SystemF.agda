@@ -579,8 +579,8 @@ opaque
 
 opaque
   --! CompDefinition
-  _,_∣_⨾ˢ_ : ∀ η₁ η₂ → η₁ ∣ Γ₁ ⇒ˢ Γ₂ → η₂ ∣ Γ₂ ⇒ˢ Γ₃ → (η₁ ⨟ˢ η₂) ∣ Γ₁ ⇒ˢ Γ₃
-  (_ , _ ∣ σ₁ ⨾ˢ σ₂) _ x = _ ∣ (σ₁ _ x) [ σ₂ ]ˢ
+  _,_∣_⨾ˢ_ : ∀ η₁ η₂ → (σ₁ : η₁ ∣ Γ₁ ⇒ˢ Γ₂) → (σ₂ : η₂ ∣ Γ₂ ⇒ˢ Γ₃) → (η₁ ⨟ˢ η₂) ∣ Γ₁ ⇒ˢ Γ₃
+  (η₁ , η₂ ∣ σ₁ ⨾ˢ σ₂) _ x = η₂ ∣ (σ₁ _ x) [ σ₂ ]ˢ
 
 _⨾ˢ_ : η₁ ∣ Γ₁ ⇒ˢ Γ₂ → η₂ ∣ Γ₂ ⇒ˢ Γ₃ → (η₁ ⨟ˢ η₂) ∣ Γ₁ ⇒ˢ Γ₃
 _⨾ˢ_ {η₁ = η₁} {η₂ = η₂} σ₁ σ₂ = (η₁ , η₂ ∣ σ₁ ⨾ˢ σ₂)
@@ -607,15 +607,15 @@ opaque
     ζ₁ , ζ₂ ∣ (ζ₁ ∣ ρ₁ ⇑ᴿ T) ⨾ᴿ (ζ₂ ∣ ρ₂ ⇑ᴿ (T [ ζ₁ ]ᴿ)) ≡ ((ζ₁ ⨟ᴿ ζ₂) ∣ (ζ₁ , ζ₂ ∣ ρ₁ ⨾ᴿ ρ₂) ⇑ᴿ T)
   Lift-Dist-Compᴿᴿ _ _ = fun-ext λ _ → fun-ext λ { zero → refl; (suc x) → refl }
 
-  lift*-dist-Compᴿᴿ : (ζ₁ : Ren n₁ n₂) (ζ₂ : Ren n₂ n₃) (ρ₁ : ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (ρ₂ : ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃) →
+  Lift*-Dist-Compᴿᴿ : (ζ₁ : Ren n₁ n₂) (ζ₂ : Ren n₂ n₃) (ρ₁ : ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (ρ₂ : ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃) →
     (ζ₁ ↑ᴿ) , (ζ₂ ↑ᴿ) ∣ (ζ₁ ∣ ρ₁ ↑ᴿ*) ⨾ᴿ (ζ₂ ∣ ρ₂ ↑ᴿ*) ≡ ((ζ₁ ⨟ᴿ ζ₂) ∣ (ζ₁ , ζ₂ ∣ ρ₁ ⨾ᴿ ρ₂) ↑ᴿ*)
-  lift*-dist-Compᴿᴿ _ _ _ _ = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
+  Lift*-Dist-Compᴿᴿ _ _ _ _ = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
 
   Compositionalityᴿᴿ : ∀ (e : Expr Γ₁ T) (ζ₁ : Ren n₁ n₂) (ζ₂ : Ren n₂ n₃) (ρ₁ : ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (ρ₂ : ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃) →
     ζ₂ ∣ (ζ₁ ∣ e [ ρ₁ ]ᴿ) [ ρ₂ ]ᴿ ≡ (ζ₁ ⨟ᴿ ζ₂) ∣ e [ ζ₁ , ζ₂ ∣ ρ₁ ⨾ᴿ ρ₂ ]ᴿ
   Compositionalityᴿᴿ (` x)     _  _  _  _   = refl
   Compositionalityᴿᴿ (λx e)    _  _  _  _   = cong λx (trans (Compositionalityᴿᴿ e _ _ _ _) (cong (_ ∣ e [_]ᴿ) (Lift-Dist-Compᴿᴿ _ _)))
-  Compositionalityᴿᴿ (Λα e)    _  _  _  _   = cong Λα (trans (Compositionalityᴿᴿ e _ _ _ _) (cong (_ ∣ e [_]ᴿ) (lift*-dist-Compᴿᴿ _ _ _ _)))
+  Compositionalityᴿᴿ (Λα e)    _  _  _  _   = cong Λα (trans (Compositionalityᴿᴿ e _ _ _ _) (cong (_ ∣ e [_]ᴿ) (Lift*-Dist-Compᴿᴿ _ _ _ _)))
   Compositionalityᴿᴿ (e₁ · e₂) _  _  _  _   = cong₂ _·_ (Compositionalityᴿᴿ e₁ _ _ _ _) (Compositionalityᴿᴿ e₂ _ _ _ _)
   Compositionalityᴿᴿ (e ·* T′) ζ₁ ζ₂ ρ₁ ρ₂  = cong (_·* (T′ [ ζ₁ ⨟ᴿ ζ₂ ]ᴿ)) (Compositionalityᴿᴿ e _ _ _ _)
 
@@ -623,15 +623,15 @@ opaque
     ⟨ ζ₁ ⟩ , η₂ ∣ (ζ₁ ∣⟪ ζ₁ ∣ ρ₁ ⇑ᴿ T ⟫) ⨾ˢ (η₂ ∣ σ₂ ⇑ˢ (T [ ζ₁ ]ᴿ)) ≡ ((⟨ ζ₁ ⟩ ⨟ˢ η₂) ∣ (⟨ ζ₁ ⟩ , η₂ ∣ ζ₁ ∣⟪ ρ₁ ⟫ ⨾ˢ σ₂) ⇑ˢ T)
   Lift-Dist-Compᴿˢ _ _ = fun-ext λ _ → fun-ext λ { zero → refl; (suc x) → refl }
 
-  lift*-dist-Compᴿˢ : (ζ₁ : Ren n₁ n₂) (η₂ : Sub n₂ n₃) (ρ₁ : ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (σ₂ : η₂ ∣ Γ₂ ⇒ˢ Γ₃) →
+  Lift*-Dist-Compᴿˢ : (ζ₁ : Ren n₁ n₂) (η₂ : Sub n₂ n₃) (ρ₁ : ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (σ₂ : η₂ ∣ Γ₂ ⇒ˢ Γ₃) →
     ⟨ ζ₁ ↑ᴿ ⟩ , (η₂ ↑ˢ) ∣ ((ζ₁ ↑ᴿ ∣⟪ ζ₁ ∣ ρ₁ ↑ᴿ* ⟫)) ⨾ˢ (η₂ ∣ σ₂ ⇑ˢ*) ≡ ((⟨ ζ₁ ⟩ ⨟ˢ η₂) ∣ (⟨ ζ₁ ⟩ , η₂ ∣ ζ₁ ∣⟪ ρ₁ ⟫ ⨾ˢ σ₂) ⇑ˢ*)
-  lift*-dist-Compᴿˢ _ _ _ _ = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
+  Lift*-Dist-Compᴿˢ _ _ _ _ = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
 
   Compositionalityᴿˢ : ∀ (e : Expr Γ₁ T) (ζ₁ : Ren n₁ n₂) (η₂ : Sub n₂ n₃) (ρ₁ : ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (σ₂ : η₂ ∣ Γ₂ ⇒ˢ Γ₃) →
     η₂ ∣ (ζ₁ ∣ e [ ρ₁ ]ᴿ) [ σ₂ ]ˢ ≡ (⟨ ζ₁ ⟩ ⨟ˢ η₂) ∣ e [ ⟨ ζ₁ ⟩ , η₂ ∣ ζ₁ ∣⟪ ρ₁ ⟫ ⨾ˢ σ₂ ]ˢ
   Compositionalityᴿˢ (` x)     _  _  _  _   = refl
   Compositionalityᴿˢ (λx e)    ζ₁ η₂ ρ₁ σ₂  = cong λx (trans (Compositionalityᴿˢ e _ _ _ _) (cong ((⟨ ζ₁ ⟩ ⨟ˢ η₂) ∣ e [_]ˢ) (Lift-Dist-Compᴿˢ ρ₁ σ₂)))
-  Compositionalityᴿˢ (Λα e)    ζ₁ η₂ ρ₁ σ₂  = cong Λα (trans (Compositionalityᴿˢ e _ _ _ _) (cong (((⟨ ζ₁ ⟩ ⨟ˢ η₂) ↑ˢ) ∣ e [_]ˢ) (lift*-dist-Compᴿˢ _ η₂ ρ₁ σ₂)))
+  Compositionalityᴿˢ (Λα e)    ζ₁ η₂ ρ₁ σ₂  = cong Λα (trans (Compositionalityᴿˢ e _ _ _ _) (cong (((⟨ ζ₁ ⟩ ⨟ˢ η₂) ↑ˢ) ∣ e [_]ˢ) (Lift*-Dist-Compᴿˢ _ η₂ ρ₁ σ₂)))
   Compositionalityᴿˢ (e₁ · e₂) _  _  _  _   = cong₂ _·_ (Compositionalityᴿˢ e₁ _ _ _ _) (Compositionalityᴿˢ e₂ _ _ _ _)
   Compositionalityᴿˢ (e ·* T′) ζ₁ η₂ ρ₁ ρ₂  = cong (_·* (T′ [ ⟨ ζ₁ ⟩ ⨟ˢ η₂ ]ˢ)) (Compositionalityᴿˢ e _ _ _ _)
 
@@ -662,9 +662,9 @@ opaque
         _  ≡⟨ cong (idᴿ ∣_[ Wkᴿ _ ]ᴿ) (sym (Coincidence e _)) ⟩
         _  ∎ }
 
-  lift*-dist-Compˢᴿ : (η₁ : Sub n₁ n₂) (ζ₂ : Ren n₂ n₃) (σ₁ : η₁ ∣ Γ₁ ⇒ˢ Γ₂) (ρ₂ : ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃) →
+  Lift*-Dist-Compˢᴿ : (η₁ : Sub n₁ n₂) (ζ₂ : Ren n₂ n₃) (σ₁ : η₁ ∣ Γ₁ ⇒ˢ Γ₂) (ρ₂ : ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃) →
     (η₁ ↑ˢ) , ⟨ ζ₂ ↑ᴿ ⟩ ∣ (η₁ ∣ σ₁ ⇑ˢ*) ⨾ˢ ((ζ₂ ↑ᴿ) ∣⟪ ζ₂ ∣ ρ₂ ↑ᴿ* ⟫) ≡ (η₁ ⨟ˢ ⟨ ζ₂ ⟩) ∣ (η₁ , ⟨ ζ₂ ⟩ ∣ σ₁ ⨾ˢ (ζ₂ ∣⟪ ρ₂ ⟫)) ⇑ˢ*
-  lift*-dist-Compˢᴿ η₁ ζ₂ σ₁ ρ₂ = fun-ext λ _ → fun-ext λ
+  Lift*-Dist-Compˢᴿ η₁ ζ₂ σ₁ ρ₂ = fun-ext λ _ → fun-ext λ
     { (suc* x) →
       let e = σ₁ _ x in begin
         _  ≡⟨ Coincidence (wkᴿ ∣ e [ wkᴿ* ]ᴿ) (ζ₂ ∣ ρ₂ ↑ᴿ*) ⟩
@@ -677,7 +677,7 @@ opaque
     ζ₂ ∣ (η₁ ∣ e [ σ₁ ]ˢ) [ ρ₂ ]ᴿ ≡ (η₁ ⨟ˢ ⟨ ζ₂ ⟩) ∣ e [ (η₁ , ⟨ ζ₂ ⟩ ∣ σ₁ ⨾ˢ (ζ₂ ∣⟪ ρ₂ ⟫)) ]ˢ
   Compositionalityˢᴿ (` x)     _  _  σ₁ _   = sym (Coincidence (σ₁ _ x) _)
   Compositionalityˢᴿ (λx e)    η₁ ζ₂ σ₁ ρ₂  = cong λx (trans (Compositionalityˢᴿ e _ _ _ _) (cong ((η₁ ⨟ˢ ⟨ ζ₂ ⟩) ∣ e [_]ˢ) (Lift-Dist-Compˢᴿ σ₁ ρ₂)))
-  Compositionalityˢᴿ (Λα e)    η₁ ζ₂ σ₁ ρ₂  = cong Λα (trans (Compositionalityˢᴿ e _ _ _ _) (cong (((η₁ ⨟ˢ ⟨ ζ₂ ⟩) ↑ˢ) ∣ e [_]ˢ) (lift*-dist-Compˢᴿ η₁ ζ₂ σ₁ ρ₂)))
+  Compositionalityˢᴿ (Λα e)    η₁ ζ₂ σ₁ ρ₂  = cong Λα (trans (Compositionalityˢᴿ e _ _ _ _) (cong (((η₁ ⨟ˢ ⟨ ζ₂ ⟩) ↑ˢ) ∣ e [_]ˢ) (Lift*-Dist-Compˢᴿ η₁ ζ₂ σ₁ ρ₂)))
   Compositionalityˢᴿ (e₁ · e₂) _  _  _  _   = cong₂ _·_ (Compositionalityˢᴿ e₁ _ _ _ _) (Compositionalityˢᴿ e₂ _ _ _ _)
   Compositionalityˢᴿ (e ·* T′) η₁ ζ₂ σ₁ ρ₂  = cong (_·* (T′ [ η₁ ⨟ˢ ⟨ ζ₂ ⟩ ]ˢ)) (Compositionalityˢᴿ e η₁ ζ₂ σ₁ ρ₂)
 
@@ -691,9 +691,9 @@ opaque
         _  ≡⟨ sym (Compositionalityˢᴿ e _ idᴿ σ₂ (Wkᴿ _)) ⟩
         _  ∎ }
 
-  lift*-dist-Compˢˢ : (η₁ : Sub n₁ n₂) (η₂ : Sub n₂ n₃) (σ₁ : η₁ ∣ Γ₁ ⇒ˢ Γ₂) (σ₂ : η₂ ∣ Γ₂ ⇒ˢ Γ₃) →
+  Lift*-Dist-Compˢˢ : (η₁ : Sub n₁ n₂) (η₂ : Sub n₂ n₃) (σ₁ : η₁ ∣ Γ₁ ⇒ˢ Γ₂) (σ₂ : η₂ ∣ Γ₂ ⇒ˢ Γ₃) →
     (η₁ ↑ˢ) , (η₂ ↑ˢ) ∣ (η₁ ∣ σ₁ ⇑ˢ*) ⨾ˢ (η₂ ∣ σ₂ ⇑ˢ*) ≡ ((η₁ ⨟ˢ η₂) ∣ (η₁ , η₂ ∣ σ₁ ⨾ˢ σ₂) ⇑ˢ*)
-  lift*-dist-Compˢˢ _ η₂ σ₁ σ₂ = fun-ext λ _ → fun-ext λ
+  Lift*-Dist-Compˢˢ _ η₂ σ₁ σ₂ = fun-ext λ _ → fun-ext λ
     { (suc* x) →
       let e = σ₁ _ x in begin
         _  ≡⟨ Compositionalityᴿˢ e _ _ _ _ ⟩
@@ -702,8 +702,9 @@ opaque
         _  ∎ }
 
   --! CompositionalityType
-  Compositionalityˢˢ : ∀ (e : Expr Γ₁ T) (η₁ : Sub n₁ n₂) (η₂ : Sub n₂ n₃) (σ₁ : η₁ ∣ Γ₁ ⇒ˢ Γ₂) (σ₂ : η₂ ∣ Γ₂ ⇒ˢ Γ₃) →
-    η₂ ∣ (η₁ ∣ e [ σ₁ ]ˢ) [ σ₂ ]ˢ ≡ (η₁ ⨟ˢ η₂) ∣ e [ η₁ , η₂ ∣ σ₁ ⨾ˢ σ₂ ]ˢ
+  Compositionalityˢˢ : ∀ (e : Expr Γ₁ T) (η₁ : Sub n₁ n₂) (η₂ : Sub n₂ n₃)
+    → (σ₁ : η₁ ∣ Γ₁ ⇒ˢ Γ₂) (σ₂ : η₂ ∣ Γ₂ ⇒ˢ Γ₃)
+    → η₂ ∣ (η₁ ∣ e [ σ₁ ]ˢ) [ σ₂ ]ˢ ≡ (η₁ ⨟ˢ η₂) ∣ e [ η₁ , η₂ ∣ σ₁ ⨾ˢ σ₂ ]ˢ
 
   --! CompositionalityBody
   Compositionalityˢˢ (` x)      η₁ η₂ σ₁ σ₂  = refl
@@ -718,7 +719,7 @@ opaque
         (η₂ ↑ˢ) ∣ (η₁ ↑ˢ) ∣ e [ η₁ ∣ σ₁ ⇑ˢ* ]ˢ [ η₂ ∣ σ₂ ⇑ˢ* ]ˢ
       ≡⟨ Compositionalityˢˢ e (η₁ ↑ˢ) (η₂ ↑ˢ) (η₁ ∣ σ₁ ⇑ˢ*) (η₂ ∣ σ₂ ⇑ˢ*) ⟩
         ((η₁ ⨟ˢ η₂) ↑ˢ) ∣ e [ (η₁ ↑ˢ) , η₂ ↑ˢ ∣ η₁ ∣ σ₁ ⇑ˢ* ⨾ˢ (η₂ ∣ σ₂ ⇑ˢ*) ]ˢ
-      ≡⟨ cong (((η₁ ⨟ˢ η₂) ↑ˢ) ∣ e [_]ˢ) (lift*-dist-Compˢˢ η₁ η₂ σ₁ σ₂) ⟩
+      ≡⟨ cong (((η₁ ⨟ˢ η₂) ↑ˢ) ∣ e [_]ˢ) (Lift*-Dist-Compˢˢ η₁ η₂ σ₁ σ₂) ⟩
         ((η₁ ⨟ˢ η₂) ↑ˢ) ∣ e [ (η₁ ⨟ˢ η₂) ∣ η₁ , η₂ ∣ σ₁ ⨾ˢ σ₂ ⇑ˢ* ]ˢ
       ∎)
   Compositionalityˢˢ (e₁ · e₂)  η₁ η₂ σ₁ σ₂  = cong₂ _·_ 

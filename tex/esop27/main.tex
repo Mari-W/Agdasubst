@@ -759,31 +759,35 @@ big lambda
 where the body is already a value. An expression fulfills progress if
 it is either a value (\AgdaInductiveConstructor{done}) or if it can make
 a step (\AgdaInductiveConstructor{step}). Due to the definition of
-value for big lambdas, we establish progress for contexts that
+value for big lambdas, we have to establish progress for contexts that
 may contain type bindings, but no value bindings. These contexts are
-characterized by function \AgdaFunction{NoVar}. The actual proof of
+characterized literally by the function \AgdaFunction{NoVar}. The actual proof of
 \AgdaFunction{progress} is by induction on the structure of expressions. The overall
-structure of this proof closely follows a proof for System~F$\omega$
-\cite{10.1007/978-3-030-33636-3_10}. Their proof is more complicated
-because their semantics is call-by-value and their language supports
-isorecursive types.
+structure of this proof closely follows Chapman et
+al~\cite{10.1007/978-3-030-33636-3_10}. Their proof is more
+complicated because their semantics is call-by-value, their language supports
+isorecursive types, and their subject language is System~F$\omega$.
 
 \section{Laws for Renaming and Substitution}
 \label{sec:laws-renam-subst}
 
-Proving type safety for System~F \emph{requires} exercising the
-substitution theory at the \emph{type level}. Without installing its
-laws as definitional equalities, many definitions become more
+Proving type safety for System~F requires exercising the
+substitution theory at the type level. Without installing its
+laws as definitional equalities, many definitions become
 cumbersome because transport lemmas have to be inserted to equalize
 the types of (Agda) expressions.
 
 % TODO[PT]: give a better motivation than this
-While proving type safety does \emph{not} require exercising the same
-theory at the \emph{expression level}, it is still good practice to
+As we have seen in \cref{sec:semantics}, proving type safety does
+\emph{not} require exercising substitution theory at the expression
+level. However, as a sanity check of the definitions we
 verify functorial and monadic properties of expression
 substitutions. Moreover, if we were to move on to constructing and
 proving properties of logical relations, then these properties would
 be needed \cite{10.1145/3678000.3678201}.
+
+\subsection{Composition of Substitutions with Rewriting}
+\label{sec:comp-subst-with}
 
 As an example, we examine the composition of two expression
 substitutions. Its definition involves two type substitutions $\eta_1$ and $\eta_2$ that
@@ -801,8 +805,8 @@ equality are different and would require a transfer without our
 rewriting machinery in place.
 % TODO[PT]: needs tranfer with compositonalityˢˢ on type level
 \SFExprSubCompositionalityType
-We show the proof of this property just do demonstrate that type
-adjustments for type substitutions can be ignored and we can
+We show the proof of this property not as a subject of study, but to
+demonstrate that transfers for type substitutions are not needed. We can
 concentrate on the gist of the proof, rather than being overwhelmed by
 transfers. The remaining fly in the ointment is the explicit passing
 of the type substitutions $\eta_1$ and $\eta_2$. We chose to make them
@@ -813,41 +817,49 @@ there are equally many places where inference is not possible.
 This proof relies on further properties, in particular
 \AgdaFunction{Lift-Dist-Comp$^{SS}$} (lifting a composition of substitutions
 is equal to composing their liftings) and
-\AgdaFunction{lift*-dist-Comp$^{SS}$} (its counterpart for lifting
+\AgdaFunction{Lift*-Dist-Comp$^{SS}$} (its counterpart for lifting
 over type bindings), where the statement and proof would require
 explicit transfers. Essentially, these properties form a ``food
 chain'' that stops at the composition properties of renamings with
-renamings and liftings, all of which follow similarly. The supplemental
+renamings and liftings, all of which work similarly. The supplemental
 material gives the full story.
 
-\subsection{Comparison to a Proof in Transfer Hell}
+\subsection{Composition of Substitutions Without Rewriting: Transfer Hell}
 \label{sec:comparison-transfer-hell}
 % make very clear this is not our code and not WITHOUT rewriting.
-We now contrast our development with the same proof carried out without
+We now contrast the development from \cref{sec:comp-subst-with} with
+the same proof carried out \emph{without} 
 installing the $\sigma$-calculus equations as definitional equalities. As a
-point of comparison, we take the supplement of the logical relation
-construction of \citet{10.1145/3678000.3678201}, which
-also mechanizes the compositionality properties for System~F. To enable a direct
+point of comparison, we take the supplement of the construction of a
+logical relation \cite{10.1145/3678000.3678201}, which 
+also mechanizes the compositionality properties of expression
+substitutions for System~F. To enable a direct 
 comparison, we have aligned the surface syntax of their definitions
 with ours.
 
 Inspecting the type of the compositionality lemma already exposes the
 core issue: because the $\sigma$-calculus equations are only
 propositional, the statement of the theorem must itself rely on
-\AgdaFunction{subst} to bridge equal-but-not-definitionally-equal indices.
+\AgdaFunction{subst} to bridge equal-but-not-definitionally-equal
+indices: the type of the left side of the equality is \emph{not}
+definitionally equal to the type of the right side. To adapt the types,
+compositionality of type substitutions is applied to the type of the
+expression using function \AgdaFunction{sub}.
 \ExportCompositionalityHom
 
-\noindent Every recursive call to the induction hypothesis introduces a
-fresh application of \AgdaFunction{subst}, which then has to be
-distributed to the outside of the term and combined with the
+\noindent Because \AgdaFunction{subst} is part of the statement, every
+recursive call to the induction hypothesis introduces a 
+fresh application of \AgdaFunction{subst}, which has to be discharged
+in the proof alongside the interesting proof steps.
+To do so it to be distributed to the outside of the term and combined with the
 \AgdaFunction{subst}s arising from neighboring subterms before the goal
 can be closed. This bookkeeping is further complicated by the fact that
 the other appearances of type substitution lemmas required in the proof interact with the
-transported equalities in non-trivial ways. We illustrate the resulting
-complexity by zooming in on a single induction case---type
+transport equalities in non-trivial ways. We illustrate the resulting
+complexity by zooming in on a single case of the inductive proof---type
 application---of their compositionality lemma.
 
-A first observation is that our development already saves one
+Firstly, our development already saves one
 \AgdaFunction{subst} in the very definition of substitution application.
 %Without the definitional $\sigma$-calculus, this saving is no longer
 %available: 
@@ -856,11 +868,11 @@ The type application case requires the swap lemma of type
 definition.
 \ExportSubstInDef
 
-\noindent With this in place, we can examine the type application case
+\noindent Next, we examine the type application case
 of the compositionality proof itself. The authors employ heterogeneous
 equality~\cite{DBLP:conf/types/McBride00} to avoid some of the
 administrative reasoning otherwise forced by transfer hell. Without
-heterogeneous equality, the proof would be considerably worse still,
+heterogeneous equality, the proof would be even more complex,
 requiring several auxiliary lemmas that explicitly shuffle applications
 of \AgdaFunction{subst} around. Thus, the version below already
 constitutes one of the simplest forms of the argument.
@@ -884,17 +896,18 @@ constitutes one of the simplest forms of the argument.
         proof.
 \end{enumerate}
 Of these, steps~(2), (4), the type coercion in~(5), and~(6),
-as well as the translation into heterogeneous equality, are entirely
+as well as the use of heterogeneous equality, are entirely
 absent from our rewriting-based proof, only the application of the
-induction hypothesis and the implicit (un)folding of definitions remain.
+inductive hypothesis and the implicit (un)folding of definitions remain.
 
-We complement this qualitative comparison with a quantitative one. The
-following table records the lines of code and number of characters
+We complement this qualitative comparison with a quantitative
+one. \cref{tab:proof-statistics} records the lines of code and number
+of characters 
 required to mechanize the compositionality law for expression
 substitutions, together with the type-checking time of the
 respective developments.
 
-\begin{center}
+\begin{table}[tp]
 \begin{tabular}{|l|rr|rr|}
     \hline
                                           & \multicolumn{2}{c|}{\textbf{With Rewriting}}
@@ -911,7 +924,9 @@ respective developments.
                                           & \multicolumn{2}{c|}{9.51\,s} \\
     \hline
 \end{tabular}
-\end{center}
+\caption{Proof statistics}
+\label{tab:proof-statistics}
+\end{table}
 
 As expected, the amount of code required to formalize type
 substitution is roughly the same in both developments. For
@@ -922,13 +937,13 @@ type-checking time is also reduced by about 50\% when the
 $\sigma$-calculus equations are installed as rewrite rules.
 
 \subsection{Equational Theory for Expression Substitution}
-Having proven the functor laws for expression substitution, the
+Having proven the functor laws for expression substitution, one of the
 hardest result has already been established. A natural question is
 whether we can go further and install a full equational theory for
 expression substitution as definitional equalities, just as we did at
-the type level. And in fact, we can. The $\sigma$-calculus for type-substitution-indexed
+the type level. Turns out, we can! The $\sigma$-calculus for type-substitution-indexed
 expression substitutions is an extension of the one for
-type substitutions in \cref{fig:system-f-sigma-calculus}, and the
+type substitutions in \cref{sec:laws-renam-subst-1}, and the
 same holds analogously for expression renamings.
 
 Expression substitutions carry additional operators that have no
@@ -940,7 +955,7 @@ expression-level laws: one for the \emph{expression} variants
 transcription of the corresponding rule from
 \cref{sec:laws-renam-subst-1}, and one for the \emph{type} variants
 (\AgdaFunction{\_∙ˢ*\_}, \AgdaFunction{wkˢ*}), which is genuinely
-new. We illustrate this pattern on the $\eta$-id law. The expression
+new. We illustrate this pattern with the $\eta$-id law. The expression
 variant
 \SFExprSubEtaIdSub
 is a direct transcription of \AgdaFunction{$\eta$-id} from
@@ -958,7 +973,7 @@ reduction of the traversal functions \AgdaFunction{\_∣\_[\_]ᴿ}
 and \AgdaFunction{\_∣\_[\_]ˢ} and re-install each of their
 defining clauses as a rewrite rule. This is necessary because, in
 the case of type application, the rewriting must perform two
-reduction steps simultaneously, as required by the triangle
+reduction steps at once, as required by the triangle
 criterion: one step normalizes the type
 index, and one step reduces the expression itself, pushing the
 substitution inside.
@@ -968,9 +983,9 @@ substitution inside.
 
 We have now made the equations of the $\sigma$-calculus definitional
 at two levels of the syntactic hierarchy: at the type level and at
-the expression level, where the latter \emph{depends} on the former.
+the expression level, where the latter depends on the former.
 In general, this strategy applies to
-arbitrarily tall \emph{towers} of intrinsically typed syntaxes, in
+arbitrarily tall towers of intrinsically typed syntaxes, in
 which each level's type indices themselves support substitution.
 
 More precisely, consider a tower $T_0, T_1, \dots, T_n$ of syntactic
@@ -987,8 +1002,8 @@ recipe proceeds bottom-up:
         $\sigma$-calculus laws for $T_i$, and install them as
         rewrite rules.
 \end{enumerate}
-The key is that the laws for all lower levels are already definitional, when we define and prove the laws for
-level $i$.
+The key is that the laws for all levels $<i$ are already definitional,
+when we define and prove the laws for level $i$.
 Otherwise, the types of the level-$i$ operations would no longer
 match up on the nose, and we would be back in transfer hell. 
 
@@ -1005,11 +1020,11 @@ linearly with the level, but each new family follows the same
 template as the previous one, so the proof effort per family stays
 constant.
 
-As a concrete instance, the System
-$\mathrm{F}^{\uparrow}_{C}$~\cite{10.1145/2103786.2103795} language
+As a concrete instance, the language System
+$\mathrm{F}^{\uparrow}_{C}$~\cite{10.1145/2103786.2103795}
 features three levels: kinds, types, and
 expressions. Each level carries its own variables
-and substitution. Using our approach, it would be possible to construct
+and substitution. Using our approach, we believe, it would be possible to construct
 an intrinsically typed representation for it and establish the
 substitution theory for all three levels uniformly, without any transfer
 reasoning.
@@ -1178,24 +1193,26 @@ reasoning.
 
 %TODO[PT]: does this need update?
 
-Intrinsically typed syntax promises elegant mechanizations by making
-well-typed programs representable only as well-typed data, but for
+Intrinsically typed syntax facilitates elegant mechanizations by making
+well-typed programs representable only as well-typed data. For
 polymorphic calculi this promise is often undermined by pervasive
-transport reasoning. Our experience with System~F and System~F$\omega$
+transport reasoning. Our experience with System~F
 shows that the difficulty does not stem from binding structure or
 indexing itself, but from a mismatch between substitution and
 definitional equality: substitutions that are extensionally equal fail
 to compute to a canonical form. By internalizing the equational laws of
-the $\sigma$-calculus as definitional equality, substitutions become
+the $\sigma$-calculus as definitional equalities, substitutions become
 canonical and routine transports disappear from proofs. The resulting
-developments recover the simplicity seen in the simply-typed case
-while scaling to higher-order polymorphism and intrinsic type
-conversion. More broadly, this pearl suggests a practical guideline
+developments recover the elegance seen in the simply-typed case while
+scaling to towers of syntactic sorts.
+More broadly, this fresh perspective suggests a practical guideline
 for mechanizing type systems in dependently typed proof assistants:
 when intrinsically typed encodings become proof-heavy, a promising
 strategy is often to strengthen definitional equality rather than
-introduce additional lemmas or automation. 
+introduce additional lemmas or automation.
 
+%% System~F$\omega$
+%% while scaling to higher-order polymorphism and intrinsic type conversion.
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}

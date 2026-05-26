@@ -542,23 +542,25 @@ opaque
   (_ ∣ e ∙ˢ σ) _ zero     = e
   (_ ∣ e ∙ˢ σ) _ (suc x)  = σ _ x
 
+  --! TExtension
   _∣_∙ˢ*_ : ∀ η T → (σ : η ∣ Γ₁ ⇒ˢ Γ₂) → (T ∙ˢ η) ∣ (Γ₁ ▷*) ⇒ˢ Γ₂
   (_ ∣ T ∙ˢ* σ) _ (suc* x) = σ _ x
 
-  --! Lookup
   -- blocking alias for "apply substitution to variable" — analog of `_&ˢ_` at type level
-  _∣_&ˢ_ : ∀ η → (x : Γ₁ ∋ T) → (σ : η ∣ Γ₁ ⇒ˢ Γ₂) → Expr Γ₂ (T [ η ]ˢ)
+  --! Lookup
+  _∣_&ˢ_ : ∀ {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} (η : Sub n₁ n₂)
+    → (x : Γ₁ ∋ T) → (σ : η ∣ Γ₁ ⇒ˢ Γ₂) → Expr Γ₂ (T [ η ]ˢ)
   η ∣ x &ˢ σ = σ _ x
 
   -- lifting a substitution
   --! Lifting
   _∣_⇑ˢ_ : ∀ η → (σ : η ∣ Γ₁ ⇒ˢ Γ₂) → ∀ T → η ∣ (Γ₁ ▷ T) ⇒ˢ (Γ₂ ▷ (T [ η ]ˢ))
-  η ∣ σ ⇑ˢ T = η ∣ (` zero) ∙ˢ λ _ x → idᴿ ∣ (σ _ x) [ Wkᴿ _ ]ᴿ
+  η ∣ σ ⇑ˢ T = η ∣ (` zero) ∙ˢ λ _ x → idᴿ ∣ (σ _ x) [ Wkᴿ (T [ η ]ˢ) ]ᴿ
 
   -- type lifting
   --! TLifting
-  _∣_↑ˢ* : ∀ η → (σ : η ∣ Γ₁ ⇒ˢ Γ₂) → (η ↑ˢ) ∣ (Γ₁ ▷*) ⇒ˢ (Γ₂ ▷*)
-  (η ∣ σ ↑ˢ*) = (η ⨟ˢ ⟨ wkᴿ ⟩) ∣ (` zero) ∙ˢ* λ _ x → wkᴿ ∣ (σ _ x) [ wkᴿ* ]ᴿ
+  _∣_⇑ˢ* : ∀ η → (σ : η ∣ Γ₁ ⇒ˢ Γ₂) → (η ↑ˢ) ∣ (Γ₁ ▷*) ⇒ˢ (Γ₂ ▷*)
+  (η ∣ σ ⇑ˢ*) = (η ⨟ˢ ⟨ wkᴿ ⟩) ∣ (` zero) ∙ˢ* λ _ x → wkᴿ ∣ (σ _ x) [ wkᴿ* ]ᴿ
 
 ⟪_⟫ : (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) → ⟨ ζ ⟩ ∣ Γ₁ ⇒ˢ Γ₂
 ⟪_⟫ = _ ∣⟪_⟫
@@ -571,9 +573,9 @@ opaque
   _∣_[_]ˢ : (η : Sub n₁ n₂) → (e : Expr Γ₁ T) → (σ : η ∣ Γ₁ ⇒ˢ Γ₂) → Expr Γ₂ (T [ η ]ˢ)
   η  ∣ (` x) [ σ ]ˢ      = η ∣ x &ˢ σ
   η  ∣ (λx e) [ σ ]ˢ     = λx (η ∣ e [ η ∣ σ ⇑ˢ _ ]ˢ)
-  η  ∣ (Λα e) [ σ ]ˢ     = Λα ((η ↑ˢ) ∣ e [ η ∣ σ ↑ˢ* ]ˢ)
+  η  ∣ (Λα e) [ σ ]ˢ     = Λα ((η ↑ˢ) ∣ e [ η ∣ σ ⇑ˢ* ]ˢ)
   η  ∣ (e · e₁) [ σ ]ˢ   = (η ∣ e [ σ ]ˢ) · (η ∣ e₁ [ σ ]ˢ)
-  η  ∣ (e ·* T′) [ σ ]ˢ  = (η ∣ e [ σ ]ˢ) ·* (T′ [ η ]ˢ)
+  η  ∣ (e ·* T) [ σ ]ˢ   = (η ∣ e [ σ ]ˢ) ·* (T [ η ]ˢ)
 
 opaque
   --! CompDefinition
@@ -584,14 +586,14 @@ _⨾ˢ_ : η₁ ∣ Γ₁ ⇒ˢ Γ₂ → η₂ ∣ Γ₂ ⇒ˢ Γ₃ → (η₁
 _⨾ˢ_ {η₁ = η₁} {η₂ = η₂} σ₁ σ₂ = (η₁ , η₂ ∣ σ₁ ⨾ˢ σ₂)
 
 opaque
-  unfolding Idᴿ Wkᴿ wkᴿ* _,_∣_⨾ᴿ_ _∣_∙ᴿ_ _∣_∙ᴿ*_ _∣_&ᴿ_ _∣_⇑ᴿ_ _∣_↑ᴿ* _∣_[_]ᴿ _∣⟪_⟫ Idˢ Wkˢ wkˢ* _∣_∙ˢ_ _∣_∙ˢ*_ _,_∣_⨾ˢ_ _∣_&ˢ_ _∣_⇑ˢ_ _∣_↑ˢ* _∣_[_]ˢ
+  unfolding Idᴿ Wkᴿ wkᴿ* _,_∣_⨾ᴿ_ _∣_∙ᴿ_ _∣_∙ᴿ*_ _∣_&ᴿ_ _∣_⇑ᴿ_ _∣_↑ᴿ* _∣_[_]ᴿ _∣⟪_⟫ Idˢ Wkˢ wkˢ* _∣_∙ˢ_ _∣_∙ˢ*_ _,_∣_⨾ˢ_ _∣_&ˢ_ _∣_⇑ˢ_ _∣_⇑ˢ* _∣_[_]ˢ
 
   --! EtaIdSub
   η-Idˢ : ⟨ idᴿ ⟩ ∣ (` zero) ∙ˢ (Wkˢ T) ≡ Idˢ {Γ = Γ ▷ T}
 
   η-Idˢ = fun-ext λ _ → fun-ext λ { zero → refl; (suc x) → refl }
 
-  η*-Id : ⟨ idᴿ ⟩ ∣ (Idˢ {Γ = Γ}) ↑ˢ* ≡ Idˢ
+  η*-Id : ⟨ idᴿ ⟩ ∣ (Idˢ {Γ = Γ}) ⇑ˢ* ≡ Idˢ
   η*-Id = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
 
   Identityᵣ : ∀ (e : Expr Γ T) → ⟨ idᴿ ⟩ ∣ e [ Idˢ ]ˢ ≡ e
@@ -622,7 +624,7 @@ opaque
   Lift-Dist-Compᴿˢ _ _ = fun-ext λ _ → fun-ext λ { zero → refl; (suc x) → refl }
 
   lift*-dist-Compᴿˢ : (ζ₁ : Ren n₁ n₂) (η₂ : Sub n₂ n₃) (ρ₁ : ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (σ₂ : η₂ ∣ Γ₂ ⇒ˢ Γ₃) →
-    ⟨ ζ₁ ↑ᴿ ⟩ , (η₂ ↑ˢ) ∣ ((ζ₁ ↑ᴿ ∣⟪ ζ₁ ∣ ρ₁ ↑ᴿ* ⟫)) ⨾ˢ (η₂ ∣ σ₂ ↑ˢ*) ≡ ((⟨ ζ₁ ⟩ ⨟ˢ η₂) ∣ (⟨ ζ₁ ⟩ , η₂ ∣ ζ₁ ∣⟪ ρ₁ ⟫ ⨾ˢ σ₂) ↑ˢ*)
+    ⟨ ζ₁ ↑ᴿ ⟩ , (η₂ ↑ˢ) ∣ ((ζ₁ ↑ᴿ ∣⟪ ζ₁ ∣ ρ₁ ↑ᴿ* ⟫)) ⨾ˢ (η₂ ∣ σ₂ ⇑ˢ*) ≡ ((⟨ ζ₁ ⟩ ⨟ˢ η₂) ∣ (⟨ ζ₁ ⟩ , η₂ ∣ ζ₁ ∣⟪ ρ₁ ⟫ ⨾ˢ σ₂) ⇑ˢ*)
   lift*-dist-Compᴿˢ _ _ _ _ = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
 
   Compositionalityᴿˢ : ∀ (e : Expr Γ₁ T) (ζ₁ : Ren n₁ n₂) (η₂ : Sub n₂ n₃) (ρ₁ : ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (σ₂ : η₂ ∣ Γ₂ ⇒ˢ Γ₃) →
@@ -647,7 +649,7 @@ opaque
       _  ∎
 
 opaque
-  unfolding Idᴿ Wkᴿ wkᴿ* _,_∣_⨾ᴿ_ _∣_∙ᴿ_ _∣_∙ᴿ*_ _∣_&ᴿ_ _∣_⇑ᴿ_ _∣_↑ᴿ* _∣_[_]ᴿ _∣⟪_⟫ Idˢ Wkˢ wkˢ* _∣_∙ˢ_ _∣_∙ˢ*_ _,_∣_⨾ˢ_ _∣_&ˢ_ _∣_⇑ˢ_ _∣_↑ˢ* _∣_[_]ˢ
+  unfolding Idᴿ Wkᴿ wkᴿ* _,_∣_⨾ᴿ_ _∣_∙ᴿ_ _∣_∙ᴿ*_ _∣_&ᴿ_ _∣_⇑ᴿ_ _∣_↑ᴿ* _∣_[_]ᴿ _∣⟪_⟫ Idˢ Wkˢ wkˢ* _∣_∙ˢ_ _∣_∙ˢ*_ _,_∣_⨾ˢ_ _∣_&ˢ_ _∣_⇑ˢ_ _∣_⇑ˢ* _∣_[_]ˢ
 
   Lift-Dist-Compˢᴿ : (σ₁ : η₁ ∣ Γ₁ ⇒ˢ Γ₂) (ρ₂ : ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃) →
     η₁ , ⟨ ζ₂ ⟩ ∣ (η₁ ∣ σ₁ ⇑ˢ T) ⨾ˢ (ζ₂ ∣⟪ ζ₂ ∣ ρ₂ ⇑ᴿ (T [ η₁ ]ˢ) ⟫) ≡ ((η₁ ⨟ˢ ⟨ ζ₂ ⟩) ∣ (η₁ , ⟨ ζ₂ ⟩ ∣ σ₁ ⨾ˢ (ζ₂ ∣⟪ ρ₂ ⟫)) ⇑ˢ T)
@@ -661,7 +663,7 @@ opaque
         _  ∎ }
 
   lift*-dist-Compˢᴿ : (η₁ : Sub n₁ n₂) (ζ₂ : Ren n₂ n₃) (σ₁ : η₁ ∣ Γ₁ ⇒ˢ Γ₂) (ρ₂ : ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃) →
-    (η₁ ↑ˢ) , ⟨ ζ₂ ↑ᴿ ⟩ ∣ (η₁ ∣ σ₁ ↑ˢ*) ⨾ˢ ((ζ₂ ↑ᴿ) ∣⟪ ζ₂ ∣ ρ₂ ↑ᴿ* ⟫) ≡ (η₁ ⨟ˢ ⟨ ζ₂ ⟩) ∣ (η₁ , ⟨ ζ₂ ⟩ ∣ σ₁ ⨾ˢ (ζ₂ ∣⟪ ρ₂ ⟫)) ↑ˢ*
+    (η₁ ↑ˢ) , ⟨ ζ₂ ↑ᴿ ⟩ ∣ (η₁ ∣ σ₁ ⇑ˢ*) ⨾ˢ ((ζ₂ ↑ᴿ) ∣⟪ ζ₂ ∣ ρ₂ ↑ᴿ* ⟫) ≡ (η₁ ⨟ˢ ⟨ ζ₂ ⟩) ∣ (η₁ , ⟨ ζ₂ ⟩ ∣ σ₁ ⨾ˢ (ζ₂ ∣⟪ ρ₂ ⟫)) ⇑ˢ*
   lift*-dist-Compˢᴿ η₁ ζ₂ σ₁ ρ₂ = fun-ext λ _ → fun-ext λ
     { (suc* x) →
       let e = σ₁ _ x in begin
@@ -690,7 +692,7 @@ opaque
         _  ∎ }
 
   lift*-dist-Compˢˢ : (η₁ : Sub n₁ n₂) (η₂ : Sub n₂ n₃) (σ₁ : η₁ ∣ Γ₁ ⇒ˢ Γ₂) (σ₂ : η₂ ∣ Γ₂ ⇒ˢ Γ₃) →
-    (η₁ ↑ˢ) , (η₂ ↑ˢ) ∣ (η₁ ∣ σ₁ ↑ˢ*) ⨾ˢ (η₂ ∣ σ₂ ↑ˢ*) ≡ ((η₁ ⨟ˢ η₂) ∣ (η₁ , η₂ ∣ σ₁ ⨾ˢ σ₂) ↑ˢ*)
+    (η₁ ↑ˢ) , (η₂ ↑ˢ) ∣ (η₁ ∣ σ₁ ⇑ˢ*) ⨾ˢ (η₂ ∣ σ₂ ⇑ˢ*) ≡ ((η₁ ⨟ˢ η₂) ∣ (η₁ , η₂ ∣ σ₁ ⨾ˢ σ₂) ⇑ˢ*)
   lift*-dist-Compˢˢ _ η₂ σ₁ σ₂ = fun-ext λ _ → fun-ext λ
     { (suc* x) →
       let e = σ₁ _ x in begin
@@ -713,11 +715,11 @@ opaque
         (η₁ ⨟ˢ η₂) ∣ e [ (η₁ ⨟ˢ η₂) ∣ η₁ , η₂ ∣ σ₁ ⨾ˢ σ₂ ⇑ˢ T₁ ]ˢ
       ∎)
   Compositionalityˢˢ (Λα e)     η₁ η₂ σ₁ σ₂  = cong Λα (begin
-        (η₂ ↑ˢ) ∣ (η₁ ↑ˢ) ∣ e [ η₁ ∣ σ₁ ↑ˢ* ]ˢ [ η₂ ∣ σ₂ ↑ˢ* ]ˢ
-      ≡⟨ Compositionalityˢˢ e (η₁ ↑ˢ) (η₂ ↑ˢ) (η₁ ∣ σ₁ ↑ˢ*) (η₂ ∣ σ₂ ↑ˢ*) ⟩
-        ((η₁ ⨟ˢ η₂) ↑ˢ) ∣ e [ (η₁ ↑ˢ) , η₂ ↑ˢ ∣ η₁ ∣ σ₁ ↑ˢ* ⨾ˢ (η₂ ∣ σ₂ ↑ˢ*) ]ˢ
+        (η₂ ↑ˢ) ∣ (η₁ ↑ˢ) ∣ e [ η₁ ∣ σ₁ ⇑ˢ* ]ˢ [ η₂ ∣ σ₂ ⇑ˢ* ]ˢ
+      ≡⟨ Compositionalityˢˢ e (η₁ ↑ˢ) (η₂ ↑ˢ) (η₁ ∣ σ₁ ⇑ˢ*) (η₂ ∣ σ₂ ⇑ˢ*) ⟩
+        ((η₁ ⨟ˢ η₂) ↑ˢ) ∣ e [ (η₁ ↑ˢ) , η₂ ↑ˢ ∣ η₁ ∣ σ₁ ⇑ˢ* ⨾ˢ (η₂ ∣ σ₂ ⇑ˢ*) ]ˢ
       ≡⟨ cong (((η₁ ⨟ˢ η₂) ↑ˢ) ∣ e [_]ˢ) (lift*-dist-Compˢˢ η₁ η₂ σ₁ σ₂) ⟩
-        ((η₁ ⨟ˢ η₂) ↑ˢ) ∣ e [ (η₁ ⨟ˢ η₂) ∣ η₁ , η₂ ∣ σ₁ ⨾ˢ σ₂ ↑ˢ* ]ˢ
+        ((η₁ ⨟ˢ η₂) ↑ˢ) ∣ e [ (η₁ ⨟ˢ η₂) ∣ η₁ , η₂ ∣ σ₁ ⨾ˢ σ₂ ⇑ˢ* ]ˢ
       ∎)
   Compositionalityˢˢ (e₁ · e₂)  η₁ η₂ σ₁ σ₂  = cong₂ _·_ 
       (Compositionalityˢˢ e₁ η₁ η₂ σ₁ σ₂) 
@@ -727,7 +729,7 @@ opaque
 
 -- expression-level σ-calculus laws (mirroring the type-level laws above)
 opaque
-  unfolding Idᴿ Wkᴿ wkᴿ* _,_∣_⨾ᴿ_ _∣_∙ᴿ_ _∣_∙ᴿ*_ _∣_&ᴿ_ _∣_⇑ᴿ_ _∣_↑ᴿ* _∣_[_]ᴿ _∣⟪_⟫ Idˢ Wkˢ wkˢ* _∣_∙ˢ_ _∣_∙ˢ*_ _,_∣_⨾ˢ_ _∣_&ˢ_ _∣_⇑ˢ_ _∣_↑ˢ* _∣_[_]ˢ
+  unfolding Idᴿ Wkᴿ wkᴿ* _,_∣_⨾ᴿ_ _∣_∙ᴿ_ _∣_∙ᴿ*_ _∣_&ᴿ_ _∣_⇑ᴿ_ _∣_↑ᴿ* _∣_[_]ᴿ _∣⟪_⟫ Idˢ Wkˢ wkˢ* _∣_∙ˢ_ _∣_∙ˢ*_ _,_∣_⨾ˢ_ _∣_&ˢ_ _∣_⇑ˢ_ _∣_⇑ˢ* _∣_[_]ˢ
 
   --! ExprRenamingTraversal {
   -- traversal clauses on expressions as rewrite rules (analog of traversal-* type-level)
@@ -771,7 +773,7 @@ opaque
 
   Traversal-Λαˢ : ∀ {η : Sub n₁ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                   (e : Expr (Γ₁ ▷*) T) (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
-                  η ∣ (Λα e) [ σ ]ˢ ≡ Λα ((η ↑ˢ) ∣ e [ η ∣ σ ↑ˢ* ]ˢ)
+                  η ∣ (Λα e) [ σ ]ˢ ≡ Λα ((η ↑ˢ) ∣ e [ η ∣ σ ⇑ˢ* ]ˢ)
   Traversal-Λαˢ _ _ = refl
 
   Traversal-·ˢ : ∀ {η : Sub n₁ n₂} {T₁ T₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
@@ -969,7 +971,7 @@ opaque
 
   --! ExprLiftBeta {
   -- σ-calculus form of lifts (analog of type-level `beta-lift`):
-  -- ρ ⇑ᴿ T is the σ-form ` zero ∙ᴿ (ρ ⨾ᴿ Wkᴿ); similarly for ↑ᴿ*, ⇑ˢ, ↑ˢ*.
+  -- ρ ⇑ᴿ T is the σ-form ` zero ∙ᴿ (ρ ⨾ᴿ Wkᴿ); similarly for ↑ᴿ*, ⇑ˢ, ⇑ˢ*.
   Beta-liftᴿ : ∀ {ζ : Ren n₁ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} {T : Type n₁}
                (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
                (ζ ∣ ρ ⇑ᴿ T) ≡ (ζ ∣ zero ∙ᴿ (ζ , idᴿ ∣ ρ ⨾ᴿ Wkᴿ (T [ ζ ]ᴿ)))
@@ -990,7 +992,7 @@ opaque
 
   Beta-liftˢ* : ∀ {η : Sub n₁ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                 (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
-                (η ∣ σ ↑ˢ*) ≡ ((η ⨟ˢ ⟨ wkᴿ ⟩) ∣ (` zero) ∙ˢ* (η , ⟨ wkᴿ ⟩ ∣ σ ⨾ˢ wkˢ*))
+                (η ∣ σ ⇑ˢ*) ≡ ((η ⨟ˢ ⟨ wkᴿ ⟩) ∣ (` zero) ∙ˢ* (η , ⟨ wkᴿ ⟩ ∣ σ ⨾ˢ wkˢ*))
   Beta-liftˢ* σ = fun-ext λ _ → fun-ext λ
     { (suc* x) → sym (Coincidence (σ _ x) wkᴿ*)
     }
@@ -1065,21 +1067,21 @@ opaque
 -- single substitution, semantics, and progress
 --! <
 --! Sem >
---! SingleSub {
+--! SingleSub
 _[_] : Expr (Γ ▷ T′) T → Expr Γ T′ → Expr Γ T
 e [ e′ ] = idˢ ∣ e [ idˢ ∣ e′ ∙ˢ Idˢ ]ˢ
 
+--! SingleTypeSub
 _[*_*] : Expr (Γ ▷*) T → (T′ : Type n) → Expr Γ (T [ T′ ]*)
 e [* T′ *] = (T′ ∙ˢ idˢ) ∣ e [ idˢ ∣ T′ ∙ˢ* Idˢ ]ˢ
---! }
 
 --! Definition
 data _⟶_ : Expr Γ T → Expr Γ T → Set where
-  β-λ   : (λx e₁ · e₂) ⟶ (e₁ [ e₂ ])
-  β-Λ   : (Λα e ·* T′) ⟶ (e [* T′ *])
-  ξ-·   : e₁ ⟶ e₁′ → (e₁ · e₂) ⟶ (e₁′ · e₂)
-  ξ-·*  : e ⟶ e′ → (e ·* T) ⟶ (e′ ·* T)
-  ξ-Λ   : e ⟶ e′ → (Λα e) ⟶ (Λα e′)
+  β-λ   :                (λx e₁ · e₂)  ⟶ (e₁ [ e₂ ])
+  β-Λ   :                (Λα e ·* T′)  ⟶ (e [* T′ *])
+  ξ-·   : e₁ ⟶ e₁′  →  (e₁ · e₂)     ⟶ (e₁′ · e₂)
+  ξ-·*  : e ⟶ e′    →  (e ·* T)      ⟶ (e′ ·* T)
+  ξ-Λ   : e ⟶ e′    →  (Λα e)        ⟶ (Λα e′)
 
 data _⟶*_ : Expr Γ T → Expr Γ T → Set where
   ⟶refl   : e ⟶* e
@@ -1091,35 +1093,62 @@ open import Relation.Nullary using (¬_)
 
 --! ProgressDefs {
 data Value : Expr Γ T → Set where
-  λx  : (e : Expr (Γ ▷ T₁) T₂) → Value (λx e)
-  Λα  : Value e → Value (Λα e)
+  λx  : (e : Expr (Γ ▷ T₁) T₂)  → Value (λx e)
+  Λα  : (v : Value e)           → Value (Λα e)
 
 data Progress : Expr Γ T → Set where
-  done  : (v : Value e) → Progress e
-  step  : (e⟶e′ : e ⟶ e′) → Progress e
-
-NoVar : Ctx n → Set
-NoVar ∅        = ⊤
-NoVar (Γ ▷ T)  = ⊥
-NoVar (Γ ▷*)   = NoVar Γ
-
-noVar : NoVar Γ → ¬ (Γ ∋ T)
-noVar nv (suc* x) = noVar nv x
+  done  : (v : Value e)       → Progress e
+  step  : (e⟶e′ : e ⟶ e′)  → Progress e
 --! }
 
---! Progress
-progress : NoVar Γ → (e : Expr Γ T) → Progress e
-progress nv (` x)   = ⊥-elim (noVar nv x)
-progress nv (λx e)  = done (λx e)
-progress nv (e · e₁)
-  with progress nv e
-... | done (λx e₂)  = step β-λ
-... | step e⟶e′   = step (ξ-· e⟶e′)
-progress nv (Λα e)
-  with progress nv e
-... | done v       = done (Λα v)
-... | step e⟶e′  = step (ξ-Λ e⟶e′)
-progress nv (e ·* T′)
-  with progress nv e
-... | done (Λα v)  = step β-Λ
-... | step e⟶e′  = step (ξ-·* e⟶e′)
+
+module old where
+  --! NoVarDefs {
+  NoVar : Ctx n → Set
+  NoVar ∅        = ⊤
+  NoVar (Γ ▷ T)  = ⊥
+  NoVar (Γ ▷*)   = NoVar Γ
+
+  noVar : NoVar Γ → ¬ (Γ ∋ T)
+  noVar nv (suc* x) = noVar nv x
+  --! }
+
+
+  --! Progress
+  progress : NoVar Γ → (e : Expr Γ T) → Progress e
+  progress nv (` x)   = ⊥-elim (noVar nv x)
+  progress nv (λx e)  = done (λx e)
+  progress nv (e · e₁)
+    with progress nv e
+  ... | done (λx e₂)  = step β-λ
+  ... | step e⟶e′   = step (ξ-· e⟶e′)
+  progress nv (Λα e)
+    with progress nv e
+  ... | done v       = done (Λα v)
+  ... | step e⟶e′  = step (ξ-Λ e⟶e′)
+  progress nv (e ·* T′)
+    with progress nv e
+  ... | done (Λα v)  = step β-Λ
+  ... | step e⟶e′  = step (ξ-·* e⟶e′)
+
+module exp where
+  --! NewNoVarDefs
+  NoVar : Ctx n → Set
+  NoVar Γ = ∀ {T′} → ¬ (Γ ∋ T′)
+  
+  --! NewProgress
+  progress : NoVar Γ → (e : Expr Γ T) → Progress e
+  progress nv (` x)   = ⊥-elim (nv x)
+  progress nv (λx e)  = done (λx e)
+  progress nv (e · e₁)
+    with progress nv e
+  ... | done (λx e₂)  = step β-λ
+  ... | step e⟶e′   = step (ξ-· e⟶e′)
+  progress nv (Λα e)
+    with progress (λ{ (suc* x) → nv x}) e
+  ... | done v       = done (Λα v)
+  ... | step e⟶e′  = step (ξ-Λ e⟶e′)
+  progress nv (e ·* T′)
+    with progress nv e
+  ... | done (Λα v)  = step β-Λ
+  ... | step e⟶e′  = step (ξ-·* e⟶e′)

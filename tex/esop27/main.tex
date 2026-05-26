@@ -611,8 +611,11 @@ expression variables and binders.
 
 The definition of a small-step operational semantics requires
 expression renamings and substitution to implement beta reduction for
-value abstractions and type abstractions. As in the introduction, we
-define a call-by-name semantics for concision.
+value abstractions and type abstractions.
+Renamings and substitutions are both indexed by type renamings and
+type substitutions, respectively. We skip the treatment of renamings
+as it is analogous to the one for substitutions and concentrate on
+explaining the latter.
 
 
 % TODO[PT]: wrong! we do exactly this!
@@ -663,6 +666,15 @@ adjusting its type according to the type substitution: $T [ \eta
 ]^S$. Notationally, we write $\eta \mid \dots$ for any operation on
 substitutions that is indexed by type substitution $\eta$.
 \SFExprSubstitution
+Applying a substitution to a variable is just function
+application. Nevertheless, we use the same interface as for type
+substitutions to
+enable using the same rewriting machinery on the expression level
+again.  For this definition, we include the typing of all symbols,
+which is similar for all further definitions and omitted because it
+can be inferred. 
+\SFExprSubLookup
+
 The identity substitution for expressions is straightforward to
 define. But this simplicity is due to the installed rewriting of type
 substitutions. Without the rewriting, the right hand side's type is
@@ -671,57 +683,87 @@ transport lemma \AgdaPostulate{comp-id$_r$}.
 \SFExprSubIds
 Extending a substitution is standard: given an expression $e$ and a
 substitution $\sigma$, we return a substitution that sends variable
-\AgdaInductiveConstructor{zero} to $e$ and otherwise resorts to $\sigma$.
+\AgdaInductiveConstructor{zero} to $e$ and otherwise resorts to
+$\sigma$.
 \SFExprSubExtension
-Due to the structure of contexts, we need two lifting lemmas, one for
-value bindings and another for type bindings. 
-The former requires a transport lemma, which is applied by rewriting.
+Due to the structure of contexts, we need two lifting lemmas when
+defining the application of a substitution to an expression, one for
+value bindings and another for type bindings. In both cases, the
+substitution $\sigma$ needs to be adjusted (i.e., lifted) to
+accommodate the newly introduced binding.
+The former is standard: it maps the newly introduced variable to
+itself (\AgdaInductiveConstructor{zero}) and weakens the images of
+$\sigma$ accordingly. However, the definition of lifting requires a
+transport lemma to line up the type substitutions, which is applied by
+rewriting. The last part of the definition $\AgdaFunction{id}^R \mid
+\dots \AgdaFunction{Wk}^R \dots$ applies an expression renaming
+(weakening by $T [ η ]ˢ$) indexed by \AgdaFunction{idᴿ} to the
+output of $\sigma$. 
 \SFExprSubLifting
-Lifting a substitution over a type binding is straightforward.
+Lifting a substitution over a type binding is non-standard, but
+straightforward. The type substitution requires lifting, but no rewriting is needed.
 \SFExprSubTLifting
 These operations are sufficient to define the application of a
-substitution to an expression.
+substitution to an expression. The cases dispatch exactly to the
+operations that we introduced: applying a substitution to a variable,
+lifting over a value binding (case \AgdaInductiveConstructor{λx}),
+lifting over a type binding (case \AgdaInductiveConstructor{Λα}),
+the cases for application and type application are homomorphic.
 \SFExprSubTraversal
 
 \subsection{Semantics}
 \label{sec:semantics}
 
+
+
+We are now in position to define a small-step operational
+semantics. As in the introduction, we opt for call-by-name for
+concision. The definition of single substitution, needed for beta 
+reduction, is analogous to the one on types: we build the substitution
+by extending the identity substitution with the argument $e'$. As
+usual in intrinsically typed setting, this definition already proves
+that substitution preserves typing!
+\SFExprSemSingleSub
+In addition, we have to substitute a type into an expression to
+cater for beta reduction of type applications. This substitution is
+also implemented by an expression substitution indexed by a type
+substitution that performs the actual change.
+\SFExprSemSingleTypeSub
+Due to the extended type substitution on the left, we also have to
+adapt the expression substitution on the right to the extended context
+structure. This adaptation is the type-level analogue to extension:
+\SFExprSubTExtension
+
+With substitution in place, the definition of the call-by-name small-step
+reduction relation is straightforward. As usual, such a definition of reduction for
+intrinsically-typed syntax implies subject reduction by construction.
+\SFExprSemDefinition
+
 \begin{figure}[tp]
-  \begin{minipage}[t]{0.49\linewidth}
+  \begin{minipage}[t]{0.47\linewidth}
     \SFExprSemProgressDefs
+    \SFExprSemNewNoVarDefs
   \end{minipage}
   \begin{minipage}[t]{0.49\linewidth}
-    \SFExprSemProgress
+    \SFExprSemNewProgress
   \end{minipage}
   \caption{Progress for System~F}
   \label{fig:system-f-progress}
 \end{figure}
 
-We are now in position to define a small-step operational
-semantics. The definition of single substitution, needed for beta
-reduction, is analogous to the one on types: we build the substitution
-by extending the identity substitution with the argument. In addition, a type
-substitution into expression is needed for beta reduction of type
-applications. This substitution is also implemented by an expression
-substitution indexed by a type substitution that performs the actual change.
-\SFExprSemSingleSub
-
-With substitution in place, the definition of call-by-name small-step
-reduction is straightforward. As usual, such a definition of reduction for
-intrinsically-typed syntax implies subject reduction by construction.
-\SFExprSemDefinition
-
 To obtain type safety, it remains to prove progress.
 \Cref{fig:system-f-progress} presents the complete proof of progress
-for call-by-name System~F. A value is either a lambda or a big lambda
+for call-by-name System~F using the structure from PLFA
+\cite{DBLP:journals/scp/KokkeSW20}. A value is either a lambda or a
+big lambda 
 where the body is already a value. An expression fulfills progress if
-it is either a value (\AgdaInductiveConstructor{done}) or it can make
+it is either a value (\AgdaInductiveConstructor{done}) or if it can make
 a step (\AgdaInductiveConstructor{step}). Due to the definition of
-value for big lambdas, we establish progress for type contexts that
+value for big lambdas, we establish progress for contexts that
 may contain type bindings, but no value bindings. These contexts are
 characterized by function \AgdaFunction{NoVar}. The actual proof of
-progress is by induction on the structure of expressions. The overall
-structure of this proof closely follows the corresponding proof by
+\AgdaFunction{progress} is by induction on the structure of expressions. The overall
+structure of this proof closely follows a proof for System~F$\omega$
 \cite{10.1007/978-3-030-33636-3_10}. Their proof is more complicated
 because their semantics is call-by-value and their language supports
 isorecursive types.

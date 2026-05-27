@@ -8,7 +8,7 @@
   \providecommand\BibTeX{{%
     Bib\TeX}}}
 
-\setcopyright{acmlicensed}
+\setcopyright{none}
 \copyrightyear{2018}
 \acmYear{2018}
 \acmDOI{XXXXXXX.XXXXXXX}
@@ -44,40 +44,29 @@
 \orcid{0009-0008-1152-165X}
 
 \begin{abstract}
-Intrinsically typed syntax promises elegant mechanizations: well-typed
+In dependently typed proof
+assistants, intrinsically typed syntax promises elegant mechanizations: well-typed
 terms are represented by well-typed data, substitution preserves
 typing by construction, and type safety proofs collapse to
 straightforward induction. For simple calculi such as the simply-typed
-lambda calculus this promise is fulfilled. For realistic systems, however,
-the technique often becomes impractical. In dependently typed proof
-assistants, intrinsically typed encodings of polymorphic calculi lead
-to pervasive type-changing equalities: renamings and substitutions
+lambda calculus this promise is fulfilled. For realistic polymorphic systems, however,
+the technique can become impractical: renamings and substitutions
 indexed by other substitutions force proofs to transport terms across
 equal types that are not definitionally equal. This
 phenomenon---informally known as transfer hell---causes even routine
 metatheoretic arguments to be dominated by administrative reasoning.  
 
 This fresh perspective shows how to make intrinsically typed syntax
-work in practice for polymorphic calculi. We give extacts of a
-mechanization of the metatheory of System F in Agda while avoiding
-explicit reasoning about transports almost  
-entirely. The key is to internalize the equational theory of the
-$\sigma$-calculus for substitutions and make it definitional. We rely
-on proved $\sigma$-calculus laws for a functional representation of substitutions and
-install them into Agda’s rewrite mechanism, obtaining canonical
-behavior for substitution and renaming without explicit
-transports. The main technical challenge is ensuring that the
-resulting rewrite system remains terminating and confluent together
-with Agda’s built-in reductions. 
+work in practice for polymorphic calculi. We show that giving substitutions canonical
+computational behavior (via Agda rewriting) yields a
+mechanization of System~F's metatheory in Agda that avoids
+explicit transport reasoning.
  
-The use of rewriting dramatically simplifies proofs of metatheoretic
-properties: typing 
-preservation becomes definitional, substitution lemmas disappear, and
-even well-behaved type conversions can be handled intrinsically. Our
-experience suggests a general methodology: when intrinsically typed
-syntax generates transports, the correct solution is often not more
-lemmas but better definitional equality. We propose some practical
-guidelines towards this methodology. 
+Our approach simplifies proofs of metatheoretic
+properties: typing preservation becomes definitional, substitution lemmas and corresponding
+transfers disappear. Generally, when intrinsic encodings generate transports, the right move
+is often  to strengthen definitional equality rather than add more lemmas. We extract practical
+guidelines for applying this methodology. 
 \end{abstract}
 
 % TODO[PT]: somehwere insert related work, namely comapre with propositonal tools and 
@@ -93,10 +82,10 @@ guidelines towards this methodology.
 Intrinsically typed syntax is widely recommended for mechanizing type
 systems in dependently typed proof assistants. By representing
 well-typed terms as well-typed data, typing invariants hold by
-construction as in a Church-style presentation, so type
+construction as in a Church-style presentation, so typing
 preservation is immediate. For small 
 calculi this approach is highly effective. However, for realistic
-polymorphic calculi such as System F, mechanizations often become
+polymorphic calculi such as System~F, mechanizations often become
 complicated: conceptually simple proofs become cluttered with
 transports across equal types and administrative equalities. 
 
@@ -111,25 +100,22 @@ transports across equal types and administrative equalities.
     \STLCSmallStep
     \STLCProgress
   \end{minipage}
-  \caption{Call-by-name simply-typed lambda calculus}
+  \caption{Call-by-name simply-typed lambda calculus (adapted from the PLFA textbook \cite{DBLP:journals/scp/KokkeSW20})}
   \label{fig:simply-typed-syntax}
 \end{figure}
 The simply-typed lambda calculus is the canonical example where
 intrinsically typed syntax is particularly effective. \Cref{fig:simply-typed-syntax}
-shows typical definitions of the 
+shows typical Agda definitions of the 
 syntax of types, type contexts, variables, and expressions, which are
 indexed by contexts and types (left column). Building on these definitions we
 can define a small-step operational semantics and
 prove type safety. This is because subject reduction holds by construction and progress
-follows by a simple inductive proof (right column). The style of these
-definitions is adapted from the textbook by
-\citet{DBLP:journals/scp/KokkeSW20}. We elide the definition  of the
+follows by a simple inductive proof (right column). We elide the definition  of the
 substitution operator \AgdaFunction{$\_[\_]$}, as we discuss substitutions in detail
 in \cref{sec:types}.
 
 The simply-typed lambda calculus therefore represents the ideal
-scenario: intrinsic typing elides type preservation proofs, thus
-making type safety proofs so concise that they can serve as textbook
+scenario where type safety proofs are so concise that they can serve as textbook
 examples \cite{DBLP:journals/scp/KokkeSW20}. Nothing comparable to
 transport reasoning arises in this development as only definitional
 properties of substitutions are required. The remainder of this paper
@@ -149,64 +135,50 @@ Coq do not allow users to state this equality directly.\footnote{A situation
   \citet{DBLP:journals/jar/BentonHKM12} discuss this approach in the
   context of an adequacy proof for a logical relation.}
 This phenomenon appears when substitutions themselves carry dependent typing
-information. In System F, expression substitutions
+information. In intrinsic mechanizations of System F, expression substitutions
 depend on type substitutions and type substitutions depend on
 renamings; composing them yields types that are equal only
 propositionally, forcing transports throughout proofs. 
 One workaround is to state definitions and
 proofs with explicit equivalence relations, but this practice is
-cumbersome, inefficient, and far away from the elegance of
-definitional equality, which just works.
+cumbersome, inefficient, and far away from the concision of
+definitional equality.
+This observation shifts the focus to computation on substitutions: if extensionally equal
+substitution do not normalize identically, transport reasoning is unavoidable.
 
-To our knowledge, previous intrinsically typed mechanization of
-System~F$\omega$ (e.g., \cite{10.1007/978-3-030-33636-3_10})
-follow a natural design: expression syntax is indexed by typing
-derivations and substitutions are indexed by substitutions at the type
-level. While elegant at the level of definitions, this design makes
-proofs brittle. Because expression substitutions depend on type
-substitutions, and type substitutions depend on renamings, which again
-depend on type renamings, routine equalities require repeated
-transport across equal types, leading to directly to transfer hell. 
 
-The message of this pearl is simple: when intrinsically typed syntax
+Hence, the simple message of this fresh perspective: when intrinsically typed syntax
 becomes complicated, the problem is often not the encoding of terms
 but the definition of equality on substitutions. Strengthening
 definitional equality can simplify metatheory more effectively than
 adding automation or additional lemmas.
 
-In this paper, we examine the transfer hell arising by
-intrinsically typed syntax encodings of System~F. Specifically, we
-consider the problems arising with 
-type-renaming-indexed renamings and type-substitution-indexed
-substitutions.
-Our solution is to strengthen definitional equality rather than to add
-more lemmas. We make substitution compute canonically by internalizing
-the equational theory of substitutions (the $\sigma$-calculus) as
-definitional equality using Agda’s rewriting mechanism. As a
+We substantiate our claims with a case study on renaming and substitution in an
+intrinsic encoding of System~F.
+We strengthen definitional equality by internalizing the equational theory of substitutions
+(the $\sigma$-calculus)
+using Agda’s rewriting mechanism. As a
 consequence, extensionally equal substitutions normalize to the same
 form and transports disappear from routine proofs. 
-This approach is inspired by the tactics of Autosubst
-\cite{schafer2015autosubst,Stark:2020:Mechanising,10.1145/3293880.3294101},
-but internalized by rewriting \cite{10.1145/3434341}. We build on a
-standard functional representation of renamings and substitutions
-\cite{DBLP:journals/jar/BentonHKM12}. We prove the  $\sigma$-calculus
-laws and install them as Agda rewrite rules, i.e., make the $\sigma$-calculus equations
-definitional. The main challenge is to
-ensure that the combined reduction relation remains terminating and confluent. 
-% TODO[PT]: explain that definitional equality is determined by reduction and normal forms
+
+% The key is to internalize the equational theory of the
+% $\sigma$-calculus for substitutions and make it definitional. We rely
+% on proved $\sigma$-calculus laws for a functional representation of substitutions and
+% install them into Agda’s rewrite mechanism, obtaining canonical
+% behavior for substitution and renaming without explicit
+% transports. The main technical challenge is ensuring that the
+% resulting rewrite system remains terminating and confluent together
+% with Agda’s built-in reductions. 
+
 
 % TODO[PT]: update to current section structure
-We exercise this program for plain System~F in
-\cref{sec:system-f}, significantly simplifying the transfer-ridden
-approach used by prior work
-\cite{10.1145/3678000.3678201}.
 
-In summary, intrinsically typed syntax fails for polymorphic calculi
-because substitutions lack canonical equality; making them compute
-canonically restores the original promise of intrinsic typing.
+% In summary, intrinsically typed syntax fails for polymorphic calculi
+% because substitutions lack canonical equality; making them compute
+% canonically restores the original promise of intrinsic typing.
 
 \subsection*{Contributions}
-This functional pearl demonstrates how to mechanize polymorphic
+This fresh perspective demonstrates how to mechanize polymorphic
 calculi using intrinsically typed syntax without pervasive transport
 reasoning. 
 \begin{itemize}
@@ -215,17 +187,13 @@ reasoning.
   indexed by other substitutions produce equal types that are not
   definitionally equal.
 \item 
-  We show how to eliminate these transports by installing the
-  equational laws of the $\sigma$-calculus for substitutions as definitional
-  equality using Agda’s rewriting mechanism, taking care to make the
-  equations compatible with the built-in definitional equality.
+  We show how to eliminate these transports by internalizing the
+  equational laws of the $\sigma$-calculus for substitutions using Agda’s rewriting
+  mechanism. 
 \item 
   We demonstrate that the resulting rewrite system is compatible with Agda’s
   definitional equality (in particular, terminating and confluent) for
-  the functional representation of substitutions
-  and verify that the resulting rewrite system is terminating and
-  confluent with respect to the proof assistant’s definitional
-  equality. 
+  the functional representation of substitutions.
 \item 
   We mechanize parts of the metatheory of System F,
   obtaining substantially simpler proofs and an intrinsic treatment of
@@ -237,6 +205,47 @@ reasoning.
 
 All code fragments in this document are extracted from typechecked
 Agda code, which is available as a supplement.
+
+\subsection*{Related Work and Positioning}
+
+To our knowledge, previous intrinsically typed mechanizations of
+System~F (e.g., \cite{10.1007/978-3-030-33636-3_10,10.1145/3678000.3678201})
+follow a natural design: expression syntax is indexed by typing
+derivations and substitutions are indexed by substitutions at the type
+level. While elegant at the level of definitions, this design makes
+proofs brittle. Because expression substitutions depend on type
+substitutions, and type substitutions depend on renamings, which again
+depend on type renamings, routine equalities require repeated
+transport across equal types, leading to directly to transfer hell.
+Our work eliminates transfers resulting from substitutions entirely.
+
+Recent work studies rewrite rules in dependent type theories,
+including Agda~\cite{cockx:LIPIcs.TYPES.2019.2} and
+Rocq~\cite{leray_et_al:LIPIcs.ITP.2024.26}. Local rewrite rules are an
+active research direction~\cite{10.1145/3776704}.
+In Rewriting Type Theory (RTT), the reduction relation is extended by turning
+propositional equalities into reduction rules: a term matched by the
+left-hand side of an equation reduces to the right-hand side. 
+Rewrites are safe if they preserve subject reduction and
+consistency. The former is guaranteed by confluence of the combined
+rewrite system, while the latter can be ensured by only rewriting
+proved propositional equalities.
+
+Our approach is inspired by the tactics of Autosubst
+\cite{schafer2015autosubst,Stark:2020:Mechanising,10.1145/3293880.3294101},
+but internalized by rewriting \cite{10.1145/3434341}. We build on a
+standard functional representation of renamings and substitutions
+\cite{DBLP:journals/jar/BentonHKM12}. We prove the $\sigma$-calculus
+laws and install them as Agda rewrite rules, i.e., make the $\sigma$-calculus equations
+definitional. The main challenge is to fine-tune the reduction
+behavior of the defitions to ensure that the combined reduction relation remains terminating
+and confluent. 
+% TODO[PT]: explain that definitional equality is determined by reduction and normal forms
+
+% We exercise this program for plain System~F in
+% \cref{sec:system-f}, significantly simplifying the transfer-ridden
+% approach used by prior work
+% \cite{10.1145/3678000.3678201}.
 
 \section{System F Types}
 \label{sec:system-f}

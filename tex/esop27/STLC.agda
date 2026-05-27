@@ -114,7 +114,7 @@ opaque
 
 --! SmallStep {
 data _⟶_ {Γ} {T} : Γ ⊢ T → Γ ⊢ T → Set where
-  β-lam  : app {Γ = Γ} (lam e₁) e₂ ⟶ (e₁ [ e₂ ])
+  β-lam  : app (lam e₁) e₂ ⟶ (e₁ [ e₂ ])
   ξ-app  : e₁ ⟶ e₁′ → app e₁ e₂ ⟶ app e₁′ e₂
 --! }
 
@@ -123,7 +123,7 @@ data Value {Γ} : Γ ⊢ T → Set where
   con  : Value con
   lam  : (e : (Γ ▷ T) ⊢ U) → Value (lam e)
 
-data Progress : Γ ⊢ T → Set where
+data Progress (e : Γ ⊢ T) : Set where
   done  : Value e → Progress e
   step  : e ⟶ e′ → Progress e
 

@@ -87,7 +87,7 @@ preservation is immediate. For small
 calculi this approach is highly effective. However, for realistic
 polymorphic calculi such as System~F, mechanizations often become
 complicated: conceptually simple proofs become cluttered with
-transports across equal types and administrative equalities. 
+transports due to administrative equalities. 
 
 \begin{figure}[tp]
   \begin{minipage}[t]{0.49\linewidth}
@@ -114,43 +114,47 @@ follows by a simple inductive proof (right column). We elide the definition  of 
 substitution operator \AgdaFunction{$\_[\_]$}, as we discuss substitutions in detail
 in \cref{sec:types}.
 
-The simply-typed lambda calculus therefore represents the ideal
-scenario where type safety proofs are so concise that they can serve as textbook
+The intrinsic encoding makes type safety proofs so concise that they can serve as textbook
 examples \cite{DBLP:journals/scp/KokkeSW20}. Nothing comparable to
 transport reasoning arises in this development as only definitional
-properties of substitutions are required. The remainder of this paper
-explains why the same approach breaks down for polymorphic calculi and
-how to recover some of its simplicity.
+properties of substitutions are required. 
+However, the same approach breaks down for polymorphic calculi and the remainder of this
+paper explains how to recover some of its simplicity.
 
 % TODO[PT]: define transfer hell precisely and what propositional vs definitional means
 Transfer hell is the colloquial term for being forced to apply
 type-changing lemmas to terms that are already known to be equal.
-The root problem is that substitutions that are propositionally equal
-are not definitionally equal, so terms must repeatedly be transported
-across equal types. 
-This situation is problematic because proof assistants like Agda or
-Coq do not allow users to state this equality directly.\footnote{A situation
-  that can be addressed using heterogeneous equality introduced in
-  Conor McBride's thesis~\cite{DBLP:conf/types/McBride00}.
-  \citet{DBLP:journals/jar/BentonHKM12} discuss this approach in the
-  context of an adequacy proof for a logical relation.}
-This phenomenon appears when substitutions themselves carry dependent typing
-information. In intrinsic mechanizations of System F, expression substitutions
+This phenomenon appears, for example,
+in intrinsic mechanizations of System F: expression substitutions 
 depend on type substitutions and type substitutions depend on
 renamings; composing them yields types that are equal only
 propositionally, forcing transports throughout proofs. 
+The root problem is that substitutions that are propositionally equal
+are not definitionally equal, so terms must repeatedly be transported
+across equal types. 
+
 One workaround is to state definitions and
 proofs with explicit equivalence relations, but this practice is
 cumbersome, inefficient, and far away from the concision of
 definitional equality.
-This observation shifts the focus to computation on substitutions: if extensionally equal
-substitution do not normalize identically, transport reasoning is unavoidable.
+Our proposal thus shifts the focus to computation on substitutions: if extensionally equal
+substitutions do not normalize identically, transport reasoning is unavoidable.
+
+ % when substitutions themselves carry dependent typing
+ % information. For example,
+
+% This situation is problematic because proof assistants like Agda or
+% Coq do not allow users to state this equality directly.\footnote{A situation
+%   that can be addressed using heterogeneous equality introduced in
+%   Conor McBride's thesis~\cite{DBLP:conf/types/McBride00}.
+%   \citet{DBLP:journals/jar/BentonHKM12} discuss this approach in the
+%   context of an adequacy proof for a logical relation.}
 
 
-Hence, the simple message of this fresh perspective: when intrinsically typed syntax
+Hence, the simple message of this fresh perspective is: when intrinsically typed syntax
 becomes complicated, the problem is often not the encoding of terms
 but the definition of equality on substitutions. Strengthening
-definitional equality can simplify metatheory more effectively than
+definitional equality can simplify metatheoretical proofs more effectively than
 adding automation or additional lemmas.
 
 We substantiate our claims with a case study on renaming and substitution in an
@@ -178,22 +182,23 @@ form and transports disappear from routine proofs.
 % canonically restores the original promise of intrinsic typing.
 
 \subsection*{Contributions}
-This fresh perspective demonstrates how to mechanize polymorphic
-calculi using intrinsically typed syntax without pervasive transport
-reasoning. 
+% This fresh perspective demonstrates how to mechanize polymorphic
+% calculi using intrinsically typed syntax without pervasive transport
+% reasoning. 
 \begin{itemize}
-\item We identify the fundamental cause of ``transfer hell'' in intrinsically typed
-  encodings of System F: renamings and substitutions
-  indexed by other substitutions produce equal types that are not
-  definitionally equal.
+% \item We identify the fundamental cause of ``transfer hell'' in intrinsically typed
+%   encodings of System F: renamings and substitutions
+%   indexed by other substitutions produce equal types that are not
+%   definitionally equal.
 \item 
-  We show how to eliminate these transports by internalizing the
+  We show how to eliminate ``transfer hell'' in intrinsically typed
+  encodings of System F by internalizing the
   equational laws of the $\sigma$-calculus for substitutions using Agda’s rewriting
   mechanism. 
 \item 
   We demonstrate that the resulting rewrite system is compatible with Agda’s
   definitional equality (in particular, terminating and confluent) for
-  the functional representation of substitutions.
+  a functional representation of substitutions.
 \item 
   We mechanize parts of the metatheory of System F,
   obtaining substantially simpler proofs and an intrinsic treatment of
@@ -209,15 +214,17 @@ Agda code, which is available as a supplement.
 \subsection*{Related Work and Positioning}
 
 To our knowledge, previous intrinsically typed mechanizations of
-System~F (e.g., \cite{10.1007/978-3-030-33636-3_10,10.1145/3678000.3678201})
+System~F 
+\cite{10.1007/978-3-030-33636-3_10,10.1145/3678000.3678201,DBLP:journals/jar/BentonHKM12}
 follow a natural design: expression syntax is indexed by typing
 derivations and substitutions are indexed by substitutions at the type
 level. While elegant at the level of definitions, this design makes
-proofs brittle. Because expression substitutions depend on type
-substitutions, and type substitutions depend on renamings, which again
-depend on type renamings, routine equalities require repeated
-transport across equal types, leading to directly to transfer hell.
-Our work eliminates transfers resulting from substitutions entirely.
+proofs brittle, because they are prone to transfer hell. 
+% Because expression substitutions depend on type
+% substitutions, and type substitutions depend on renamings, which again
+% depend on type renamings, routine equalities require repeated
+% transport across equal types, leading directly to transfer hell.
+Our work eliminates transfers resulting from substitutions, thus avoiding transfer hell.
 
 Recent work studies rewrite rules in dependent type theories,
 including Agda~\cite{cockx:LIPIcs.TYPES.2019.2} and
@@ -228,24 +235,38 @@ propositional equalities into reduction rules: a term matched by the
 left-hand side of an equation reduces to the right-hand side. 
 Rewrites are safe if they preserve subject reduction and
 consistency. The former is guaranteed by confluence of the combined
-rewrite system, while the latter can be ensured by only rewriting
+rewrite system, the latter by only rewriting
 proved propositional equalities.
+Our work is based on Agda's implementation of RTT.
 
-Our approach is inspired by the tactics of Autosubst
-\cite{schafer2015autosubst,Stark:2020:Mechanising,10.1145/3293880.3294101},
-but internalized by rewriting \cite{10.1145/3434341}. We build on a
+Our approach is inspired by the work on Autosubst
+\cite{schafer2015autosubst,Stark:2020:Mechanising,10.1145/3293880.3294101}.
+While they rely on tactics to normalize substitutions, we do so by rewriting
+\cite{10.1145/3434341}. We build on a 
 standard functional representation of renamings and substitutions
-\cite{DBLP:journals/jar/BentonHKM12}. We prove the $\sigma$-calculus
-laws and install them as Agda rewrite rules, i.e., make the $\sigma$-calculus equations
-definitional. The main challenge is to fine-tune the reduction
-behavior of the defitions to ensure that the combined reduction relation remains terminating
-and confluent. 
+\cite{DBLP:journals/jar/BentonHKM12}. 
+The main challenge in setting up the $\sigma$-calculus is to fine-tune the
+reduction behavior of the definitions with the rewrite rules to ensure that the combined
+reduction relation remains terminating and confluent.
+
 % TODO[PT]: explain that definitional equality is determined by reduction and normal forms
 
 % We exercise this program for plain System~F in
 % \cref{sec:system-f}, significantly simplifying the transfer-ridden
 % approach used by prior work
 % \cite{10.1145/3678000.3678201}.
+
+\subsection*{Overview}
+
+\Cref{sec:system-f} presents our scoped encoding of System~F types. It discusses the
+standard encoding of functional renamings and substitutions (\cref{sec:renam-subst}) and
+introduces the  $\sigma$-calculus laws
+(\cref{sec:laws-renam-subst-1}). \Cref{sec:system-f-expressions} presents the intrinsically
+typed encoding of System~F expressions. It defines expression substitutions
+(\cref{sec:expr-renam-subst}) and a small-step operational semantics (\cref{sec:semantics}).
+\Cref{sec:laws-renam-subst} demonstrates a concrete instance of transfer hell, once treated
+manually and once by using our method.
+\Cref{sec:going-further} outlines our recommendations and guidelines.
 
 \section{System F Types}
 \label{sec:system-f}
@@ -763,7 +784,7 @@ al~\cite{10.1007/978-3-030-33636-3_10}. Their proof is more
 complicated because their semantics is call-by-value, their language supports
 isorecursive types, and their subject language is System~F$\omega$.
 
-\section{Laws for Renaming and Substitution}
+\section{Transfer Heaven and Transfer Hell}
 \label{sec:laws-renam-subst}
 
 Proving type safety for System~F requires exercising the
@@ -781,7 +802,7 @@ substitutions. Moreover, if we were to move on to constructing and
 proving properties of logical relations, then these properties would
 be needed \cite{10.1145/3678000.3678201}.
 
-\subsection{Composition of Substitutions with Rewriting}
+\subsection{Transfer Heaven: Composition of Substitutions with Rewriting}
 \label{sec:comp-subst-with}
 
 As an example, we examine the composition of two expression
@@ -819,7 +840,7 @@ chain'' that stops at the composition properties of renamings with
 renamings and liftings, all of which work similarly. The supplemental
 material contains full details.
 
-\subsection{Composition of Substitutions Without Rewriting: Transfer Hell}
+\subsection{Transfer Hell: Composition of Substitutions Without Rewriting}
 \label{sec:comparison-transfer-hell}
 % make very clear this is not our code and not WITHOUT rewriting.
 We now contrast the development from \cref{sec:comp-subst-with} with
@@ -930,6 +951,10 @@ the transfer-hell version requires more than five times as many lines
 of code as the rewriting-based one. As a welcome side effect, the
 type-checking time is also reduced by about 50\% when the
 $\sigma$-calculus equations are installed as rewrite rules.
+
+\section{Going Further}
+\label{sec:going-further}
+
 
 \subsection{Equational Theory for Expression Substitution}
 \label{sec:equat-theory-expr}

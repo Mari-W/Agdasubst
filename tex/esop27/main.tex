@@ -266,7 +266,7 @@ typed encoding of System~F expressions. It defines expression substitutions
 (\cref{sec:expr-renam-subst}) and a small-step operational semantics (\cref{sec:semantics}).
 \Cref{sec:laws-renam-subst} demonstrates a concrete instance of transfer hell, once treated
 manually and once by using our method.
-\Cref{sec:going-further} outlines our recommendations and guidelines.
+\Cref{sec:going-further} outlines methodological issues along with recommendations and guidelines.
 
 \section{System F Types}
 \label{sec:system-f}
@@ -296,7 +296,8 @@ $\AgdaInductiveConstructor{suc}~(\AgdaInductiveConstructor{suc}~\AgdaInductiveCo
 \dots and ranged over by {$\alpha$}.
 The  \AgdaInductiveConstructor{$\forall\alpha$}-binder introduces a new type
 variable, and \AgdaInductiveConstructor{$\Rightarrow$} is the infix
-function type constructor. We let \AgdaFunction{T} range over types.
+function type constructor. We call this style of syntax \emph{intrinsically scoped} as it
+can only express well-scoped types. We let \AgdaFunction{T} range over types.
 
 \subsection{Renaming and Substitution}
 \label{sec:renam-subst}
@@ -312,39 +313,82 @@ function type constructor. We let \AgdaFunction{T} range over types.
   \caption{Renamings and substitutions on types}
   \label{fig:system-f-ren-sub}
 \end{figure}
+
+\begin{table}[t]
+  \centering
+  \small
+  \begin{tabular}{p{0.20\linewidth}p{0.25\linewidth}p{0.49\linewidth}}
+    \hline
+    \textbf{Family} & \textbf{Operator} & \textbf{Role} \\
+    \hline
+    Renaming & \AgdaFunction{wkᴿ} & weakening renaming \\
+    Renaming & \AgdaFunction{idᴿ} & identity renaming \\
+    Renaming & \AgdaFunction{α ∙ᴿ ζ} & extend renaming with head variable \AgdaFunction{α} \\
+    Renaming & \AgdaFunction{α \&ᴿ ζ} & apply renaming to a variable \\
+    Renaming & \AgdaFunction{ζ₁ ⨟ᴿ ζ₂} & compose renamings \\
+    Renaming & \AgdaFunction{ζ ↑ᴿ} & lift renaming under a binder \\
+    Renaming & \AgdaFunction{T [ ζ ]ᴿ} & apply renaming to a type \\
+    \hline
+    Substitution & \AgdaFunction{⟨ ζ ⟩} & embed renaming as substitution \\
+    Substitution & \AgdaFunction{T ∙ˢ η} & extend substitution with head type \AgdaFunction{T} \\
+    Substitution & \AgdaFunction{α \&ˢ η} & apply substitution to a variable \\
+    Substitution & \AgdaFunction{η₁ ⨟ˢ η₂} & compose substitutions \\
+    Substitution & \AgdaFunction{η ↑ˢ} & lift substitution under a binder \\
+    Substitution & \AgdaFunction{T [ η ]ˢ} & apply substitution to a type \\
+    \hline
+  \end{tabular}
+  \caption{Operator inventory for type renamings and substitutions.}
+  \label{tab:system-f-operator-inventory}
+\end{table}
+
 The most important operations on types are consistent renaming of
 type variables and substitution.
 \Cref{fig:system-f-ren-sub} contains the first step in defining
 renamings (left column) and substitutions (right column).
 Our definitions of renamings and substitutions in functional style are
 standard \cite{ren-sub,DBLP:journals/jar/BentonHKM12,DBLP:journals/scp/KokkeSW20}. 
-For now, we
-ignore the use of \AgdaKeyword{opaque}. We  defer the
+For now, we ignore the use of \AgdaKeyword{opaque}. We  defer the
 discussion of using it to \cref{sec:laws-renam-subst-1}.
 
-A type renaming $\zeta$ maps variables from one scope $n_1$ to
-another $n_2$. We write the type of type renamings as
-$\AgdaFunction{Ren}~n_1~n_2$.
-The definitions comprise (in order) weakening (\AgdaFunction{wkᴿ}), the
-identity renaming (\AgdaFunction{idᴿ}),
-extending a renaming with variable \AgdaFunction{α}
-(\AgdaFunction{α ∙ᴿ ζ}), applying a renaming to a variable (\AgdaFunction{α \&ᴿ ζ}), 
-composing two renamings (\AgdaFunction{ζ₁ ⨟ᴿ ζ₂}), lifting a renaming (to move under a
-binder) (\AgdaFunction{ζ ↑ᴿ}), and applying a renaming to a type (\AgdaFunction{T [ ζ ]ᴿ}).
+% A type renaming $\zeta$ maps variables from one scope $n_1$ to
+% another $n_2$. We write the type of type renamings as
+% $\AgdaFunction{Ren}~n_1~n_2$.
+% The definitions comprise (see also~\cref{tab:system-f-operator-inventory}) weakening
+% (\AgdaFunction{wkᴿ}), the 
+% identity renaming (\AgdaFunction{idᴿ}),
+% extending a renaming with variable \AgdaFunction{α}
+% (\AgdaFunction{α ∙ᴿ ζ}), applying a renaming to a variable (\AgdaFunction{α \&ᴿ ζ}), 
+% composing two renamings (\AgdaFunction{ζ₁ ⨟ᴿ ζ₂}), lifting a renaming (to move under a
+% binder) (\AgdaFunction{ζ ↑ᴿ}), and applying a renaming to a type (\AgdaFunction{T [ ζ ]ᴿ}).
 
-For substitutions (right column of \cref{fig:system-f-ren-sub}) we
-proceed analogously. A type substitution $\eta :
-\AgdaFunction{Sub}~n_1~n_2$ maps variables from scope 
-$n_1$ to types defined over scope $n_2$.
-% We write the type of type substitutions as $n_1$ \AgdaFunction{$\to^S$} $n_2$.
-The definitions (in order) comprise
-lifting a renaming to a substitution (\AgdaFunction{⟨ ζ ⟩}), extending a
-substitution with a new type $T$ (\AgdaFunction{T ∙ˢ η}), applying a
-substitution to variable (\AgdaFunction{α \&ˢ η}), lifting a
-substitution (to move under a binder) (\AgdaFunction{η ↑ˢ}), applying
-a substitution to a type (\AgdaFunction{T [ η ]ˢ}), and composing two
-substitutions (\AgdaFunction{η₁ ⨟ˢ η₂}).
+% For substitutions (right column of \cref{fig:system-f-ren-sub}, bottom of
+% \cref{tab:system-f-operator-inventory}) we 
+% proceed analogously. A type substitution $\eta :
+% \AgdaFunction{Sub}~n_1~n_2$ maps variables from scope 
+% $n_1$ to types defined over scope $n_2$.
+% % We write the type of type substitutions as $n_1$ \AgdaFunction{$\to^S$} $n_2$.
+% The definitions (in order) comprise
+% lifting a renaming to a substitution (\AgdaFunction{⟨ ζ ⟩}), extending a
+% substitution with a new type $T$ (\AgdaFunction{T ∙ˢ η}), applying a
+% substitution to variable (\AgdaFunction{α \&ˢ η}), lifting a
+% substitution (to move under a binder) (\AgdaFunction{η ↑ˢ}), applying
+% a substitution to a type (\AgdaFunction{T [ η ]ˢ}), and composing two
+% substitutions (\AgdaFunction{η₁ ⨟ˢ η₂}).
 
+\Cref{tab:system-f-operator-inventory} summarizes the operator layer used throughout the development.
+The table is intended as a reference map: renaming operators $\zeta :
+\AgdaFunction{Ren}~n_1~n_2$ capture structure-preserving variable 
+reindexing from scope $n_1$ to scope $n_2$, while substitution operators $\eta :
+\AgdaFunction{Sub}~n_1~n_2$ perform capture-avoiding substitution of types from scope $n_2$
+for variables in a type at scope $n_1$.
+Rather than introducing each symbol ad hoc in later proofs, we fix this interface once and
+reuse it uniformly. 
+
+Two design choices are important for what follows.  First, renamings and substitutions are
+represented functionally, which keeps composition and lifting explicit.  Second, the
+operators in this interface are the symbols on which we later impose the $\sigma$-calculus
+equations as rewrite rules.  This separation between interface and equations enables
+us to control reduction behavior precisely.
 
 \subsection{The $\sigma$-Calculus with First-class Renamings}
 \label{sec:laws-renam-subst-1}
@@ -361,14 +405,15 @@ substitutions (\AgdaFunction{η₁ ⨟ˢ η₂}).
 %   \label{fig:system-f-sigma-calculus}
 % \end{figure}
 
-This section presents the equalities that we \emph{actually} used for computing
-with renamings and substitutions, rather than their defining equations
-in \cref{fig:system-f-ren-sub}. The \AgdaKeyword{opaque} blocks enable
-us to control this behavior: Function symbols defined in an 
+This section presents the equalities of the $\sigma$-calculus. These are the equalities that
+we \emph{actually} use for computing with renamings and substitutions, rather than their
+defining equations 
+in \cref{fig:system-f-ren-sub}. The \AgdaKeyword{opaque} blocks control this behavior.
+Function symbols defined in an
 \AgdaKeyword{opaque} block are usable outside the block, but they do
-not reduce! That is, the only reducing definitions in the renaming
+not reduce. The only reducing definitions in the renaming
 block are \AgdaFunction{$\zeta~ \uparrow^R$} for lifting a renaming and
-application of a renaming to a type; in the substitution block, only
+application of a renaming to a type. In the substitution block, only
 the application of a substitution to a type reduces.
 
 This selective reduction behavior is
@@ -399,8 +444,9 @@ lead to circularity.
 
 The second group contains laws about interactions between substitutions.
 \SFTypeSubstitutionInteraction
-Composition is assoziative, it distributes over extension, weakening
-cancels extension, the identity substitution is a right and left identity, and we give two
+Composition is associative and it distributes over extension. First weakening and then
+extending with $T$ has no effect, as $T$ is substituted for a non-existing variable. The
+identity substitution is a right and left identity. We conclude this group with two 
 $\eta$-laws about the interaction of extension and
 weakening.\footnote{In the statement of \AgdaFunction{$\eta$-id}, we
   write $\AgdaInductiveConstructor{zero}~ \{n\}$ to tell Agda's type
@@ -417,12 +463,12 @@ renaming and the four possible compositions of renamings and
 substitutions.
 \SFTypeMonad
 
-The final group contains contains laws that mediate
-between substitutions and renamings: A substitution which applies a
-lifted renaming is just applying the renaming; the composition of two
+The final group contains laws that mediate
+between substitutions and renamings. Substitution of a
+lifted renaming is a renaming; the composition of two
 lifted renamings is the lifting of their composition as renamings.
 \SFTypeCoincidence
-In general ,the extraction of renamings from
+In general, the extraction of renamings from
 substitutions requires a dedicated solving
 strategy~\cite{10.1145/3293880.3294101} and we have omitted some
 further coincidence laws for brevity.
@@ -431,7 +477,8 @@ Orienting these equations from left to right results in a confluent
 rewrite system for the $\sigma$-calculus that we install in Agda's computation engine using the
 \AgdaKeyword{REWRITE} pragma \cite{10.1145/3434341}. Confluence of
 these rewrite equations is mechanically checked by Agda using
-the flags \texttt{--rewriting --confluence-check}. From now on, all
+the flags \texttt{--rewriting --confluence-check}. We discuss safety considerations for
+rewriting in \cref{sec:safety}. From now on, all 
 equations shown in this section \cref{sec:laws-renam-subst-1} are
 treated as definitional equalities.
 
@@ -456,7 +503,436 @@ The lifting laws are shown on the left, the application laws on the right.
 The analogous results for renamings follow exactly the same pattern.
 
 
-\subsection{A Note on Safety}
+
+\section{System F Expressions}
+\label{sec:system-f-expressions}
+\subsection{Syntax}
+\label{sec:expressions}
+
+\begin{figure}[tp]
+  \begin{minipage}[t]{0.49\linewidth}
+  \SFTypeWeaken
+  \SFTypeSubzero
+  \SFTypeCtx
+  \SFTypeVar
+  \end{minipage}
+  \begin{minipage}[t]{0.49\linewidth}
+    \SFExprDefinition
+  \end{minipage}
+  \caption{Type contexts, variables, and expressions}
+  \label{fig:system-f-expressions}
+\end{figure}
+
+
+\Cref{fig:system-f-expressions} defines the ingredients of intrinsically typed expressions:
+type weakening (\AgdaFunction{weaken}) and 
+single substitution \AgdaFunction{T [ T′ ]*} of a type $T'$ for the
+innermost variable of $T$ along with type contexts $\Gamma$, expression
+variables $x$, and expression syntax $e$. These ingredients provide the infrastructure for defining
+substitution and semantics in the following subsections.
+
+Type contexts and expression variables follow the work of
+\citet{10.1007/978-3-030-33636-3_10}. A type context $\Gamma : \AgdaDatatype{Ctx}~n$
+tracks expression and type
+variables in scope $n$. The operator
+\AgdaInductiveConstructor{\AgdaUnderscore{}▷\AgdaUnderscore{}} adds a
+value binding while
+\AgdaInductiveConstructor{\AgdaUnderscore{}▷*} adds a type
+binding to $\Gamma$. Correspondingly, expression variables are implemented as typed de Bruijn
+indices with an extra case \AgdaInductiveConstructor{suc*} to skip
+over type variables in the context.
+
+Skipping with \AgdaInductiveConstructor{suc*} requires weakening of the type as it is used
+under one more type binding. The lambda expression adds a value binding, while the type
+lambda adds a type binding. Type application requires the single substitution. 
+
+Expressions $e : $ \AgdaDatatype{Expr}\AgdaSpace{}%
+\AgdaBound{Γ}\AgdaSpace{}%
+\AgdaGeneralizable{T} are indexed by a context $\Gamma$ and a type $T$ with the intended
+reading as a typing judgment $\Gamma \vdash e : T$. As customary in an intrinsically typed
+setting, each expression constructor corresponds to a typing rule in System~F.
+\Cref{fig:example-system-f-expressions} presents some example expressions and types.  For
+readability, we have aliases \AgdaFunction{$`\alpha$} for \AgdaInductiveConstructor{` Z},
+\AgdaFunction{$`\beta$} for \AgdaInductiveConstructor{` (S Z)}, and analogously for
+expression variables and binders.
+
+% \subsection{Examples}
+% \label{sec:examples-1}
+
+% \Cref{fig:example-system-f-expressions} presents Church numerals as examples of System~F
+% expressions and types. We show their type and the encoding of zero, one, two, and the
+% successor function.
+
+\begin{figure}[tp]
+
+  \noindent\begin{minipage}[t]{0.49\linewidth}
+    \FCNType
+  \end{minipage}\hfill\begin{minipage}[t]{0.49\linewidth}
+    \FCNZero
+  \end{minipage}
+
+  % \noindent We continue with the constant one and the Church numeral for two.
+
+\noindent\begin{minipage}[t]{0.49\linewidth}
+  \FCNOne
+\end{minipage}\hfill\begin{minipage}[t]{0.49\linewidth}
+  \FCNTwo
+\end{minipage}
+
+% \noindent The successor operation has a longer body.
+\FCNSucc
+% \FCNFour
+
+\caption{Church numerals in System~F}
+\label{fig:example-system-f-expressions}
+\end{figure}
+\subsection{Renaming and Substitution}
+\label{sec:expr-renam-subst}
+
+
+The definition of a small-step operational semantics requires
+expression renamings and substitution to implement beta reduction for
+value abstractions and type abstractions.
+Renamings and substitutions are both indexed by type renamings and
+type substitutions, respectively.
+
+Expression renamings $\rho$ are indexed by type renamings $\zeta$. As usual, they map a
+variable from one context to another. Notationally, we write $\zeta \mid \dots$ for any operation on
+renamings that is indexed by type renaming $\zeta$. We only show the following
+representative definition as an example. The remaining operations may be found in the
+supplement. 
+\SFExprRenaming
+
+
+% TODO[PT]: wrong! we do exactly this!
+% For expressions, we represent renamings and substitutions directly by
+% suitable functions, rather than axiomatic as with type renamings and
+% substitutions. Hence, we cannot automate the simplification of
+% expression substitutions; nevertheless, we define the primitives analogously.
+
+% TODO[PT]: i removed renamings, they are analogous
+
+% \subsubsection{Renaming}
+% \label{sec:renamings}
+% 
+% 
+% Expression renamings are indexed by type renamings because type
+% variables in expression may have to be renamed at the same time as
+% expression variables. This complication makes the types of the
+% operations quite involved, although the actual operations are not that
+% complicated. 
+% \SFExprRenaming
+% Defining the identity renaming is straightforward due to the presence
+% of rewriting for type substitutions.
+% \SFExprRenIdr
+% Weakening of a renaming by a value binding. 
+% \SFExprRenWeakening
+% Weakening of a renaming by a type binding.
+% \SFExprRenTWeakening
+% Extension of a renaming.
+% \SFExprRenExtension
+% Lifting of a renaming over a value binding.
+% \SFExprRenLifting
+% Lifting of a renaming over a type binding.
+% \SFExprRenTLifting
+% Inductive definition of a renaming on expressions. The last case of
+% the definition requires rewriting to type check.
+% \SFExprRenTraversal
+
+% \subsubsection{Substitution}
+% \label{sec:substitution}
+
+
+% TODO[PT]: this is very dry, improve writing 
+
+Expression substitutions $\sigma$ are indexed by type substitutions
+$\eta$. A substitution takes a variable $x$ of type $T$ in context
+$\Gamma_1$ and maps it to an expression typed in context $\Gamma_2$
+adjusting its type according to the type substitution: $T [ \eta
+]^S$. The notation is analogous to the one for renamings.
+\SFExprSubstitution
+Applying a substitution to a variable corresponds to function
+application. Nevertheless, we use the same interface as for type
+substitutions to
+enable using the same rewriting machinery on the expression level
+again.  For this definition, we include the typing of all symbols,
+which is similar for all further definitions and omitted because it
+can be inferred. 
+\SFExprSubLookup
+
+The identity substitution for expressions appears simple only because of the installed
+rewriting of type
+substitutions. Without the rewriting, the right-hand side's type is
+$T$, but the expected type is $T[ \AgdaFunction{id}^s ]^S$, which would require the
+transport lemma \AgdaPostulate{comp-id$_r$}.
+\SFExprSubIds
+Extending a substitution is standard: given an expression $e$ and a
+substitution $\sigma$, we return a substitution that sends variable
+\AgdaInductiveConstructor{zero} to $e$ and otherwise resorts to
+$\sigma$.
+\SFExprSubExtension
+Due to the structure of contexts, we need two lifting lemmas when
+defining the application of a substitution to an expression, one for
+value bindings and another for type bindings. In both cases, the
+substitution $\sigma$ needs to be adjusted (i.e., lifted) to
+accommodate the newly introduced binding.
+The former is standard: it maps the newly introduced variable to
+itself (\AgdaInductiveConstructor{zero}) and weakens the images of
+$\sigma$ accordingly. However, the definition of lifting requires a
+transport lemma to line up the type substitutions, which is applied by
+rewriting. The last part of the definition $\AgdaFunction{id}^R \mid
+\dots \AgdaFunction{Wk}^R \dots$ applies an expression renaming
+(weakening by $T [ η ]ˢ$) indexed by \AgdaFunction{idᴿ} to the
+output of $\sigma$. 
+\SFExprSubLifting
+Lifting a substitution over a type binding is non-standard. The type substitution requires
+lifting, but no rewriting is needed. 
+\SFExprSubTLifting
+Substitution application is defined by structural recursion on
+expressions. The cases dispatch to the
+operations that we introduced: applying a substitution to a variable,
+lifting over a value binding (case \AgdaInductiveConstructor{λx}),
+lifting over a type binding (case \AgdaInductiveConstructor{Λα}),
+the cases for application and type-application are homomorphic.
+\SFExprSubTraversal
+
+\subsection{Semantics}
+\label{sec:semantics}
+
+
+
+We are now ready to define a small-step operational
+semantics. As in the introduction, we opt for call-by-name for
+concision. The definition of single substitution, needed for beta 
+reduction, is analogous to the one on types: we build the substitution
+by extending the identity substitution with the argument $e'$. As
+usual in an intrinsically typed setting, this definition already proves
+that substitution preserves typing.
+\SFExprSemSingleSub
+In addition, we have to substitute a type into an expression to
+cater for beta reduction of type applications. This substitution is
+also implemented by an expression substitution indexed by a type
+substitution that performs the actual change.
+\SFExprSemSingleTypeSub
+Due to the extended type substitution on the left, we also have to
+adapt the expression substitution on the right to the extended context
+structure. This adaptation is the type-level analogue to extension:
+\SFExprSubTExtension
+
+With substitution in place, we present the definition of the call-by-name small-step
+reduction relation. As usual, such a definition of reduction for
+intrinsically-typed syntax implies subject reduction by construction.
+\SFExprSemDefinition
+
+\begin{figure}[tp]
+  \begin{minipage}[t]{0.47\linewidth}
+    \SFExprSemProgressDefs
+    \SFExprSemNewNoVarDefs
+  \end{minipage}
+  \begin{minipage}[t]{0.49\linewidth}
+    \SFExprSemNewProgress
+  \end{minipage}
+  \caption{Progress for System~F}
+  \label{fig:system-f-progress}
+\end{figure}
+
+To obtain type safety, it remains to prove progress.
+\Cref{fig:system-f-progress} presents the complete proof of progress
+for call-by-name System~F using the structure from PLFA
+\cite{DBLP:journals/scp/KokkeSW20}. A value is either a lambda or a
+type lambda 
+where the body is already a value. An expression satisfies progress if
+it is either a value (\AgdaInductiveConstructor{done}) or if it can make
+a step (\AgdaInductiveConstructor{step}).
+
+Due to the definition of value for type lambdas, we have to establish progress for
+contexts that may contain type bindings, but no value bindings. These contexts are
+characterized literally by the function \AgdaFunction{NoVar}.
+
+The proof of
+\AgdaFunction{progress} is by induction on the structure of expressions. The overall
+structure of this proof closely follows Chapman et
+al~\cite{10.1007/978-3-030-33636-3_10}. Their proof is more
+complicated because their semantics is call-by-value, their language supports
+isorecursive types, and their subject language is System~F$\omega$.
+
+Next, we move on to study an example of transfer hell in detail.
+
+\section{Transfer Heaven and Transfer Hell}
+\label{sec:laws-renam-subst}
+
+
+% Proving type safety for System~F requires exercising the
+% substitution theory at the \emph{type level}. Without installing its
+% laws as definitional equalities, many definitions become
+% cumbersome because transport lemmas have to be inserted to equalize
+% the types of (Agda) expressions.
+
+% TODO[PT]: give a better motivation than this
+% As we have seen in \cref{sec:semantics}, proving type safety for System~F does 
+% \emph{not} require exercising substitution theory at the expression level.
+
+In this section, we move on to
+verify functorial and monadic properties of expression
+substitutions. These properties are needed, once we consider properties of logical relations
+\cite{10.1145/3678000.3678201}. 
+
+As an example, we examine the composition of two expression
+substitutions. Its definition is reasonably compact, yet it showcases a significant amount of
+transfer hell. 
+
+\subsection{Transfer Heaven: Composition of Substitutions with Rewriting}
+\label{sec:comp-subst-with}
+
+The definition of composition involves two type substitutions $\eta_1$ and $\eta_2$ that
+index the corresponding expression substitutions $\sigma_1$ and
+$\sigma_2$. The composed expression substitution is indexed by the
+composition of $\eta_1$ and $\eta_2$. Type checking this definition
+already exercises the laws for composition of type substitutions.
+\SFExprSubCompDefinition
+
+We state the functoriality property of expression substitution:
+applying two substitutions one after the other to an expression is the
+same as applying their composition. Without $\sigma$-calculus rewriting in place, the types
+of the left and 
+right-hand side of the equality are different and would require a transfer.
+% TODO[PT]: needs tranfer with compositonalityˢˢ on type level
+\SFExprSubCompositionalityType
+We show the proof only to illustrate where rewriting removes transports; the key proof idea
+is sufficient for our purposes.
+We can
+concentrate on the gist of the proof, rather than being overwhelmed by
+transfers. The remaining complication is the explicit passing
+of the type substitutions $\eta_1$ and $\eta_2$. We chose to make them
+explicit; while Agda can infer them in many places, 
+there are equally many places where inference is not possible.
+\SFExprSubCompositionalityBody
+
+This proof relies on further properties, in particular
+\AgdaFunction{Lift-Dist-Comp$^{SS}$} (lifting a composition of substitutions
+is equal to composing their liftings) and
+\AgdaFunction{Lift*-Dist-Comp$^{SS}$} (its counterpart for lifting
+over type bindings), where the statement and proof would require
+explicit transfers. Essentially, these properties form a hierarchy that stops at the
+composition properties of renamings with 
+renamings and liftings, all of which work similarly. The supplemental
+material contains full details.
+
+\subsection{Transfer Hell: Composition of Substitutions Without Rewriting}
+\label{sec:comparison-transfer-hell}
+% make very clear this is not our code and not WITHOUT rewriting.
+We now contrast the development from \cref{sec:comp-subst-with} with
+a proof of the same compositionality property, but carried out with explicit transfers.
+The proof is taken from the supplement of a paper on a
+logical relation for System~F \cite{10.1145/3678000.3678201}. We aligned the surface syntax
+of their definitions with ours to enable direct comparison.
+
+The type of compositionality already exposes the
+core issue. Because the $\sigma$-calculus equations are only
+propositional, the theorem statement must include
+\AgdaFunction{subst} to bridge indices that are equal
+but not definitionally equal: the type of the left-hand side of the equality is \emph{not}
+definitionally equal to the type of the right-hand side. To adapt the types,
+compositionality of type substitutions is applied to the type of the
+expression using function \AgdaFunction{sub}.
+\ExportCompositionalityHom
+
+\noindent Because \AgdaFunction{subst} is part of the statement, every
+recursive call to the induction hypothesis introduces a 
+fresh application of \AgdaFunction{subst}, which has to be discharged
+in the proof alongside the interesting proof steps.
+To do so, it must be distributed to the outside of the term and combined with the
+\AgdaFunction{subst}s arising from neighboring subterms before the goal
+can be closed. This process is further complicated by other occurrences of type substitution
+lemmas that interact non-trivially with the
+transports. We illustrate the resulting
+complexity by zooming in on a single case of the inductive proof---type
+application---of their compositionality lemma.
+
+Firstly, our development already saves one
+\AgdaFunction{subst} in the very definition of substitution application.
+%Without the definitional $\sigma$-calculus, this saving is no longer
+%available: 
+The type application case requires the swap lemma of type
+\ExportSwap\ to coerce the term to the expected type, leading to the following
+definition.
+\ExportSubstInDef
+
+\noindent Next, we examine the type application case
+of the compositionality proof itself. The authors employ heterogeneous
+equality~\cite{DBLP:conf/types/McBride00} to avoid some of the
+administrative reasoning otherwise forced by transfer hell. Without
+heterogeneous equality, the proof would be even more complex,
+requiring several auxiliary lemmas that explicitly shuffle applications
+of \AgdaFunction{subst} around. Thus, the version below already
+constitutes a streamlined form of the argument.
+\ExportProofTerm
+
+\noindent The proof proceeds in seven steps.
+\begin{enumerate}
+  \item Unfold the definition of expression substitution at the inner
+        application of $\sigma_1$, exposing the \AgdaFunction{subst}
+        inside.
+  \item Remove the \AgdaFunction{subst} that sits inside the term under
+        consideration, justified by heterogeneous equality.
+  \item Reveal yet another \AgdaFunction{subst} introduced by the substitution application of $\sigma_2$
+  \item Remove the \AgdaFunction{subst} on the outside.
+  \item Apply the induction hypothesis while simultaneously coercing
+        the index according to the compositionality law for type
+        substitutions.
+  \item Reinsert the \AgdaFunction{subst} demanded by the proof goal on
+        the outside.
+  \item Fold the definition of expression substitution to conclude the
+        proof.
+\end{enumerate}
+Of these, steps~(2), (4), the type coercion in~(5), and~(6),
+as well as the use of heterogeneous equality, are entirely
+absent from our rewriting-based proof, only the application of the
+inductive hypothesis and the implicit (un)folding of definitions remain.
+
+\subsection{Quantitative Comparison}
+\label{sec:quant-comp}
+
+We complement the preceding qualitative comparison with a quantitative
+one. \cref{tab:proof-statistics} records the lines of code and number
+of characters 
+required to mechanize the compositionality law for expression
+substitutions, together with the type-checking time of the
+respective developments.
+
+\begin{table}[tp]
+\begin{tabular}{|l|rr|rr|}
+    \hline
+                                          & \multicolumn{2}{c|}{\textbf{With Rewriting}}
+                                          & \multicolumn{2}{c|}{\textbf{Transfer Hell}} \\
+                                          & LOC & Chars & LOC & Chars \\
+    \hline
+    Type substitution + proofs            &   217 &  12\,246 &    285 &  12\,584 \\
+    Expression substitution + proofs      &   199 &  11\,465 & 1\,405 &  69\,846 \\
+    \hline
+    \textbf{Total}                        & \textbf{416} & \textbf{23\,711}
+                                          & \textbf{1\,690} & \textbf{82\,430} \\
+    \hline
+    Type-check time                       & \multicolumn{2}{c|}{4.49\,s}
+                                          & \multicolumn{2}{c|}{9.51\,s} \\
+    \hline
+\end{tabular}
+\caption{Proof statistics}
+\label{tab:proof-statistics}
+\end{table}
+
+As expected, the amount of code required to formalize type
+substitution is roughly the same in both developments. For
+expression substitutions, however, the picture changes:
+the transfer-hell version requires more than five times as many lines
+of code as the rewriting-based one. As a welcome side effect, the
+type-checking time is also reduced by about 50\% when the
+$\sigma$-calculus equations are installed as rewrite rules.
+
+\section{Methodology}
+\label{sec:going-further}
+
+\subsection{Safety Conditions for Rewriting}
 \label{sec:safety}
 The theory underlying a proof assistant must be sound and consistent.
 Hence, it is a delicate act turning propositional equalities into definitional ones, 
@@ -549,411 +1025,6 @@ overall method otherwise transfers.
 % safely gained definitional equalities in place, we can continue
 % to define expressions and expression substitution without ending
 % up in transfer hell.
-
-\section{System F Expressions}
-\label{sec:system-f-expressions}
-\subsection{Syntax}
-\label{sec:expressions}
-
-\begin{figure}[tp]
-  \begin{minipage}[t]{0.49\linewidth}
-  \SFTypeWeaken
-  \SFTypeSubzero
-  \SFTypeCtx
-  \SFTypeVar
-  \end{minipage}
-  \begin{minipage}[t]{0.49\linewidth}
-    \SFExprDefinition
-  \end{minipage}
-  \caption{Type contexts, variables, and expressions}
-  \label{fig:system-f-expressions}
-\end{figure}
-
-Working towards intrinsically-typed expressions,
-\Cref{fig:system-f-expressions} defines type weakening (\AgdaFunction{weaken}) and
-single substitution \AgdaFunction{T [ T′ ]*} of a type $T'$ for the
-innermost variable of $T$ along with type contexts $\Gamma$, expression
-variables $x$, and the syntax of  
-expressions $e$. Type contexts and expression variables follow the work of
-\citet{10.1007/978-3-030-33636-3_10}. A type context $\Gamma : \AgdaDatatype{Ctx}~n$
-tracks expression and type
-variables in scope $n$. The operator
-\AgdaInductiveConstructor{\AgdaUnderscore{}▷\AgdaUnderscore{}} adds an
-value binding while
-\AgdaInductiveConstructor{\AgdaUnderscore{}▷*} adds a type
-binding to $\Gamma$. Correspondingly, expression variables are implemented as typed de Bruijn
-indices with an extra case \AgdaInductiveConstructor{suc*} to skip
-over type variables in the context. Skipping requires weakening of the
-type as it is used under one more type binding.
-
-Expressions $e : $ \AgdaDatatype{Expr}\AgdaSpace{}%
-\AgdaBound{Γ}\AgdaSpace{}%
-\AgdaGeneralizable{T} are indexed by a context $\Gamma$ and a type $T$
-with the intended reading as a typing judgment $\Gamma \vdash e :
-T$. As customary in an intrinsically typed setting, each expression
-constructor corresponds to a typing rule in System~F. The rule for
-type application relies on single substitution for types.
-
-\subsection{Examples}
-\label{sec:examples-1}
-
-As an example of System~F expressions, we present some definitions for
-Church numerals. We start with their type and the encoding of
-zero. For readability, we define aliases for type variables like
-\AgdaFunction{$`\alpha$} for \AgdaInductiveConstructor{` Z}, \AgdaFunction{$`\beta$} for \AgdaInductiveConstructor{` (S Z)}, and analogously for
-expression variables and binders.
-
-\noindent\begin{minipage}[t]{0.49\linewidth}
-  \FCNType
-\end{minipage}\hfill\begin{minipage}[t]{0.49\linewidth}
-  \FCNZero
-\end{minipage}
-
-\noindent We continue with the constant one and the Church numeral for two.
-
-\noindent\begin{minipage}[t]{0.49\linewidth}
-  \FCNOne
-\end{minipage}\hfill\begin{minipage}[t]{0.49\linewidth}
-  \FCNTwo
-\end{minipage}
-
-\noindent The successor operation has a longer body.
-\FCNSucc
-% \FCNFour
-
-\subsection{Renaming and Substitution}
-\label{sec:expr-renam-subst}
-
-
-The definition of a small-step operational semantics requires
-expression renamings and substitution to implement beta reduction for
-value abstractions and type abstractions.
-Renamings and substitutions are both indexed by type renamings and
-type substitutions, respectively. We omit renamings here,
-as their development is analogous to the one for substitutions and
-concentrate on explaining the latter.
-
-
-% TODO[PT]: wrong! we do exactly this!
-% For expressions, we represent renamings and substitutions directly by
-% suitable functions, rather than axiomatic as with type renamings and
-% substitutions. Hence, we cannot automate the simplification of
-% expression substitutions; nevertheless, we define the primitives analogously.
-
-% TODO[PT]: i removed renamings, they are analogous
-
-% \subsubsection{Renaming}
-% \label{sec:renamings}
-% 
-% 
-% Expression renamings are indexed by type renamings because type
-% variables in expression may have to be renamed at the same time as
-% expression variables. This complication makes the types of the
-% operations quite involved, although the actual operations are not that
-% complicated. 
-% \SFExprRenaming
-% Defining the identity renaming is straightforward due to the presence
-% of rewriting for type substitutions.
-% \SFExprRenIdr
-% Weakening of a renaming by a value binding. 
-% \SFExprRenWeakening
-% Weakening of a renaming by a type binding.
-% \SFExprRenTWeakening
-% Extension of a renaming.
-% \SFExprRenExtension
-% Lifting of a renaming over a value binding.
-% \SFExprRenLifting
-% Lifting of a renaming over a type binding.
-% \SFExprRenTLifting
-% Inductive definition of a renaming on expressions. The last case of
-% the definition requires rewriting to type check.
-% \SFExprRenTraversal
-
-% \subsubsection{Substitution}
-% \label{sec:substitution}
-
-
-% TODO[PT]: this is very dry, improve writing 
-
-Expression substitutions $\sigma$ are indexed by type substitutions
-$\eta$. A substitution takes a variable $x$ of type $T$ in context
-$\Gamma_1$ and maps it to an expression typed in context $\Gamma_2$
-adjusting its type according to the type substitution: $T [ \eta
-]^S$. Notationally, we write $\eta \mid \dots$ for any operation on
-substitutions that is indexed by type substitution $\eta$.
-\SFExprSubstitution
-Applying a substitution to a variable corresponds to function
-application. Nevertheless, we use the same interface as for type
-substitutions to
-enable using the same rewriting machinery on the expression level
-again.  For this definition, we include the typing of all symbols,
-which is similar for all further definitions and omitted because it
-can be inferred. 
-\SFExprSubLookup
-
-The identity substitution for expressions is straightforward to
-define. But this simplicity is due to the installed rewriting of type
-substitutions. Without the rewriting, the right hand side's type is
-$T$, but the expected type is $T[ \AgdaFunction{id}^s ]^S$, which would require the
-transport lemma \AgdaPostulate{comp-id$_r$}.
-\SFExprSubIds
-Extending a substitution is standard: given an expression $e$ and a
-substitution $\sigma$, we return a substitution that sends variable
-\AgdaInductiveConstructor{zero} to $e$ and otherwise resorts to
-$\sigma$.
-\SFExprSubExtension
-Due to the structure of contexts, we need two lifting lemmas when
-defining the application of a substitution to an expression, one for
-value bindings and another for type bindings. In both cases, the
-substitution $\sigma$ needs to be adjusted (i.e., lifted) to
-accommodate the newly introduced binding.
-The former is standard: it maps the newly introduced variable to
-itself (\AgdaInductiveConstructor{zero}) and weakens the images of
-$\sigma$ accordingly. However, the definition of lifting requires a
-transport lemma to line up the type substitutions, which is applied by
-rewriting. The last part of the definition $\AgdaFunction{id}^R \mid
-\dots \AgdaFunction{Wk}^R \dots$ applies an expression renaming
-(weakening by $T [ η ]ˢ$) indexed by \AgdaFunction{idᴿ} to the
-output of $\sigma$. 
-\SFExprSubLifting
-Lifting a substitution over a type binding is non-standard, but
-straightforward. The type substitution requires lifting, but no rewriting is needed.
-\SFExprSubTLifting
-Substitution application is defined by structural recursion on
-expressions. The cases dispatch to the
-operations that we introduced: applying a substitution to a variable,
-lifting over a value binding (case \AgdaInductiveConstructor{λx}),
-lifting over a type binding (case \AgdaInductiveConstructor{Λα}),
-the cases for application and type-application are homomorphic.
-\SFExprSubTraversal
-
-\subsection{Semantics}
-\label{sec:semantics}
-
-
-
-We are now ready to define a small-step operational
-semantics. As in the introduction, we opt for call-by-name for
-concision. The definition of single substitution, needed for beta 
-reduction, is analogous to the one on types: we build the substitution
-by extending the identity substitution with the argument $e'$. As
-usual in an intrinsically typed setting, this definition already proves
-that substitution preserves typing!
-\SFExprSemSingleSub
-In addition, we have to substitute a type into an expression to
-cater for beta reduction of type applications. This substitution is
-also implemented by an expression substitution indexed by a type
-substitution that performs the actual change.
-\SFExprSemSingleTypeSub
-Due to the extended type substitution on the left, we also have to
-adapt the expression substitution on the right to the extended context
-structure. This adaptation is the type-level analogue to extension:
-\SFExprSubTExtension
-
-With substitution in place, the definition of the call-by-name small-step
-reduction relation is straightforward. As usual, such a definition of reduction for
-intrinsically-typed syntax implies subject reduction by construction.
-\SFExprSemDefinition
-
-\begin{figure}[tp]
-  \begin{minipage}[t]{0.47\linewidth}
-    \SFExprSemProgressDefs
-    \SFExprSemNewNoVarDefs
-  \end{minipage}
-  \begin{minipage}[t]{0.49\linewidth}
-    \SFExprSemNewProgress
-  \end{minipage}
-  \caption{Progress for System~F}
-  \label{fig:system-f-progress}
-\end{figure}
-
-To obtain type safety, it remains to prove progress.
-\Cref{fig:system-f-progress} presents the complete proof of progress
-for call-by-name System~F using the structure from PLFA
-\cite{DBLP:journals/scp/KokkeSW20}. A value is either a lambda or a
-big lambda 
-where the body is already a value. An expression satisfies progress if
-it is either a value (\AgdaInductiveConstructor{done}) or if it can make
-a step (\AgdaInductiveConstructor{step}). Due to the definition of
-value for big lambdas, we have to establish progress for contexts that
-may contain type bindings, but no value bindings. These contexts are
-characterized literally by the function \AgdaFunction{NoVar}. The actual proof of
-\AgdaFunction{progress} is by induction on the structure of expressions. The overall
-structure of this proof closely follows Chapman et
-al~\cite{10.1007/978-3-030-33636-3_10}. Their proof is more
-complicated because their semantics is call-by-value, their language supports
-isorecursive types, and their subject language is System~F$\omega$.
-
-\section{Transfer Heaven and Transfer Hell}
-\label{sec:laws-renam-subst}
-
-Proving type safety for System~F requires exercising the
-substitution theory at the type level. Without installing its
-laws as definitional equalities, many definitions become
-cumbersome because transport lemmas have to be inserted to equalize
-the types of (Agda) expressions.
-
-% TODO[PT]: give a better motivation than this
-As we have seen in \cref{sec:semantics}, proving type safety does
-\emph{not} require exercising substitution theory at the expression
-level. However, as a sanity check of the definitions we
-verify functorial and monadic properties of expression
-substitutions. Moreover, if we were to move on to constructing and
-proving properties of logical relations, then these properties would
-be needed \cite{10.1145/3678000.3678201}.
-
-\subsection{Transfer Heaven: Composition of Substitutions with Rewriting}
-\label{sec:comp-subst-with}
-
-As an example, we examine the composition of two expression
-substitutions. Its definition involves two type substitutions $\eta_1$ and $\eta_2$ that
-index the corresponding expression substitutions $\sigma_1$ and
-$\sigma_2$. The composed expression substitution is indexed by the
-composition of  $\eta_1$ and $\eta_2$. Type checking this definition
-already exercises the laws for composition of type substitutions.
-\SFExprSubCompDefinition
-
-We state the functoriality property of expression substitution:
-applying two substitutions one after the other to an expression is the
-same as applying their composition. This statement is a very prominent
-example of transfer hell: the types of the left and right side of the
-equality are different and would require a transfer without our
-rewriting machinery in place.
-% TODO[PT]: needs tranfer with compositonalityˢˢ on type level
-\SFExprSubCompositionalityType
-We show the proof of this property not as a subject of study, but to
-demonstrate that transfers for type substitutions are not needed. We can
-concentrate on the gist of the proof, rather than being overwhelmed by
-transfers. The remaining complication is the explicit passing
-of the type substitutions $\eta_1$ and $\eta_2$. We chose to make them
-explicit; while Agda can infer them in many places, 
-there are equally many places where inference is not possible.
-\SFExprSubCompositionalityBody
-
-This proof relies on further properties, in particular
-\AgdaFunction{Lift-Dist-Comp$^{SS}$} (lifting a composition of substitutions
-is equal to composing their liftings) and
-\AgdaFunction{Lift*-Dist-Comp$^{SS}$} (its counterpart for lifting
-over type bindings), where the statement and proof would require
-explicit transfers. Essentially, these properties form a ``food
-chain'' that stops at the composition properties of renamings with
-renamings and liftings, all of which work similarly. The supplemental
-material contains full details.
-
-\subsection{Transfer Hell: Composition of Substitutions Without Rewriting}
-\label{sec:comparison-transfer-hell}
-% make very clear this is not our code and not WITHOUT rewriting.
-We now contrast the development from \cref{sec:comp-subst-with} with
-the same proof carried out \emph{without} 
-installing the $\sigma$-calculus equations as definitional equalities. As a
-point of comparison, we take the supplement of the construction of a
-logical relation \cite{10.1145/3678000.3678201}, which 
-also mechanizes the compositionality properties of expression
-substitutions for System~F. To enable a direct 
-comparison, we have aligned the surface syntax of their definitions
-with ours.
-
-The type of compositionality already exposes the
-core issue. Because the $\sigma$-calculus equations are only
-propositional, the theorem statement must include
-\AgdaFunction{subst} to bridge indices that are equal
-but not definitionally equal : the type of the left side of the equality is \emph{not}
-definitionally equal to the type of the right side. To adapt the types,
-compositionality of type substitutions is applied to the type of the
-expression using function \AgdaFunction{sub}.
-\ExportCompositionalityHom
-
-\noindent Because \AgdaFunction{subst} is part of the statement, every
-recursive call to the induction hypothesis introduces a 
-fresh application of \AgdaFunction{subst}, which has to be discharged
-in the proof alongside the interesting proof steps.
-To do so, it must be distributed to the outside of the term and combined with the
-\AgdaFunction{subst}s arising from neighboring subterms before the goal
-can be closed. This bookkeeping is further complicated by the fact that
-the other appearances of type substitution lemmas required in the proof interact with the
-transport equalities in non-trivial ways. We illustrate the resulting
-complexity by zooming in on a single case of the inductive proof---type
-application---of their compositionality lemma.
-
-Firstly, our development already saves one
-\AgdaFunction{subst} in the very definition of substitution application.
-%Without the definitional $\sigma$-calculus, this saving is no longer
-%available: 
-The type application case requires the swap lemma of type
-\ExportSwap\ to coerce the term to the expected type, leading to the following
-definition.
-\ExportSubstInDef
-
-\noindent Next, we examine the type application case
-of the compositionality proof itself. The authors employ heterogeneous
-equality~\cite{DBLP:conf/types/McBride00} to avoid some of the
-administrative reasoning otherwise forced by transfer hell. Without
-heterogeneous equality, the proof would be even more complex,
-requiring several auxiliary lemmas that explicitly shuffle applications
-of \AgdaFunction{subst} around. Thus, the version below already
-constitutes one of the simplest forms of the argument.
-\ExportProofTerm
-
-\noindent The proof proceeds in seven steps.
-\begin{enumerate}
-  \item Unfold the definition of expression substitution at the inner
-        application of $\sigma_1$, exposing the \AgdaFunction{subst}
-        inside.
-  \item Remove the \AgdaFunction{subst} that sits inside the term under
-        consideration, justified by heterogeneous equality.
-  \item Reveal yet another \AgdaFunction{subst} introduced by the substitution application of $\sigma_2$
-  \item Remove the \AgdaFunction{subst} on the outside.
-  \item Apply the induction hypothesis while simultaneously coercing
-        the index according to the compositionality law for type
-        substitutions.
-  \item Reinsert the \AgdaFunction{subst} demanded by the proof goal on
-        the outside.
-  \item Fold the definition of expression substitution to conclude the
-        proof.
-\end{enumerate}
-Of these, steps~(2), (4), the type coercion in~(5), and~(6),
-as well as the use of heterogeneous equality, are entirely
-absent from our rewriting-based proof, only the application of the
-inductive hypothesis and the implicit (un)folding of definitions remain.
-
-We complement this qualitative comparison with a quantitative
-one. \cref{tab:proof-statistics} records the lines of code and number
-of characters 
-required to mechanize the compositionality law for expression
-substitutions, together with the type-checking time of the
-respective developments.
-
-\begin{table}[tp]
-\begin{tabular}{|l|rr|rr|}
-    \hline
-                                          & \multicolumn{2}{c|}{\textbf{With Rewriting}}
-                                          & \multicolumn{2}{c|}{\textbf{Transfer Hell}} \\
-                                          & LOC & Chars & LOC & Chars \\
-    \hline
-    Type substitution + proofs            &   217 &  12\,246 &    285 &  12\,584 \\
-    Expression substitution + proofs      &   199 &  11\,465 & 1\,405 &  69\,846 \\
-    \hline
-    \textbf{Total}                        & \textbf{416} & \textbf{23\,711}
-                                          & \textbf{1\,690} & \textbf{82\,430} \\
-    \hline
-    Type-check time                       & \multicolumn{2}{c|}{4.49\,s}
-                                          & \multicolumn{2}{c|}{9.51\,s} \\
-    \hline
-\end{tabular}
-\caption{Proof statistics}
-\label{tab:proof-statistics}
-\end{table}
-
-As expected, the amount of code required to formalize type
-substitution is roughly the same in both developments. For
-expression substitutions, however, the picture changes:
-the transfer-hell version requires more than five times as many lines
-of code as the rewriting-based one. As a welcome side effect, the
-type-checking time is also reduced by about 50\% when the
-$\sigma$-calculus equations are installed as rewrite rules.
-
-\section{Going Further}
-\label{sec:going-further}
 
 
 \subsection{Equational Theory for Expression Substitution}

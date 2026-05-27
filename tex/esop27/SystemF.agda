@@ -439,7 +439,7 @@ variable
 
 --! Renaming
 _∣_⇒ᴿ_ : Ren n₁ n₂ → Ctx n₁ → Ctx n₂ → Set
-ζ ∣ Γ₁ ⇒ᴿ Γ₂ = ∀ T → Γ₁ ∋ T → Γ₂ ∋ (T [ ζ ]ᴿ)
+ζ ∣ Γ₁ ⇒ᴿ Γ₂ = ∀ T → (x : Γ₁ ∋ T) → Γ₂ ∋ (T [ ζ ]ᴿ)
 
 variable
   ρ ρ′ ρ₁ ρ₂ ρ₃ : ζ ∣ Γ₁ ⇒ᴿ Γ₂

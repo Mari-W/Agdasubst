@@ -78,12 +78,10 @@ explicit transport reasoning.
 Our approach simplifies proofs of metatheoretic
 properties: typing preservation becomes definitional, substitution lemmas and corresponding
 transfers disappear. Generally, when intrinsic encodings generate transports, the right move
-is often  to strengthen definitional equality rather than add more lemmas. We extract practical
-guidelines for applying this methodology. 
+is often  to strengthen definitional equality rather than add more lemmas. We extract a practical
+recipe for applying this methodology. 
 \end{abstract}
 
-% TODO[PT]: somehwere insert related work, namely comapre with propositonal tools and 
-%           with stricification paper
 % TODO[PT]: explain agda syntax at relevant places: 
 
 \maketitle
@@ -134,7 +132,6 @@ properties of substitutions are required.
 However, the same approach breaks down for polymorphic calculi and the remainder of this
 paper explains how to recover some of its simplicity.
 
-% TODO[PT]: define transfer hell precisely and what propositional vs definitional means
 Transfer hell is the colloquial term for being forced to apply
 type-changing lemmas to terms that are already known to be equal.
 This phenomenon appears, for example,
@@ -187,8 +184,6 @@ form and transports disappear from routine proofs.
 % resulting rewrite system remains terminating and confluent together
 % with Agda’s built-in reductions. 
 
-
-% TODO[PT]: update to current section structure
 
 % In summary, intrinsically typed syntax fails for polymorphic calculi
 % because substitutions lack canonical equality; making them compute
@@ -261,7 +256,6 @@ The main challenge in setting up the $\sigma$-calculus is to fine-tune the
 reduction behavior of the definitions with the rewrite rules to ensure that the combined
 reduction relation remains terminating and confluent.
 
-% TODO[PT]: explain that definitional equality is determined by reduction and normal forms
 
 % We exercise this program for plain System~F in
 % \cref{sec:system-f}, significantly simplifying the transfer-ridden
@@ -655,7 +649,6 @@ supplement.
 % \label{sec:substitution}
 
 
-% TODO[PT]: this is very dry, improve writing 
 
 Expression substitutions $\sigma$ are indexed by type substitutions
 $\eta$. A substitution takes a variable $x$ of type $T$ in context
@@ -780,9 +773,6 @@ Next, we move on to study an example of transfer hell in detail.
 % cumbersome because transport lemmas have to be inserted to equalize
 % the types of (Agda) expressions.
 
-% TODO[PT]: give a better motivation than this
-% As we have seen in \cref{sec:semantics}, proving type safety for System~F does 
-% \emph{not} require exercising substitution theory at the expression level.
 
 In this section, we move on to
 verify functorial and monadic properties of expression

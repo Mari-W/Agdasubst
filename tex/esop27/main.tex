@@ -1296,8 +1296,6 @@ reasoning.
 \section{Conclusion}
 \label{sec:conclusions}
 
-%TODO[PT]: does this need update?
-
 Intrinsically typed syntax facilitates elegant mechanizations by making
 well-typed programs representable only as well-typed data. For
 polymorphic calculi this promise is often undermined by pervasive
@@ -1308,9 +1306,10 @@ definitional equality: substitutions that are extensionally equal fail
 to compute to a canonical form. By internalizing the equational laws of
 the $\sigma$-calculus as definitional equalities, substitutions become
 canonical and routine transports disappear from proofs. The resulting
-developments recover the elegance seen in the simply-typed case while
-scaling to towers of syntactic sorts.
-More broadly, this fresh perspective suggests a practical guideline
+developments recover the elegance and concision seen in the simply-typed case while
+scaling to towers of syntactic sorts. In our System~F case study, we observe a decrease of
+code size by a factor of 3--4 and a speedup by a factor of 2.
+More broadly, this fresh perspective proposes a practical recipe
 for mechanizing type systems in dependently typed proof assistants:
 when intrinsically typed encodings become proof-heavy, a promising
 strategy is often to strengthen definitional equality rather than

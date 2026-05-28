@@ -228,8 +228,7 @@ Our work eliminates transfers resulting from substitutions, thus avoiding transf
 
 Recent work studies rewrite rules in dependent type theories,
 including Agda~\cite{cockx:LIPIcs.TYPES.2019.2} and
-Rocq~\cite{leray_et_al:LIPIcs.ITP.2024.26}. Local rewrite rules are an
-active research direction~\cite{10.1145/3776704}.
+Rocq~\cite{leray_et_al:LIPIcs.ITP.2024.26,10.1145/3776704}.
 In Rewriting Type Theory (RTT), the reduction relation is extended by turning
 propositional equalities into reduction rules: a term matched by the
 left-hand side of an equation reduces to the right-hand side. 
@@ -934,27 +933,12 @@ $\sigma$-calculus equations are installed as rewrite rules.
 
 \subsection{Safety Conditions for Rewriting}
 \label{sec:safety}
-The theory underlying a proof assistant must be sound and consistent.
-Hence, it is a delicate act turning propositional equalities into definitional ones, 
-for example by adding rewrite rules, because 
-it can endanger both soundness and consistency.
-Recent work studies  rewrite rules in dependent type theories,
-including Agda~\cite{cockx:LIPIcs.TYPES.2019.2} and
-Rocq~\cite{leray_et_al:LIPIcs.ITP.2024.26}. Local rewrite rules are an
-active  research direction~\cite{10.1145/3776704}.
 
 Rewrite rules and the reductions of a dependently typed
-system interact in non-trivial ways. Hence, it is important to have criteria
-when it is safe to add rewrites. We justify
-making the equations from \cref{sec:laws-renam-subst-1}
-definitional by appealing to the approach put forward for Rewriting
-Type Theory (RTT)~\cite{10.1145/3434341}, which is implemented
-in Agda. In RTT, the reduction relation is extended by turning
-propositional equalities into reduction rules: a term matched by the
-left-hand side of an equation reduces to the right-hand side, exactly
-like in \cref{sec:laws-renam-subst-1}. The two properties we wish
-to preserve when adding rewrite rules are subject reduction and consistency. In particular, the type
-checker assumes subject reduction and it would break without it.
+system interact in non-trivial
+ways~\cite{cockx:LIPIcs.TYPES.2019.2,leray_et_al:LIPIcs.ITP.2024.26,10.1145/3776704}.
+According to RTT's criteria, we can make the equations from \cref{sec:laws-renam-subst-1}
+definitional because they preserve subject reduction and consistency. 
 
 To uphold subject reduction, the critical property of the newly added rewriting
 equations is that their \emph{union with the existing reduction
@@ -977,24 +961,41 @@ explicitly hide these definitions inside an \AgdaKeyword{opaque} block,
 so that only the equations we install with \AgdaKeyword{REWRITE} define
 their reduction behaviour.
 
+Without the opaque definitions, it may happen that the left-hand side of an equation reduces
+to a normal form, which is different from the right-hand side. Thus, confluence would be
+violated. 
 As a concrete example, consider the equation
-$\eta$-law: \AgdaSymbol{(}\AgdaInductiveConstructor{zero}\,\AgdaFunction{\&ˢ}\,\AgdaBound{η}\AgdaSymbol{)}\,\AgdaFunction{∙ˢ}\,\AgdaSymbol{(}\AgdaFunction{⟨}\,\AgdaFunction{wkᴿ}\,\AgdaFunction{⟩}\,\AgdaFunction{⨟ˢ}\,\AgdaBound{η}\AgdaSymbol{)}\,\AgdaDatatype{≡}\,\AgdaBound{η}.
-Without the \AgdaKeyword{opaque} block, the underlying definition
-\AgdaSymbol{(}\AgdaBound{η₁}\,\AgdaFunction{⨟ˢ}\,\AgdaBound{η₂}\AgdaSymbol{)}\,\AgdaBound{α}\,\AgdaSymbol{=}\,\AgdaSymbol{(}\AgdaBound{η₁}\,\AgdaBound{α}\AgdaSymbol{)}\,\AgdaFunction{[}\,\AgdaBound{η₂}\,\AgdaFunction{]ˢ}
-would $\delta$-unfold the inner composition
+\AgdaFunction{$\eta$-law} (left) in connection with the definition of composition (right):
+\begin{align*}
+   \AgdaSymbol{(}\AgdaInductiveConstructor{zero}\,\AgdaFunction{\&ˢ}\,\AgdaBound{η}\AgdaSymbol{)}\,\AgdaFunction{∙ˢ}\,\AgdaSymbol{(}\AgdaFunction{⟨}\,\AgdaFunction{wkᴿ}\,\AgdaFunction{⟩}\,\AgdaFunction{⨟ˢ}\,\AgdaBound{η}\AgdaSymbol{)}\,&\AgdaDatatype{≡}\,\AgdaBound{η}
+  &
+\AgdaSymbol{(}\AgdaBound{η₁}\,\AgdaFunction{⨟ˢ}\,\AgdaBound{η₂}\AgdaSymbol{)}\,\AgdaBound{α}\,&\AgdaSymbol{=}\,\AgdaSymbol{(}\AgdaBound{η₁}\,\AgdaBound{α}\AgdaSymbol{)}\,\AgdaFunction{[}\,\AgdaBound{η₂}\,\AgdaFunction{]ˢ}    
+\end{align*}
+Without the \AgdaKeyword{opaque} block, the definition of composition
+would $\delta$-unfold the inner application
 \AgdaFunction{⟨}\,\AgdaFunction{wkᴿ}\,\AgdaFunction{⟩}\,\AgdaFunction{⨟ˢ}\,\AgdaBound{η}
-into the lambda
-\AgdaSymbol{$\lambda$}\,\AgdaBound{α}\,\AgdaSymbol{$\to$}\,\AgdaBound{η}\,\AgdaSymbol{(}\AgdaInductiveConstructor{suc}\,\AgdaBound{α}\AgdaSymbol{)},
-so that the entire left-hand side reduces to
-\AgdaSymbol{(}\AgdaBound{η}\,\AgdaInductiveConstructor{zero}\AgdaSymbol{)}\,\AgdaFunction{∙ˢ}\,\AgdaSymbol{(}\AgdaSymbol{$\lambda$}\,\AgdaBound{α}\,\AgdaSymbol{$\to$}\,\AgdaBound{η}\,\AgdaSymbol{(}\AgdaInductiveConstructor{suc}\,\AgdaBound{α}\AgdaSymbol{)}\AgdaSymbol{)}.
-Two issues arise. First, the rewrite engine would no longer be able to match the
-left-hand side of \AgdaFunction{$\eta$-law} syntactically during reduction\footnote{To see why, note that $\eta$ does not appear in pattern position here. A precise definition of pattern position is available in the Agda Wiki: \url{https://agda.readthedocs.io/en/latest/language/rewriting.html\#general-shape-of-rewrite-rules}}.
-Second, even if the rewrite rule were admitted, confluence would still fail. The two
+to
+\AgdaSymbol{$\lambda$}\,\AgdaBound{α}\,\AgdaSymbol{$\to$}\,\AgdaBound{η}\,\AgdaSymbol{(}\AgdaInductiveConstructor{suc}\,\AgdaBound{α}\AgdaSymbol{)}
+so that the left-hand side reduces as follows:
+\begin{align*}
+  \AgdaSymbol{(}\AgdaInductiveConstructor{zero}\,\AgdaFunction{\&ˢ}\,\AgdaBound{η}\AgdaSymbol{)}\,\AgdaFunction{∙ˢ}\,\AgdaSymbol{(}\AgdaFunction{⟨}\,\AgdaFunction{wkᴿ}\,\AgdaFunction{⟩}\,\AgdaFunction{⨟ˢ}\,\AgdaBound{η}\AgdaSymbol{)}\,&\AgdaDatatype{≡}\,
+\AgdaSymbol{(}\AgdaInductiveConstructor{zero}\,\AgdaFunction{\&ˢ}\,\AgdaBound{η}\AgdaSymbol{)}\,\AgdaFunction{∙ˢ}\,\AgdaSymbol{(}\AgdaSymbol{$\lambda$}\,\AgdaBound{α}\,\AgdaSymbol{$\to$}\,\AgdaBound{η}\,\AgdaSymbol{(}\AgdaInductiveConstructor{suc}\,\AgdaBound{α}\AgdaSymbol{)}\AgdaSymbol{)}\,\\
+&\AgdaDatatype{≡}\,
+\AgdaSymbol{(}\AgdaBound{η}\,\AgdaInductiveConstructor{zero}\AgdaSymbol{)}\,\AgdaFunction{∙ˢ}\,\AgdaSymbol{(}\AgdaSymbol{$\lambda$}\,\AgdaBound{α}\,\AgdaSymbol{$\to$}\,\AgdaBound{η}\,\AgdaSymbol{(}\AgdaInductiveConstructor{suc}\,\AgdaBound{α}\AgdaSymbol{)}\AgdaSymbol{)}
+\end{align*}
+
+% so that the entire left-hand side reduces to
+% \AgdaSymbol{(}\AgdaBound{η}\,\AgdaInductiveConstructor{zero}\AgdaSymbol{)}\,\AgdaFunction{∙ˢ}\,\AgdaSymbol{(}\AgdaSymbol{$\lambda$}\,\AgdaBound{α}\,\AgdaSymbol{$\to$}\,\AgdaBound{η}\,\AgdaSymbol{(}\AgdaInductiveConstructor{suc}\,\AgdaBound{α}\AgdaSymbol{)}\AgdaSymbol{)}.
+Two issues arise. First, the definitional reduction happens \emph{before} the rewrite engine
+tries to match the left-hand side of \AgdaFunction{$\eta$-law} syntactically. Thus the
+rewrite never happens\footnote{To see why, note that $\eta$ does not appear in pattern
+  position in the reduct. A precise definition of pattern position is available in the Agda Wiki: \url{https://agda.readthedocs.io/en/latest/language/rewriting.html\#general-shape-of-rewrite-rules}}.
+Second, if the rewrite rule were admitted, confluence would fail. The two
 reducts \AgdaBound{η} (via the rewrite) and
 \AgdaSymbol{(}\AgdaBound{η}\,\AgdaInductiveConstructor{zero}\AgdaSymbol{)}\,\AgdaFunction{∙ˢ}\,\AgdaSymbol{(}\AgdaSymbol{$\lambda$}\,\AgdaBound{α}\,\AgdaSymbol{$\to$}\,\AgdaBound{η}\,\AgdaSymbol{(}\AgdaInductiveConstructor{suc}\,\AgdaBound{α}\AgdaSymbol{)}\AgdaSymbol{)}
 (via $\delta$-unfolding) are propositionally equal but not definitionally
 equal. Because the function \AgdaFunction{∙ˢ} case-splits on a neutral
-variable, Agda cannot reduce the second reduct back to \AgdaBound{η}.
+variable, no further reduction back to \AgdaBound{η} is possible.
 Hiding the definition of the symbol \AgdaFunction{⨟ˢ} (together with \AgdaFunction{∙ˢ} and the
 other operators) inside an \AgdaKeyword{opaque} block turns them into
 stuck symbols, restoring both matchability and
@@ -1026,11 +1027,12 @@ overall method otherwise transfers.
 % to define expressions and expression substitution without ending
 % up in transfer hell.
 
+After automating the type-level substitution theory by installing safe rewrites, we aim to
+extend our method to the expressions level.
 
 \subsection{Equational Theory for Expression Substitution}
 \label{sec:equat-theory-expr}
-Having proven the functor laws for expression substitution, one of the
-hardest results has already been established. A natural question is
+With functoriality for expression substitution in place, one might ask
 whether we can go further and install a full equational theory for
 expression substitution as definitional equalities, just as we did at
 the type level. We show that it is possible. The $\sigma$-calculus for type-substitution-indexed
@@ -1041,9 +1043,9 @@ same holds analogously for expression renamings.
 Expression substitutions carry additional operators that have no
 counterpart at the type level.
 Every law involving extension or weakening splits into two
-expression-level laws.  One goversn the expression variants
+expression-level laws.  One governs the expression variants
 (\AgdaFunction{\_∙ˢ\_}, \AgdaFunction{wkˢ}) and directly mirrors the
-type-level rule \cref{sec:laws-renam-subst-1}. The other goversn the type variants
+type-level rule \cref{sec:laws-renam-subst-1}. The other governs the type variants
 (\AgdaFunction{\_∙ˢ*\_}, \AgdaFunction{wkˢ*}) and is genuinely
 new. We illustrate this pattern with the $\eta$-id law. The expression
 variant
@@ -1080,16 +1082,31 @@ More precisely, consider a tower $T_0, T_1, \dots, T_n$ of syntactic
 sorts in which the variables and substitutions of $T_{i+1}$ are
 indexed by the contexts and substitutions of $T_0, \dots, T_i$. The
 recipe proceeds bottom-up:
+\begin{quote}
+\noindent\fbox{%
+\begin{minipage}{0.96\linewidth}
+\textbf{Methodology Recipe.}
+To avoid transfer hell in intrinsically typed towers:
 \begin{enumerate}
-  \item Define $T_0$ together with its renamings and substitutions,
-        and install the $\sigma$-calculus equations for $T_0$ as
-        rewrite rules.
-  \item For each $i$ from $1$ to $n$, define $T_i$ \emph{on top of}
-        the already-definitional substitution machinery of
-        $T_0, \dots, T_{i-1}$, prove the corresponding
-        $\sigma$-calculus laws for $T_i$, and install them as
-        rewrite rules.
+  \item Start at the base sort $T_0$: define renamings/substitutions and install
+        the $\sigma$-calculus equations as rewrite rules.
+  \item For each higher sort $T_i$, define syntax and substitution
+        \emph{on top of} already-definitional lower-level substitutions.
+  \item Prove the $\sigma$-calculus laws for $T_i$ and install them as rewrite rules.
+  \item Check confluence of the combined reduction relation after each level.
 \end{enumerate}
+\end{minipage}}
+\end{quote}
+% \begin{enumerate}
+%   \item Define $T_0$ together with its renamings and substitutions,
+%         and install the $\sigma$-calculus equations for $T_0$ as
+%         rewrite rules.
+%   \item For each $i$ from $1$ to $n$, define $T_i$ \emph{on top of}
+%         the already-definitional substitution machinery of
+%         $T_0, \dots, T_{i-1}$, prove the corresponding
+%         $\sigma$-calculus laws for $T_i$, and install them as
+%         rewrite rules.
+% \end{enumerate}
 The key is that the laws for all levels $<i$ are already definitional,
 when we define and prove the laws for level $i$.
 Otherwise, the types of the level-$i$ operations would no longer
@@ -1108,7 +1125,7 @@ linearly with the level, but each new family follows the same
 template as the previous one, so the proof effort per family stays
 constant.
 
-As a concrete instance, the language System
+As an example from the literature, the language System
 $\mathrm{F}^{\uparrow}_{C}$~\cite{10.1145/2103786.2103795}
 features three levels: kinds, types, and
 expressions. Each level carries its own variables

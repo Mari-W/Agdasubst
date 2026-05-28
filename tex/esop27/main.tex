@@ -774,9 +774,8 @@ Next, we move on to study an example of transfer hell in detail.
 % the types of (Agda) expressions.
 
 
-In this section, we move on to
-verify functorial and monadic properties of expression
-substitutions. These properties are needed, once we consider properties of logical relations
+In this section, we study functorial and monadic properties of expression
+substitutions. These properties are needed once we consider properties of logical relations
 \cite{10.1145/3678000.3678201}. 
 
 As an example, we examine the composition of two expression
@@ -801,11 +800,9 @@ applying two substitutions one after the other to an expression is the
 same as applying their composition. Without $\sigma$-calculus rewriting in place, the types
 of the left and 
 right-hand side of the equality are different and would require a transfer.
-% TODO[PT]: needs tranfer with compositonalityˢˢ on type level
 \SFExprSubCompositionalityType
-We show the proof only to illustrate where rewriting removes transports; the key proof idea
-is sufficient for our purposes.
-We can
+We show the proof only to illustrate where rewriting removes
+transports, which enables us to
 concentrate on the gist of the proof, rather than being overwhelmed by
 transfers. The remaining complication is the explicit passing
 of the type substitutions $\eta_1$ and $\eta_2$. We chose to make them
@@ -818,9 +815,9 @@ This proof relies on further properties, in particular
 is equal to composing their liftings) and
 \AgdaFunction{Lift*-Dist-Comp$^{SS}$} (its counterpart for lifting
 over type bindings), where the statement and proof would require
-explicit transfers. Essentially, these properties form a hierarchy that stops at the
-composition properties of renamings with 
-renamings and liftings, all of which work similarly. The supplemental
+explicit transfers. Essentially, these properties form a hierarchy
+that stops with lemmas for composing two renamings and composing a
+renaming with a lifting, all of which work similarly. The supplemental
 material contains full details.
 
 \subsection{Transfer Hell: Composition of Substitutions Without Rewriting}

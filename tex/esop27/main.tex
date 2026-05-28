@@ -780,20 +780,23 @@ substitutions. These properties are needed, once we consider properties of logic
 \cite{10.1145/3678000.3678201}. 
 
 As an example, we examine the composition of two expression
-substitutions. Its definition is reasonably compact, yet it showcases a significant amount of
-transfer hell. 
+substitutions. Its definition is reasonably compact, yet proving its
+functoriality showcases a significant amount of transfer hell.
+The definition involves two type substitutions $\eta_1$ and $\eta_2$ that
+index the corresponding expression substitutions $\sigma_1$ and
+$\sigma_2$. The composed expression substitution is indexed by the
+composition of $\eta_1$ and $\eta_2$.
+\SFExprSubCompDefinition
+
+In the following subsections, we state and prove functoriality of
+composition, once in heaven with $\sigma$-calculus rewriting in place
+and once in hell.
 
 \subsection{Transfer Heaven: Composition of Substitutions with Rewriting}
 \label{sec:comp-subst-with}
 
-The definition of composition involves two type substitutions $\eta_1$ and $\eta_2$ that
-index the corresponding expression substitutions $\sigma_1$ and
-$\sigma_2$. The composed expression substitution is indexed by the
-composition of $\eta_1$ and $\eta_2$. Type checking this definition
-already exercises the laws for composition of type substitutions.
-\SFExprSubCompDefinition
 
-We state the functoriality property of expression substitution:
+The functoriality property of expression substitution says that
 applying two substitutions one after the other to an expression is the
 same as applying their composition. Without $\sigma$-calculus rewriting in place, the types
 of the left and 

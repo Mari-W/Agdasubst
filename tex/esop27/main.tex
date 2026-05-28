@@ -3,6 +3,19 @@
 
 \usepackage{agda}
 \usepackage{stmaryrd}
+\usepackage{xcolor}
+\usepackage{mdframed}
+\definecolor{transferhellbg}{rgb}{0.98,0.92,0.93}
+\newmdenv[%
+  backgroundcolor=transferhellbg,%
+  linewidth=0pt,%
+  innerleftmargin=4pt,innerrightmargin=4pt,%
+  innertopmargin=2pt,innerbottommargin=2pt,%
+  skipabove=4pt,skipbelow=4pt]{transferhellbox}
+\newsavebox{\transferhellinlinebox}
+\newcommand{\transferhellinline}[1]{%
+  \sbox{\transferhellinlinebox}{#1}%
+  \colorbox{transferhellbg}{\usebox{\transferhellinlinebox}}}
 
 \AtBeginDocument{%
   \providecommand\BibTeX{{%
@@ -825,6 +838,8 @@ a proof of the same compositionality property, but carried out with explicit tra
 The proof is taken from the supplement of a paper on a
 logical relation for System~F \cite{10.1145/3678000.3678201}. We aligned the surface syntax
 of their definitions with ours to enable direct comparison.
+Throughout this subsection, code reproduced from that prior work is rendered
+with a shaded background to distinguish it from our own development.
 
 The type of compositionality already exposes the
 core issue. Because the $\sigma$-calculus equations are only
@@ -834,7 +849,9 @@ but not definitionally equal: the type of the left-hand side of the equality is 
 definitionally equal to the type of the right-hand side. To adapt the types,
 compositionality of type substitutions is applied to the type of the
 expression using function \AgdaFunction{sub}.
+\begin{transferhellbox}
 \ExportCompositionalityHom
+\end{transferhellbox}
 
 \noindent Because \AgdaFunction{subst} is part of the statement, every
 recursive call to the induction hypothesis introduces a 
@@ -853,9 +870,11 @@ Firstly, our development already saves one
 %Without the definitional $\sigma$-calculus, this saving is no longer
 %available: 
 The type application case requires the swap lemma of type
-\ExportSwap\ to coerce the term to the expected type, leading to the following
+\transferhellinline{\ExportSwap}\ to coerce the term to the expected type, leading to the following
 definition.
+\begin{transferhellbox}
 \ExportSubstInDef
+\end{transferhellbox}
 
 \noindent Next, we examine the type application case
 of the compositionality proof itself. The authors employ heterogeneous
@@ -865,7 +884,9 @@ heterogeneous equality, the proof would be even more complex,
 requiring several auxiliary lemmas that explicitly shuffle applications
 of \AgdaFunction{subst} around. Thus, the version below already
 constitutes a streamlined form of the argument.
+\begin{transferhellbox}
 \ExportProofTerm
+\end{transferhellbox}
 
 \noindent The proof proceeds in seven steps.
 \begin{enumerate}

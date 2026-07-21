@@ -1,0 +1,147 @@
+ICFP 2026 Paper #105 Reviews and Comments
+===========================================================================
+Paper #105 Intrinisically Typed Syntax That Works (Functional Pearl)
+
+
+Review #105A
+===========================================================================
+
+Overall merit
+-------------
+C. Weak reject
+
+Reviewer expertise
+------------------
+Y. Knowledgeable
+
+Paper summary
+-------------
+This paper revisits intrinsically typed syntax for polymorphic calculi and addresses the well-known issue of transfer hell: the need to apply type changing lemmas to terms that are known to be equal. The key solution is to internalize the equational theory of substitutions (σ-calculus) as definitional equality using Agda’s rewriting mechanism. This idea is used to partly mechanize the metatheory of both system F and system Fω with significantly simpler proofs.
+
+Comments for authors
+--------------------
+Pros: 
+-----
++ The problem identification is very clean and indeed it is a very important problem in the mechanization of type systems. 
++ The solution is clean, implemented in Agda, for both systems. 
++ The writing is pleasant, though at parts too technical. 
+
+Cons: 
+------
+- There is no clean explanation that the resulting system is terminating and confluent. 
+- There is a lot of related work/proof systems/tactics that are not mentioned. 
+- Even though the writing is good, I am not sure it is at a level of an ICFP pearl (e.g., section 2.3 is dry). 
+
+
+The paper was pleasant to read. The problem is important and very well explained and the solution is clean. Yet, my main objection against acceptance is that there is a lot of related work on how equational reasoning can be automated while proving theorems that is not mentioned at all in this paper. 
+As a most recent example, Towards Pen-and-Paper-Style Equational Reasoning in Interactive Theorem Provers by Equality Saturation POPL'26, develop an equality saturation with e-graphs tactic in Lean. Even though this technique, as such, cannot just be adopted in Agda, the paper should compare against such techniques developed for Lean, Rocq (Hammer), and Isabelle’s Sledgehammer. Would your metatheoric proofs be similarly simplified using such tactics? 
+
+As a smaller comment, more explanation would be required on why the resulting system is terminating and confluent. I assume that it is because the rewrite (line 646) gets accepted by Agda, but line 648 simply cites [1,8] without providing more explanations.
+
+
+
+Review #105B
+===========================================================================
+
+Overall merit
+-------------
+D. Strong reject
+
+Reviewer expertise
+------------------
+Y. Knowledgeable
+
+Paper summary
+-------------
+The thesis of this pearl is that enriching definitional equality is an effective way to simplify programming language mechanizations in dependent type theory. This claim is supported by encodings in Agda of intrinsically-typed System F and intrinsically-typed System Fw. By enriching definitional equality with sigma calculus substitution laws, the encoding leads to shorter proofs, often `refl` or `cong`.
+
+Comments for authors
+--------------------
+Strengths:
++ Compelling encoding instance. System F with sigma calculus sounds like a neat idea, good basis for a pearl.
+
+Weaknesses:
+- Assumes much knowledge of Agda.
+- Benefits are not clearly illustrated.
+- Little discussion of takeaways for other researchers.
+
+Note: my Agda background is very weak, just based on reading papers and code. Never writing.
+
+This pearl begins on an excellent note. The abstract sets out a well-defined problem, proposes a clean solution, and even hints at a "general methodology" and "practical guidelines" for dependently typed mechanizations. The chosen encoding also sounds like an elegant idea to me - why not use the sigma calculus within definitional equality?
+
+In Section 3.2.1, however, there is a concerning note about performance. Proving that 1 + 1 equals 2 takes over a minute on the authors machine. The Agda proof is ideal, simply `refl`, but the performance anecdote is terrible, and begs the question of how long other proofs in the paper take and whether the approach scales even to other small encodings. Would it be feasible to prove free theorems about lists, for example? The pearl should discuss tradeoffs thoroughly, otherwise the takeaway message is left in a doubtful state.
+
+The pearl should also highlight benefits more clearly. Section 2.6, if I understand correctly, says that the authors have a ~10-line proof of a property that takes over 2 typeset pages (Appendix A) using the prior state of the art [MPC 2019]. First of all, there should be a clear proof-size comparison. This is missing. Second, I find it very hard to see that we're comparing two equal properties. The pearl proves `Compose^{SS}` and the Appendix shows a bunch of `fusion-Esub-Esub` terms under the heading: "Proof for Compose Monad Law in Transfer Hell". It should be abundantly clear (since this is a pearl) that "Compose Monad Law" and `Compose^{SS}` capture the same idea. The pearl does have a small translation guide mapping notation from prior work to the pearl's notation (Section 2.6), but readers are left to work out the details by themselves. I'd appreciate some highlighting of what exactly counts as transfer hell in the proofs, such as the proof at the end of Section 2.6, because, as an inexperienced Agda user myself, that proof and the proof at the end of Section 2.5 both look approximately the same as dense blocks of equational reasoning.
+
+The pearl's promise in the abstract to "distill practical guidelines" is not borne out. The pearl says repeatedly that strengthening definitional equality is a good idea, but there are no additional examples of where it does work or where it might work. This is disappointing.
+
+Sections 2 and 3 get very deep into Agda notation with little explanatory prose. I found Section 2.3.1 especially difficult; I'm not sure I've ever seen this notation to represent a renaming with a vertical bar and right arrow. The notation for equational reasoning is unfamiliar to me as well. I get the basic idea that the triple-equal sign (or `R.=~` sign) puts clauses together and the square "Qed" symbol ends the proof, but is this basic Agda that all users of dependently-typed languages would know? Anyway, notation needs to be explained yet this pearl is full of assumed-familiar notation.
+
+The call for papers says "A Functional Pearl is an elegant essay about something related to functional programming." I'm afraid I didn't find this to be an elegant essay.
+
+<https://icfp26.sigplan.org/track/icfp-2026-icfp-papers#functional-pearls>
+
+PS. I agree with Reviewer A that it was strange not to see a proof outline that enriched definitional equality is terminating and confluent. Other authors who follow your method would probably need to do similar proofs; give them some kind of road map to follow.
+
+
+
+Review #105C
+===========================================================================
+
+Overall merit
+-------------
+C. Weak reject
+
+Reviewer expertise
+------------------
+X. Expert
+
+Paper summary
+-------------
+This paper focuses on intrinsically typed embeddings of polymorphic calculi,
+and shows how to leverage Agda's extensible rewrite system to alleviate some of
+the administrative burden that arises from dependencies between renamings and 
+substitutions in polymorphic calculi.
+
+Comments for authors
+--------------------
+On the one hand, I appreciate the premise and motivation of this paper. 
+Having suffered when dealing with deep intrinsic embeddings that seem like they
+should just work, but there's just always an equality across which terms needs to be 
+transported; it all hit very close to home. 
+The solution is also intriguing at a high level: Agda's rewrite system is powerful, 
+and internalizing the σ-calculus explicit substitutions within it to force computation
+across equalities is a clever trick.
+
+That said, the paper, in its current form is not a functional pearl---and neither is it
+a research paper, as it lacks a proper demonstration of its core claim: that it works;
+mechanizing "parts of a metatheory" of a system and showing that those parts are simpler
+is definitely not adequate substantiation. A much more thorough comparison would be needed for that, including, ideally, both quantitative (e.g. proof size, checking time which is worryingly slow here) and qualitative (ease of use, which is somewhat addressed) comparisons with prior work.
+As per the CFP: "A pearl is likely to be rejected if its readers get bored, [..] or if the writing is inelegant."
+Pages 4,6,7,8,and 9, a core part of the paper, are all basically entirely snippets of Agda code with 
+minimal or no verbiage and signposting associated. You are defining a representation of 
+a well-known system in F, and the reader is left processing through a sequence of statements. 
+Page 8 is an excellent example of this: 
+
+"Weakening of a renaming by a value binding."
+
+<definition>
+
+"Weakening of a renaming by a type binding."
+
+<definition>
+
+"Extension of a renaming."
+
+<definition>
+
+[...]
+
+What's interesting about each definition? Readers should not be left wondering what each
+new Agda line brings to the table. Again, as per the CFP, a pearl should be 
+"instructive and entertaining", and a sequence of definitions broken by caption-style prose
+is not that. 
+
+Overall, the paper would need a substantial amount of rewriting and polish before being 
+considered a functional pearl, and it would also need a stronger justification of its 
+"that works" title.

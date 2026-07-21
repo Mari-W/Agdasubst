@@ -1,5 +1,5 @@
 {-# OPTIONS --rewriting --local-confluence-check  #-}  -- confluence-check off: σ-laws confluent as a theory (ACCL), non-confluent-but-minimal as oriented rules — see note
-module systemf where
+module systemfT2 where
 
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; trans; module ≡-Reasoning)
 open ≡-Reasoning
@@ -158,7 +158,7 @@ opaque
   -- definitional rules
   def-∙ˢ-zero           : zero ⋯ˢ (t ∙ˢ σ)   ≡ t                             
   def-∙ˢ-suc            : suc x ⋯ˢ (t ∙ˢ σ)  ≡ x ⋯ˢ σ 
-  def-⨟ : (x ⋯ˢ (σ₁ ⨟ σ₂)) ≡ ((x ⋯ˢ σ₁) ⋯ˢ σ₂)
+  def-⨟ : ((x ⋯ˢ σ₁) ⋯ˢ σ₂) ≡ (x ⋯ˢ (σ₁ ⨟ σ₂))
   def-↑ˢ               : σ ↑ˢ s ≡ (` zero) ∙ˢ (σ ⨟ wkˢ _)
   --! }
   def-id                : x ⋯ᴿ idᴿ ≡ x
@@ -409,20 +409,20 @@ opaque
 {-# REWRITE 
 def-∙ˢ-zero def-∙ˢ-suc def-↑ˢ def-⨟   
 assoc dist interact       
-comp-idᵣ comp-idₗ η-id η-law
+comp-idᵣ comp-idₗ η-id 
 inst-x inst-λ inst-Λ inst-∀ inst-· inst-•
 inst-⇒ inst-*
-right-id         
-compositionalityᴿᴿ compositionalityᴿˢ
-compositionalityˢᴿ compositionalityˢˢ
-coincidence coincidence-fold coincidence-comp coincidence-ext
+         
+ 
+ compositionalityˢˢ
+   
 
-def-id def-wk def-∙ᴿ-zero def-∙ᴿ-suc def-∘
-assocᴿ distᴿ interactᴿ       
-comp-idᵣᴿ comp-idₗᴿ η-idᴿ η-lawᴿ
-instᴿ-x instᴿ-λ instᴿ-Λ instᴿ-∀ instᴿ-· instᴿ-•
-instᴿ-⇒ instᴿ-* 
-coincidence-var
+    
+         
+   
+     
+  
+
 #-}
 --! }
 

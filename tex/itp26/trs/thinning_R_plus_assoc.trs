@@ -1,0 +1,15 @@
+; ── R + ASSOCIATIVITY as ORIENTED rules: the A-vs-B clash ──
+; Adding cmp-assoc as a directed rule.  Claim: TERMINATING but NOT CONFLUENT.
+; Critical pair on  cmp(cmp(os(x),os(y)),z) :
+;     os/os  ⇒  cmp(os(cmp(x,y)), z)
+;     assoc  ⇒  cmp(os(x), cmp(os(y), z))
+; — no common reduct (for variable z), so confluence FAILS.  This is exactly the
+; obstruction we hit:  elimination and associativity cannot be ORIENTED together.
+(VAR x y z)
+(RULES
+  cmp(x,od(y))     -> od(cmp(x,y))
+  cmp(os(x),os(y)) -> os(cmp(x,y))
+  cmp(od(x),os(y)) -> od(cmp(x,y))
+  cmp(oz,oz)       -> oz
+  cmp(cmp(x,y),z)  -> cmp(x,cmp(y,z))
+)

@@ -1,7 +1,7 @@
-{-# OPTIONS --rewriting --local-confluence-check  #-}  -- confluence-check off: σ-laws confluent as a theory (ACCL), non-confluent-but-minimal as oriented rules — see note
-module systemf where
+{-# OPTIONS --rewriting --local-confluence-check #-}
+module systemf_confluent where
 
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; trans; module ≡-Reasoning)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; trans; subst; module ≡-Reasoning)
 open ≡-Reasoning
 open import Agda.Builtin.Equality.Rewrite public
 
@@ -406,22 +406,20 @@ opaque
 
 --! RewriteSys {
 -- complete rewrite system 
-{-# REWRITE 
-def-∙ˢ-zero def-∙ˢ-suc def-↑ˢ def-⨟   
-assoc dist interact       
-comp-idᵣ comp-idₗ η-id η-law
+{-# REWRITE
+def-∙ˢ-zero def-∙ˢ-suc def-↑ˢ def-⨟
+interact
+comp-idᵣ comp-idₗ η-id
 inst-x inst-λ inst-Λ inst-∀ inst-· inst-•
 inst-⇒ inst-*
-right-id         
-compositionalityᴿᴿ compositionalityᴿˢ
-compositionalityˢᴿ compositionalityˢˢ
-coincidence coincidence-fold coincidence-comp coincidence-ext
+right-id
+coincidence coincidence-comp coincidence-ext
 
 def-id def-wk def-∙ᴿ-zero def-∙ᴿ-suc def-∘
-assocᴿ distᴿ interactᴿ       
-comp-idᵣᴿ comp-idₗᴿ η-idᴿ η-lawᴿ
+interactᴿ
+comp-idᵣᴿ comp-idₗᴿ η-idᴿ
 instᴿ-x instᴿ-λ instᴿ-Λ instᴿ-∀ instᴿ-· instᴿ-•
-instᴿ-⇒ instᴿ-* 
+instᴿ-⇒ instᴿ-*
 coincidence-var
 #-}
 --! }
@@ -529,9 +527,36 @@ data _↪_ : S ⊢ expr → S ⊢ expr → Set where
 ⊢wkᴿ : ∀ (Γ : Ctx S) (x : S ∋ s) t (t′ : S ∶⊢ s′) → Γ ∋ x ∶ t → (t′ ∷ₜ Γ) ∋ x ⋯ᴿ (wkᴿ _) ∶ (weaken t) 
 ⊢wkᴿ _ _ _ _ refl = refl
 
+-- ren/weaken naturality: (t ⋯ᴿ ρ) ⋯ᴿ wkᴿ ≡ (t ⋯ᴿ wkᴿ) ⋯ᴿ (ρ ↑ᴿ s)
+-- both sides reduce (via compositionalityᴿᴿ + interactᴿ) to t ⋯ᴿ (ρ ∘ wkᴿ).
+⋯ᴿ-wk-↑ᴿ : ∀ {S₁ S₂ s s′} (ρ : S₁ →ᴿ S₂) (t : S₁ ⊢ s) →
+  (t ⋯ᴿ ρ) ⋯ᴿ wkᴿ s′ ≡ (t ⋯ᴿ wkᴿ s′) ⋯ᴿ (ρ ↑ᴿ s′)
+⋯ᴿ-wk-↑ᴿ {s′ = s′} ρ t =
+  trans (compositionalityᴿᴿ {ρ₁ = ρ} {ρ₂ = wkᴿ s′} t)
+        (sym (compositionalityᴿᴿ {ρ₁ = wkᴿ s′} {ρ₂ = ρ ↑ᴿ s′} t))
+
 ⊢↑ᴿ : ρ ∶ Γ₁ →ᴿ Γ₂ → (t : S₁ ∶⊢ s) → (ρ ↑ᴿ s) ∶ (t ∷ₜ Γ₁) →ᴿ ((t ⋯ᴿ ρ) ∷ₜ Γ₂)
-⊢↑ᴿ ⊢ρ _ _ (zero) _ refl = refl 
-⊢↑ᴿ {ρ = ρ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} ⊢ρ t _ (suc x) _ refl = ⊢wkᴿ Γ₂ (x ⋯ᴿ ρ) (wk-drop-∈ x (Γ₁ _ x) ⋯ᴿ ρ) (t ⋯ᴿ ρ) (⊢ρ _ x _ refl)
+⊢↑ᴿ {ρ = ρ} ⊢ρ t _ (zero) _ refl = ⋯ᴿ-wk-↑ᴿ ρ t
+⊢↑ᴿ {ρ = ρ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} ⊢ρ t _ (suc x) _ refl =
+  trans (⊢wkᴿ Γ₂ (x ⋯ᴿ ρ) (wk-drop-∈ x (Γ₁ _ x) ⋯ᴿ ρ) (t ⋯ᴿ ρ) (⊢ρ _ x _ refl))
+        (⋯ᴿ-wk-↑ᴿ ρ (wk-drop-∈ x (Γ₁ _ x)))
+
+-- single substitution commutes with renaming:
+--   (t′ [ t ]) ⋯ᴿ ρ ≡ (t′ ⋯ᴿ (ρ ↑ᴿ _)) [ t ⋯ᴿ ρ ]
+-- both sides ⋯ˢ-reduce (compositionalityˢᴿ / compositionalityᴿˢ) to
+-- t′ ⋯ˢ ((t ⋯ᴿ ρ) ∙ˢ ⟨ ρ ⟩), the shared substitution.
+[]-⋯ᴿ : ∀ {S₁ S₂ s s′} (ρ : S₁ →ᴿ S₂) (t′ : (s′ ∷ S₁) ⊢ s) (t : S₁ ⊢ s′) →
+  (t′ [ t ]) ⋯ᴿ ρ ≡ (t′ ⋯ᴿ (ρ ↑ᴿ s′)) [ t ⋯ᴿ ρ ]
+[]-⋯ᴿ {s′ = s′} ρ t′ t =
+  trans (compositionalityˢᴿ {σ₁ = t ∙ˢ idˢ} {ρ₂ = ρ} t′)
+        (trans (cong (t′ ⋯ˢ_) mid)
+               (sym (compositionalityᴿˢ {ρ₁ = ρ ↑ᴿ s′} {σ₂ = (t ⋯ᴿ ρ) ∙ˢ idˢ} t′)))
+  where
+    mid : ((t ∙ˢ idˢ) ⨟ ⟨ ρ ⟩) ≡ (⟨ ρ ↑ᴿ s′ ⟩ ⨟ ((t ⋯ᴿ ρ) ∙ˢ idˢ))
+    mid =
+      trans (dist {t = t} {σ₁ = idˢ} {σ₂ = ⟨ ρ ⟩})
+            (trans (cong (_∙ˢ ⟨ ρ ⟩) (coincidence {ρ = ρ} t))
+                   (sym (coincidence-fold {ρ = ρ} {t = t ⋯ᴿ ρ} {σ = idˢ})))
 
 _⊢⋯ᴿ[_]_ : ∀ {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} →
   Γ₁ ⊢ e ∶ t →
@@ -539,51 +564,91 @@ _⊢⋯ᴿ[_]_ : ∀ {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} →
   ρ ∶ Γ₁ →ᴿ Γ₂ →
   Γ₂ ⊢ (e ⋯ᴿ ρ) ∶ (t ⋯ᴿ ρ)
 (⊢` ⊢x)         ⊢⋯ᴿ[ ρ ] ⊢ρ  = ⊢` (⊢ρ _ _ _ ⊢x) 
-(⊢λ ⊢e)         ⊢⋯ᴿ[ ρ ] ⊢ρ  = ⊢λ (⊢e ⊢⋯ᴿ[ ρ ↑ᴿ _ ] (⊢↑ᴿ ⊢ρ _))
+(⊢λ {t′ = t′} ⊢e) ⊢⋯ᴿ[ ρ ] ⊢ρ  =
+  ⊢λ (subst (λ ty → _ ⊢ _ ∶ ty) (sym (⋯ᴿ-wk-↑ᴿ ρ t′)) (⊢e ⊢⋯ᴿ[ ρ ↑ᴿ _ ] (⊢↑ᴿ ⊢ρ _)))
 (⊢Λ ⊢e)         ⊢⋯ᴿ[ ρ ] ⊢ρ  = ⊢Λ (⊢e ⊢⋯ᴿ[ ρ ↑ᴿ _ ] (⊢↑ᴿ ⊢ρ _))
 (⊢· ⊢e₁ ⊢e₂)    ⊢⋯ᴿ[ ρ ] ⊢ρ  = ⊢· (⊢e₁ ⊢⋯ᴿ[ ρ ] ⊢ρ) (⊢e₂ ⊢⋯ᴿ[ ρ ] ⊢ρ)
-(⊢• ⊢e ⊢t ⊢t')  ⊢⋯ᴿ[ ρ ] ⊢ρ  = ⊢• (⊢e ⊢⋯ᴿ[ ρ ] ⊢ρ) (⊢t ⊢⋯ᴿ[ ρ ] ⊢ρ) (⊢t' ⊢⋯ᴿ[ ρ ↑ᴿ _ ] (⊢↑ᴿ ⊢ρ _))
+(⊢• {t′ = t′} {t = t} ⊢e ⊢t ⊢t')  ⊢⋯ᴿ[ ρ ] ⊢ρ  =
+  subst (λ ty → _ ⊢ _ ∶ ty) (sym ([]-⋯ᴿ ρ t′ t))
+    (⊢• (⊢e ⊢⋯ᴿ[ ρ ] ⊢ρ) (⊢t ⊢⋯ᴿ[ ρ ] ⊢ρ) (⊢t' ⊢⋯ᴿ[ ρ ↑ᴿ _ ] (⊢↑ᴿ ⊢ρ _)))
 ⊢*              ⊢⋯ᴿ[ ρ ] ⊢ρ  = ⊢*
 
 ⊢wkˢ : ∀ (Γ : Ctx S) (e : S ⊢ s) (t : S ∶⊢ s) (t′ : S ∶⊢ s′) → Γ ⊢ e ∶ t → (t′ ∷ₜ Γ) ⊢ weaken e ∶ weaken t 
 ⊢wkˢ Γ e t t' ⊢t = ⊢t ⊢⋯ᴿ[ wkᴿ _ ] (λ s x t ⊢x → ⊢wkᴿ Γ x t t' ⊢x)
 
+-- sub/weaken naturality: (t ⋯ˢ σ) ⋯ᴿ wkᴿ ≡ (t ⋯ᴿ wkᴿ) ⋯ˢ (σ ↑ˢ s)
+-- both sides reduce (compositionalityˢᴿ / compositionalityᴿˢ) to t ⋯ˢ (σ ⨟ wkˢ).
+⋯ˢ-wk-↑ˢ : ∀ {S₁ S₂ s s′} (σ : S₁ →ˢ S₂) (t : S₁ ⊢ s) →
+  (t ⋯ˢ σ) ⋯ᴿ wkᴿ s′ ≡ (t ⋯ᴿ wkᴿ s′) ⋯ˢ (σ ↑ˢ s′)
+⋯ˢ-wk-↑ˢ {s′ = s′} σ t =
+  trans (compositionalityˢᴿ {σ₁ = σ} {ρ₂ = wkᴿ s′} t)
+        (sym (compositionalityᴿˢ {ρ₁ = wkᴿ s′} {σ₂ = σ ↑ˢ s′} t))
+
 ⊢↑ˢ[_]_ : (σ : S₁ →ˢ S₂) → σ ∶ Γ₁ →ˢ Γ₂ → (t : S₁ ∶⊢ s) → (σ ↑ˢ s) ∶ t ∷ₜ Γ₁ →ˢ ((t ⋯ˢ σ) ∷ₜ Γ₂)
-(⊢↑ˢ[ σ ] ⊢σ) _ _ (zero) _ refl = ⊢` refl 
-⊢↑ˢ[_]_ {Γ₁ = Γ₁} {Γ₂ = Γ₂} σ ⊢σ t _ (suc x) _ refl = 
-  ⊢wkˢ Γ₂ (x ⋯ˢ σ) (wk-drop-∈ x (Γ₁ _ x) ⋯ˢ σ) (t ⋯ˢ σ) (⊢σ _ x _ refl)
+(⊢↑ˢ[ σ ] ⊢σ) t _ (zero) _ refl = ⊢` (⋯ˢ-wk-↑ˢ σ t)
+⊢↑ˢ[_]_ {Γ₁ = Γ₁} {Γ₂ = Γ₂} σ ⊢σ t _ (suc x) _ refl =
+  subst (λ ty → _ ⊢ _ ∶ ty) (⋯ˢ-wk-↑ˢ σ (wk-drop-∈ x (Γ₁ _ x)))
+    (⊢wkˢ Γ₂ (x ⋯ˢ σ) (wk-drop-∈ x (Γ₁ _ x) ⋯ˢ σ) (t ⋯ˢ σ) (⊢σ _ x _ refl))
+
+-- single substitution commutes with substitution:
+--   (t′ [ t ]) ⋯ˢ σ ≡ (t′ ⋯ˢ (σ ↑ˢ _)) [ t ⋯ˢ σ ]
+-- both sides ⋯ˢ-reduce (compositionalityˢˢ) to t′ ⋯ˢ ((t ⋯ˢ σ) ∙ˢ σ).
+[]-⋯ˢ : ∀ {S₁ S₂ s s′} (σ : S₁ →ˢ S₂) (t′ : (s′ ∷ S₁) ⊢ s) (t : S₁ ⊢ s′) →
+  (t′ [ t ]) ⋯ˢ σ ≡ (t′ ⋯ˢ (σ ↑ˢ s′)) [ t ⋯ˢ σ ]
+[]-⋯ˢ {s′ = s′} σ t′ t =
+  trans (compositionalityˢˢ {σ₁ = t ∙ˢ idˢ} {σ₂ = σ} t′)
+        (trans (cong (t′ ⋯ˢ_) mid)
+               (sym (compositionalityˢˢ {σ₁ = σ ↑ˢ s′} {σ₂ = (t ⋯ˢ σ) ∙ˢ idˢ} t′)))
+  where
+    mid : ((t ∙ˢ idˢ) ⨟ σ) ≡ ((σ ↑ˢ s′) ⨟ ((t ⋯ˢ σ) ∙ˢ idˢ))
+    mid =
+      trans (dist {t = t} {σ₁ = idˢ} {σ₂ = σ})
+            (sym (trans (dist {t = ` zero} {σ₁ = σ ⨟ wkˢ s′} {σ₂ = (t ⋯ˢ σ) ∙ˢ idˢ})
+                        (cong ((t ⋯ˢ σ) ∙ˢ_)
+                              (assoc {σ₁ = σ} {σ₂ = wkˢ s′} {σ₃ = (t ⋯ˢ σ) ∙ˢ idˢ}))))
 
 --! SPT {
-_⊢⋯ˢ[_]_ : 
+_⊢⋯ˢ[_]_ :
   Γ₁ ⊢ t ∶ t′ →
   (σ : S₁ →ˢ S₂) →
   σ ∶ Γ₁ →ˢ Γ₂ →
   Γ₂ ⊢ (t ⋯ˢ σ) ∶ (t′ ⋯ˢ σ)
-(⊢` ⊢x)         ⊢⋯ˢ[ σ ] ⊢σ  = 
-  ⊢σ _ _ _ ⊢x 
-(⊢λ ⊢e)         ⊢⋯ˢ[ σ ] ⊢σ  = 
-  ⊢λ (⊢e ⊢⋯ˢ[ σ ↑ˢ _ ] (⊢↑ˢ[ σ ] ⊢σ) _)
-(⊢Λ ⊢e)         ⊢⋯ˢ[ σ ] ⊢σ  = 
+(⊢` ⊢x)         ⊢⋯ˢ[ σ ] ⊢σ  =
+  ⊢σ _ _ _ ⊢x
+(⊢λ {t′ = t′} ⊢e)         ⊢⋯ˢ[ σ ] ⊢σ  =
+  ⊢λ (subst (λ ty → _ ⊢ _ ∶ ty) (sym (⋯ˢ-wk-↑ˢ σ t′)) (⊢e ⊢⋯ˢ[ σ ↑ˢ _ ] (⊢↑ˢ[ σ ] ⊢σ) _))
+(⊢Λ ⊢e)         ⊢⋯ˢ[ σ ] ⊢σ  =
   ⊢Λ (⊢e ⊢⋯ˢ[ σ ↑ˢ _ ] (⊢↑ˢ[ σ ] ⊢σ) _)
-(⊢· ⊢e₁ ⊢e₂)    ⊢⋯ˢ[ σ ] ⊢σ  = 
+(⊢· ⊢e₁ ⊢e₂)    ⊢⋯ˢ[ σ ] ⊢σ  =
   ⊢· (⊢e₁ ⊢⋯ˢ[ σ ] ⊢σ) (⊢e₂ ⊢⋯ˢ[ σ ] ⊢σ)
-(⊢• ⊢e ⊢t ⊢t')  ⊢⋯ˢ[ σ ] ⊢σ  = 
-  ⊢• (⊢e ⊢⋯ˢ[ σ ] ⊢σ) (⊢t ⊢⋯ˢ[ σ ] ⊢σ) 
-  (⊢t' ⊢⋯ˢ[ σ ↑ˢ _ ] (⊢↑ˢ[ σ ] ⊢σ) _)
+(⊢• {t′ = t′} {t = t} ⊢e ⊢t ⊢t')  ⊢⋯ˢ[ σ ] ⊢σ  =
+  subst (λ ty → _ ⊢ _ ∶ ty) (sym ([]-⋯ˢ σ t′ t))
+    (⊢• (⊢e ⊢⋯ˢ[ σ ] ⊢σ) (⊢t ⊢⋯ˢ[ σ ] ⊢σ)
+        (⊢t' ⊢⋯ˢ[ σ ↑ˢ _ ] (⊢↑ˢ[ σ ] ⊢σ) _))
 ⊢*              ⊢⋯ˢ[ σ ] ⊢σ  = ⊢*
 --! }
 
+-- weakening followed by a single substitution is the identity:
+--   (t ⋯ᴿ wkᴿ) ⋯ˢ (e ∙ˢ idˢ) ≡ t
+-- (compositionalityᴿˢ reduces the LHS to t ⋯ˢ (wkˢ ⨟ (e ∙ˢ idˢ)) = t ⋯ˢ idˢ, then right-idˢ).
+wk-[]-id : ∀ {S s s′} (e : S ⊢ s′) (t : S ⊢ s) →
+  (t ⋯ᴿ wkᴿ s′) ⋯ˢ (e ∙ˢ idˢ) ≡ t
+wk-[]-id e t = trans (compositionalityᴿˢ {ρ₁ = wkᴿ _} {σ₂ = e ∙ˢ idˢ} t) (right-idˢ t)
+
 ⊢[] : ∀ {Γ : Ctx S} {e : S ⊢ s} {t : S ∶⊢ s} → Γ ⊢ e ∶ t → (e ∙ˢ idˢ) ∶ (t ∷ₜ Γ) →ˢ Γ
-⊢[] ⊢t _ zero     _ refl = ⊢t 
-⊢[] ⊢t _ (suc x)  _ refl = ⊢` refl
+⊢[] {e = e} {t = t} ⊢t _ zero     _ refl =
+  subst (λ ty → _ ⊢ _ ∶ ty) (sym (wk-[]-id e t)) ⊢t
+⊢[] {Γ = Γ} {e = e} ⊢t _ (suc x)  _ refl =
+  ⊢` (sym (wk-[]-id e (wk-drop-∈ x (Γ _ x))))
 
 --! SR {
 sr : 
   Γ ⊢ e ∶ t →   
   e ↪ e′ → 
   Γ ⊢ e′ ∶ t 
-sr (⊢· {e₂ = e₂} (⊢λ ⊢e₁) ⊢e₂) (β-λ v₂) = 
-  ⊢e₁ ⊢⋯ˢ[ e₂ ∙ˢ idˢ ] (⊢[] ⊢e₂)
+sr {t = t} (⊢· {e₂ = e₂} (⊢λ ⊢e₁) ⊢e₂) (β-λ v₂) =
+  subst (λ ty → _ ⊢ _ ∶ ty) (wk-[]-id e₂ t)
+    (⊢e₁ ⊢⋯ˢ[ e₂ ∙ˢ idˢ ] (⊢[] ⊢e₂))
 sr (⊢• {t = t} (⊢Λ ⊢e) ⊢t ⊢t') β-Λ = 
   ⊢e ⊢⋯ˢ[ t ∙ˢ idˢ ] (⊢[] ⊢t)     
 sr (⊢· ⊢e₁ ⊢e₂) (ξ-·₁ e₁↪e) = 

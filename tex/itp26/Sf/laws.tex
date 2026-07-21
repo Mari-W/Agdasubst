@@ -1,0 +1,477 @@
+\documentclass{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathpartir}
+\usepackage{stmaryrd}      % \llbracket, \fatsemi
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+
+% ---- notation --------------------------------------------------------------
+
+% scopes and thinnings
+\newcommand{\Scope}{\mathsf{Scope}}
+\newcommand{\thin}{\sqsubseteq}                    % thinning  θ : Γ ⊑ Δ
+\newcommand{\oz}{\mathsf{oz}}
+\newcommand{\os}{\mathsf{os}}
+\newcommand{\od}{\mathsf{o'}}
+\newcommand{\oi}{\mathsf{1}}                        % identity thinning
+\renewcommand{\oe}{\mathsf{e}}                      % empty thinning  (overrides oe-ligature)
+\newcommand{\comp}{\mathbin{\fatsemi}}              % thinning composition
+
+% covers and coproducts
+\newcommand{\Cover}[3]{#1 \mid #2 \blacktriangleright #3}
+\newcommand{\thL}{\mathsf{thinL}}
+\newcommand{\thR}{\mathsf{thinR}}
+\newcommand{\cop}{\mathbin{\sqcup}}                 % coproduct of two thinnings
+\newcommand{\mkcop}{\mathsf{mkCop}}
+\newcommand{\out}{\mathsf{out}}
+\newcommand{\cov}{\mathsf{cov}}
+\newcommand{\covL}{\mathsf{covL}}
+\newcommand{\covR}{\mathsf{covR}}
+\newcommand{\full}{\mathsf{full}}
+
+% things-with-thinnings
+\newcommand{\Th}[2]{#1 {\uparrow} #2}              % T ↑ Δ
+\newcommand{\wt}[2]{#1 {\Uparrow} #2}              % t ⇑ θ
+\newcommand{\ren}[2]{#1\langle#2\rangle}           % rename u⟨φ⟩
+\newcommand{\fmap}{\mathbin{\langle\$\rangle}}     % <$>
+
+% smart constructors
+\newcommand{\appU}{\mathsf{app}^{{\uparrow}}}
+\newcommand{\lamU}{\lambda^{{\uparrow}}}
+
+% substitution signature
+\newcommand{\Sub}[2]{#2 \Rightarrow #1}            % Sub Δ Γ written Γ⇒Δ
+\newcommand{\selL}{\mathord{{\downharpoonleft}_{\mathsf{L}}}}
+\newcommand{\selR}{\mathord{{\downharpoonleft}_{\mathsf{R}}}}
+\newcommand{\ids}{\mathsf{id}}
+\newcommand{\shift}{\mathord{\uparrow}}             % shift primitive ↑
+\newcommand{\wk}{\mathsf{wk}}
+\newcommand{\nil}{\langle\rangle}                   % empty substitution
+\newcommand{\emb}{\mathsf{emb}}
+
+% substitution operations
+\newcommand{\ins}[1]{[\,#1\,]}                      % instantiation t[σ]
+\newcommand{\app}[2]{#1\llbracket#2\rrbracket}      % apply to thing u⟦τ⟧
+\newcommand{\seq}{\mathbin{{\fatsemi}}}             % substitution composition ⨟
+\newcommand{\cons}{\mathbin{\bullet}}               % cons  u•σ
+\newcommand{\vz}{\mathsf{v}_0}                      % var₀
+\newcommand{\Up}{\mathord{{\Uparrow}\!}}            % binder lift ⇑σ
+
+% contexts
+\newcommand{\Cx}{\mathsf{Cx}}
+\newcommand{\rest}{\mathbin{{\restriction}}}        % restriction Φ↾θ
+\newcommand{\eps}{\varepsilon}
+\newcommand{\splitL}{\mathsf{splitL}}
+\newcommand{\splitR}{\mathsf{splitR}}
+
+% typing / reduction
+\newcommand{\val}{\mathsf{Value}}
+\newcommand{\rw}{\;\longrightarrow\;}              % the rewrite arrow ⟶
+\newcommand{\steps}{\longrightarrow}
+
+% category tags
+\newcommand{\catL}{\textbf{(L)}}
+\newcommand{\catD}{\textbf{(D)}}
+\newcommand{\catS}{\textbf{(S)}}
+
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}
+
+% ---- document --------------------------------------------------------------
+
+\begin{document}
+
+\title{A confluent co-de-Bruijn $\sigma$-calculus:\\a signature and its term rewriting system}
+\author{}\date{}\maketitle
+
+\noindent
+We present substitution for an intrinsically scoped, co-de-Bruijn object language as an
+abstract \emph{symbolic rewrite system}: a typed signature of operator symbols
+(Part~\ref{sec:sig}), and a set of oriented rewrite rules over those symbols
+(Part~\ref{sec:rules}).
+The presentation is purely syntactic.
+Each rule group carries one tag:
+\begin{description}
+  \item[\catL{} Library.] Object-language-independent; fixed once.
+  \item[\catD{} Derivable.] Syntax-dependent but mechanical: generated from one
+        traversal $\ins\cdot$ per object syntax together with three base rules
+        (\textsc{Fuse}, \textsc{IdEmb}, \textsc{VarCons}).
+  \item[\catS{} Syntax-specific.] Supplied per object language: typing and reduction.
+\end{description}
+
+% ===========================================================================
+\part*{Part I.\quad Signature}\label{sec:sig}
+
+\noindent
+Scopes $\Gamma,\Delta,\Upsilon,\dots : \Scope$ are lists of sorts; $s$ ranges over sorts.
+Below, each symbol is declared with its arity/type only.
+
+% ---------------------------------------------------------------------------
+\section{Thinnings \hfill \catL}\label{sig:thin}
+
+A thinning $\theta : \Gamma\thin\Delta$ relates two scopes.
+\begin{align*}
+  \oz       &: [] \thin []
+    && \text{empty-scope thinning}\\
+  \os(\cdot) &: (\Gamma\thin\Delta) \to (s\!::\!\Gamma \thin s\!::\!\Delta)
+    && \text{keep}\\
+  \od(\cdot) &: (\Gamma\thin\Delta) \to (\Gamma \thin s\!::\!\Delta)
+    && \text{drop}\\
+  \oi       &: \Gamma\thin\Gamma
+    && \text{identity}\\
+  \comp     &: (\Gamma\thin\Delta)\to(\Delta\thin\Upsilon)\to(\Gamma\thin\Upsilon)
+    && \text{composition}\\
+  \oe       &: [] \thin \Delta
+    && \text{empty thinning}
+\end{align*}
+
+% ---------------------------------------------------------------------------
+\section{Covers and coproducts \hfill \catL}\label{sig:cover}
+
+A cover $c : \Cover{\Gamma_l}{\Gamma_r}{\Gamma}$ is built from
+$\mathsf{czz}$, $\mathsf{css}$, $\mathsf{cs'}$, $\mathsf{c's}$
+(empty / shared / left-only / right-only).
+\begin{align*}
+  \thL(\cdot) &: \Cover{\Gamma_l}{\Gamma_r}{\Gamma} \to (\Gamma_l\thin\Gamma)
+    && \text{left embedding of a cover}\\
+  \thR(\cdot) &: \Cover{\Gamma_l}{\Gamma_r}{\Gamma} \to (\Gamma_r\thin\Gamma)
+    && \text{right embedding}\\
+  \cop        &: (\Gamma_1\thin\Delta)\to(\Gamma_2\thin\Delta)\to\mathsf{Cop}
+    && \text{coproduct of two thinnings}\\
+  \out(\cdot) &: \mathsf{Cop} \to (\Upsilon\thin\Delta)
+    && \text{outer thinning of a coproduct}\\
+  \cov(\cdot) &: \mathsf{Cop} \to \Cover{\Gamma_1}{\Gamma_2}{\Upsilon}
+    && \text{cover of a coproduct}\\
+  \mkcop      &: (\Gamma_1\thin\Upsilon)(\Gamma_2\thin\Upsilon)(\Upsilon\thin\Delta)\,\Cover{\Gamma_1}{\Gamma_2}{\Upsilon}\to\mathsf{Cop}
+    && \text{coproduct constructor}\\
+  \covL(\cdot)&: (\Gamma\thin\Delta)\to\Cover{\Delta}{\Gamma}{\Delta}
+    && \text{left-canonical cover}\\
+  \covR(\cdot)&: (\Gamma\thin\Delta)\to\Cover{\Gamma}{\Delta}{\Delta}
+    && \text{right-canonical cover}\\
+  \full       &: \Cover{\Gamma}{\Gamma}{\Gamma}
+    && \text{diagonal cover}
+\end{align*}
+The fields of a $\mkcop$ value are read off by $\out$ and $\cov$:
+$\out(\mkcop\,l\,r\,o\,c) = o$ and $\cov(\mkcop\,l\,r\,o\,c) = c$.
+
+% ---------------------------------------------------------------------------
+\section{Things-with-thinnings \hfill \catL}\label{sig:scaffold}
+
+For a scope-indexed family $T$, the type $\Th{T}{\Delta}$ pairs a term over some
+support $\Upsilon$ with a thinning $\Upsilon\thin\Delta$; the pair is written $\wt{t}{\theta}$.
+\begin{align*}
+  \wt{\cdot}{\cdot}&: T\,\Upsilon \to (\Upsilon\thin\Delta) \to \Th{T}{\Delta}
+    && \text{pairing}\\
+  \ren{\cdot}{\cdot}&: \Th{T}{\Gamma} \to (\Gamma\thin\Delta) \to \Th{T}{\Delta}
+    && \text{renaming}\\
+  \fmap &: (T\,\Gamma \to U\,\Gamma) \to \Th{T}{\Delta} \to \Th{U}{\Delta}
+    && \text{map under a thinning } (f\fmap u)\\
+  \times^{r} &: (T\,\Gamma)(U\,\Gamma) \to (T\times^{r}U)\,\Delta
+    && \text{relevant pairing}\\
+  \mathsf{Bind}\,b\,T &: \Scope \to \mathsf{Set}
+    && \text{a } T \text{ under one bound variable of sort } b
+\end{align*}
+The \emph{relevant pairing} $u \times^{r} v : (T\times^{r}U)\,\Delta$ merges two
+things-with-thinnings $u : \Th{T}{\Delta}$, $v : \Th{U}{\Delta}$ into one node carrying
+the cover $\cov(\theta\cop\phi)$ of their two supports and the outer thinning
+$\out(\theta\cop\phi)$.
+The binder former $\mathsf{Bind}\,b\,T$ packages a $T$ together with a thinning recording
+whether the bound $b$-variable is \textsf{use}d or \textsf{drop}ped.
+The map $\fmap$ relabels the term inside a thing-with-thinning, leaving its thinning fixed.
+
+% ---------------------------------------------------------------------------
+\section{Substitutions \hfill \catL}\label{sig:sub}
+
+A substitution $\sigma : \Sub\Delta\Gamma$ carries one $\Th{\cdot}{\Delta}$ per
+variable of $\Gamma$.
+\begin{align*}
+  \ids        &: \Sub\Gamma\Gamma
+    && \text{identity}\\
+  \shift      &: \Sub{(s\!::\!\Gamma)}{\Gamma}
+    && \text{shift}\\
+  \ins\cdot   &: T\,\Gamma \to \Sub\Delta\Gamma \to \Th{T}{\Delta}
+    && \text{instantiation } t\ins\sigma\\
+  \app{\cdot}{\cdot} &: \Th{T}{\Gamma} \to \Sub\Delta\Gamma \to \Th{T}{\Delta}
+    && \text{apply to a thing } \app{u}{\tau}\\
+  \seq        &: \Sub\Delta\Gamma \to \Sub\Upsilon\Delta \to \Sub\Upsilon\Gamma
+    && \text{composition } \sigma\seq\tau\\
+  \cons       &: \Th{T}{\Delta} \to \Sub\Delta\Gamma \to \Sub\Delta{(s\!::\!\Gamma)}
+    && \text{cons } u\cons\sigma\\
+  \vz         &: \Th{T}{(s\!::\!\Delta)}
+    && \text{first variable } (=\wt{\mathsf{var}}{\os\,\oe})\\
+  \nil        &: \Sub\Delta{[]}
+    && \text{empty substitution}\\
+  \emb(\cdot) &: (\Gamma\thin\Delta) \to \Sub\Delta\Gamma
+    && \text{embedding of a thinning}\\
+  \selL,\selR &: \Cover{\Gamma_l}{\Gamma_r}{\Gamma}\to\Sub\Delta\Gamma\to\Sub\Delta{\Gamma_l\!/\Gamma_r}
+    && \text{cover split}\\
+  \rest       &: \Sub\Upsilon\Delta \to (\Gamma\thin\Delta) \to \Sub\Upsilon\Gamma
+    && \text{restriction } \sigma\rest\theta\\
+  \wk(\cdot)  &: \Sub\Delta\Gamma \to \Sub{(s\!::\!\Delta)}{\Gamma}
+    && \text{weakening}
+\end{align*}
+\textbf{Defined abbreviation (binder lift).}
+\[
+  \Up(\cdot) : \Sub\Delta\Gamma \to \Sub{(s\!::\!\Delta)}{(s\!::\!\Gamma)},
+  \qquad
+  \Up\sigma \;:=\; \vz \cons (\sigma\seq\shift).
+\]
+The shift $\shift$ is the primitive; general weakening is the defined
+$\wk\,\sigma := \sigma\seq\shift$.
+
+% ---------------------------------------------------------------------------
+\section{Contexts \hfill \catL}\label{sig:cx}
+
+A context $\Phi : \Cx\,\Gamma$ carries one closed classifier per variable of $\Gamma$.
+\begin{align*}
+  \eps        &: \Cx\,[]
+    && \text{empty context}\\
+  \cdot,\cdot &: \Cx\,\Gamma \to \mathsf{Ent} \to \Cx\,(s\!::\!\Gamma)
+    && \text{context extension}\\
+  \rest       &: \Cx\,\Delta \to (\Gamma\thin\Delta) \to \Cx\,\Gamma
+    && \text{restriction } \Phi\rest\theta\\
+  \splitL,\splitR &: \Cover{\Gamma_l}{\Gamma_r}{\Gamma}\to\Cx\,\Gamma\to\Cx\,\Gamma_{l\!/\!r}
+    && \text{cover split}
+\end{align*}
+The split is defined: $\splitL\,c\,\Phi := \Phi\rest(\thL\,c)$,
+$\splitR\,c\,\Phi := \Phi\rest(\thR\,c)$.
+
+% ---------------------------------------------------------------------------
+\section{Object syntax \hfill \catS}\label{sig:syntax}
+
+\paragraph{STLC.} A single family $\mathsf{Tm} : \Scope\to\mathsf{Set}$:
+\begin{align*}
+  \mathsf{var} &: \mathsf{Tm}\,(s\!::\![])\\
+  \mathsf{app} &: (\mathsf{Tm}\times^{r}\mathsf{Tm})\,\Gamma \to \mathsf{Tm}\,\Gamma
+    && \text{stores a cover of the two operand supports}\\
+  \mathsf{lam} &: \mathsf{Bind}\,\mathsf{Tm}\,\Gamma \to \mathsf{Tm}\,\Gamma
+    && \text{binder body: } \mathsf{use}\text{ or }\mathsf{drop}
+\end{align*}
+Smart constructors $\appU,\lamU$ pair via the coproduct and bind via the
+drop-thinning.
+
+\paragraph{System~F.} A single sorted family
+$\mathsf{Exp} : \Scope\to\mathsf{Sort}\to\mathsf{Set}$ with
+$\mathsf{Sort}=\{\mathsf{ty},\mathsf{tm}\}$, writing
+$\mathsf{Ty}=\mathsf{Exp}^{\mathsf{ty}}$, $\mathsf{Tm}=\mathsf{Exp}^{\mathsf{tm}}$:
+\begin{align*}
+  \mathsf{var}&: \mathsf{Exp}^{r}\,(r\!::\![])
+  & \_\mathbin{\mathtt{`{\to}}}\_ &: (\mathsf{Ty}\times^{r}\mathsf{Ty})\,\Gamma\to\mathsf{Ty}\,\Gamma
+  & \mathtt{`\forall}&: \mathsf{Bind}\,\mathsf{ty}\,\mathsf{Ty}\,\Gamma\to\mathsf{Ty}\,\Gamma\\
+  \mathtt{`lam}&: (\mathsf{Ty}\times^{r}\mathsf{Bind}\,\mathsf{tm}\,\mathsf{Tm})\,\Gamma\to\mathsf{Tm}\,\Gamma
+  & \mathtt{`Lam}&: \mathsf{Bind}\,\mathsf{ty}\,\mathsf{Tm}\,\Gamma\to\mathsf{Tm}\,\Gamma
+  & \mathtt{`app}&: (\mathsf{Tm}\times^{r}\mathsf{Tm})\,\Gamma\to\mathsf{Tm}\,\Gamma\\
+  \mathtt{`App}&: (\mathsf{Tm}\times^{r}\mathsf{Ty})\,\Gamma\to\mathsf{Tm}\,\Gamma
+\end{align*}
+A single substitution $\ins\cdot$ acts at both sorts; the lift under every binder
+($\mathtt{`\forall},\mathtt{`lam},\mathtt{`Lam}$) is the same $\Up$.
+
+% ===========================================================================
+\part*{Part II.\quad Rewrite rules}\label{sec:rules}
+
+\noindent
+Every rule is oriented left-to-right.
+We write $\mathit{name} : \mathrm{LHS} \rw \mathrm{RHS}$.
+
+% ---------------------------------------------------------------------------
+\section{(R1) Thinning monoid \hfill \catL}\label{r:thin}
+\begin{align}
+  \textsc{IdL}_{\thin} &: \oi\comp\theta \rw \theta \label{r:thinIdL}\\
+  \textsc{IdR}_{\thin} &: \theta\comp\oi \rw \theta \label{r:thinIdR}\\
+  \textsc{Assoc}_{\thin} &: (\theta\comp\phi)\comp\psi \rw \theta\comp(\phi\comp\psi) \label{r:thinAssoc}
+\end{align}
+
+% ---------------------------------------------------------------------------
+\section{(R2) Coproduct / cover algebra \hfill \catL}\label{r:cover}
+
+\noindent
+In each slice $\thin/\Delta$, two subscopes $\theta:\Gamma_1\thin\Delta$,
+$\phi:\Gamma_2\thin\Delta$ have a \emph{union} — their coproduct.
+The symbol $\cop$ computes it: $\out(\theta\cop\phi)$ is its inclusion into $\Delta$
+and $\thL(\cov(\theta\cop\phi)),\thR(\cov(\theta\cop\phi))$ are its two injections, with
+$\thL(\cov(\theta\cop\phi))\comp\out(\theta\cop\phi)=\theta$ and symmetrically on the right.
+The canonical covers are the degenerate coproducts:
+$\covL\,\phi = \phi\cop\oi$, $\covR\,\theta = \oi\cop\theta$, $\full = \oi\cop\oi$.
+Group (R2) is exactly the $\beta$/unit laws of this coproduct.
+\begin{align}
+  \textsc{Cop-unitL} &: \oi\cop\phi \rw \mkcop\,\oi\,\phi\,\oi\,(\covL\,\phi) \label{r:copUnitL}\\
+  \textsc{Cop-unitR} &: \theta\cop\oi \rw \mkcop\,\theta\,\oi\,\oi\,(\covR\,\theta) \label{r:copUnitR}\\
+  \textsc{CovL-id} &: \covL\,\oi \rw \full \label{r:covLId}\\
+  \textsc{CovR-id} &: \covR\,\oi \rw \full \label{r:covRId}\\
+  \textsc{ThinL-covL} &: \thL(\covL\,\phi) \rw \oi
+    & \textsc{ThinR-covL} &: \thR(\covL\,\phi) \rw \phi \label{r:thinCovL}\\
+  \textsc{ThinL-covR} &: \thL(\covR\,\theta) \rw \theta
+    & \textsc{ThinR-covR} &: \thR(\covR\,\theta) \rw \oi \label{r:thinCovR}\\
+  \textsc{ThinL-full} &: \thL\,\full \rw \oi
+    & \textsc{ThinR-full} &: \thR\,\full \rw \oi \label{r:thinFull}\\
+  \textsc{Fac-L} &: \thL(\cov(\theta\cop\phi))\comp\out(\theta\cop\phi) \rw \theta
+    & \textsc{Fac-R} &: \thR(\cov(\theta\cop\phi))\comp\out(\theta\cop\phi) \rw \phi \label{r:fac}
+\end{align}
+\textsc{Fac-L}/\textsc{Fac-R} are the injection factorisations: composing an injection
+with the inclusion recovers the original subscope.
+
+% ---------------------------------------------------------------------------
+\section{(R3) $\sigma_{SP}$ --- instantiation \hfill \catD}\label{r:inst}
+
+\noindent
+$c$ denotes the cover stored in the relevant $\mathsf{app}$/pair node.
+\begin{align}
+  \textsc{VarCons} &: \mathsf{var}\ins{u\cons\sigma} \rw u \label{r:varcons}\\
+  \textsc{Inst-app} &: (l\;r)\ins\sigma \rw (l\ins{c\selL\,\sigma})\;(r\ins{c\selR\,\sigma}) \label{r:instApp}\\
+  \textsc{Inst-lam} &: (\lambda^{\mathsf{use}} t)\ins\sigma \rw \lamU\,(t\ins{\Up\sigma}) \label{r:instLam}\\
+  \textsc{Inst-lam-drop} &: (\lambda^{\mathsf{drop}} t)\ins\sigma \rw \lamU\,(\mathsf{drop}\fmap(t\ins\sigma)) \label{r:instLamDrop}\\
+  \textsc{IdSubst} &: t\ins\ids \rw \wt{t}{\oi} \label{r:idsubst}\\
+  \textsc{Clos} &: \app{(\app{u}{\tau})}{\upsilon} \rw \app{u}{(\tau\seq\upsilon)} \label{r:clos}
+\end{align}
+The instantiation rules \textsc{VarCons}, \textsc{Inst-app}, \textsc{Inst-lam},
+\textsc{Inst-lam-drop} are the clauses of $\ins\cdot$ on each constructor.
+
+% ---------------------------------------------------------------------------
+\section{(R4) $\sigma_{SP}$ --- composition monoid \hfill \catD}\label{r:monoid}
+\begin{align}
+  \textsc{Map} &: (u\cons\sigma)\seq\tau \rw (\app{u}{\tau})\cons(\sigma\seq\tau) \label{r:map}\\
+  \textsc{EmptyComp} &: \nil\seq\tau \rw \nil \label{r:emptyComp}\\
+  \textsc{IdL} &: \ids\seq\sigma \rw \sigma \label{r:idL}\\
+  \textsc{IdR} &: \sigma\seq\ids \rw \sigma \label{r:idR}\\
+  \textsc{Assoc} &: (\sigma\seq\tau)\seq\upsilon \rw \sigma\seq(\tau\seq\upsilon) \label{r:assoc}
+\end{align}
+
+% ---------------------------------------------------------------------------
+\section{(R5) $\sigma_{SP}$ --- cons / $\eta$ \hfill \catD}\label{r:cons}
+\begin{align}
+  \textsc{ShiftCons} &: \shift\seq(u\cons\sigma) \rw \sigma \label{r:shiftCons}\\
+  \textsc{IdCons} &: \vz\cons\shift \rw \ids \label{r:idCons}\\
+  \textsc{SCons} &: (\vz\ins\sigma)\cons(\shift\seq\sigma) \rw \sigma \label{r:sCons}
+\end{align}
+\noindent
+\textsc{SCons} is the fundamental cons/$\eta$ law (surjective pairing of substitutions):
+every substitution out of $s\!::\!\Gamma$ is its head $\vz\ins\sigma$ consed onto its tail
+$\shift\seq\sigma$.
+\textsc{ShiftCons} is its tail projection and \textsc{IdCons} its $\sigma=\ids$ instance;
+both are derivable from \textsc{SCons} together with \textsc{VarCons}.
+All three are \catD; they are registered together only because the confluent completion
+needs them all present.
+
+\paragraph{Derivability of (R4)/(R5).}
+The whole of groups (R4) and (R5) is generated from three base rules together with
+the clauses of $\ins\cdot$:
+\[
+  \textsc{Fuse}:\app{(t\ins\sigma)}{\upsilon}\rw t\ins{(\sigma\seq\upsilon)},
+  \quad
+  \textsc{IdEmb}:t\ins{\emb\,\theta}\rw\wt{t}{\theta},
+  \quad
+  \textsc{VarCons}:\mathsf{var}\ins{u\cons\nil}\rw u.
+\]
+
+% ---------------------------------------------------------------------------
+\section{(R6) Context coherence \hfill \catL}\label{r:cx}
+
+\noindent
+Restriction makes $\Cx$ a \emph{presheaf} on the thinning category:
+\textsc{Rest-id} and \textsc{Rest-fun} are its functoriality,
+and \textsc{Rest-empty} fixes its value at the empty thinning $\oe$.
+\begin{align}
+  \textsc{Rest-id} &: \Phi\rest\oi \rw \Phi \label{r:restId}\\
+  \textsc{Rest-empty} &: \Phi\rest\oe \rw \eps \label{r:restEmpty}\\
+  \textsc{Rest-fun} &: \Phi\rest(\psi\comp\theta) \rw (\Phi\rest\theta)\rest\psi \label{r:restFun}\\
+  \textsc{CohL} &: (\Phi\rest\out(\theta\cop\phi))\rest\thL(\cov(\theta\cop\phi)) \rw \Phi\rest\theta \label{r:cohL}\\
+  \textsc{CohR} &: (\Phi\rest\out(\theta\cop\phi))\rest\thR(\cov(\theta\cop\phi)) \rw \Phi\rest\phi \label{r:cohR}
+\end{align}
+
+\paragraph{CohL/CohR are derived.}
+The coherences are not primitive: \textsc{CohL} follows from functoriality
+(\textsc{Rest-fun}) and the thinning-level factorisation \textsc{Fac-L}
+(Eq.~\ref{r:fac}):
+\[
+  (\Phi\rest\out(\theta\cop\phi))\rest\thL(\cov(\theta\cop\phi))
+  \;\overset{\textsc{Rest-fun}}{=}\;
+  \Phi\rest(\thL(\cov(\theta\cop\phi))\comp\out(\theta\cop\phi))
+  \;\overset{\textsc{Fac-L}}{=}\;
+  \Phi\rest\theta,
+\]
+and \textsc{CohR} symmetrically from \textsc{Fac-R}.
+They are registered as rewrites in their own right only so that the rule set
+completes to a confluent system; mathematically they are theorems.
+
+% ---------------------------------------------------------------------------
+\section*{Meta-property}
+
+\begin{proposition}[Local confluence]
+The rule set \textnormal{(R1)--(R6)} is locally confluent.
+Hence the induced equational theory holds definitionally: each rule may be used as a
+silent computation step.
+\end{proposition}
+
+% ===========================================================================
+\section{(R7) Typing and call-by-value reduction \hfill \catS}\label{r:sr}
+
+\noindent
+Typing $\Phi\vdash t : A$ is an extrinsic judgement over $\Cx$, with
+$\Phi\vdash_{\uparrow}\,\wt{t}{\theta} : A \;\Longleftrightarrow\; \Phi\rest\theta\vdash t : A$.
+For STLC:
+\[
+  \inferrule{ }{(\eps,A)\vdash\mathsf{var}:A}
+  \quad
+  \inferrule{\Phi\rest\theta\vdash l:A\!\to\!B \\ \Phi\rest\phi\vdash r:A}
+            {\Phi\rest\out(\theta\cop\phi)\vdash\mathsf{app}(l,r,\cov(\theta\cop\phi)):B}
+  \quad
+  \inferrule{(\Phi,A)\vdash t:B}{\Phi\vdash\lambda^{\mathsf{use}} t:A\!\to\!B}
+  \quad
+  \inferrule{\Phi\vdash t:B}{\Phi\vdash\lambda^{\mathsf{drop}} t:A\!\to\!B}
+\]
+
+\paragraph{Values.}
+$\val\,(\lambda^{\mathsf{use}} t)$ and $\val\,(\lambda^{\mathsf{drop}} t)$.
+
+\paragraph{Reduction rules} ($c$ the cover of the $\mathsf{app}$ node; a contractum is a
+thing-with-thinning, its support possibly smaller):
+\begin{align}
+  \textsc{$\beta_{\mathsf{use}}$} &:
+    (\lambda^{\mathsf{use}} b)\;v \rw b\ins{v\cons\emb(\thL\,c)}
+    && \val\,v \label{r:betaUse}\\
+  \textsc{$\beta_{\mathsf{drop}}$} &:
+    (\lambda^{\mathsf{drop}} b)\;v \rw b\ins{\emb(\thL\,c)}
+    && \val\,v \label{r:betaDrop}\\
+  \textsc{$\xi$-fun} &:
+    \appU(l,r) \rw \appU(\ren{l'}{\thL\,c})\,(\wt{r}{\thR\,c})
+    && l\steps l' \label{r:xiFun}\\
+  \textsc{$\xi$-arg} &:
+    \appU(v,r) \rw \appU(\wt{v}{\thL\,c})\,(\ren{r'}{\thR\,c})
+    && \val\,v,\; r\steps r' \label{r:xiArg}
+\end{align}
+
+\paragraph{Substitution preserves typing.}
+For a well-typed substitution $\sigma$ (each entry typed in $\Psi$ at the
+classifier $\Phi$ records),
+\[
+  \textsc{sub-pres}:\quad \Phi\vdash t:A \;\Longrightarrow\; \Psi\vdash_{\uparrow}\,t\ins\sigma:A.
+\]
+
+\paragraph{Subject reduction.}
+\[
+  \textsc{preserve}:\quad \Phi\vdash t:A \;\wedge\; t\steps t' \;\Longrightarrow\; \Phi\vdash_{\uparrow}\,t':A.
+\]
+The $\beta$-cases are \textsc{sub-pres} at the $\beta$-environment; the $\xi$-cases use
+$\appU$ together with \textsc{Rest-fun} to re-embed the reduced subterm.
+Typing and subject reduction for System~F are not yet formalised
+(the substitution engine and rules \textnormal{(R1)--(R6)} are complete for it).
+
+% ===========================================================================
+\section*{Summary}
+
+\noindent
+\begin{tabular}{@{}lll@{}}
+\hline
+\textbf{Group} & \textbf{Tag} & \textbf{Rules} \\
+\hline
+(R1) Thinning monoid & \catL & \textsc{IdL}$_\thin$, \textsc{IdR}$_\thin$, \textsc{Assoc}$_\thin$ \\
+(R2) Coproduct / cover algebra & \catL & \textsc{Cop-unitL/R}, \textsc{CovL/R-id}, \textsc{ThinL/R-covL/R/full}, \textsc{Fac-L/R} \\
+(R3) $\sigma_{SP}$ instantiation & \catD & \textsc{VarCons}, \textsc{Inst-app/lam/lam-drop}, \textsc{IdSubst}, \textsc{Clos} \\
+(R4) $\sigma_{SP}$ monoid & \catD & \textsc{Map}, \textsc{EmptyComp}, \textsc{IdL}, \textsc{IdR}, \textsc{Assoc} \\
+(R5) $\sigma_{SP}$ cons/$\eta$ & \catD & \textsc{ShiftCons}, \textsc{IdCons}, \textsc{SCons} \\
+(R6) Context coherence & \catL & \textsc{Rest-id}, \textsc{Rest-empty}, \textsc{Rest-fun}, \textsc{CohL}, \textsc{CohR} \\
+(R7) Typing / CBV & \catS & $\beta_{\mathsf{use}}$, $\beta_{\mathsf{drop}}$, $\xi$-fun, $\xi$-arg; \textsc{sub-pres}, \textsc{preserve} \\
+\hline
+\end{tabular}
+
+\end{document}

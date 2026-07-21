@@ -1,0 +1,11 @@
+; ── Thinning composition: the ELIMINATION rules only (Orientation A) ──
+; Generators: oz (empty []⊑[]), os (keep), od (drop, = o').  cmp = composition (⨾).
+; Claim: CONFLUENT and TERMINATING.  (Rules are left-linear and non-overlapping —
+; disjoint by the SECOND argument's head: od / os / oz — so trivially confluent.)
+(VAR x y z)
+(RULES
+  cmp(x,od(y))     -> od(cmp(x,y))
+  cmp(os(x),os(y)) -> os(cmp(x,y))
+  cmp(od(x),os(y)) -> od(cmp(x,y))
+  cmp(oz,oz)       -> oz
+)

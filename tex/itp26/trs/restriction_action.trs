@@ -1,0 +1,21 @@
+; ── The RESTRICTION ACTION ↾ on substitutions (the SAME clash, one layer up) ──
+; Sub generators: e (ε), cons (t∙σ).  res = ↾ (restriction by a thinning).
+; cmp = thinning composition.  R = elimination clauses for both cmp and res.
+; The action-associativity  res(res(s,th),ph) = res(s, cmp(ph,th))  is what the
+; arrow distribution ⟪⟫-⇒↑ needs; oriented, it clashes with res-elimination exactly
+; as cmp-assoc clashes with cmp-elimination.  Modulo those equations: confluent.
+(VAR s t th ph x y z)
+(RULES
+  ; thinning composition (Orientation A)
+  cmp(x,od(y))      -> od(cmp(x,y))
+  cmp(os(x),os(y))  -> os(cmp(x,y))
+  cmp(od(x),os(y))  -> od(cmp(x,y))
+  cmp(oz,oz)        -> oz
+  ; restriction elimination
+  res(e,oz)             -> e
+  res(cons(t,s),os(th)) -> cons(t, res(s,th))
+  res(cons(t,s),od(th)) -> res(s,th)
+)
+; ORIENTED action-assoc  res(res(s,th),ph) -> res(s,cmp(ph,th))  would clash with
+; res(cons(...),os(..)) just like cmp-assoc clashes — add it to see NON-confluence,
+; or treat it (with cmp-assoc) as the modulo-theory E for the confluent-modulo check.

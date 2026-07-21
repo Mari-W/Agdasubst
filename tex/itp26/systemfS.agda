@@ -424,5 +424,5 @@ opaque
 
 --! RewriteSys {
 -- complete rewrite system 
-{-# REWRITE def-∙ˢ-zero def-∙ˢ-suc def-↑ˢ def-⨟ assoc dist interact comp-idᵣ comp-idₗ inst-x inst-λ inst-Λ inst-∀ inst-· inst-• inst-⇒ inst-* right-id compositionalityᴿᴿ compositionalityᴿˢ compositionalityˢᴿ compositionalityˢˢ coincidence coincidence-comp coincidence-ext def-id def-wk def-∙ᴿ-zero def-∙ᴿ-suc def-∘ assocᴿ distᴿ interactᴿ comp-idᵣᴿ comp-idₗᴿ instᴿ-x instᴿ-λ instᴿ-Λ instᴿ-∀ instᴿ-· instᴿ-• instᴿ-⇒ instᴿ-* coincidence-var right-idˢ id-var wk-var wk-comp wk-compᴿ def-compˢᴿ def-compᴿˢ dist-⟨⟩ assoc-⟨⟩ η-idᴿ
+{-# REWRITE def-∙ˢ-zero def-∙ˢ-suc def-↑ˢ def-⨟ assoc dist interact comp-idᵣ comp-idₗ inst-x inst-λ inst-Λ inst-∀ inst-· inst-• inst-⇒ inst-* right-id compositionalityᴿᴿ compositionalityᴿˢ compositionalityˢᴿ compositionalityˢˢ coincidence coincidence-comp coincidence-ext def-id def-wk def-∙ᴿ-zero def-∙ᴿ-suc def-∘ assocᴿ distᴿ interactᴿ comp-idᵣᴿ comp-idₗᴿ instᴿ-x instᴿ-λ instᴿ-Λ instᴿ-∀ instᴿ-· instᴿ-• instᴿ-⇒ instᴿ-* coincidence-var right-idˢ id-var wk-var wk-comp wk-compᴿ comp-wkᴿ def-compˢᴿ def-compᴿˢ dist-⟨⟩ assoc-⟨⟩ η-idᴿ η-lawᴿ
 #-}

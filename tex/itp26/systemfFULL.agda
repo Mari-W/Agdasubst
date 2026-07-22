@@ -1,7 +1,7 @@
 {-# OPTIONS --rewriting --local-confluence-check  #-}  -- confluence-check off: σ-laws confluent as a theory (ACCL), non-confluent-but-minimal as oriented rules — see note
-module systemfT6 where
+module systemfFULL where
 
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; trans; module ≡-Reasoning)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; trans; subst; module ≡-Reasoning)
 open ≡-Reasoning
 open import Agda.Builtin.Equality.Rewrite public
 
@@ -162,10 +162,11 @@ opaque
   def-↑ˢ               : σ ↑ˢ s ≡ (` zero) ∙ˢ (σ ⨟ wkˢ _)
   --! }
   def-id                : x ⋯ᴿ idᴿ ≡ x
-  def-wk                : x ⋯ᴿ (wkᴿ s) ≡ suc x  
+  def-wk                : x ⋯ᴿ (wkᴿ s) ≡ suc x
+  wk-suc : ∀ {S s s′} (x : S ∋ s) → x ⋯ᴿ (wkᴿ s′) ≡ suc x  
   def-∙ᴿ-zero           : zero ⋯ᴿ (x ∙ᴿ ρ)     ≡ x         
   def-∙ᴿ-suc            : (suc x) ⋯ᴿ (x′ ∙ᴿ ρ)  ≡ x ⋯ᴿ ρ      
-  def-∘                 : x ⋯ᴿ (ρ₁ ∘ ρ₂) ≡ (x ⋯ᴿ ρ₁) ⋯ᴿ ρ₂
+  def-∘                 : (x ⋯ᴿ ρ₁) ⋯ᴿ ρ₂ ≡ x ⋯ᴿ (ρ₁ ∘ ρ₂)
 
   --! InteractLaws {
   -- interaction rules
@@ -176,9 +177,16 @@ opaque
   comp-idₗ                : idˢ ⨟ σ         ≡ σ                                               
   η-id    : (` zero {s} {S}) ∙ˢ (wkˢ _)      ≡ idˢ
   η-law  : (zero ⋯ˢ σ) ∙ˢ (wkˢ _ ⨟ σ)        ≡ σ
-  id-var : x ⋯ˢ idˢ            ≡ ` x
-  wk-var : x ⋯ˢ wkˢ s          ≡ ` (suc x)
-  wk-comp : x ⋯ˢ (wkˢ s ⨟ σ)   ≡ suc x ⋯ˢ σ
+  id-var    : x ⋯ˢ idˢ            ≡ ` x
+  wk-var    : x ⋯ˢ wkˢ s          ≡ ` (suc x)
+  wk-comp   : x ⋯ˢ (wkˢ s ⨟ σ)    ≡ suc x ⋯ˢ σ
+  wk-compᴿ  : x ⋯ᴿ (wkᴿ s ∘ ρ)    ≡ suc x ⋯ᴿ ρ
+  comp-wkᴿ  : x ⋯ᴿ (ρ ∘ wkᴿ s)    ≡ suc (x ⋯ᴿ ρ)
+  def-compˢᴿ : ∀ {S₁ S₂ S₃ s} {x : S₁ ∋ s} {σ₁ : S₁ →ˢ S₂} {ρ₂ : S₂ →ᴿ S₃} → (x ⋯ˢ σ₁) ⋯ᴿ ρ₂ ≡ x ⋯ˢ (σ₁ ⨟ ⟨ ρ₂ ⟩)
+  def-compᴿˢ : (x ⋯ᴿ ρ₁) ⋯ˢ σ₂    ≡ x ⋯ˢ (⟨ ρ₁ ⟩ ⨟ σ₂)
+  dist-⟨⟩   : ⟨ x ∙ᴿ ρ ⟩ ⨟ σ      ≡ (x ⋯ˢ σ) ∙ˢ (⟨ ρ ⟩ ⨟ σ)
+  assoc-⟨⟩  : ⟨ ρ₁ ∘ ρ₂ ⟩ ⨟ σ     ≡ ⟨ ρ₁ ⟩ ⨟ (⟨ ρ₂ ⟩ ⨟ σ)
+  var-⟨⟩-comp : x ⋯ˢ (⟨ ρ ⟩ ⨟ σ)  ≡ (x ⋯ᴿ ρ) ⋯ˢ σ
   --! }
   assocᴿ           : (ρ₁ ∘ ρ₂) ∘ ρ₃ ≡ ρ₁ ∘ (ρ₂ ∘ ρ₃)                     
   distᴿ : (x ∙ᴿ ρ₁)  ∘ ρ₂  ≡ ((x ⋯ᴿ ρ₂) ∙ᴿ (ρ₁ ∘ ρ₂)) 
@@ -258,13 +266,21 @@ opaque
   def-∙ˢ-zero = refl
   def-∙ˢ-suc  = refl
   def-⨟     = refl
-  id-var  = refl
-  wk-var  = refl
-  wk-comp = refl
+  id-var    = refl
+  wk-var    = refl
+  wk-comp   = refl
+  wk-compᴿ  = refl
+  comp-wkᴿ  = refl
+  def-compˢᴿ {x = x} {σ₁ = σ₁} = sym (coincidence (σ₁ _ x))
+  def-compᴿˢ = refl
+  dist-⟨⟩   = ext λ { zero → refl ; (suc x) → refl }
+  assoc-⟨⟩  = ext λ x → refl
+  var-⟨⟩-comp = refl
   def-↑ˢ {σ = σ} = cong ((` zero) ∙ˢ_) (sym (ext λ x → coincidence (σ _ x)))
 
   def-id      = refl
-  def-wk      = refl      
+  def-wk      = refl
+  wk-suc _    = refl      
   def-∙ᴿ-zero = refl
   def-∙ᴿ-suc  = refl
   def-∘       = refl
@@ -412,25 +428,176 @@ opaque
 
 --! RewriteSys {
 -- complete rewrite system 
-{-# REWRITE 
-def-∙ˢ-zero def-∙ˢ-suc def-↑ˢ def-⨟   
-assoc dist interact       
-comp-idᵣ comp-idₗ η-id η-law
-inst-x inst-λ inst-Λ inst-∀ inst-· inst-•
-inst-⇒ inst-*
-         
- 
- compositionalityˢˢ
-   
-
-    
-         
-   
-     
-  
-
- right-idˢ
- id-var
- wk-var
- wk-comp
+{-# REWRITE def-∙ˢ-zero def-∙ˢ-suc def-↑ˢ def-⨟ assoc dist interact comp-idₗ inst-x inst-λ inst-Λ inst-∀ inst-· inst-• inst-⇒ inst-* compositionalityᴿᴿ compositionalityᴿˢ compositionalityˢᴿ compositionalityˢˢ coincidence coincidence-comp coincidence-ext def-id def-∙ᴿ-zero def-∙ᴿ-suc def-∘ assocᴿ distᴿ interactᴿ comp-idᵣᴿ comp-idₗᴿ instᴿ-x instᴿ-λ instᴿ-Λ instᴿ-∀ instᴿ-· instᴿ-• instᴿ-⇒ instᴿ-* coincidence-var id-var def-compˢᴿ def-compᴿˢ dist-⟨⟩ assoc-⟨⟩ 
 #-}
+--! }
+
+
+↑ᵗ_ : Sort → Sort 
+↑ᵗ expr = type
+↑ᵗ type = kind
+↑ᵗ kind = kind
+
+_∶⊢_ : Scope → Sort → Set
+S ∶⊢ s = S ⊢ (↑ᵗ s)
+  
+depth : S ∋ s → ℕ
+depth zero     = zero
+depth (suc x)  = suc (depth x)
+
+drop-∈ : S ∋ s → Scope → Scope
+drop-∈ e xs = drop (suc (depth e)) xs
+
+Ctx : Scope → Set
+Ctx S = ∀ s → (x : S ∋ s) → drop-∈ x S ∶⊢ s
+
+[]ₜ : Ctx []
+[]ₜ _ ()
+
+_∷ₜ_ : S ∶⊢ s → Ctx S → Ctx (s ∷ S)
+(t ∷ₜ Γ) _ zero     = t
+(t ∷ₜ Γ) _ (suc x)  = Γ _ x
+
+weaken : S ⊢ s → (s′ ∷ S) ⊢ s
+weaken {s′ = s} t = t ⋯ᴿ (wkᴿ _)
+
+_[_] : (s′ ∷ S) ⊢ s → S ⊢ s′ → S ⊢ s
+t [ t′ ] = t ⋯ˢ (t′ ∙ˢ idˢ) 
+
+wk-drop-∈ : (x : S ∋ s) → drop-∈ x S ⊢ s′ → S ⊢ s′
+wk-drop-∈ zero t = weaken t 
+wk-drop-∈ (suc x)  t = weaken (wk-drop-∈ x t) 
+
+wk-telescope : Ctx S → S ∋ s → S ∶⊢ s
+wk-telescope Γ x = wk-drop-∈ x (Γ _ x)
+
+_∋_∶_ : Ctx S → S ∋ s → S ∶⊢ s → Set
+Γ ∋ x ∶ t = wk-telescope Γ x ≡ t
+
+variable 
+  Γ Γ₁ Γ₂ Γ₃ Γ′ Γ₁′ Γ₂′ Γ₃′ : Ctx S
+
+data _⊢_∶_ : Ctx S → S ⊢ s → S ∶⊢ s → Set where
+  ⊢` : ∀ {x : S ∋ s} {t} → 
+    Γ ∋ x ∶ t →
+    Γ ⊢ (` x) ∶ t
+  ⊢λ : 
+    (t ∷ₜ Γ) ⊢ e ∶ (weaken t′) → 
+    Γ ⊢ (λx e) ∶ (t ⇒ t′)
+  ⊢Λ : 
+    (k ∷ₜ Γ) ⊢ e ∶ t →  
+    Γ ⊢ (Λα e) ∶ (∀[α∶ k ] t)
+  ⊢· : 
+    Γ ⊢ e₁ ∶ (t₁ ⇒ t₂) →
+    Γ ⊢ e₂ ∶ t₁ →
+    Γ ⊢ (e₁ · e₂) ∶ t₂
+  ⊢• : 
+    Γ ⊢ e ∶ (∀[α∶ k ] t′) →
+    Γ ⊢ t ∶ k →
+    (k ∷ₜ Γ) ⊢ t′ ∶ k′ →
+    Γ ⊢ (e • t) ∶ (t′ [ t ])
+  ⊢* : {t : S ⊢ type} →
+    Γ ⊢ t ∶ *
+
+_∶_→ᴿ_ : S₁ →ᴿ S₂ → Ctx S₁ → Ctx S₂ → Set
+_∶_→ᴿ_ {S₁} {S₂} ρ Γ₁ Γ₂ = ∀ (s : Sort) (x : S₁ ∋ s) (t : S₁ ∶⊢ s) → 
+  (Γ₁ ∋ x ∶ t) → Γ₂ ∋ (x ⋯ᴿ ρ) ∶ (t ⋯ᴿ ρ)
+
+--! WTS {
+_∶_→ˢ_ : S₁ →ˢ S₂ → (Γ₁ : Ctx S₁) → (Γ₂ : Ctx S₂) → Set
+--! }
+
+_∶_→ˢ_ {S₁} {S₂} σ Γ₁ Γ₂ = 
+  ∀ (s : Sort) (x : S₁ ∋ s) (t : S₁ ∶⊢ s) → 
+  (Γ₁ ∋ x ∶ t) → Γ₂ ⊢ (x ⋯ˢ σ) ∶ (t ⋯ˢ σ) 
+
+data Val : S ⊢ expr → Set where
+  vλ : Val (λx e)
+  vΛ : Val (Λα e)
+
+data _↪_ : S ⊢ expr → S ⊢ expr → Set where
+  β-λ :
+    Val e₂ →
+    ((λx e₁) · e₂) ↪ (e₁ [ e₂ ])
+  β-Λ :
+    ((Λα e) • t) ↪ (e [ t ])
+  ξ-·₁ :
+    e₁ ↪ e →
+    (e₁ · e₂) ↪ (e · e₂)
+  ξ-·₂ :
+    e₂ ↪ e →
+    Val e₁ →
+    (e₁ · e₂) ↪ (e₁ · e)
+  ξ-• :
+    e ↪ e′ →
+    (e • t) ↪ (e′ • t)
+
+⊢wkᴿ : ∀ (Γ : Ctx S) (x : S ∋ s) t (t′ : S ∶⊢ s′) → Γ ∋ x ∶ t → (t′ ∷ₜ Γ) ∋ x ⋯ᴿ (wkᴿ _) ∶ (weaken t) 
+⊢wkᴿ Γ x t t′ refl = cong (wk-telescope (t′ ∷ₜ Γ)) (wk-suc x)
+
+⊢↑ᴿ : ρ ∶ Γ₁ →ᴿ Γ₂ → (t : S₁ ∶⊢ s) → (ρ ↑ᴿ s) ∶ (t ∷ₜ Γ₁) →ᴿ ((t ⋯ᴿ ρ) ∷ₜ Γ₂)
+⊢↑ᴿ ⊢ρ _ _ (zero) _ refl = refl 
+⊢↑ᴿ {ρ = ρ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} ⊢ρ t _ (suc x) _ refl = ⊢wkᴿ Γ₂ (x ⋯ᴿ ρ) (wk-drop-∈ x (Γ₁ _ x) ⋯ᴿ ρ) (t ⋯ᴿ ρ) (⊢ρ _ x _ refl)
+
+_⊢⋯ᴿ[_]_ : ∀ {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} →
+  Γ₁ ⊢ e ∶ t →
+  (ρ : S₁ →ᴿ S₂) →
+  ρ ∶ Γ₁ →ᴿ Γ₂ →
+  Γ₂ ⊢ (e ⋯ᴿ ρ) ∶ (t ⋯ᴿ ρ)
+(⊢` {x = x} {t = t} ⊢x) ⊢⋯ᴿ[ ρ ] ⊢ρ  = ⊢` (⊢ρ _ x t ⊢x) 
+(⊢λ ⊢e)         ⊢⋯ᴿ[ ρ ] ⊢ρ  = ⊢λ (⊢e ⊢⋯ᴿ[ ρ ↑ᴿ _ ] (⊢↑ᴿ ⊢ρ _))
+(⊢Λ ⊢e)         ⊢⋯ᴿ[ ρ ] ⊢ρ  = ⊢Λ (⊢e ⊢⋯ᴿ[ ρ ↑ᴿ _ ] (⊢↑ᴿ ⊢ρ _))
+(⊢· ⊢e₁ ⊢e₂)    ⊢⋯ᴿ[ ρ ] ⊢ρ  = ⊢· (⊢e₁ ⊢⋯ᴿ[ ρ ] ⊢ρ) (⊢e₂ ⊢⋯ᴿ[ ρ ] ⊢ρ)
+(⊢• ⊢e ⊢t ⊢t')  ⊢⋯ᴿ[ ρ ] ⊢ρ  = ⊢• (⊢e ⊢⋯ᴿ[ ρ ] ⊢ρ) (⊢t ⊢⋯ᴿ[ ρ ] ⊢ρ) (⊢t' ⊢⋯ᴿ[ ρ ↑ᴿ _ ] (⊢↑ᴿ ⊢ρ _))
+⊢*              ⊢⋯ᴿ[ ρ ] ⊢ρ  = ⊢*
+
+⊢wkˢ : ∀ (Γ : Ctx S) (e : S ⊢ s) (t : S ∶⊢ s) (t′ : S ∶⊢ s′) → Γ ⊢ e ∶ t → (t′ ∷ₜ Γ) ⊢ weaken e ∶ weaken t 
+⊢wkˢ Γ e t t' ⊢t = ⊢t ⊢⋯ᴿ[ wkᴿ _ ] (λ s x t ⊢x → ⊢wkᴿ Γ x t t' ⊢x)
+
+⊢↑ˢ[_]_ : (σ : S₁ →ˢ S₂) → σ ∶ Γ₁ →ˢ Γ₂ → (t : S₁ ∶⊢ s) → (σ ↑ˢ s) ∶ t ∷ₜ Γ₁ →ˢ ((t ⋯ˢ σ) ∷ₜ Γ₂)
+(⊢↑ˢ[ σ ] ⊢σ) _ _ (zero) _ refl = ⊢` refl 
+⊢↑ˢ[_]_ {Γ₁ = Γ₁} {Γ₂ = Γ₂} σ ⊢σ t _ (suc x) _ refl = 
+  ⊢wkˢ Γ₂ (x ⋯ˢ σ) (wk-drop-∈ x (Γ₁ _ x) ⋯ˢ σ) (t ⋯ˢ σ) (⊢σ _ x _ refl)
+
+--! SPT {
+_⊢⋯ˢ[_]_ : 
+  Γ₁ ⊢ t ∶ t′ →
+  (σ : S₁ →ˢ S₂) →
+  σ ∶ Γ₁ →ˢ Γ₂ →
+  Γ₂ ⊢ (t ⋯ˢ σ) ∶ (t′ ⋯ˢ σ)
+(⊢` {x = x} {t = t} ⊢x)         ⊢⋯ˢ[ σ ] ⊢σ  = 
+  ⊢σ _ x t ⊢x 
+(⊢λ ⊢e)         ⊢⋯ˢ[ σ ] ⊢σ  = 
+  ⊢λ (⊢e ⊢⋯ˢ[ σ ↑ˢ _ ] (⊢↑ˢ[ σ ] ⊢σ) _)
+(⊢Λ ⊢e)         ⊢⋯ˢ[ σ ] ⊢σ  = 
+  ⊢Λ (⊢e ⊢⋯ˢ[ σ ↑ˢ _ ] (⊢↑ˢ[ σ ] ⊢σ) _)
+(⊢· ⊢e₁ ⊢e₂)    ⊢⋯ˢ[ σ ] ⊢σ  = 
+  ⊢· (⊢e₁ ⊢⋯ˢ[ σ ] ⊢σ) (⊢e₂ ⊢⋯ˢ[ σ ] ⊢σ)
+(⊢• {e = e} {t′ = t′} {t = t} ⊢e ⊢t ⊢t')  ⊢⋯ˢ[ σ ] ⊢σ  = 
+  subst (λ τ → _ ⊢ ((e ⋯ˢ σ) • (t ⋯ˢ σ)) ∶ (t′ ⋯ˢ ((t ⋯ˢ σ) ∙ˢ τ)))
+        (comp-idᵣ {σ = σ})
+  (⊢• (⊢e ⊢⋯ˢ[ σ ] ⊢σ) (⊢t ⊢⋯ˢ[ σ ] ⊢σ) 
+  (⊢t' ⊢⋯ˢ[ σ ↑ˢ _ ] (⊢↑ˢ[ σ ] ⊢σ) _))
+⊢*              ⊢⋯ˢ[ σ ] ⊢σ  = ⊢*
+--! }
+
+⊢[] : ∀ {Γ : Ctx S} {e : S ⊢ s} {t : S ∶⊢ s} → Γ ⊢ e ∶ t → (e ∙ˢ idˢ) ∶ (t ∷ₜ Γ) →ˢ Γ
+⊢[] {Γ = Γ} {e = e} {t = t} ⊢t _ zero     _ refl = subst (_⊢_∶_ Γ e) (sym (right-id t)) ⊢t 
+⊢[] ⊢t _ (suc x)  _ refl = ⊢` (sym (right-id _))
+
+--! SR {
+sr : 
+  Γ ⊢ e ∶ t →   
+  e ↪ e′ → 
+  Γ ⊢ e′ ∶ t 
+sr {Γ = Γ} {t = t} (⊢· {e₂ = e₂} (⊢λ {e = e₁} ⊢e₁) ⊢e₂) (β-λ v₂) = 
+  subst (_⊢_∶_ Γ (e₁ [ e₂ ])) (right-id t) (⊢e₁ ⊢⋯ˢ[ e₂ ∙ˢ idˢ ] (⊢[] ⊢e₂))
+sr (⊢• {t = t} (⊢Λ ⊢e) ⊢t ⊢t') β-Λ = 
+  ⊢e ⊢⋯ˢ[ t ∙ˢ idˢ ] (⊢[] ⊢t)     
+sr (⊢· ⊢e₁ ⊢e₂) (ξ-·₁ e₁↪e) = 
+  ⊢· (sr ⊢e₁ e₁↪e) ⊢e₂
+sr (⊢· ⊢e₁ ⊢e₂) (ξ-·₂ e₂↪e x) = 
+  ⊢· ⊢e₁ (sr ⊢e₂ e₂↪e)          
+sr (⊢• ⊢e ⊢t ⊢t') (ξ-• e↪e') = 
+  ⊢• (sr ⊢e e↪e') ⊢t ⊢t'
+--! }   

@@ -1,7 +1,7 @@
-{-# OPTIONS --rewriting --local-confluence-check  #-}  -- confluence-check off: σ-laws confluent as a theory (ACCL), non-confluent-but-minimal as oriented rules — see note
+{-# OPTIONS --rewriting --local-confluence-check  #-}  -- locally confluent: see the note above the REWRITE pragma
 module systemf where
 
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; trans; module ≡-Reasoning)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; trans; subst; module ≡-Reasoning)
 open ≡-Reasoning
 open import Agda.Builtin.Equality.Rewrite public
 
@@ -158,14 +158,17 @@ opaque
   -- definitional rules
   def-∙ˢ-zero           : zero ⋯ˢ (t ∙ˢ σ)   ≡ t                             
   def-∙ˢ-suc            : suc x ⋯ˢ (t ∙ˢ σ)  ≡ x ⋯ˢ σ 
-  def-⨟ : (x ⋯ˢ (σ₁ ⨟ σ₂)) ≡ ((x ⋯ˢ σ₁) ⋯ˢ σ₂)
+  def-⨟ : ((x ⋯ˢ σ₁) ⋯ˢ σ₂) ≡ (x ⋯ˢ (σ₁ ⨟ σ₂))
   def-↑ˢ               : σ ↑ˢ s ≡ (` zero) ∙ˢ (σ ⨟ wkˢ _)
   --! }
   def-id                : x ⋯ᴿ idᴿ ≡ x
-  def-wk                : x ⋯ᴿ (wkᴿ s) ≡ suc x  
+  def-wk                : x ⋯ᴿ (wkᴿ s) ≡ suc x
+  -- def-wk generalised to a weakening sort independent of x's sort;
+  -- not registered (it races def-∘), but needed to retype ⊢wkᴿ.
+  wk-suc : ∀ {S s s′} (x : S ∋ s) → x ⋯ᴿ (wkᴿ s′) ≡ suc x
   def-∙ᴿ-zero           : zero ⋯ᴿ (x ∙ᴿ ρ)     ≡ x         
   def-∙ᴿ-suc            : (suc x) ⋯ᴿ (x′ ∙ᴿ ρ)  ≡ x ⋯ᴿ ρ      
-  def-∘                 : x ⋯ᴿ (ρ₁ ∘ ρ₂) ≡ (x ⋯ᴿ ρ₁) ⋯ᴿ ρ₂
+  def-∘                 : (x ⋯ᴿ ρ₁) ⋯ᴿ ρ₂ ≡ x ⋯ᴿ (ρ₁ ∘ ρ₂)
 
   --! InteractLaws {
   -- interaction rules
@@ -176,6 +179,20 @@ opaque
   comp-idₗ                : idˢ ⨟ σ         ≡ σ                                               
   η-id    : (` zero {s} {S}) ∙ˢ (wkˢ _)      ≡ idˢ
   η-law  : (zero ⋯ˢ σ) ∙ˢ (wkˢ _ ⨟ σ)        ≡ σ
+  --! }
+
+  --! CompletionLaws {
+  -- completion rules.  id-var/def-compˢᴿ/def-compᴿˢ are the VARIABLE-level
+  -- instances of the identity and the two mixed compositionality laws; like
+  -- def-⨟/def-∘ they are oriented to FUSE, so a variable under two actions
+  -- always contracts to a single action.  dist-⟨⟩/assoc-⟨⟩ let a first-class
+  -- renaming pass a cons/composition on the left of a ⨟.
+  id-var     : x ⋯ˢ idˢ          ≡ ` x
+  def-compˢᴿ : ∀ {S₁ S₂ S₃ s} {x : S₁ ∋ s} {σ₁ : S₁ →ˢ S₂} {ρ₂ : S₂ →ᴿ S₃} →
+    (x ⋯ˢ σ₁) ⋯ᴿ ρ₂  ≡ x ⋯ˢ (σ₁ ⨟ ⟨ ρ₂ ⟩)
+  def-compᴿˢ : (x ⋯ᴿ ρ₁) ⋯ˢ σ₂   ≡ x ⋯ˢ (⟨ ρ₁ ⟩ ⨟ σ₂)
+  dist-⟨⟩    : ⟨ x ∙ᴿ ρ ⟩ ⨟ σ    ≡ (x ⋯ˢ σ) ∙ˢ (⟨ ρ ⟩ ⨟ σ)
+  assoc-⟨⟩   : ⟨ ρ₁ ∘ ρ₂ ⟩ ⨟ σ   ≡ ⟨ ρ₁ ⟩ ⨟ (⟨ ρ₂ ⟩ ⨟ σ)
   --! }
   assocᴿ           : (ρ₁ ∘ ρ₂) ∘ ρ₃ ≡ ρ₁ ∘ (ρ₂ ∘ ρ₃)                     
   distᴿ : (x ∙ᴿ ρ₁)  ∘ ρ₂  ≡ ((x ⋯ᴿ ρ₂) ∙ᴿ (ρ₁ ∘ ρ₂)) 
@@ -255,10 +272,16 @@ opaque
   def-∙ˢ-zero = refl
   def-∙ˢ-suc  = refl
   def-⨟     = refl
+  id-var     = refl
+  def-compˢᴿ {x = x} {σ₁ = σ₁} = sym (coincidence (σ₁ _ x))
+  def-compᴿˢ = refl
+  dist-⟨⟩    = ext λ { zero → refl ; (suc x) → refl }
+  assoc-⟨⟩   = ext λ x → refl
   def-↑ˢ {σ = σ} = cong ((` zero) ∙ˢ_) (sym (ext λ x → coincidence (σ _ x)))
 
   def-id      = refl
-  def-wk      = refl      
+  def-wk      = refl
+  wk-suc _    = refl
   def-∙ᴿ-zero = refl
   def-∙ᴿ-suc  = refl
   def-∘       = refl
@@ -404,24 +427,45 @@ opaque
 
   demo2 = refl
 
+-- This oriented system passes --local-confluence-check.  Reaching that cost
+-- three things, in decreasing order of interest:
+--
+--  1. def-⨟ and def-∘ are oriented to FUSE, i.e. as the mode-V instances of
+--     compositionalityˢˢ / compositionalityᴿᴿ.  In the defusing orientation
+--     they form an unjoinable critical pair with dist / distᴿ: the peak
+--     x ⋯ˢ ((t ∙ˢ σ₁) ⨟ σ₂) has two normal forms whose join needs a case
+--     analysis on the ABSTRACT index x, which no rewrite rule can perform.
+--
+--  2. The completion rules below (id-var, def-compˢᴿ, def-compᴿˢ, dist-⟨⟩,
+--     assoc-⟨⟩) close the pairs the fusing orientation opens.
+--
+--  3. The four η/surjective-pairing laws (η-id, η-law, η-idᴿ, η-lawᴿ) and the
+--     laws that depend on them (comp-idᵣ, right-id, def-wk, coincidence-fold)
+--     are NO LONGER REGISTERED.  They are still proven above and usable as
+--     propositional equations — see ⊢wkᴿ / ⊢[] / sr below, which now transport
+--     along them explicitly.  This is the classical obstruction: η-law is the
+--     SCons rule of σ_SP, whose LHS (zero ⋯ˢ σ) ∙ˢ (wkˢ _ ⨟ σ) is non-left-
+--     linear and has a reducible head, and σ_SP is not confluent on open terms.
+--     Registering any one of them costs at least one unjoinable pair
+--     (comp-idᵣ needs right-idˢ, which needs η-id, which needs η-law, ...).
 --! RewriteSys {
--- complete rewrite system 
-{-# REWRITE 
-def-∙ˢ-zero def-∙ˢ-suc def-↑ˢ def-⨟   
-assoc dist interact       
-comp-idᵣ comp-idₗ η-id η-law
+-- complete rewrite system
+{-# REWRITE
+def-∙ˢ-zero def-∙ˢ-suc def-↑ˢ def-⨟
+assoc dist interact
+comp-idₗ
 inst-x inst-λ inst-Λ inst-∀ inst-· inst-•
 inst-⇒ inst-*
-right-id         
 compositionalityᴿᴿ compositionalityᴿˢ
 compositionalityˢᴿ compositionalityˢˢ
-coincidence coincidence-fold coincidence-comp coincidence-ext
+coincidence coincidence-comp coincidence-ext
+id-var def-compˢᴿ def-compᴿˢ dist-⟨⟩ assoc-⟨⟩
 
-def-id def-wk def-∙ᴿ-zero def-∙ᴿ-suc def-∘
-assocᴿ distᴿ interactᴿ       
-comp-idᵣᴿ comp-idₗᴿ η-idᴿ η-lawᴿ
+def-id def-∙ᴿ-zero def-∙ᴿ-suc def-∘
+assocᴿ distᴿ interactᴿ
+comp-idᵣᴿ comp-idₗᴿ
 instᴿ-x instᴿ-λ instᴿ-Λ instᴿ-∀ instᴿ-· instᴿ-•
-instᴿ-⇒ instᴿ-* 
+instᴿ-⇒ instᴿ-*
 coincidence-var
 #-}
 --! }
@@ -527,7 +571,7 @@ data _↪_ : S ⊢ expr → S ⊢ expr → Set where
     (e • t) ↪ (e′ • t)
 
 ⊢wkᴿ : ∀ (Γ : Ctx S) (x : S ∋ s) t (t′ : S ∶⊢ s′) → Γ ∋ x ∶ t → (t′ ∷ₜ Γ) ∋ x ⋯ᴿ (wkᴿ _) ∶ (weaken t) 
-⊢wkᴿ _ _ _ _ refl = refl
+⊢wkᴿ Γ x t t′ refl = cong (wk-telescope (t′ ∷ₜ Γ)) (wk-suc x)
 
 ⊢↑ᴿ : ρ ∶ Γ₁ →ᴿ Γ₂ → (t : S₁ ∶⊢ s) → (ρ ↑ᴿ s) ∶ (t ∷ₜ Γ₁) →ᴿ ((t ⋯ᴿ ρ) ∷ₜ Γ₂)
 ⊢↑ᴿ ⊢ρ _ _ (zero) _ refl = refl 
@@ -538,7 +582,7 @@ _⊢⋯ᴿ[_]_ : ∀ {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} →
   (ρ : S₁ →ᴿ S₂) →
   ρ ∶ Γ₁ →ᴿ Γ₂ →
   Γ₂ ⊢ (e ⋯ᴿ ρ) ∶ (t ⋯ᴿ ρ)
-(⊢` ⊢x)         ⊢⋯ᴿ[ ρ ] ⊢ρ  = ⊢` (⊢ρ _ _ _ ⊢x) 
+(⊢` {x = x} {t = t} ⊢x) ⊢⋯ᴿ[ ρ ] ⊢ρ  = ⊢` (⊢ρ _ x t ⊢x)
 (⊢λ ⊢e)         ⊢⋯ᴿ[ ρ ] ⊢ρ  = ⊢λ (⊢e ⊢⋯ᴿ[ ρ ↑ᴿ _ ] (⊢↑ᴿ ⊢ρ _))
 (⊢Λ ⊢e)         ⊢⋯ᴿ[ ρ ] ⊢ρ  = ⊢Λ (⊢e ⊢⋯ᴿ[ ρ ↑ᴿ _ ] (⊢↑ᴿ ⊢ρ _))
 (⊢· ⊢e₁ ⊢e₂)    ⊢⋯ᴿ[ ρ ] ⊢ρ  = ⊢· (⊢e₁ ⊢⋯ᴿ[ ρ ] ⊢ρ) (⊢e₂ ⊢⋯ᴿ[ ρ ] ⊢ρ)
@@ -559,31 +603,35 @@ _⊢⋯ˢ[_]_ :
   (σ : S₁ →ˢ S₂) →
   σ ∶ Γ₁ →ˢ Γ₂ →
   Γ₂ ⊢ (t ⋯ˢ σ) ∶ (t′ ⋯ˢ σ)
-(⊢` ⊢x)         ⊢⋯ˢ[ σ ] ⊢σ  = 
-  ⊢σ _ _ _ ⊢x 
+(⊢` {x = x} {t = t} ⊢x) ⊢⋯ˢ[ σ ] ⊢σ  =
+  ⊢σ _ x t ⊢x
 (⊢λ ⊢e)         ⊢⋯ˢ[ σ ] ⊢σ  = 
   ⊢λ (⊢e ⊢⋯ˢ[ σ ↑ˢ _ ] (⊢↑ˢ[ σ ] ⊢σ) _)
 (⊢Λ ⊢e)         ⊢⋯ˢ[ σ ] ⊢σ  = 
   ⊢Λ (⊢e ⊢⋯ˢ[ σ ↑ˢ _ ] (⊢↑ˢ[ σ ] ⊢σ) _)
 (⊢· ⊢e₁ ⊢e₂)    ⊢⋯ˢ[ σ ] ⊢σ  = 
   ⊢· (⊢e₁ ⊢⋯ˢ[ σ ] ⊢σ) (⊢e₂ ⊢⋯ˢ[ σ ] ⊢σ)
-(⊢• ⊢e ⊢t ⊢t')  ⊢⋯ˢ[ σ ] ⊢σ  = 
-  ⊢• (⊢e ⊢⋯ˢ[ σ ] ⊢σ) (⊢t ⊢⋯ˢ[ σ ] ⊢σ) 
-  (⊢t' ⊢⋯ˢ[ σ ↑ˢ _ ] (⊢↑ˢ[ σ ] ⊢σ) _)
+-- σ ⨟ idˢ ≡ σ (comp-idᵣ) is no longer a rewrite, so transport along it here
+(⊢• {e = e} {t′ = t′} {t = t} ⊢e ⊢t ⊢t')  ⊢⋯ˢ[ σ ] ⊢σ  =
+  subst (λ τ → _ ⊢ ((e ⋯ˢ σ) • (t ⋯ˢ σ)) ∶ (t′ ⋯ˢ ((t ⋯ˢ σ) ∙ˢ τ)))
+        (comp-idᵣ {σ = σ})
+  (⊢• (⊢e ⊢⋯ˢ[ σ ] ⊢σ) (⊢t ⊢⋯ˢ[ σ ] ⊢σ)
+  (⊢t' ⊢⋯ˢ[ σ ↑ˢ _ ] (⊢↑ˢ[ σ ] ⊢σ) _))
 ⊢*              ⊢⋯ˢ[ σ ] ⊢σ  = ⊢*
 --! }
 
 ⊢[] : ∀ {Γ : Ctx S} {e : S ⊢ s} {t : S ∶⊢ s} → Γ ⊢ e ∶ t → (e ∙ˢ idˢ) ∶ (t ∷ₜ Γ) →ˢ Γ
-⊢[] ⊢t _ zero     _ refl = ⊢t 
-⊢[] ⊢t _ (suc x)  _ refl = ⊢` refl
+-- t ⋯ᴿ idᴿ ≡ t (right-id) is no longer a rewrite, so transport along it here
+⊢[] {Γ = Γ} {e = e} {t = t} ⊢t _ zero _ refl = subst (_⊢_∶_ Γ e) (sym (right-id t)) ⊢t
+⊢[] ⊢t _ (suc x)  _ refl = ⊢` (sym (right-id _))
 
 --! SR {
 sr : 
   Γ ⊢ e ∶ t →   
   e ↪ e′ → 
   Γ ⊢ e′ ∶ t 
-sr (⊢· {e₂ = e₂} (⊢λ ⊢e₁) ⊢e₂) (β-λ v₂) = 
-  ⊢e₁ ⊢⋯ˢ[ e₂ ∙ˢ idˢ ] (⊢[] ⊢e₂)
+sr {Γ = Γ} {t = t} (⊢· {e₂ = e₂} (⊢λ {e = e₁} ⊢e₁) ⊢e₂) (β-λ v₂) =
+  subst (_⊢_∶_ Γ (e₁ [ e₂ ])) (right-id t) (⊢e₁ ⊢⋯ˢ[ e₂ ∙ˢ idˢ ] (⊢[] ⊢e₂))
 sr (⊢• {t = t} (⊢Λ ⊢e) ⊢t ⊢t') β-Λ = 
   ⊢e ⊢⋯ˢ[ t ∙ˢ idˢ ] (⊢[] ⊢t)     
 sr (⊢· ⊢e₁ ⊢e₂) (ξ-·₁ e₁↪e) = 

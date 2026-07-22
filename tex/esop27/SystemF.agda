@@ -1,5 +1,5 @@
 -- rewriting safe, when rewrites terminate, double checked by kernel
-{-# OPTIONS --rewriting --confluence-check --double-check #-}
+{-# OPTIONS --rewriting --confluence-check --double-check --without-K #-}
 module SystemF where
 open import Agda.Builtin.Equality.Rewrite public
 

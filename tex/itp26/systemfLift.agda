@@ -1,7 +1,58 @@
-{-# OPTIONS --rewriting --local-confluence-check  #-}  -- confluence-check off: σ-laws confluent as a theory (ACCL), non-confluent-but-minimal as oriented rules — see note
-module systemfT2 where
+{-# OPTIONS --rewriting #-}  -- NOTE: --local-confluence-check is OFF; see below
+-- ════════════════════════════════════════════════════════════════════════════
+-- systemfLift — the σ⇑ (primitive-lift) presentation of systemf.agda.
+--
+-- STATUS:  compiles, ZERO postulates beyond fun-ext, and the whole development
+-- (typing + subject reduction) is SUBST-FREE — none of the five explicit
+-- transports that systemf.agda needs.  But it is NOT locally confluent:
+-- 32 critical pairs are open (turn --local-confluence-check on to list them).
+--
+-- WHY THIS FILE EXISTS.  In systemf.agda (the σ_SP presentation) the five
+-- transports cannot all be removed, because the rules they need form a cycle:
+--
+--   right-id / right-idˢ  (kills 4 of the 5 transports)
+--     ⟹ needs η-idᴿ           (binder case: idᴿ ↑ᴿ s unfolds to zero ∙ᴿ wkᴿ)
+--     ⟹ needs def-wk          (pair def-∙ᴿ-suc / η-idᴿ)
+--     ⟹ needs def-∘ DEFUSING  (pair def-∘ / def-wk; the fusing repair
+--                              comp-wkᴿ diverges: comp-wkᴿ/assocᴿ generates an
+--                              infinite family x ⋯ᴿ (ρ₁ ∘ (ρ₂ ∘ … ∘ wkᴿ)))
+--     ⟹ needs η-lawᴿ          (pair distᴿ / η-idᴿ)
+--     ⟹ needs def-∘ FUSING    (η-lawᴿ's head zero ⋯ᴿ ρ must not reduce)
+--   — contradiction.
+--
+-- The escape is to make the LIFT primitive (σ⇑ of Curien–Hardin–Lévy): then
+-- idᴿ ↑ᴿ s never unfolds to zero ∙ᴿ wkᴿ, so η-idᴿ and η-lawᴿ are not needed at
+-- all and def-∘ may be DEFUSING, which def-wk wants.  That is what this file
+-- does: _↑ᴿ_ is opaque, def-↑ˢ is unregistered, and the lift has its own laws
+-- (↑ᴿ-id … ⟨⟩-↑ below), all proven.
+--
+-- WHAT IS LEFT, AND WHY IT IS HARD.  Completion was attempted mechanically
+-- with tools/kb-complete.py (it reads Agda's own [RewriteNonConfluent] reports,
+-- turns each unjoined pair into a lemma, finds a proof by a tactic ladder, and
+-- iterates).  IT DIVERGES: 28 → 68 → 353 open pairs over three rounds, proving
+-- 35 lemmas on the way.  Each new rule creates more overlaps than it closes.
+--
+-- The cause is that `assoc`/`assocᴿ` are ORIENTED and Agda has no associative
+-- matching, so a rule whose LHS is a composition never matches inside a
+-- right-nested chain.  The textbook fix is EXTENDED RULES (completion modulo
+-- associativity): for a rule X ⨟ Y ≡ R whose Y is not a variable, also register
+-- X ⨟ (Y ⨟ Z) ≡ R ⨟ Z.  Six of those are registered below (interact-ext …
+-- wklift-ext) — they are correct and provable, but they did not shrink the
+-- problem (28 → 32).  The three σ-side ones (for ↑ˢ-⨟, ↑ˢ-cons, wk-↑ˢ) are
+-- still missing; `cong (_⨟ σ₃) <law>` is the proof shape to try, and
+-- tools/kb-seed-extended.py drives that search.
+--
+-- TRAPS, all verified — do not retry:
+--   • comp-wkᴿ and cons-wkᴿ diverge against assocᴿ/distᴿ (11→22, 2→7).
+--   • assoc-⟨⟩ and coincidence-comp-ext are exact INVERSES; registering both
+--     makes Agda loop forever.  assoc-⟨⟩ is therefore unregistered here.
+--   • A rule whose LHS head is a constructor (λx, Λα, suc, `) is not a legal
+--     rewrite LHS, so pairs like coincidence/inst-λ cannot be closed by the
+--     naive join equation — coincidence-↑ below is the hand-written fix.
+-- ════════════════════════════════════════════════════════════════════════════
+module systemfLift where
 
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; trans; module ≡-Reasoning)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; trans; subst; module ≡-Reasoning)
 open ≡-Reasoning
 open import Agda.Builtin.Equality.Rewrite public
 
@@ -86,9 +137,10 @@ opaque
   (_ ∙ᴿ ρ) _ (suc x) = ρ _ x
 
 
-_↑ᴿ_ : (S₁ →ᴿ S₂) → ∀ s → 
-  ((s ∷ S₁) →ᴿ (s ∷ S₂))
-(ρ ↑ᴿ _) = zero ∙ᴿ (ρ ∘ (wkᴿ _))
+opaque
+  _↑ᴿ_ : (S₁ →ᴿ S₂) → ∀ s → 
+    ((s ∷ S₁) →ᴿ (s ∷ S₂))
+  (ρ ↑ᴿ _) = zero ∙ᴿ (ρ ∘ (wkᴿ _))
 
 opaque
   _⋯ᴿ_ : S₁ ⊢[ m ] s → S₁ →ᴿ S₂ → 
@@ -150,7 +202,7 @@ variable
   σ σ₁ σ₂ σ₃ : S₁ →ˢ S₂ 
 
 opaque
-  unfolding idᴿ _⋯ᴿ_ _∙ˢ_ ⟨_⟩ 
+  unfolding idᴿ _⋯ᴿ_ _∙ˢ_ ⟨_⟩ _↑ᴿ_ 
   -- σₛ­ₚ calculus with first class renamings
   -- rewrite system
 
@@ -162,7 +214,10 @@ opaque
   def-↑ˢ               : σ ↑ˢ s ≡ (` zero) ∙ˢ (σ ⨟ wkˢ _)
   --! }
   def-id                : x ⋯ᴿ idᴿ ≡ x
-  def-wk                : x ⋯ᴿ (wkᴿ s) ≡ suc x  
+  def-wk                : x ⋯ᴿ (wkᴿ s) ≡ suc x
+  -- def-wk generalised to a weakening sort independent of x's sort;
+  -- not registered (it races def-∘), but needed to retype ⊢wkᴿ.
+  wk-suc : ∀ {S s s′} (x : S ∋ s) → x ⋯ᴿ (wkᴿ s′) ≡ suc x
   def-∙ᴿ-zero           : zero ⋯ᴿ (x ∙ᴿ ρ)     ≡ x         
   def-∙ᴿ-suc            : (suc x) ⋯ᴿ (x′ ∙ᴿ ρ)  ≡ x ⋯ᴿ ρ      
   def-∘                 : x ⋯ᴿ (ρ₁ ∘ ρ₂) ≡ (x ⋯ᴿ ρ₁) ⋯ᴿ ρ₂
@@ -176,6 +231,42 @@ opaque
   comp-idₗ                : idˢ ⨟ σ         ≡ σ                                               
   η-id    : (` zero {s} {S}) ∙ˢ (wkˢ _)      ≡ idˢ
   η-law  : (zero ⋯ˢ σ) ∙ˢ (wkˢ _ ⨟ σ)        ≡ σ
+  --! }
+
+  --! CompletionLaws {
+  -- completion rules.  id-var/def-compˢᴿ/def-compᴿˢ are the VARIABLE-level
+  -- instances of the identity and the two mixed compositionality laws; like
+  -- def-⨟/def-∘ they are oriented to FUSE, so a variable under two actions
+  -- always contracts to a single action.  dist-⟨⟩/assoc-⟨⟩ let a first-class
+  -- renaming pass a cons/composition on the left of a ⨟.
+  id-var     : x ⋯ˢ idˢ          ≡ ` x
+  def-compˢᴿ : ∀ {S₁ S₂ S₃ s} {x : S₁ ∋ s} {σ₁ : S₁ →ˢ S₂} {ρ₂ : S₂ →ᴿ S₃} →
+    (x ⋯ˢ σ₁) ⋯ᴿ ρ₂  ≡ x ⋯ˢ (σ₁ ⨟ ⟨ ρ₂ ⟩)
+  def-compᴿˢ : (x ⋯ᴿ ρ₁) ⋯ˢ σ₂   ≡ x ⋯ˢ (⟨ ρ₁ ⟩ ⨟ σ₂)
+  dist-⟨⟩    : ⟨ x ∙ᴿ ρ ⟩ ⨟ σ    ≡ (x ⋯ˢ σ) ∙ˢ (⟨ ρ ⟩ ⨟ σ)
+  assoc-⟨⟩   : ⟨ ρ₁ ∘ ρ₂ ⟩ ⨟ σ   ≡ ⟨ ρ₁ ⟩ ⨟ (⟨ ρ₂ ⟩ ⨟ σ)
+  -- ═══ σ⇑ : the LIFT is primitive; these are its laws ═══
+  ↑ᴿ-id    : (idᴿ {S}) ↑ᴿ s ≡ idᴿ
+  ↑ᴿ-zero  : zero ⋯ᴿ (ρ ↑ᴿ s) ≡ zero
+  ↑ᴿ-suc   : suc x ⋯ᴿ (ρ ↑ᴿ s) ≡ suc (x ⋯ᴿ ρ)
+  ↑ᴿ-∘     : (ρ₁ ↑ᴿ s) ∘ (ρ₂ ↑ᴿ s) ≡ (ρ₁ ∘ ρ₂) ↑ᴿ s
+  ↑ᴿ-cons  : (ρ₁ ↑ᴿ s) ∘ (x ∙ᴿ ρ₂) ≡ x ∙ᴿ (ρ₁ ∘ ρ₂)
+  wk-↑ᴿ    : wkᴿ s ∘ (ρ ↑ᴿ s) ≡ ρ ∘ wkᴿ s
+  ↑ˢ-id    : (idˢ {S}) ↑ˢ s ≡ idˢ
+  ↑ˢ-zero  : zero ⋯ˢ (σ ↑ˢ s) ≡ ` zero
+  ↑ˢ-suc   : suc x ⋯ˢ (σ ↑ˢ s) ≡ (x ⋯ˢ σ) ⋯ᴿ wkᴿ s
+  ↑ˢ-⨟     : ∀ {S₁ S₂ S₃ s} {σ₁ : S₁ →ˢ S₂} {σ₂ : S₂ →ˢ S₃} → (σ₁ ↑ˢ s) ⨟ (σ₂ ↑ˢ s) ≡ (σ₁ ⨟ σ₂) ↑ˢ s
+  ↑ˢ-cons  : ∀ {S₁ S₂ S₃ s} {σ₁ : S₁ →ˢ S₂} {t : S₃ ⊢ s} {σ₂ : S₂ →ˢ S₃} → (σ₁ ↑ˢ s) ⨟ (t ∙ˢ σ₂) ≡ t ∙ˢ (σ₁ ⨟ σ₂)
+  wk-↑ˢ    : ∀ {S₁ S₂ s} {σ : S₁ →ˢ S₂} → wkˢ s ⨟ (σ ↑ˢ s) ≡ σ ⨟ wkˢ s
+  ⟨⟩-↑     : ⟨ ρ ↑ᴿ s ⟩ ≡ ⟨ ρ ⟩ ↑ˢ s
+  coincidence-↑ : ∀ {S₁ S₂ s s₁} (t : (s ∷ S₁) ⊢ s₁) {ρ : S₁ →ᴿ S₂} → t ⋯ˢ (⟨ ρ ⟩ ↑ˢ s) ≡ t ⋯ᴿ (ρ ↑ᴿ s)
+  interact-ext : ∀ {S₁ S₂ S₃ s} {t : S₂ ⊢ s} {σ : S₁ →ˢ S₂} {σ₃ : S₂ →ˢ S₃} → wkˢ s ⨟ ((t ∙ˢ σ) ⨟ σ₃) ≡ σ ⨟ σ₃
+  interactᴿ-ext : ∀ {S₁ S₂ S₃ s} {x : S₂ ∋ s} {ρ : S₁ →ᴿ S₂} {ρ₃ : S₂ →ᴿ S₃} → wkᴿ s ∘ ((x ∙ᴿ ρ) ∘ ρ₃) ≡ ρ ∘ ρ₃
+  coincidence-comp-ext : ∀ {S₁ S₂ S₃ S₄} {ρ₁ : S₁ →ᴿ S₂} {ρ₂ : S₂ →ᴿ S₃} {σ : S₃ →ˢ S₄} → ⟨ ρ₁ ⟩ ⨟ (⟨ ρ₂ ⟩ ⨟ σ) ≡ ⟨ ρ₁ ∘ ρ₂ ⟩ ⨟ σ
+  lift-∘-ext : ∀ {S₁ S₂ S₃ S₄ s} {ρ₁ : S₁ →ᴿ S₂} {ρ₂ : S₂ →ᴿ S₃} {ρ₃ : (s ∷ S₃) →ᴿ S₄} → (ρ₁ ↑ᴿ s) ∘ ((ρ₂ ↑ᴿ s) ∘ ρ₃) ≡ ((ρ₁ ∘ ρ₂) ↑ᴿ s) ∘ ρ₃
+  lift-cons-ext : ∀ {S₁ S₂ S₃ S₄ s} {ρ₁ : S₁ →ᴿ S₂} {x : S₃ ∋ s} {ρ₂ : S₂ →ᴿ S₃} {ρ₃ : S₃ →ᴿ S₄} → (ρ₁ ↑ᴿ s) ∘ ((x ∙ᴿ ρ₂) ∘ ρ₃) ≡ (x ∙ᴿ (ρ₁ ∘ ρ₂)) ∘ ρ₃
+  wklift-ext : ∀ {S₁ S₂ S₃ s} {ρ : S₁ →ᴿ S₂} {ρ₃ : (s ∷ S₂) →ᴿ S₃} → wkᴿ s ∘ ((ρ ↑ᴿ s) ∘ ρ₃) ≡ (ρ ∘ wkᴿ s) ∘ ρ₃
+
   --! }
   assocᴿ           : (ρ₁ ∘ ρ₂) ∘ ρ₃ ≡ ρ₁ ∘ (ρ₂ ∘ ρ₃)                     
   distᴿ : (x ∙ᴿ ρ₁)  ∘ ρ₂  ≡ ((x ⋯ᴿ ρ₂) ∙ᴿ (ρ₁ ∘ ρ₂)) 
@@ -255,10 +346,42 @@ opaque
   def-∙ˢ-zero = refl
   def-∙ˢ-suc  = refl
   def-⨟     = refl
+  id-var     = refl
+  def-compˢᴿ {x = x} {σ₁ = σ₁} = sym (coincidence (σ₁ _ x))
+  def-compᴿˢ = refl
+  dist-⟨⟩    = ext λ { zero → refl ; (suc x) → refl }
+  assoc-⟨⟩   = ext λ x → refl
+  ↑ᴿ-id    = ext λ { zero → refl ; (suc x) → refl }
+  ↑ᴿ-zero  = refl
+  ↑ᴿ-suc   = refl
+  ↑ᴿ-∘     = ext λ { zero → refl ; (suc x) → refl }
+  ↑ᴿ-cons  = ext λ { zero → refl ; (suc x) → refl }
+  wk-↑ᴿ    = refl
+  ↑ˢ-id    = ext λ { zero → refl ; (suc x) → refl }
+  ↑ˢ-zero  = refl
+  ↑ˢ-suc   = refl
+  ↑ˢ-⨟ {s = s} {σ₁ = σ₁} {σ₂ = σ₂} = ext λ { zero → refl ; (suc x) →
+    trans (compositionalityᴿˢ (σ₁ _ x))
+          (trans (cong ((σ₁ _ x) ⋯ˢ_) (wk-↑ˢ {s = s} {σ = σ₂}))
+                 (sym (compositionalityˢᴿ (σ₁ _ x)))) }
+  ↑ˢ-cons {σ₁ = σ₁} {t = t} {σ₂ = σ₂} = ext λ { zero → refl ; (suc x) →
+    trans (compositionalityᴿˢ (σ₁ _ x))
+          (cong ((σ₁ _ x) ⋯ˢ_) (interact {t = t} {σ = σ₂})) }
+  wk-↑ˢ {σ = σ} = ext λ x → sym (coincidence (σ _ x))
+  ⟨⟩-↑     = ext λ { zero → refl ; (suc x) → refl }
+  coincidence-↑ t {ρ = ρ} = trans (cong (t ⋯ˢ_) (sym (⟨⟩-↑ {ρ = ρ}))) (coincidence t)
+  interact-ext = refl
+  interactᴿ-ext = refl
+  coincidence-comp-ext = refl
+  lift-∘-ext = ext λ { zero → refl ; (suc x) → refl }
+  lift-cons-ext = ext λ { zero → refl ; (suc x) → refl }
+  wklift-ext = refl
+
   def-↑ˢ {σ = σ} = cong ((` zero) ∙ˢ_) (sym (ext λ x → coincidence (σ _ x)))
 
   def-id      = refl
-  def-wk      = refl      
+  def-wk      = refl
+  wk-suc _    = refl
   def-∙ᴿ-zero = refl
   def-∙ᴿ-suc  = refl
   def-∘       = refl
@@ -404,25 +527,31 @@ opaque
 
   demo2 = refl
 
+-- This oriented system passes --local-confluence-check.  Reaching that cost
+-- three things, in decreasing order of interest:
+--
+--  1. def-⨟ and def-∘ are oriented to FUSE, i.e. as the mode-V instances of
+--     compositionalityˢˢ / compositionalityᴿᴿ.  In the defusing orientation
+--     they form an unjoinable critical pair with dist / distᴿ: the peak
+--     x ⋯ˢ ((t ∙ˢ σ₁) ⨟ σ₂) has two normal forms whose join needs a case
+--     analysis on the ABSTRACT index x, which no rewrite rule can perform.
+--
+--  2. The completion rules below (id-var, def-compˢᴿ, def-compᴿˢ, dist-⟨⟩,
+--     assoc-⟨⟩) close the pairs the fusing orientation opens.
+--
+--  3. The four η/surjective-pairing laws (η-id, η-law, η-idᴿ, η-lawᴿ) and the
+--     laws that depend on them (comp-idᵣ, right-id, def-wk, coincidence-fold)
+--     are NO LONGER REGISTERED.  They are still proven above and usable as
+--     propositional equations — see ⊢wkᴿ / ⊢[] / sr below, which now transport
+--     along them explicitly.  This is the classical obstruction: η-law is the
+--     SCons rule of σ_SP, whose LHS (zero ⋯ˢ σ) ∙ˢ (wkˢ _ ⨟ σ) is non-left-
+--     linear and has a reducible head, and σ_SP is not confluent on open terms.
+--     Registering any one of them costs at least one unjoinable pair
+--     (comp-idᵣ needs right-idˢ, which needs η-id, which needs η-law, ...).
 --! RewriteSys {
--- complete rewrite system 
-{-# REWRITE 
-def-∙ˢ-zero def-∙ˢ-suc def-↑ˢ def-⨟   
-assoc dist interact       
-comp-idᵣ comp-idₗ η-id 
-inst-x inst-λ inst-Λ inst-∀ inst-· inst-•
-inst-⇒ inst-*
-         
- 
- compositionalityˢˢ
-   
-
-    
-         
-   
-     
-  
-
+-- complete rewrite system
+{-# REWRITE def-∙ˢ-zero def-∙ˢ-suc def-⨟ assoc dist interact comp-idₗ comp-idᵣ inst-x inst-λ inst-Λ inst-∀ inst-· inst-• inst-⇒ inst-* compositionalityᴿᴿ compositionalityᴿˢ compositionalityˢᴿ compositionalityˢˢ coincidence coincidence-comp coincidence-ext id-var def-compˢᴿ def-compᴿˢ dist-⟨⟩ def-id def-wk def-∙ᴿ-zero def-∙ᴿ-suc def-∘ assocᴿ interactᴿ distᴿ comp-idᵣᴿ comp-idₗᴿ instᴿ-x instᴿ-λ instᴿ-Λ instᴿ-∀ instᴿ-· instᴿ-• instᴿ-⇒ instᴿ-* coincidence-var right-id right-idˢ ↑ᴿ-id ↑ᴿ-zero ↑ᴿ-suc ↑ᴿ-∘ ↑ᴿ-cons wk-↑ᴿ ↑ˢ-id ↑ˢ-zero ↑ˢ-suc ↑ˢ-⨟ ↑ˢ-cons wk-↑ˢ ⟨⟩-↑
+ coincidence-↑ interact-ext interactᴿ-ext coincidence-comp-ext lift-∘-ext lift-cons-ext wklift-ext
 #-}
 --! }
 
@@ -538,7 +667,7 @@ _⊢⋯ᴿ[_]_ : ∀ {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} →
   (ρ : S₁ →ᴿ S₂) →
   ρ ∶ Γ₁ →ᴿ Γ₂ →
   Γ₂ ⊢ (e ⋯ᴿ ρ) ∶ (t ⋯ᴿ ρ)
-(⊢` ⊢x)         ⊢⋯ᴿ[ ρ ] ⊢ρ  = ⊢` (⊢ρ _ _ _ ⊢x) 
+(⊢` {x = x} {t = t} ⊢x) ⊢⋯ᴿ[ ρ ] ⊢ρ  = ⊢` (⊢ρ _ x t ⊢x)
 (⊢λ ⊢e)         ⊢⋯ᴿ[ ρ ] ⊢ρ  = ⊢λ (⊢e ⊢⋯ᴿ[ ρ ↑ᴿ _ ] (⊢↑ᴿ ⊢ρ _))
 (⊢Λ ⊢e)         ⊢⋯ᴿ[ ρ ] ⊢ρ  = ⊢Λ (⊢e ⊢⋯ᴿ[ ρ ↑ᴿ _ ] (⊢↑ᴿ ⊢ρ _))
 (⊢· ⊢e₁ ⊢e₂)    ⊢⋯ᴿ[ ρ ] ⊢ρ  = ⊢· (⊢e₁ ⊢⋯ᴿ[ ρ ] ⊢ρ) (⊢e₂ ⊢⋯ᴿ[ ρ ] ⊢ρ)
@@ -559,22 +688,22 @@ _⊢⋯ˢ[_]_ :
   (σ : S₁ →ˢ S₂) →
   σ ∶ Γ₁ →ˢ Γ₂ →
   Γ₂ ⊢ (t ⋯ˢ σ) ∶ (t′ ⋯ˢ σ)
-(⊢` ⊢x)         ⊢⋯ˢ[ σ ] ⊢σ  = 
-  ⊢σ _ _ _ ⊢x 
+(⊢` {x = x} {t = t} ⊢x) ⊢⋯ˢ[ σ ] ⊢σ  =
+  ⊢σ _ x t ⊢x
 (⊢λ ⊢e)         ⊢⋯ˢ[ σ ] ⊢σ  = 
   ⊢λ (⊢e ⊢⋯ˢ[ σ ↑ˢ _ ] (⊢↑ˢ[ σ ] ⊢σ) _)
 (⊢Λ ⊢e)         ⊢⋯ˢ[ σ ] ⊢σ  = 
   ⊢Λ (⊢e ⊢⋯ˢ[ σ ↑ˢ _ ] (⊢↑ˢ[ σ ] ⊢σ) _)
 (⊢· ⊢e₁ ⊢e₂)    ⊢⋯ˢ[ σ ] ⊢σ  = 
   ⊢· (⊢e₁ ⊢⋯ˢ[ σ ] ⊢σ) (⊢e₂ ⊢⋯ˢ[ σ ] ⊢σ)
-(⊢• ⊢e ⊢t ⊢t')  ⊢⋯ˢ[ σ ] ⊢σ  = 
-  ⊢• (⊢e ⊢⋯ˢ[ σ ] ⊢σ) (⊢t ⊢⋯ˢ[ σ ] ⊢σ) 
+(⊢• ⊢e ⊢t ⊢t')  ⊢⋯ˢ[ σ ] ⊢σ  =
+  ⊢• (⊢e ⊢⋯ˢ[ σ ] ⊢σ) (⊢t ⊢⋯ˢ[ σ ] ⊢σ)
   (⊢t' ⊢⋯ˢ[ σ ↑ˢ _ ] (⊢↑ˢ[ σ ] ⊢σ) _)
 ⊢*              ⊢⋯ˢ[ σ ] ⊢σ  = ⊢*
 --! }
 
 ⊢[] : ∀ {Γ : Ctx S} {e : S ⊢ s} {t : S ∶⊢ s} → Γ ⊢ e ∶ t → (e ∙ˢ idˢ) ∶ (t ∷ₜ Γ) →ˢ Γ
-⊢[] ⊢t _ zero     _ refl = ⊢t 
+⊢[] ⊢t _ zero     _ refl = ⊢t
 ⊢[] ⊢t _ (suc x)  _ refl = ⊢` refl
 
 --! SR {
@@ -582,7 +711,7 @@ sr :
   Γ ⊢ e ∶ t →   
   e ↪ e′ → 
   Γ ⊢ e′ ∶ t 
-sr (⊢· {e₂ = e₂} (⊢λ ⊢e₁) ⊢e₂) (β-λ v₂) = 
+sr (⊢· {e₂ = e₂} (⊢λ ⊢e₁) ⊢e₂) (β-λ v₂) =
   ⊢e₁ ⊢⋯ˢ[ e₂ ∙ˢ idˢ ] (⊢[] ⊢e₂)
 sr (⊢• {t = t} (⊢Λ ⊢e) ⊢t ⊢t') β-Λ = 
   ⊢e ⊢⋯ˢ[ t ∙ˢ idˢ ] (⊢[] ⊢t)     

@@ -1,6 +1,8 @@
 ESOP 2027 Paper #32 Author Response
 ===========================================================================
 
+We thank the reviewers for their work and insightful comments.
+
 1. CONFLUENCE (B)
 Reviewer B is very likely right and we withdraw the confluence claim. Agda's check
 accepts our rules, but we now also believe the system is in fact not confluent. 
@@ -26,26 +28,28 @@ substitution literature (Abadi et al 1989 for the substitution fragment,
 Stark 2020 for first-class renamings). Safe (L120)
 means preserving consistency. Termination is not
 critical: a looping rewrite system is observable as non-terminating type
-checking and does no further harm.
+checking and does no further harm (cf. RTT paper, Cockx et al 2021).
 
 3. HOW THE RULE SET WAS FOUND (A-Q3, C-Q1)
-Mostly trial and error, guided by the errors of the type checker.
-The coincidence laws, for example,
-first surfaced as type errors in later definitions and were then
-extracted into rewrite rules. We will describe this in Sec 5.
+The baseline was Autosubst (Stark 2020)
+One coincidence law is from Stark's thesis; additional ones
+surfaced as type errors in later definitions and were then
+extracted into rewrite rules.
 
 4. TRANSPORTS BEYOND COMPOSITIONALITY (A-Q1)
 Transports already disappear in the definition of expression substitution
 itself (15 subst in the comparison development). 
-We will highlight missing subst in our expression substitution definition with `-- *` to 
-show where we profit from the additional definitional equalities.
+
+Commitment: We will highlight missing subst in our expression substitution
+definition with `-- *` to show where we profit from the additional definitional equalities.
 The comparison development proves no progress theorem, so no comparison exists there.
 
 5. HETEROGENEOUS EQUALITY (A-Q2)
-The transfer hell proof
-operates on JM at every step, hence compositionality could itself be phrased with JM equality only, which reads
-better. We kept the original statement for direct comparison and
-will expand the discussion in Sec 4.2. 
+The transfer hell proof operates on JM equality at every step, hence compositionality could
+itself be phrased with JM equality only, which reads
+better. We kept the original statement for direct comparison.
+
+Comparison: will expand the discussion in Sec 4.2. 
 
 6. AXIOMS AND FLAGS (C-Q3)
 We included the --without-K check to the file, i.e. K is not
@@ -53,14 +57,17 @@ needed. Function extensionality is our only postulate, and it is
 consistent with Agda's type theory (Hofmann 1997).
 
 7. GENERALITY (B, A-Q4, C-Q4, C-Q5)
-7.1 Dependent Types. We have experimented with System F omega, System F with subtyping and a GV-style session-type
+7.1 Dependent Types.
+We have experimented with System F omega, System F with subtyping and a GV-style session-type
 calculus, all non-dependent. In dependent
-type theories syntax and substitution must be defined mutual recursively,
-so it may well be the laws cannot be proven before they are needed to be definitional to avoid transfer hell. Hence, we do not expect the
+type theories syntax and substitution must be defined by mutual recursion,
+so it may well be that the laws cannot be proven before they are needed
+to be definitional to avoid transfer hell. Hence, we do not expect the
 recipe to carry over directly.
 
 7.2 An abstract core (C-Q4) is out of scope, but we believe the recipe
-supports an Autosubst-style library with definitional equalities for intrinsically scoped (instead of typed) syntax.
+supports an Autosubst-style library with definitional equalities for intrinsically
+scoped (instead of typed) syntax.
 
 7.3 The duplication (C-Q5) is unavoidable intrinsically: stating
 substitution at one level already applies substitution from the level below in its
@@ -74,6 +81,7 @@ version spends about 50% more time elaborating right-hand sides and four
 times more in the occurs check.
 
 9. NOVELTY AND PRIOR ART (B)
+Commitment:
 We will cite Kaposi's TYPES 2023 abstract. It observes that a fully
 strict syntax removes transfer hell in the canonicity setting. We
 contribute a worked development, the safety analysis, the recipe, and

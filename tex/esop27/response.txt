@@ -16,8 +16,8 @@ because every installed rewrite rule is instantiated with a proof.
 
 1.2 Implications. Without confluence, subject reduction of the combined
 reduction relation may fail, so type checking may behave unpredictably.
-No false statement becomes provable, and proofs that type check remain
-valid. The method has been robust in practice: we applied it in three
+We believe no false statement becomes provable, depending on this specific case and Agdas interal workings.
+The method has been robust in practice: we applied it in three
 further developments (see below) without problems.
 
 1.4 Commitment. We will rewrite Sec 5.1 and correct every line claiming checked confluence.

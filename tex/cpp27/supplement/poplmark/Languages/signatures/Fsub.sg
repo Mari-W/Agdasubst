@@ -1,0 +1,37 @@
+-- ═══ The signature of ../Fsub.agda ══════════════════════════
+--
+-- Generates that module: pure System F<:, 76 curated rules plus the 15
+-- signature-independent iterated-lifting rules the generator always
+-- emits, 91 in total.  It uses three format extensions:
+--
+--   %%module    the emitted module is QUALIFIED, `Languages.Fsub`, so it does
+--               not match the output file's basename
+--   %%var       the variable constructor is `_ , not the default `var`
+--   `…`         backtick-quoted names, because ∀[<:_]_ and λx[_]_
+--               contain ':' and '[' which the bare identifier syntax
+--               reserves
+--   %%epilogue  the F<: context machinery, which is signature-specific
+--               Agda text belonging to the core module
+
+%%module Languages.Fsub
+
+%%var `_
+
+%
+% infixr 5 _⇒_
+% infixl 6 _·_
+% infixl 6 _•_
+
+expr : Type
+type : Type
+
+-- types
+Top         : type
+`_⇒_`       : type -> type -> type
+`∀[<:_]_`   : type -> (type -> type) -> type
+
+-- terms
+`λx[_]_`    : type -> (expr -> expr) -> expr
+`Λα[<:_]_`  : type -> (type -> expr) -> expr
+`_·_`       : expr -> expr -> expr
+`_•_`       : expr -> type -> expr

@@ -1,128 +1,147 @@
-ESOP 2027 Paper #32 Reviews and Comments
+ICFP 2026 Paper #105 Reviews and Comments
 ===========================================================================
-Paper #32 Intrinisically Typed Syntax That Works (Fresh Perspective)
+Paper #105 Intrinisically Typed Syntax That Works (Functional Pearl)
 
 
-Review #32A
-===========================================================================
-
-Overall merit
--------------
-A. Good paper, I will champion it
-
-Confidence
-----------
-X. I am an expert in this area
-
-Paper summary
--------------
-The paper proposes and demonstrates to use RTT (rewrite type theory) to tackle the transport hell problem in mechanizing intrinsically typed syntax in Agda. The paper use an intrinsically typed system F mechanization as a running example. It defines a series of weakening and substitution operations in an opaque block to avoid built-in definitional equations in Agda, and instead proves other equations that are later registered in the rewrite system. The equations are organized so that, proofs in intrinsically typed syntax no longer exhibit transport hell. The paper uses preservation and compositionality as example theorems.
-
-Comments for authors
---------------------
-I have been a long time advocate against intrinsically typed syntax and for a "layered" style of formalization, and have been thinking that dependently typed programming is not going anywhere. However, this paper and related work might start to turn the game board around. I think the solution presented in this paper is inspiring, and I would really like to see how far we can go in this direction, and what else are required for us to go even further. 
-
-The paper itself is in general very clear. I do not have many pauses or troubles to digest it. The following are my comments:
-
-1. Instead of dedicating only sec 4 to describe the benefits of RTT, what about emphasizing the missing transport hell in the process of proving progress along the way? Or, is it the case that only the compositionality proof is benefited? I strongly doubt that. It would probably be easier for readers if the authors can point out a few places where one or two transports are required, whereas now they are gone. Sec. 4 is very terse compared to other sections.
-
-2. Reading sec 4.2, I am expecting a major focus on the JM equality, which is mentioned on line 600. But I think its use is in fact more significant than the text has mentioned. In particular, in a typically setup, I would expect all equalities between intrinsically typed syntax to be connected by JM eq, not just eq. To use it, of course we eventually will have to transport, but at least the statement of compositionality can be simplified and easier to read. I think the proof agrees with my intuition, considering every proof step operates on JM eq. Why are the authors taking a detour in the discussion? 
-
-3. I see that the system is very sensitive to what equalities to insert to the rewrite system. I can imagine the right set of equalities cannot be pinned down in a shot. What process have the authors gone through and how was the debugging experience, if there was one? 
-
-4. What are the authors' thoughts on an intrinsically typed syntax for dependent type theories? What other difficulties are posed? Is RTT the one and ultimate rescue?
-
-Questions for authors’ response
--------------------------------
-Questions are above.
-
-
-
-Review #32B
+Review #105A
 ===========================================================================
 
 Overall merit
 -------------
-D. Reject
+C. Weak reject
 
-Confidence
-----------
-X. I am an expert in this area
+Reviewer expertise
+------------------
+Y. Knowledgeable
 
 Paper summary
 -------------
-Intrinsically-typed presentations of type systems have been growing in popularity recently, in part because they are straightforwardly linked with semantics, whereas for extrinsic presentations this is much harder to show. For instance, in the case of dependent type theory, the link between extrinsic typing and semantics is known as the initiality conjecture, which is very administrative to establish. On the other hand, intrinsic presentations such as the one of [2] literally correspond to the initial categories with families (CwF)---that is, algebras of this type are really CwFs.
-
-Unfortunately, intrinsically-typed presentations are usually much harder to formalize, because of the proliferation of transport hell, especially when considering type systems with rich typing disciplines. This is a known problem and, although there has been recently much research around it, intrinsic formalizations are still very much a challenge.
-
-This submission discusses a simple solution for dealing with transport hell in intrinsic formalizations, namely of simply strengthening some propositional equalities into definitional ones, by using rewrite rules. Although new techniques for intrinsic formalizations are welcome, I would say that this submission has some important problems.
-
-First of all, the discussed idea is not at all novel and it has been known for a while by many researchers. For instance, a variant of it is discussed in the TYPES 2023 abstract "Towards quotient inductive-inductive-recursive types" by Kaposi, where it is mentioned as a way of simplifying proofs of canonicity: "In a completely strict syntax (where all equations are definitional), canonicity takes 44 lines of code. This corresponds to the complete lack of transport hell, and can be achieved using rewrite rules [6]".
-
-Of course, given that this is a "Fresh Perspective", this should not itself be grounds for rejection, as it could be worth having a paper illustrating this technique. However, both the type system and the metatheoretic results considered in the paper are very elementary, and there are many new difficulties that appear when considering richer systems (in particular, dependent types) and more elaborate results (such as canonicity and normalization). So, if the goal is to illustrate the technique's usefulness, it would be important to see it in action in more complicated cases, where it would really be a deal-breaker.
-
-Moreover, the development also has some technical problems. The most important one is that the authors claim that the rewrite system generated by the added rewrite rules is confluent and that this is verified by Agda, but this claim is not justified. Indeed, the confluence check implemented by Agda goes much beyond what is proved correct in [7], and in ways that lack any theoretical justification. In particular, Agda seems to unfortunately not raise any errors when adding non-left-linear rules (like the rule 𝜂-law considered by the authors), even though these almost always destroy confluence on untyped terms in combination with beta (see Klop's counter-example, which proves that beta-reduction + f(x,x) -> a is non-confluent in untyped terms). Therefore, not only the justification presented by the authors is incorrect, but the system they propose is also very likely non-confluent. By the way, I would argue that one of the main disadvantages of this technique is precisely the danger of breaking the good properties of the proof assistant when adding rewrite rules.
-
-Overall, even though having a "Fresh Perspective" about the discussed technique could be a good idea, for the aforementioned reasons I unfortunately cannot recommend accepting this submission.
+This paper revisits intrinsically typed syntax for polymorphic calculi and addresses the well-known issue of transfer hell: the need to apply type changing lemmas to terms that are known to be equal. The key solution is to internalize the equational theory of substitutions (σ-calculus) as definitional equality using Agda’s rewriting mechanism. This idea is used to partly mechanize the metatheory of both system F and system Fω with significantly simpler proofs.
 
 Comments for authors
 --------------------
-- (l32) "subject reduction holds by construction" : This is not true, because in a setting with typed reduction the correct statement of subject reduction is that `G |- (\x.t) u : A` implies `G |- (\x.t) u --> t[u/x] : A`, the point being that no beta redex can be blocked (which would be trivial when doing untyped reduction). Although this proof would be quite direct for System F, note that this is not automatic when dealing with systems with type-level computation, because it relies on the injectivity of function types with respect to equality.
+Pros: 
+-----
++ The problem identification is very clean and indeed it is a very important problem in the mechanization of type systems. 
++ The solution is clean, implemented in Agda, for both systems. 
++ The writing is pleasant, though at parts too technical. 
 
-- (l131) "they work in the framework of CwF categories [2], whereas we work on syntax." : This remark does not make a lot of sense. When defining STLC, System F, MLTT, etc, there are many ways of presenting the theory (CwFs being one possible presentation), but in any case, properties like canonicity and subject reduction always talk about the syntax of the theory. 
-
-- The related work section is overall very insufficient and should be reworked. The comparison with [9] is currently confusing and should be much extended, given that their proposal also shares the idea of making the substitution laws definitional. Moreover, the recent paper "Can We Formalise Type Theory Intrinsically without Any Compromise? A Case Study in Cubical Agda" by Chen et al. should also be discussed, as it also studies the problems one finds with intrinsic formalizations, and discusses one possible approach for reducing transport hell.
-
-- (Fig 3) Note that the fact that type-level substitution/renaming can be defined before the definition of terms is a simplification that is specific to non-dependent calculi. In intrinsic formalizations of dependent type theories, everything must be done mutually.
-
-- (l780) "Intrinsically typed syntax facilitates elegant mechanizations" : Although intrinsic typing has many advantages (as I discussed above), I don't think that there's any evidence today that it makes things easier. Actually, I would say that the reason many authors still prefer extrinsic formalizations is precisely because it eases formalizations, as we don't have to deal with transport hell.
+Cons: 
+------
+- There is no clean explanation that the resulting system is terminating and confluent. 
+- There is a lot of related work/proof systems/tactics that are not mentioned. 
+- Even though the writing is good, I am not sure it is at a level of an ICFP pearl (e.g., section 2.3 is dry). 
 
 
+The paper was pleasant to read. The problem is important and very well explained and the solution is clean. Yet, my main objection against acceptance is that there is a lot of related work on how equational reasoning can be automated while proving theorems that is not mentioned at all in this paper. 
+As a most recent example, Towards Pen-and-Paper-Style Equational Reasoning in Interactive Theorem Provers by Equality Saturation POPL'26, develop an equality saturation with e-graphs tactic in Lean. Even though this technique, as such, cannot just be adopted in Agda, the paper should compare against such techniques developed for Lean, Rocq (Hammer), and Isabelle’s Sledgehammer. Would your metatheoric proofs be similarly simplified using such tactics? 
 
-Review #32C
+As a smaller comment, more explanation would be required on why the resulting system is terminating and confluent. I assume that it is because the rewrite (line 646) gets accepted by Agda, but line 648 simply cites [1,8] without providing more explanations.
+
+
+
+Review #105B
 ===========================================================================
 
 Overall merit
 -------------
-A. Good paper, I will champion it
+D. Strong reject
 
-Confidence
-----------
-X. I am an expert in this area
+Reviewer expertise
+------------------
+Y. Knowledgeable
 
 Paper summary
 -------------
-This paper uses Agda's rewriting mechanism to formalize the metatheory of System F using intrinsically typed syntax.  
-
-The authors build up a theory of type substitutions, which prior work shows is a terminating rewrite system. They then use a careful mix of opaqueness annotations and rewrite declarations to allow the Agda compiler to reduce expressions involving substitutions according to its theory.
-
-Once type substitutions are developed, the paper develops an intrinsically typed representation of System F, along with a theory of term substitutions, which are used to give operational semantics to the language. Because of the intrinsic typing, the fact that the semantics are well-typed declarations implies subject reduction, and the use of rewriting vastly simplifies this process, since the typical presentation of System F involves terms reducing to other terms which have syntactically different types, but whose types can be shown as equal under the theory of substitutions.
-
-Finally, the paper develops two proofs of functorality for term substitutions, one with the rewriting rules and one without. The authors give a quantitative analysis of the size of the proofs, and the use of the rewriting rules significantly reduces both the size and compilation time of the proofs.
+The thesis of this pearl is that enriching definitional equality is an effective way to simplify programming language mechanizations in dependent type theory. This claim is supported by encodings in Agda of intrinsically-typed System F and intrinsically-typed System Fw. By enriching definitional equality with sigma calculus substitution laws, the encoding leads to shorter proofs, often `refl` or `cong`.
 
 Comments for authors
 --------------------
-Overall, the paper is quite strong, and very tidy. The development is neat and clear, the explanation is plain, and it addresses a serious issue with mechanizing PL metatheory. The novelty of the contributions is in line with what I expect from a "Fresh Perspective," and while many different solutions to the problem of subtitutions have been proposed, this paper uses all those developments to provide a very clear tutorial.
+Strengths:
++ Compelling encoding instance. System F with sigma calculus sounds like a neat idea, good basis for a pearl.
 
-The paper does a very good job of showing how rewrite rules improve the clarity and ease of writing the proofs. I found the quantitative analysis quite convincing, but seeing the example of transport hell beside the rewriting proof made the improvement quite qualititatively clear.
+Weaknesses:
+- Assumes much knowledge of Agda.
+- Benefits are not clearly illustrated.
+- Little discussion of takeaways for other researchers.
 
-Some of the proofs could use a little more prose explaning the inutition, but I understand there are space constraints to be considered.
+Note: my Agda background is very weak, just based on reading papers and code. Never writing.
 
-Some broad questions that I wish had been answered:
+This pearl begins on an excellent note. The abstract sets out a well-defined problem, proposes a clean solution, and even hints at a "general methodology" and "practical guidelines" for dependently typed mechanizations. The chosen encoding also sounds like an elegant idea to me - why not use the sigma calculus within definitional equality?
 
-* How hard was it to show that the rules are confluent? Was it as simple as hitting compile and Agda says "OK"? Or did the rules have to be tweaked or altered to satisfy the confluence heuristics? Are these heuristics transparent to the programmer, or did they guide the design of the contribution? E.g. what can someone reading the paper learn about how to make their own, different augmentations to definitional equality.
-* Is there any risk of non-termination? For example, having A->B and B->A can be both confluent and consistent, but it is possible that the Agda compiler will infinitely loop rewriting between them. The (on-paper) proof of termination for the substitution lets us know this is impossible, but the paper seems to imply that any confluent, consistent rewriting is "safe", and I'd like to know more about what exactly safe means here.
-* How does this play with the different options/axioms of Agda? Was --with-K used?
-* How hard would it be to extend this to an abstract binding tree, or to at least extract some core that isn't specific to System F?
-* In the "tower of sorts" for substitutions, is there a way to make it so that only one formalization of substitutions is needed? There seems to be a lot of duplication of work between the theory of term substitutions and type substitutions. Is this unavoidable? And in a 3-layer system, could the work between the top two layers avoid duplication?
-* Why does rewriting speed up compilation? In my mind, the rewrite rules should elaborate to something that looks like the non-rewriting version of the proof, so my intuition says rewriting should be slower, not faster. The reason for the speedup might reveal something interesting about the performance of dependently typed compilers.
+In Section 3.2.1, however, there is a concerning note about performance. Proving that 1 + 1 equals 2 takes over a minute on the authors machine. The Agda proof is ideal, simply `refl`, but the performance anecdote is terrible, and begs the question of how long other proofs in the paper take and whether the approach scales even to other small encodings. Would it be feasible to prove free theorems about lists, for example? The pearl should discuss tradeoffs thoroughly, otherwise the takeaway message is left in a doubtful state.
 
-Specific points and issues:
+The pearl should also highlight benefits more clearly. Section 2.6, if I understand correctly, says that the authors have a ~10-line proof of a property that takes over 2 typeset pages (Appendix A) using the prior state of the art [MPC 2019]. First of all, there should be a clear proof-size comparison. This is missing. Second, I find it very hard to see that we're comparing two equal properties. The pearl proves `Compose^{SS}` and the Appendix shows a bunch of `fusion-Esub-Esub` terms under the heading: "Proof for Compose Monad Law in Transfer Hell". It should be abundantly clear (since this is a pearl) that "Compose Monad Law" and `Compose^{SS}` capture the same idea. The pearl does have a small translation guide mapping notation from prior work to the pearl's notation (Section 2.6), but readers are left to work out the details by themselves. I'd appreciate some highlighting of what exactly counts as transfer hell in the proofs, such as the proof at the end of Section 2.6, because, as an inexperienced Agda user myself, that proof and the proof at the end of Section 2.5 both look approximately the same as dense blocks of equational reasoning.
 
-L115 - What does "brittle" mean in this context? What kinds of changes break the proof?
-L120 - What does "safe" mean here. Consistent? Decidable type checking? No type errors in the resulting code?
-L131 - The "C" in "CwF" stands for categories, so "CwF categories" is redundant.
-L393 - This was a really good comparison of exactly where the rewriting helps, seeing this in more places for the other rules might help.
-L399-420 - These rules are pretty complicated, I feel like a little more explanation would help a reader who isn't as adept ant translating DeBruijn indices into normal syntax.
-L518 - Some more explanation of where exactly the indexing shows up and how it affects the definition of compositionality would be good.
-L526 - A bit more explanation of the proof here might be helpful.
+The pearl's promise in the abstract to "distill practical guidelines" is not borne out. The pearl says repeatedly that strengthening definitional equality is a good idea, but there are no additional examples of where it does work or where it might work. This is disappointing.
+
+Sections 2 and 3 get very deep into Agda notation with little explanatory prose. I found Section 2.3.1 especially difficult; I'm not sure I've ever seen this notation to represent a renaming with a vertical bar and right arrow. The notation for equational reasoning is unfamiliar to me as well. I get the basic idea that the triple-equal sign (or `R.=~` sign) puts clauses together and the square "Qed" symbol ends the proof, but is this basic Agda that all users of dependently-typed languages would know? Anyway, notation needs to be explained yet this pearl is full of assumed-familiar notation.
+
+The call for papers says "A Functional Pearl is an elegant essay about something related to functional programming." I'm afraid I didn't find this to be an elegant essay.
+
+<https://icfp26.sigplan.org/track/icfp-2026-icfp-papers#functional-pearls>
+
+PS. I agree with Reviewer A that it was strange not to see a proof outline that enriched definitional equality is terminating and confluent. Other authors who follow your method would probably need to do similar proofs; give them some kind of road map to follow.
+
+
+
+Review #105C
+===========================================================================
+
+Overall merit
+-------------
+C. Weak reject
+
+Reviewer expertise
+------------------
+X. Expert
+
+Paper summary
+-------------
+This paper focuses on intrinsically typed embeddings of polymorphic calculi,
+and shows how to leverage Agda's extensible rewrite system to alleviate some of
+the administrative burden that arises from dependencies between renamings and 
+substitutions in polymorphic calculi.
+
+Comments for authors
+--------------------
+On the one hand, I appreciate the premise and motivation of this paper. 
+Having suffered when dealing with deep intrinsic embeddings that seem like they
+should just work, but there's just always an equality across which terms needs to be 
+transported; it all hit very close to home. 
+The solution is also intriguing at a high level: Agda's rewrite system is powerful, 
+and internalizing the σ-calculus explicit substitutions within it to force computation
+across equalities is a clever trick.
+
+That said, the paper, in its current form is not a functional pearl---and neither is it
+a research paper, as it lacks a proper demonstration of its core claim: that it works;
+mechanizing "parts of a metatheory" of a system and showing that those parts are simpler
+is definitely not adequate substantiation. A much more thorough comparison would be needed for that, including, ideally, both quantitative (e.g. proof size, checking time which is worryingly slow here) and qualitative (ease of use, which is somewhat addressed) comparisons with prior work.
+As per the CFP: "A pearl is likely to be rejected if its readers get bored, [..] or if the writing is inelegant."
+Pages 4,6,7,8,and 9, a core part of the paper, are all basically entirely snippets of Agda code with 
+minimal or no verbiage and signposting associated. You are defining a representation of 
+a well-known system in F, and the reader is left processing through a sequence of statements. 
+Page 8 is an excellent example of this: 
+
+"Weakening of a renaming by a value binding."
+
+<definition>
+
+"Weakening of a renaming by a type binding."
+
+<definition>
+
+"Extension of a renaming."
+
+<definition>
+
+[...]
+
+What's interesting about each definition? Readers should not be left wondering what each
+new Agda line brings to the table. Again, as per the CFP, a pearl should be 
+"instructive and entertaining", and a sequence of definitions broken by caption-style prose
+is not that. 
+
+Overall, the paper would need a substantial amount of rewriting and polish before being 
+considered a functional pearl, and it would also need a stronger justification of its 
+"that works" title.

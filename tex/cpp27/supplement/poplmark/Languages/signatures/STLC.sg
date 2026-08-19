@@ -1,0 +1,17 @@
+-- ═══ The signature of ../STLC.agda ══════════════════════════
+--
+-- Generates that module: the STLC core of POPLmark Reloaded, 66 curated
+-- rules plus the 15 iterated-lifting rules, 81 in total.  One sort,
+-- `expr`; the syntax is intrinsically SCOPED, not typed, so the simple
+-- types live in the metatheory rather than in `Sort`.
+
+%%module Languages.STLC
+
+%%var `_
+
+% infixl 7 _·_
+
+expr : Type
+
+`λx_` : (expr -> expr) -> expr
+`_·_` : expr -> expr -> expr

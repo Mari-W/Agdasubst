@@ -4408,3 +4408,43 @@
 %
 \>[2]\AgdaSymbol{)}\<%
 \end{code}
+\newcommand*\SubstExamplesDef{\begin{AgdaAlign}\begin{AgdaSuppressSpace}\begin{code}%
+\>[0][@{}l@{\AgdaIndent{1}}]%
+\>[2]\AgdaFunction{subst}\AgdaSpace{}%
+\AgdaSymbol{:}%
+% \>[11]\AgdaSymbol{∀}\AgdaSpace{}%
+% \AgdaSymbol{\{}\AgdaBound{A}\AgdaSpace{}%
+% \AgdaSymbol{:}\AgdaSpace{}%
+% \AgdaPrimitive{Set}\AgdaSpace{}%
+% \AgdaGeneralizable{ℓ}\AgdaSymbol{\}}\AgdaSpace{}%
+% \AgdaSymbol{\{}\AgdaBound{x}\AgdaSpace{}%
+% \AgdaBound{y}\AgdaSpace{}%
+% \AgdaSymbol{:}\AgdaSpace{}%
+% \AgdaBound{A}\AgdaSymbol{\}}\<%
+% \\
+%
+\>[11]\AgdaSymbol{(}\AgdaBound{P}\AgdaSpace{}%
+\AgdaSymbol{:}\AgdaSpace{}%
+\AgdaBound{A}\AgdaSpace{}%
+\AgdaSymbol{→}\AgdaSpace{}%
+\AgdaPrimitive{Set}\AgdaSpace{}%
+\AgdaGeneralizable{ℓ}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{→}\AgdaSpace{}%
+\AgdaBound{x}\AgdaSpace{}%
+\AgdaOperator{\AgdaDatatype{≡}}\AgdaSpace{}%
+\AgdaBound{y}\AgdaSpace{}%
+\AgdaSymbol{→}\AgdaSpace{}%
+\AgdaBound{P}\AgdaSpace{}%
+\AgdaBound{x}\AgdaSpace{}%
+\AgdaSymbol{→}\AgdaSpace{}%
+\AgdaBound{P}\AgdaSpace{}%
+\AgdaBound{y}\<%
+\\
+%
+\>[2]\AgdaFunction{subst}\AgdaSpace{}%
+\AgdaBound{P}\AgdaSpace{}%
+\AgdaInductiveConstructor{refl}\AgdaSpace{}%
+\AgdaBound{Px}\AgdaSpace{}%
+\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaBound{Px}\<%
+\end{code}\end{AgdaSuppressSpace}\end{AgdaAlign}}

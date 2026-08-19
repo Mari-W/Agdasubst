@@ -1,0 +1,50 @@
+-- ═══ The signature of ../FsubPatterns.agda ══════════════════
+--
+-- Generates that module: F<: with records AND patterns, 115 rules.
+-- This is the signature that exercises every extension at once.
+
+%%module Languages.FsubPatterns
+
+%%var `_
+%%funext ext-f
+
+%
+% Label : Set
+% Label = ℕ
+%
+% infixr 5 _⇒_
+% infixl 6 _·_
+% infixl 6 _•_
+% infixl 7 _#_
+
+expr  : Type
+type  : Type
+rtype : Type
+rexpr : Type
+pat   : ℕ -> ℕ -> Type
+rpat  : ℕ -> ℕ -> Type
+
+-- types
+Top         : type
+`_⇒_`       : type -> type -> type
+`∀[<:_]_`   : type -> (type -> type) -> type
+RcdT        : rtype -> type
+nilT        : rtype
+consT       : "Label" -> type -> rtype -> rtype
+
+-- terms
+`λx[_]_`    : type -> (expr -> expr) -> expr
+`Λα[<:_]_`  : type -> (type -> expr) -> expr
+`_·_`       : expr -> expr -> expr
+`_•_`       : expr -> type -> expr
+RcdE        : rexpr -> expr
+`_#_`       : expr -> "Label" -> expr
+letP        : pat 0 n -> expr -> (expr ^ n -> expr) -> expr
+nilE        : rexpr
+consE       : "Label" -> expr -> rexpr -> rexpr
+
+-- patterns
+pvar        : type -> pat n (suc n)
+prcd        : rpat n₁ n₂ -> pat n₁ n₂
+nilP        : rpat n n
+consP       : "Label" -> pat n₁ n₂ -> rpat n₂ n₃ -> rpat n₁ n₃

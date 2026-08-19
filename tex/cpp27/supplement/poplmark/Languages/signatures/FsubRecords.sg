@@ -1,0 +1,42 @@
+-- ═══ The signature of ../FsubRecords.agda ═══════════════════
+--
+-- Generates that module: F<: plus the two record sorts `rtype` /
+-- `rexpr`, 105 rules in total.
+--
+-- `Label` is a NON-SORT constructor parameter, declared by the `%`
+
+%%module Languages.FsubRecords
+
+%%var `_
+
+%
+% Label : Set
+% Label = ℕ
+%
+% infixr 5 _⇒_
+% infixl 6 _·_
+% infixl 6 _•_
+% infixl 7 _#_
+
+expr  : Type
+type  : Type
+rtype : Type
+rexpr : Type
+
+-- types
+Top         : type
+`_⇒_`       : type -> type -> type
+`∀[<:_]_`   : type -> (type -> type) -> type
+RcdT        : rtype -> type
+nilT        : rtype
+consT       : "Label" -> type -> rtype -> rtype
+
+-- terms
+`λx[_]_`    : type -> (expr -> expr) -> expr
+`Λα[<:_]_`  : type -> (type -> expr) -> expr
+`_·_`       : expr -> expr -> expr
+`_•_`       : expr -> type -> expr
+RcdE        : rexpr -> expr
+`_#_`       : expr -> "Label" -> expr
+nilE        : rexpr
+consE       : "Label" -> expr -> rexpr -> rexpr

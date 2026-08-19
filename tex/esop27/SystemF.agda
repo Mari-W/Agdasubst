@@ -1,13 +1,35 @@
--- rewriting safe, when rewrites terminate, double checked by kernel
-{-# OPTIONS --rewriting --confluence-check --double-check --without-K #-}
+-- ════════════════════════════════════════════════════════════════════
+-- SYSTEM F, intrinsically typed, with a σ-CALCULUS INSTALLED AS AGDA
+-- REWRITE RULES.  This is the paper's main development.
+--
+-- What it shows:
+--
+--  (1) A CONFLUENT curation of the σ-calculus with first-class
+--      renamings — λσ⇑-style: lifting is a first-class opaque symbol,
+--      there are no η-rules, and coincidence is oriented ˢ→ᴿ.  The
+--      whole set is registered with REWRITE pragmas and certified by
+--      Agda's --local-confluence-check (§3).
+--
+--  (2) TRANSFER HEAVEN at the type level: with those rules installed
+--      every index equation of the intrinsically typed syntax holds
+--      definitionally, so renaming and substitution on expressions are
+--      defined, traversed and composed without a single transport
+--      (§5, §6).
+--
+--  (3) TRANSFER HELL at the expression level: the expression-level
+--      mirror of the σ-calculus is an exact equational theory — every
+--      law in §7 is an Agda theorem — yet it cannot be installed as a
+--      rewrite system.  §7 records why.
+--
+-- The only postulate is fun-ext.
+-- ════════════════════════════════════════════════════════════════════
+{-# OPTIONS --rewriting --local-confluence-check #-}
 module SystemF where
 open import Agda.Builtin.Equality.Rewrite public
 
--- standard equational reasoning
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; trans; module ≡-Reasoning)
 open ≡-Reasoning
 
--- function extensionality (postulated)
 open import Axiom.Extensionality.Propositional using (Extensionality)
 postulate
   fun-ext : ∀ {ℓ₁ ℓ₂} → Extensionality ℓ₁ ℓ₂
@@ -18,6 +40,7 @@ open import Data.Fin using (zero; suc) renaming (Fin to Var)
 infixr 5 _⇒_
 infix 6 `_
 
+-- ══════════════ §1  Types ══════════════════════════════════════════
 --! SF >
 --! Type >
 --! Definition
@@ -36,6 +59,8 @@ variable
   n n′ n₁ n₂ n₃ : Nat
   α α′ α₁ α₂ α₃ : Var n
   T T′ T₁ T₂ T₃ : Type n
+
+-- ══════════════ §2  Renaming and substitution on types ═════════════
 
 --! Renaming
 -- renamings
@@ -65,11 +90,15 @@ opaque
   _⨟ᴿ_ : Ren n₁ n₂ → Ren n₂ n₃ → Ren n₁ n₃
   (ζ₁ ⨟ᴿ ζ₂) α = ζ₂ (ζ₁ α)
 
--- lifting
-_↑ᴿ : Ren n₁ n₂ → Ren (1 + n₁) (1 + n₂)
-_↑ᴿ ζ = zero ∙ᴿ (ζ ⨟ᴿ wkᴿ)
+-- lifting: FIRST-CLASS (opaque) — eliminating it forces the η-rules
+-- into the rewrite system, and η is incompatible with confluence
+opaque
+  _↑ᴿ : Ren n₁ n₂ → Ren (1 + n₁) (1 + n₂)
+  _↑ᴿ ζ = zero ∙ᴿ (ζ ⨟ᴿ wkᴿ)
 
--- apply renaming to type
+-- apply renaming to a type (transparent: these clauses ARE the
+-- traversal rules, and expression indices under Λ can only be
+-- decomposed by them)
 _[_]ᴿ : Type n₁ → Ren n₁ n₂ → Type n₂
 (` α) [ ζ ]ᴿ      = ` (α &ᴿ ζ)
 (∀α T) [ ζ ]ᴿ     = ∀α (T [ ζ ↑ᴿ ]ᴿ)
@@ -99,11 +128,14 @@ opaque
   _&ˢ_ : Var n₁ → Sub n₁ n₂ → Type n₂
   α &ˢ η = η α
 
-  -- lifting
+
+-- lifting: FIRST-CLASS (opaque)
+opaque
   _↑ˢ : Sub n₁ n₂ → Sub (1 + n₁) (1 + n₂)
   _↑ˢ η = (` zero) ∙ˢ λ α → (η α) [ wkᴿ ]ᴿ
 
--- apply substitution to type
+-- apply substitution to a type (transparent: these clauses ARE the
+-- traversal rules)
 _[_]ˢ : Type n₁ → Sub n₁ n₂ → Type n₂
 (` α) [ η ]ˢ      = α &ˢ η
 (∀α T) [ η ]ˢ     = ∀α (T [ η ↑ˢ ]ˢ)
@@ -118,74 +150,123 @@ opaque
 variable
   η η′ η₁ η₂ η₃ : Sub n₁ n₂
 
+-- ══════════════ §3  The σ-calculus, confluent curation ═════════════
+-- λσ⇑-style: lifting is a first-class symbol, composition at a
+-- variable PUSHES on the renaming side and FOLDS on the substitution
+-- side, there are NO η-rules, and coincidence is oriented ˢ→ᴿ, so the
+-- ᴿ-world is the normal form of a renaming-shaped substitution.  The
+-- curation is what makes the set locally confluent; the naive
+-- traversal-plus-composition set is not.
 opaque
-  unfolding wkᴿ ⟨_⟩ _⨟ˢ_
-  -- rewrite system
-  -- you probably shouldn't care too much about
-  -- the specific system here, it is "the same as in Autosubst"
-  -- namely the σₛₚ calculus
-
-  -- importantly: it is confluent and terminating
-  -- (not complete in the presence of first-class renamings)
-  -- thus valid rewrite rules
-
-  -- more importantly, we do not
-  -- (by convention, currently not enforced) use (σ _ α)
-  -- to look up a variable in a substitution,
-  -- but rather use the blocking symbol α [ σ ]ˢ
-  -- on which we can rewrite the sigma laws!
-
-  -- first-class renamings
-  -- computing renamings
+  unfolding wkᴿ idᴿ _∙ᴿ_ _&ᴿ_ _⨟ᴿ_ _↑ᴿ ⟨_⟩ _∙ˢ_ _&ˢ_ _↑ˢ _⨟ˢ_
   --! RenamingBeta {
   `beta-ext-zero    : zero  &ᴿ (α ∙ᴿ ζ)          ≡ α
   `beta-ext-suc     : suc α &ᴿ (α′ ∙ᴿ ζ)         ≡ α &ᴿ ζ
   `beta-id          : α &ᴿ idᴿ                   ≡ α
   `beta-wk          : α &ᴿ wkᴿ                   ≡ suc α
+  `beta-lift-zero   : zero &ᴿ (ζ ↑ᴿ)             ≡ zero
+  `beta-lift-suc    : suc α &ᴿ (ζ ↑ᴿ)            ≡ suc (α &ᴿ ζ)
+  -- composition at a variable PUSHES here (the substitution side
+  -- folds instead).  A fold rule at this level would pair unjoinably
+  -- with the applied rules `beta-id and `beta-wk, whose variable
+  -- arguments are bare metavariables, so nested applications simply
+  -- stay applied.  For the same reason `distributivity below is a
+  -- lemma and not a rewrite; the applied-⨟ family replaces it.
   `beta-comp        : α &ᴿ (ζ₁ ⨟ᴿ ζ₂)            ≡ (α &ᴿ ζ₁) &ᴿ ζ₂
-  -- interaction between renamings
   `associativity    : (ζ₁ ⨟ᴿ ζ₂) ⨟ᴿ ζ₃           ≡ ζ₁ ⨟ᴿ (ζ₂ ⨟ᴿ ζ₃)
   `distributivity   : (α ∙ᴿ ζ₁) ⨟ᴿ ζ₂            ≡ (α &ᴿ ζ₂) ∙ᴿ (ζ₁ ⨟ᴿ ζ₂)
   `interact         : wkᴿ ⨟ᴿ (α ∙ᴿ ζ)            ≡ ζ
+  `interact-⨟       : wkᴿ ⨟ᴿ ((α ∙ᴿ ζ) ⨟ᴿ ζ′)    ≡ ζ ⨟ᴿ ζ′
   `comp-idᵣ         : ζ ⨟ᴿ idᴿ                   ≡ ζ
   `comp-idₗ         : idᴿ ⨟ᴿ ζ                   ≡ ζ
+  `lift-id          : (idᴿ {n}) ↑ᴿ               ≡ idᴿ
+  `lift-wk          : wkᴿ ⨟ᴿ (ζ ↑ᴿ)              ≡ ζ ⨟ᴿ wkᴿ
+  `lift-cons        : (ζ ↑ᴿ) ⨟ᴿ (α ∙ᴿ ζ′)        ≡ α ∙ᴿ (ζ ⨟ᴿ ζ′)
+  `lift-cons-⨟      : (ζ ↑ᴿ) ⨟ᴿ ((α ∙ᴿ ζ′) ⨟ᴿ ζ₃) ≡ (α &ᴿ ζ₃) ∙ᴿ (ζ ⨟ᴿ (ζ′ ⨟ᴿ ζ₃))
+  `lift-fusion      : (ζ₁ ↑ᴿ) ⨟ᴿ (ζ₂ ↑ᴿ)         ≡ (ζ₁ ⨟ᴿ ζ₂) ↑ᴿ
+  `lift-wk-⨟        : wkᴿ ⨟ᴿ ((ζ ↑ᴿ) ⨟ᴿ ζ′)      ≡ ζ ⨟ᴿ (wkᴿ ⨟ᴿ ζ′)
+  `lift-fusion-⨟    : (ζ₁ ↑ᴿ) ⨟ᴿ ((ζ₂ ↑ᴿ) ⨟ᴿ ζ′) ≡ ((ζ₁ ⨟ᴿ ζ₂) ↑ᴿ) ⨟ᴿ ζ′
+  --! }
+  -- η-rules: LEMMAS ONLY — the applied rules evaluate the η-redex's
+  -- head, so no orientation of these is locally confluent
   `η-id             : zero {n} ∙ᴿ wkᴿ            ≡ idᴿ
   `η-law            : (zero &ᴿ ζ) ∙ᴿ (wkᴿ ⨟ᴿ ζ)  ≡ ζ
-  --! }
 
-  -- computing substitutions
   --! SubstitutionBeta {
   beta-ext-zero     : zero  &ˢ (T ∙ˢ η)              ≡ T
   beta-ext-suc      : suc α &ˢ (T ∙ˢ η)              ≡ α &ˢ η
   beta-rename       : α &ˢ ⟨ ζ ⟩                     ≡ ` (α &ᴿ ζ)
-  beta-comp         : α &ˢ (η₁ ⨟ˢ η₂)                ≡ (α &ˢ η₁) [ η₂ ]ˢ
-  beta-lift         : η ↑ˢ                           ≡ (` zero) ∙ˢ (η ⨟ˢ ⟨ wkᴿ ⟩)
+  beta-lift-zero    : zero &ˢ (η ↑ˢ)                 ≡ ` zero
+  beta-lift-suc     : suc α &ˢ (η ↑ˢ)                ≡ α &ˢ (η ⨟ˢ ⟨ wkᴿ ⟩)
+  beta-⟨⟩-⨟         : α &ˢ (⟨ ζ ⟩ ⨟ˢ η)              ≡ (α &ᴿ ζ) &ˢ η
+  beta-lift-zero-⨟  : zero &ˢ ((η ↑ˢ) ⨟ˢ η′)         ≡ zero &ˢ η′
+  beta-lift-suc-⨟   : suc α &ˢ ((η ↑ˢ) ⨟ˢ η′)        ≡ α &ˢ (η ⨟ˢ (⟨ wkᴿ ⟩ ⨟ˢ η′))
+  beta-fold         : (α &ˢ η₁) [ η₂ ]ˢ              ≡ α &ˢ (η₁ ⨟ˢ η₂)
+  beta-fold-ˢᴿ      : (α &ˢ η) [ ζ ]ᴿ                ≡ α &ˢ (η ⨟ˢ ⟨ ζ ⟩)
+  beta-lift-ren-∙   : (α &ᴿ (ζ ↑ᴿ)) &ˢ (T ∙ˢ η)      ≡ α &ˢ (T ∙ˢ (⟨ ζ ⟩ ⨟ˢ η))
   --! }
-  -- interaction between substitutions
   --! SubstitutionInteraction {
   associativity     : (η₁ ⨟ˢ η₂) ⨟ˢ η₃               ≡ η₁ ⨟ˢ (η₂ ⨟ˢ η₃)
   distributivity    : (T ∙ˢ η₁) ⨟ˢ η₂                ≡ (T [ η₂ ]ˢ) ∙ˢ (η₁ ⨟ˢ η₂)
   interact          : ⟨ wkᴿ ⟩ ⨟ˢ (T ∙ˢ η)            ≡ η
   comp-idᵣ          : η ⨟ˢ ⟨ idᴿ ⟩                   ≡ η
   comp-idₗ          : ⟨ idᴿ ⟩ ⨟ˢ η                   ≡ η
+  lift-id           : (⟨ idᴿ {n} ⟩ ↑ˢ)               ≡ ⟨ idᴿ ⟩
+  lift-wk           : ⟨ wkᴿ ⟩ ⨟ˢ (η ↑ˢ)              ≡ η ⨟ˢ ⟨ wkᴿ ⟩
+  lift-cons         : (η ↑ˢ) ⨟ˢ (T ∙ˢ η′)            ≡ T ∙ˢ (η ⨟ˢ η′)
+  lift-fusion       : (η₁ ↑ˢ) ⨟ˢ (η₂ ↑ˢ)             ≡ (η₁ ⨟ˢ η₂) ↑ˢ
+  lift-wk-⨟         : ⟨ wkᴿ ⟩ ⨟ˢ ((η ↑ˢ) ⨟ˢ η′)      ≡ η ⨟ˢ (⟨ wkᴿ ⟩ ⨟ˢ η′)
+  lift-fusion-⨟     : (η₁ ↑ˢ) ⨟ˢ ((η₂ ↑ˢ) ⨟ˢ η′)     ≡ ((η₁ ⨟ˢ η₂) ↑ˢ) ⨟ˢ η′
+  -- embedded composition: BARE pairs fold toward ᴿ (⟨⟩-comp), while
+  -- composites under a continuation split (⟨⟩-split-⨟) — the pair
+  -- normalizes bare forms to ⟨ζ₁⨟ᴿζ₂⟩ and continued forms to
+  -- right-nested ⟨⟩-chains, and each closes the other's peaks
+  ⟨⟩-comp           : ⟨ ζ₁ ⟩ ⨟ˢ ⟨ ζ₂ ⟩               ≡ ⟨ ζ₁ ⨟ᴿ ζ₂ ⟩
+  ⟨⟩-split          : ⟨ ζ₁ ⨟ᴿ ζ₂ ⟩                   ≡ ⟨ ζ₁ ⟩ ⨟ˢ ⟨ ζ₂ ⟩
+  ⟨⟩-split-⨟        : ⟨ ζ₁ ⨟ᴿ ζ₂ ⟩ ⨟ˢ η              ≡ ⟨ ζ₁ ⟩ ⨟ˢ (⟨ ζ₂ ⟩ ⨟ˢ η)
+  ⟨⟩-↑-cons         : ⟨ ζ ↑ᴿ ⟩ ⨟ˢ (T ∙ˢ η)           ≡ T ∙ˢ (⟨ ζ ⟩ ⨟ˢ η)
+  -- the embedded interaction laws for wk-precomposition
+  ⟨⟩-wk-cons        : ⟨ wkᴿ ⟩ ⨟ˢ ⟨ α ∙ᴿ ζ ⟩          ≡ ⟨ ζ ⟩
+  ⟨⟩-wk-cons-⨟      : ⟨ wkᴿ ⟩ ⨟ˢ (⟨ α ∙ᴿ ζ ⟩ ⨟ˢ η)   ≡ ⟨ ζ ⟩ ⨟ˢ η
+  ⟨⟩-wk-lift        : ⟨ wkᴿ ⟩ ⨟ˢ ⟨ ζ ↑ᴿ ⟩            ≡ ⟨ ζ ⟩ ⨟ˢ ⟨ wkᴿ ⟩
+  ⟨⟩-wk-lift-⨟      : ⟨ wkᴿ ⟩ ⨟ˢ (⟨ ζ ↑ᴿ ⟩ ⨟ˢ η)     ≡ ⟨ ζ ⟩ ⨟ˢ (⟨ wkᴿ ⟩ ⨟ˢ η)
+  -- the embedded lift-fusion laws.  Only the RR flavour is a REWRITE:
+  -- the RS/SR flavours produce (⟨ζ⟩ ⨟ η) ↑ˢ forms whose lift-id
+  -- instances hit the irreducible ⟨ζ↑ᴿ⟩ ≠ ⟨ζ⟩↑ˢ canonical-form split
+  -- (registering lift-⟨⟩ in either direction is non-confluent)
+  ⟨⟩-lift-lift      : ⟨ ζ₁ ↑ᴿ ⟩ ⨟ˢ ⟨ ζ₂ ↑ᴿ ⟩         ≡ ⟨ (ζ₁ ⨟ᴿ ζ₂) ↑ᴿ ⟩
+  ⟨⟩-lift-lift-⨟    : ⟨ ζ₁ ↑ᴿ ⟩ ⨟ˢ (⟨ ζ₂ ↑ᴿ ⟩ ⨟ˢ η)  ≡ ⟨ (ζ₁ ⨟ᴿ ζ₂) ↑ᴿ ⟩ ⨟ˢ η
+  `beta-lift-fusion : (α &ᴿ (ζ₁ ↑ᴿ)) &ᴿ (ζ₂ ↑ᴿ)      ≡ α &ᴿ ((ζ₁ ⨟ᴿ ζ₂) ↑ᴿ)
+  ⟨⟩-lift-RS        : ⟨ ζ ↑ᴿ ⟩ ⨟ˢ (η ↑ˢ)             ≡ (⟨ ζ ⟩ ⨟ˢ η) ↑ˢ
+  ⟨⟩-lift-RS-⨟      : ⟨ ζ ↑ᴿ ⟩ ⨟ˢ ((η ↑ˢ) ⨟ˢ η′)     ≡ ((⟨ ζ ⟩ ⨟ˢ η) ↑ˢ) ⨟ˢ η′
+  beta-lift-ren-↑   : (α &ᴿ (ζ ↑ᴿ)) &ˢ (η ↑ˢ)        ≡ α &ˢ ((⟨ ζ ⟩ ⨟ˢ η) ↑ˢ)
+  beta-lift-ren-↑-⨟ : (α &ᴿ (ζ ↑ᴿ)) &ˢ ((η ↑ˢ) ⨟ˢ η′) ≡ α &ˢ (((⟨ ζ ⟩ ⨟ˢ η) ↑ˢ) ⨟ˢ η′)
+  ⟨⟩-lift-SR-comp   : (η ↑ˢ) ⨟ˢ ⟨ (ζ ↑ᴿ) ⨟ᴿ ζ′ ⟩     ≡ ((η ⨟ˢ ⟨ ζ ⟩) ↑ˢ) ⨟ˢ ⟨ ζ′ ⟩
+  ⟨⟩-lift-SR        : (η ↑ˢ) ⨟ˢ ⟨ ζ ↑ᴿ ⟩             ≡ (η ⨟ˢ ⟨ ζ ⟩) ↑ˢ
+  ⟨⟩-lift-SR-⨟      : (η ↑ˢ) ⨟ˢ (⟨ ζ ↑ᴿ ⟩ ⨟ˢ η′)     ≡ ((η ⨟ˢ ⟨ ζ ⟩) ↑ˢ) ⨟ˢ η′
+  --! }
+  -- η-rules: lemmas only (see above)
   η-id              : (` zero {n}) ∙ˢ ⟨ wkᴿ ⟩        ≡ ⟨ idᴿ ⟩
   η-law             : (zero &ˢ η) ∙ˢ (⟨ wkᴿ ⟩ ⨟ˢ η)  ≡ η
-  --! }
+  -- lift-elimination: LEMMA only — as a rule it drags η-id into the
+  -- join of identityᵣˢ with the ∀-clause, and η is fatal for confluence
+  beta-lift         : η ↑ˢ                           ≡ (` zero) ∙ˢ (η ⨟ˢ ⟨ wkᴿ ⟩)
 
-  -- monad laws
-  -- composing renamings and substitutions
   --! Monad
   identityᵣ                  : T [ idᴿ ]ᴿ           ≡ T
-  compositionalityᴿˢ         : (T [ ζ₁ ]ᴿ) [ η₂ ]ˢ  ≡ T [ ⟨ ζ₁ ⟩ ⨟ˢ η₂ ]ˢ
   compositionalityᴿᴿ         : (T [ ζ₁ ]ᴿ) [ ζ₂ ]ᴿ  ≡ T [ ζ₁ ⨟ᴿ ζ₂ ]ᴿ
+  compositionalityᴿˢ         : (T [ ζ₁ ]ᴿ) [ η₂ ]ˢ  ≡ T [ ⟨ ζ₁ ⟩ ⨟ˢ η₂ ]ˢ
   compositionalityˢᴿ         : (T [ η₁ ]ˢ) [ ζ₂ ]ᴿ  ≡ T [ η₁ ⨟ˢ ⟨ ζ₂ ⟩ ]ˢ
   compositionalityˢˢ         : (T [ η₁ ]ˢ) [ η₂ ]ˢ  ≡ T [ η₁ ⨟ˢ η₂ ]ˢ
 
-  -- coincidence laws
-  -- transforming substitutions to renamings
+  -- THE transfer law, between the two worlds.  Only `coincidence` is
+  -- registered, i.e. it is oriented ˢ→ᴿ: a renaming-shaped
+  -- substitution normalises to a renaming, so the substitution
+  -- traversal disappears from every goal that has one.  `ren-to-sub`
+  -- is its converse, kept as a lemma.
   --! Coincidence
   coincidence       : T [ ⟨ ζ ⟩ ]ˢ      ≡ T [ ζ ]ᴿ
-  coincidence-comp  : ⟨ ζ₁ ⟩ ⨟ˢ ⟨ ζ₂ ⟩  ≡ ⟨ ζ₁ ⨟ᴿ ζ₂ ⟩
+  ren-to-sub        : T [ ζ ]ᴿ          ≡ T [ ⟨ ζ ⟩ ]ˢ
 
   identityᵣˢ        : T [ ⟨ idᴿ ⟩ ]ˢ     ≡ T
 
@@ -193,35 +274,78 @@ opaque
   `beta-ext-suc   = refl
   `beta-id        = refl
   `beta-wk        = refl
+  `beta-lift-zero = refl
+  `beta-lift-suc  = refl
   `beta-comp      = refl
 
   `associativity   = refl
   `distributivity  = fun-ext λ { zero → refl; (suc α) → refl }
   `interact        = refl
+  `interact-⨟      = refl
   `comp-idᵣ        = refl
   `comp-idₗ        = refl
+  `lift-id         = fun-ext λ { zero → refl; (suc α) → refl }
+  `lift-wk         = refl
+  `lift-cons       = fun-ext λ { zero → refl; (suc α) → refl }
+  `lift-cons-⨟     = fun-ext λ { zero → refl; (suc α) → refl }
+  `lift-fusion     = fun-ext λ { zero → refl; (suc α) → refl }
+  `lift-wk-⨟       = fun-ext λ α → refl
+  `lift-fusion-⨟   = fun-ext λ { zero → refl; (suc α) → refl }
   `η-id            = fun-ext λ { zero → refl; (suc α) → refl }
   `η-law           = fun-ext λ { zero → refl; (suc α) → refl }
 
   beta-ext-zero  = refl
   beta-ext-suc   = refl
   beta-rename    = refl
-  beta-comp      = refl
-  beta-lift      = cong ((` zero) ∙ˢ_) (sym (fun-ext λ x → coincidence))
+  beta-lift-zero = refl
+  beta-lift-suc {α = α} {η = η} = sym (coincidence {T = η α})
+  beta-⟨⟩-⨟      = refl
+  beta-lift-zero-⨟ = refl
+  beta-lift-suc-⨟ {α = α} {η = η} {η′ = η′} = compositionalityᴿˢ {T = η α}
+  beta-fold      = refl
+  beta-fold-ˢᴿ {α = α} {η = η} = sym (coincidence {T = η α})
+  beta-lift-ren-∙ {α = zero}   = refl
+  beta-lift-ren-∙ {α = suc α}  = refl
 
   associativity {η₁ = η₁} = fun-ext (λ α → compositionalityˢˢ {T = η₁ α})
   distributivity  = fun-ext λ { zero → refl; (suc α) → refl }
   interact        = refl
   comp-idᵣ        = fun-ext (λ α → identityᵣˢ)
   comp-idₗ        = refl
+  lift-id         = fun-ext λ { zero → refl; (suc α) → refl }
+  lift-wk {η = η} = fun-ext λ α → sym (coincidence {T = η α})
+  lift-cons {η = η} {T = T} {η′ = η′} = fun-ext λ
+    { zero → refl
+    ; (suc α) → trans (compositionalityᴿˢ {T = η α})
+                      (cong ((η α) [_]ˢ) (interact {T = T} {η = η′})) }
+  lift-wk-⨟ {η = η} {η′ = η′} = fun-ext λ α → compositionalityᴿˢ {T = η α}
+  lift-fusion-⨟ {η₁ = η₁} {η₂ = η₂} {η′ = η′} =
+    trans (sym (associativity {η₁ = η₁ ↑ˢ} {η₂ = η₂ ↑ˢ} {η₃ = η′}))
+          (cong (_⨟ˢ η′) lift-fusion)
+  ⟨⟩-comp         = fun-ext λ α → refl
+  ⟨⟩-split        = fun-ext λ α → refl
+  ⟨⟩-split-⨟      = fun-ext λ α → refl
+  ⟨⟩-wk-cons      = fun-ext λ α → refl
+  ⟨⟩-wk-cons-⨟    = fun-ext λ α → refl
+  ⟨⟩-wk-lift      = fun-ext λ α → refl
+  ⟨⟩-wk-lift-⨟    = fun-ext λ α → refl
+  ⟨⟩-lift-lift    = fun-ext λ { zero → refl; (suc α) → refl }
+  ⟨⟩-lift-lift-⨟  = fun-ext λ { zero → refl; (suc α) → refl }
+  `beta-lift-fusion {α = zero}  = refl
+  `beta-lift-fusion {α = suc α} = refl
+  ⟨⟩-lift-RS      = fun-ext λ { zero → refl; (suc α) → refl }
+  ⟨⟩-lift-RS-⨟    = fun-ext λ { zero → refl; (suc α) → refl }
+  beta-lift-ren-↑ {α = zero}  = refl
+  beta-lift-ren-↑ {α = suc α} = refl
+  beta-lift-ren-↑-⨟ {α = zero}  = refl
+  beta-lift-ren-↑-⨟ {α = suc α} = refl
+  ⟨⟩-↑-cons       = fun-ext λ { zero → refl; (suc α) → refl }
   η-id            = fun-ext λ { zero → refl; (suc α) → refl }
   η-law           = fun-ext λ { zero → refl; (suc α) → refl }
+  beta-lift       = cong ((` zero) ∙ˢ_) (sym (fun-ext λ x → coincidence))
 
-
-  lift-idᴿ : (idᴿ {n}) ↑ᴿ ≡ idᴿ
-  lift-idᴿ = fun-ext λ { zero → refl; (suc α) → refl }
   identityᵣ {T = (` α)}      = refl
-  identityᵣ {T = (∀α T)}     = cong ∀α (trans (cong (T [_]ᴿ) lift-idᴿ) (identityᵣ {T = T}))
+  identityᵣ {T = (∀α T)}     = cong ∀α (trans (cong (T [_]ᴿ) `lift-id) (identityᵣ {T = T}))
   identityᵣ {T = (T₁ ⇒ T₂)}  = cong₂ _⇒_ (identityᵣ {T = T₁}) (identityᵣ {T = T₂})
 
   lift-coincidence : ∀ {n₁ n₂} {ζ : Ren n₁ n₂} → (⟨ ζ ⟩ ↑ˢ) ≡ ⟨ ζ ↑ᴿ ⟩
@@ -231,7 +355,7 @@ opaque
   coincidence {T = ∀α T} {ζ = ζ}   = cong ∀α (trans (cong (T [_]ˢ) lift-coincidence) coincidence)
   coincidence {T = T₁ ⇒ T₂}        = cong₂ _⇒_ coincidence coincidence
 
-  coincidence-comp = fun-ext λ α → refl
+  ren-to-sub = sym coincidence
 
   lift-compositionalityᴿᴿ : ∀ {n₁ n₂ n₃} {ζ₁ : Ren n₁ n₂} {ζ₂ : Ren n₂ n₃} → (ζ₁ ↑ᴿ) ⨟ᴿ (ζ₂ ↑ᴿ) ≡ (ζ₁ ⨟ᴿ ζ₂) ↑ᴿ
   lift-compositionalityᴿᴿ = fun-ext λ { zero → refl; (suc α) → refl }
@@ -270,108 +394,67 @@ opaque
       T [ η₂ ⨟ˢ ⟨ wkᴿ ⟩ ]ˢ           ≡⟨ sym (compositionalityˢᴿ {T = T}) ⟩
       (T [ η₂ ]ˢ) [ wkᴿ ]ᴿ           ∎ }
 
+  lift-fusion     = lift-compositionalityˢˢ
+  ⟨⟩-lift-SR      = lift-compositionalityˢᴿ
+  ⟨⟩-lift-SR-comp {η = η} {ζ = ζ} {ζ′ = ζ′} = fun-ext λ { zero → refl; (suc α) →
+    let T = η α in
+    begin
+      (T [ wkᴿ ]ᴿ) [ ⟨ (ζ ↑ᴿ) ⨟ᴿ ζ′ ⟩ ]ˢ
+    ≡⟨ compositionalityᴿˢ {T = T} {ζ₁ = wkᴿ} {η₂ = ⟨ (ζ ↑ᴿ) ⨟ᴿ ζ′ ⟩} ⟩
+      T [ ⟨ wkᴿ ⟩ ⨟ˢ ⟨ (ζ ↑ᴿ) ⨟ᴿ ζ′ ⟩ ]ˢ
+    ≡⟨ cong (T [_]ˢ) (⟨⟩-comp {ζ₁ = wkᴿ} {ζ₂ = (ζ ↑ᴿ) ⨟ᴿ ζ′}) ⟩
+      T [ ⟨ wkᴿ ⨟ᴿ ((ζ ↑ᴿ) ⨟ᴿ ζ′) ⟩ ]ˢ
+    ≡⟨⟩
+      T [ ⟨ ζ ⨟ᴿ (wkᴿ ⨟ᴿ ζ′) ⟩ ]ˢ
+    ≡⟨ cong (T [_]ˢ) (sym (⟨⟩-comp {ζ₁ = ζ} {ζ₂ = wkᴿ ⨟ᴿ ζ′})) ⟩
+      T [ ⟨ ζ ⟩ ⨟ˢ ⟨ wkᴿ ⨟ᴿ ζ′ ⟩ ]ˢ
+    ≡⟨ cong (λ ξ → T [ ⟨ ζ ⟩ ⨟ˢ ξ ]ˢ) (sym (⟨⟩-comp {ζ₁ = wkᴿ} {ζ₂ = ζ′})) ⟩
+      T [ ⟨ ζ ⟩ ⨟ˢ (⟨ wkᴿ ⟩ ⨟ˢ ⟨ ζ′ ⟩) ]ˢ
+    ≡⟨ cong (T [_]ˢ) (sym (associativity {η₁ = ⟨ ζ ⟩} {η₂ = ⟨ wkᴿ ⟩} {η₃ = ⟨ ζ′ ⟩})) ⟩
+      T [ (⟨ ζ ⟩ ⨟ˢ ⟨ wkᴿ ⟩) ⨟ˢ ⟨ ζ′ ⟩ ]ˢ
+    ≡⟨ sym (compositionalityˢˢ {T = T} {η₁ = ⟨ ζ ⟩ ⨟ˢ ⟨ wkᴿ ⟩} {η₂ = ⟨ ζ′ ⟩}) ⟩
+      (T [ ⟨ ζ ⟩ ⨟ˢ ⟨ wkᴿ ⟩ ]ˢ) [ ⟨ ζ′ ⟩ ]ˢ
+    ≡⟨ cong (_[ ⟨ ζ′ ⟩ ]ˢ) (sym (compositionalityˢᴿ {T = T} {η₁ = ⟨ ζ ⟩} {ζ₂ = wkᴿ})) ⟩
+      ((T [ ⟨ ζ ⟩ ]ˢ) [ wkᴿ ]ᴿ) [ ⟨ ζ′ ⟩ ]ˢ    ∎ }
+  ⟨⟩-lift-SR-⨟ {η = η} {ζ = ζ} {η′ = η′} =
+    trans (sym (associativity {η₁ = η ↑ˢ} {η₂ = ⟨ ζ ↑ᴿ ⟩} {η₃ = η′}))
+          (cong (_⨟ˢ η′) lift-compositionalityˢᴿ)
+
   compositionalityˢˢ {T = ` α}      = refl
   compositionalityˢˢ {T = ∀α T}     = cong ∀α (trans (compositionalityˢˢ {T = T}) (cong (T [_]ˢ) lift-compositionalityˢˢ))
   compositionalityˢˢ {T = T₁ ⇒ T₂}  = cong₂ _⇒_ (compositionalityˢˢ {T = T₁}) (compositionalityˢˢ {T = T₂})
 
   identityᵣˢ {T = ` α}      = refl
-  identityᵣˢ {T = ∀α T}     = cong ∀α (trans (cong (T [_]ˢ) η-id) identityᵣˢ)
+  identityᵣˢ {T = ∀α T}     = cong ∀α (trans (cong (T [_]ˢ) lift-id) identityᵣˢ)
   identityᵣˢ {T = T₁ ⇒ T₂}  = cong₂ _⇒_ identityᵣˢ identityᵣˢ
 
--- more coincidence lemmas ...
--- all follow directly from case analysis
--- (they are extracted from type failures,
---  i did not analyise them)
-
--- definitely supports the claim that we need
--- a dedicated coincidence solving strategy
-opaque
-  unfolding wkᴿ ⟨_⟩ _⨟ˢ_
-  -- "single substitution under renaming": lifting ζ and post-composing with a
-  -- single-substitution `_∙ˢ⟨idᴿ⟩` collapses to direct single substitution
-  -- with ζ as the tail. Justifies (T [ T′ ]*) [ ζ ]ᴿ ≡ (T [ ζ ↑ᴿ ]ᴿ) [ T′[ζ]ᴿ ]*.
-  coincidence-pop-ᴿ : (⟨ ζ ↑ᴿ ⟩ ⨟ˢ ((T′ [ ζ ]ᴿ) ∙ˢ ⟨ idᴿ ⟩)) ≡ ((T′ [ ζ ]ᴿ) ∙ˢ ⟨ ζ ⟩)
-  coincidence-pop-ᴿ = fun-ext λ { zero → refl; (suc α) → refl }
-  -- composed-renaming variant of `coincidence-pop-ᴿ`: pulls a `ζ₁ ⨟ᴿ ζ₂` into the
-  -- single-sub equation so `(T [ T′ ]*) [ ζ₁ ⨟ᴿ ζ₂ ]ᴿ` reassociates cleanly.
-  coincidence-pop-ᴿ-⨟ : ⟨ zero ∙ᴿ (ζ₁ ⨟ᴿ (ζ₂ ⨟ᴿ wkᴿ)) ⟩ ⨟ˢ ((T [ ζ₁ ⨟ᴿ ζ₂ ]ᴿ) ∙ˢ ⟨ idᴿ ⟩) ≡ (T [ ζ₁ ⨟ᴿ ζ₂ ]ᴿ) ∙ˢ (⟨ ζ₁ ⟩ ⨟ˢ ⟨ ζ₂ ⟩)
-  coincidence-pop-ᴿ-⨟ = fun-ext λ { zero → refl; (suc α) → refl }
-  -- lift fusion in expanded form: composing a renaming-lift `ζ₁ ↑ᴿ` (made manifest
-  -- as `zero ∙ᴿ (ζ₁ ⨟ᴿ wkᴿ)`) with a substitution-lift `η₂ ↑ˢ` reassociates.
-  -- Aligns the post-beta normal forms of `↑ᴿ ⨟ˢ ↑ˢ` and `↑ˢ`.
-  coincidence-↑ᴿ-↑ˢ : ⟨ zero ∙ᴿ (ζ₁ ⨟ᴿ wkᴿ) ⟩ ⨟ˢ ((` zero) ∙ˢ (η₂ ⨟ˢ ⟨ wkᴿ ⟩)) ≡ (` zero) ∙ˢ (⟨ ζ₁ ⟩ ⨟ˢ (η₂ ⨟ˢ ⟨ wkᴿ ⟩))
-  coincidence-↑ᴿ-↑ˢ = fun-ext λ { zero → refl; (suc α) → refl }
-  coincidence-lemma₄ : (⟨ wkᴿ ⟩ ⨟ˢ ⟨ zero ∙ᴿ (ζ₂ ⨟ᴿ wkᴿ) ⟩) ≡ (⟨ ζ₂ ⟩ ⨟ˢ ⟨ wkᴿ ⟩)
-  coincidence-lemma₄ = fun-ext λ { zero → refl; (suc α) → refl }
-  -- "single substitution under substitution": substitutional analogue of
-  -- `coincidence-pop-ᴿ`. Eliminates the inner `_∙ˢ⟨idᴿ⟩` introduced when pushing
-  -- a single-sub `[ T′ ]*` past a composed substitution `η₁ ⨟ˢ ⟨ ζ₂ ⟩`.
-  coincidence-pop-ˢ : ((T′ [ η₁ ⨟ˢ ⟨ ζ₂ ⟩ ]ˢ) ∙ˢ (η₁ ⨟ˢ (⟨ ζ₂ ⨟ᴿ wkᴿ ⟩ ⨟ˢ ((T′ [ η₁ ⨟ˢ ⟨ ζ₂ ⟩ ]ˢ) ∙ˢ ⟨ idᴿ ⟩)))) ≡ ((T′ [ η₁ ⨟ˢ ⟨ ζ₂ ⟩ ]ˢ) ∙ˢ (η₁ ⨟ˢ ⟨ ζ₂ ⟩))
-  coincidence-pop-ˢ = fun-ext λ { zero → refl; (suc α) → refl }
-
 {-# REWRITE
-  `beta-id
-  `beta-wk
-  `beta-ext-zero
-  `beta-ext-suc
-  `beta-comp
+  `beta-id `beta-wk `beta-ext-zero `beta-ext-suc
+  `beta-lift-zero `beta-lift-suc `beta-comp `beta-lift-fusion
+  `associativity `interact `interact-⨟ `comp-idᵣ `comp-idₗ
+  `lift-id `lift-wk `lift-fusion `lift-wk-⨟ `lift-fusion-⨟
+  identityᵣ compositionalityᴿᴿ
 
-  beta-ext-zero
-  beta-ext-suc
-  beta-lift
-  beta-comp
-  beta-rename
+  beta-ext-zero beta-ext-suc beta-rename
+  beta-lift-zero beta-lift-suc beta-⟨⟩-⨟ beta-lift-zero-⨟ beta-lift-suc-⨟ beta-fold
+  beta-lift-ren-∙ beta-fold-ˢᴿ
+  associativity distributivity interact comp-idᵣ comp-idₗ
+  lift-id lift-wk lift-cons lift-fusion lift-wk-⨟ lift-fusion-⨟
+  ⟨⟩-↑-cons
 
-  associativity
-  distributivity
-  interact
-  comp-idᵣ
-  comp-idₗ
-  η-id
-  η-law
-
-  `associativity
-  `distributivity
-  `interact
-  `comp-idᵣ
-  `comp-idₗ
-  `η-id
-  `η-law
-
-  identityᵣ
-  compositionalityᴿˢ
-  compositionalityᴿᴿ
-  compositionalityˢᴿ
-  compositionalityˢˢ
-
+  lift-coincidence ⟨⟩-comp ⟨⟩-split-⨟
+  ⟨⟩-wk-cons ⟨⟩-wk-cons-⨟ ⟨⟩-wk-lift ⟨⟩-wk-lift-⨟ ⟨⟩-lift-lift ⟨⟩-lift-lift-⨟
+  ⟨⟩-lift-RS ⟨⟩-lift-RS-⨟ ⟨⟩-lift-SR ⟨⟩-lift-SR-⨟ ⟨⟩-lift-SR-comp
+  beta-lift-ren-↑ beta-lift-ren-↑-⨟
+  compositionalityᴿˢ compositionalityˢᴿ compositionalityˢˢ
   coincidence
-  coincidence-comp
-
-  coincidence-pop-ᴿ
-  coincidence-pop-ᴿ-⨟
-  coincidence-↑ᴿ-↑ˢ
-  coincidence-pop-ˢ
 #-}
 
 idˢ : Sub n n
 idˢ = ⟨ idᴿ ⟩
 
--- functorial action
-lift*-id1 : α &ᴿ (idᴿ ↑ᴿ) ≡ α
-lift*-id1 = refl
-
-lift*-comp1 : α &ᴿ ((ζ′ ⨟ᴿ ζ) ↑ᴿ) ≡ (α &ᴿ (ζ′ ↑ᴿ)) &ᴿ (ζ ↑ᴿ)
-lift*-comp1 {α = zero}   = refl
-lift*-comp1 {α = suc α}  = refl
-
-lifts*-id1 : α &ˢ (idˢ ↑ˢ) ≡ ` α
-lifts*-id1 = refl
-
-lifts*-comp1 : α &ˢ ((η′ ⨟ˢ η) ↑ˢ) ≡ (α &ˢ (η′ ↑ˢ)) [ η ↑ˢ ]ˢ
-lifts*-comp1 {α = zero}   = refl
-lifts*-comp1 {α = suc α}  = refl
-
-
+-- With the σ-calculus installed, the functor laws for substitution
+-- hold definitionally.  The laws marked `*` are σ-calculus laws.
 --! SubFunctorialLift {
 lifts*-id : (idˢ {n} ↑ˢ) ≡ idˢ
 lifts*-id = refl
@@ -391,6 +474,11 @@ sub*-comp : T [ η ⨟ˢ η′ ]ˢ ≡ (T [ η ]ˢ) [ η′ ]ˢ
 sub*-comp = refl                -- *
 --! }
 
+-- ══════════════ §4  Expressions ════════════════════════════════════
+-- Two abbreviations used by the syntax below: `weaken` is the index of
+-- the suc* constructor, `_[_]*` the index of type application.  Both
+-- are TRANSPARENT, so the σ-rules see through them and no separate
+-- family of interaction laws is needed.
 --! Weaken
 weaken : Type n → Type (1 + n)
 weaken T = T [ wkᴿ ]ᴿ
@@ -435,7 +523,11 @@ data Expr (Γ : Ctx n) : Type n → Set where
           Expr Γ (T [ T′ ]*)
 
 variable
-  e e′ e₁ e₁′ e₂ e₃ : Expr Γ T
+  e e′ e₁ e₁′ e₂ e₂′ e₃ : Expr Γ T
+
+-- ══════════════ §5  Renaming and substitution on expressions ═══════
+-- Every clause below is TRANSPORT-FREE: the type-level rewrite set
+-- makes each index equation definitional.  That is transfer heaven.
 
 --! Renaming
 _∣_⇒ᴿ_ : Ren n₁ n₂ → Ctx n₁ → Ctx n₂ → Set
@@ -478,17 +570,17 @@ opaque
 _⨾ᴿ_ : ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂ → ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃ → (ζ₁ ⨟ᴿ ζ₂) ∣ Γ₁ ⇒ᴿ Γ₃
 _⨾ᴿ_ {ζ₁ = ζ₁} {ζ₂ = ζ₂} ρ₁ ρ₂ = (ζ₁ , ζ₂ ∣ ρ₁ ⨾ᴿ ρ₂)
 
--- _∣_∙ᴿ*_ : ∀ ζ x → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → (x ∙ᴿ ζ) ∣ (Γ₁ ▷*) ⇒ᴿ Γ₂
--- (_ ∣ _ ∙ᴿ* ρ) _ (suc* x) = ρ _ x
-
 --! Lifting
 opaque
   _∣_⇑ᴿ_ : ∀ ζ → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → ∀ T → ζ ∣ (Γ₁ ▷ T) ⇒ᴿ (Γ₂ ▷ (T [ ζ ]ᴿ))
   (ζ ∣ ρ ⇑ᴿ _) = ζ ∣ zero ∙ᴿ (ζ , idᴿ ∣ ρ ⨾ᴿ (Wkᴿ _))
 
   --! TLifting
+  -- directly on suc*: the index equation
+  --   (weaken T) [ ζ ↑ᴿ ]ᴿ ≡ weaken (T [ ζ ]ᴿ)
+  -- is definitional via the ⟨⟩-wk-lift bridge rule
   _∣_↑ᴿ* : ∀ ζ → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → (ζ ↑ᴿ) ∣ (Γ₁ ▷*) ⇒ᴿ (Γ₂ ▷*)
-  (ζ ∣ ρ ↑ᴿ*) = (ζ ⨟ᴿ wkᴿ) ∣ zero ∙ᴿ* (ζ , wkᴿ ∣ ρ ⨾ᴿ wkᴿ*)
+  (ζ ∣ ρ ↑ᴿ*) _ (suc* x) = suc* (ρ _ x)
 
 _⇑ᴿ_ : ζ ∣ Γ₁ ⇒ᴿ Γ₂ → ∀ T → ζ ∣ (Γ₁ ▷ T) ⇒ᴿ (Γ₂ ▷ (T [ ζ ]ᴿ))
 _⇑ᴿ_ = _ ∣_⇑ᴿ_
@@ -496,21 +588,23 @@ _⇑ᴿ_ = _ ∣_⇑ᴿ_
 ↑ᴿ*_ : ζ ∣ Γ₁ ⇒ᴿ Γ₂ → (ζ ↑ᴿ) ∣ (Γ₁ ▷*) ⇒ᴿ (Γ₂ ▷*)
 ↑ᴿ*_ = _ ∣_↑ᴿ*
 
--- new symbol?
 --! Traversal
-opaque
-  _∣_[_]ᴿ : (ζ : Ren n₁ n₂) → Expr Γ₁ T → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → Expr Γ₂ (T [ ζ ]ᴿ)
-  ζ  ∣ (` x) [ ρ ]ᴿ      = ` (ζ ∣ x &ᴿ ρ)
-  _  ∣ (λx e) [ ρ ]ᴿ     = λx (_ ∣ e [ ρ ⇑ᴿ _ ]ᴿ)
-  _  ∣ (Λα e) [ ρ ]ᴿ     = Λα (_ ∣ e [ ↑ᴿ* ρ ]ᴿ)
-  _  ∣ (e₁ · e₂) [ ρ ]ᴿ  = (_ ∣ e₁ [ ρ ]ᴿ) · (_ ∣ e₂ [ ρ ]ᴿ)
-  ζ  ∣ (e ·* T′) [ ρ ]ᴿ  = (ζ ∣ e [ ρ ]ᴿ) ·* (T′ [ ζ ]ᴿ)
+-- transparent: clause matching is constructor-driven, so it commutes
+-- with index rewriting (registered traversal RULES do not)
+_∣_[_]ᴿ : (ζ : Ren n₁ n₂) → Expr Γ₁ T → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → Expr Γ₂ (T [ ζ ]ᴿ)
+ζ  ∣ (` x) [ ρ ]ᴿ      = ` (ζ ∣ x &ᴿ ρ)
+_  ∣ (λx e) [ ρ ]ᴿ     = λx (_ ∣ e [ ρ ⇑ᴿ _ ]ᴿ)
+_  ∣ (Λα e) [ ρ ]ᴿ     = Λα (_ ∣ e [ ↑ᴿ* ρ ]ᴿ)
+_  ∣ (e₁ · e₂) [ ρ ]ᴿ  = (_ ∣ e₁ [ ρ ]ᴿ) · (_ ∣ e₂ [ ρ ]ᴿ)
+ζ  ∣ (e ·* T′) [ ρ ]ᴿ  = (ζ ∣ e [ ρ ]ᴿ) ·* (T′ [ ζ ]ᴿ)
 
 Weaken : Expr Γ T → Expr (Γ ▷ T′) T
 Weaken e = idᴿ ∣ e [ Wkᴿ _ ]ᴿ
 
 weaken* : Expr Γ T → Expr (Γ ▷*) (weaken T)
 weaken* e = wkᴿ ∣ e [ wkᴿ* ]ᴿ
+
+
 
 --! <
 --! Substitution
@@ -522,21 +616,9 @@ variable
   σ σ′ σ₁ σ₂ σ₃ : η ∣ Γ₁ ⇒ˢ Γ₂
 
 opaque
-  -- raising a renaming to a substitution
   _∣⟪_⟫ : ∀ ζ → ζ ∣ Γ₁ ⇒ᴿ Γ₂ → ⟨ ζ ⟩ ∣ Γ₁ ⇒ˢ Γ₂
   (ζ ∣⟪ ρ ⟫) _ x = ` ρ _ x
 
-  --! Ids
-  Idˢ : idˢ ∣ Γ ⇒ˢ Γ
-  Idˢ _ = λ x → ` x
-
-  Wkˢ : ∀ T → ⟨ idᴿ ⟩ ∣ Γ ⇒ˢ (Γ ▷ T)
-  Wkˢ _ = idᴿ ∣⟪ Wkᴿ _ ⟫
-
-  wkˢ* : ⟨ wkᴿ ⟩ ∣ Γ ⇒ˢ (Γ ▷*)
-  wkˢ* = wkᴿ ∣⟪ wkᴿ* ⟫
-
-  -- extending a substitution
   --! Extension
   _∣_∙ˢ_ : ∀ η → (e : Expr Γ₂ (T [ η ]ˢ)) → (σ : η ∣ Γ₁ ⇒ˢ Γ₂) → η ∣ (Γ₁ ▷ T) ⇒ˢ Γ₂
   (_ ∣ e ∙ˢ σ) _ zero     = e
@@ -546,37 +628,49 @@ opaque
   _∣_∙ˢ*_ : ∀ η T → (σ : η ∣ Γ₁ ⇒ˢ Γ₂) → (T ∙ˢ η) ∣ (Γ₁ ▷*) ⇒ˢ Γ₂
   (_ ∣ T ∙ˢ* σ) _ (suc* x) = σ _ x
 
-  -- blocking alias for "apply substitution to variable" — analog of `_&ˢ_` at type level
   --! Lookup
   _∣_&ˢ_ : ∀ {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} (η : Sub n₁ n₂)
     → (x : Γ₁ ∋ T) → (σ : η ∣ Γ₁ ⇒ˢ Γ₂) → Expr Γ₂ (T [ η ]ˢ)
   η ∣ x &ˢ σ = σ _ x
 
-  -- lifting a substitution
   --! Lifting
   _∣_⇑ˢ_ : ∀ η → (σ : η ∣ Γ₁ ⇒ˢ Γ₂) → ∀ T → η ∣ (Γ₁ ▷ T) ⇒ˢ (Γ₂ ▷ (T [ η ]ˢ))
   η ∣ σ ⇑ˢ T = η ∣ (` zero) ∙ˢ λ _ x → idᴿ ∣ (σ _ x) [ Wkᴿ (T [ η ]ˢ) ]ᴿ
 
-  -- type lifting
   --! TLifting
+  -- directly on suc*: (weaken T) [ η ↑ˢ ]ˢ ≡ (T [ η ]ˢ) [ wkᴿ ]ᴿ is
+  -- definitional via lift-wk and coincidence
   _∣_⇑ˢ* : ∀ η → (σ : η ∣ Γ₁ ⇒ˢ Γ₂) → (η ↑ˢ) ∣ (Γ₁ ▷*) ⇒ˢ (Γ₂ ▷*)
-  (η ∣ σ ⇑ˢ*) = (η ⨟ˢ ⟨ wkᴿ ⟩) ∣ (` zero) ∙ˢ* λ _ x → wkᴿ ∣ (σ _ x) [ wkᴿ* ]ᴿ
+  (η ∣ σ ⇑ˢ*) _ (suc* x) = wkᴿ ∣ (σ _ x) [ wkᴿ* ]ᴿ
 
 ⟪_⟫ : (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) → ⟨ ζ ⟩ ∣ Γ₁ ⇒ˢ Γ₂
 ⟪_⟫ = _ ∣⟪_⟫
 
+-- the σ-side constants are TRANSPARENT ⟪⟫-embeddings of the ᴿ-side
+-- ones, mirroring the type level where idˢ = ⟨idᴿ⟩ and ⟨wkᴿ⟩ plays the
+-- wkˢ-role transparently — Coincidence then erases their traversals
+--! Ids
+Idˢ : idˢ ∣ Γ ⇒ˢ Γ
+Idˢ = idᴿ ∣⟪ Idᴿ ⟫
 
--- expression substitution - traversal
--- new symbol?
-opaque
-  --! Traversal
-  _∣_[_]ˢ : (η : Sub n₁ n₂) → (e : Expr Γ₁ T) → (σ : η ∣ Γ₁ ⇒ˢ Γ₂) → Expr Γ₂ (T [ η ]ˢ)
-  η  ∣ (` x) [ σ ]ˢ      = η ∣ x &ˢ σ
-  η  ∣ (λx e) [ σ ]ˢ     = λx (η ∣ e [ η ∣ σ ⇑ˢ _ ]ˢ)
-  η  ∣ (Λα e) [ σ ]ˢ     = Λα ((η ↑ˢ) ∣ e [ η ∣ σ ⇑ˢ* ]ˢ)
-  η  ∣ (e · e₁) [ σ ]ˢ   = (η ∣ e [ σ ]ˢ) · (η ∣ e₁ [ σ ]ˢ)
-  η  ∣ (e ·* T) [ σ ]ˢ   = (η ∣ e [ σ ]ˢ) ·* (T [ η ]ˢ)
+Wkˢ : ∀ T → ⟨ idᴿ ⟩ ∣ Γ ⇒ˢ (Γ ▷ T)
+Wkˢ _ = idᴿ ∣⟪ Wkᴿ _ ⟫
 
+wkˢ* : ⟨ wkᴿ ⟩ ∣ Γ ⇒ˢ (Γ ▷*)
+wkˢ* = wkᴿ ∣⟪ wkᴿ* ⟫
+
+
+
+
+--! Traversal
+_∣_[_]ˢ : (η : Sub n₁ n₂) → (e : Expr Γ₁ T) → (σ : η ∣ Γ₁ ⇒ˢ Γ₂) → Expr Γ₂ (T [ η ]ˢ)
+η  ∣ (` x) [ σ ]ˢ      = η ∣ x &ˢ σ
+η  ∣ (λx e) [ σ ]ˢ     = λx (η ∣ e [ η ∣ σ ⇑ˢ _ ]ˢ)
+η  ∣ (Λα e) [ σ ]ˢ     = Λα ((η ↑ˢ) ∣ e [ η ∣ σ ⇑ˢ* ]ˢ)
+η  ∣ (e · e₁) [ σ ]ˢ   = (η ∣ e [ σ ]ˢ) · (η ∣ e₁ [ σ ]ˢ)
+η  ∣ (e ·* T) [ σ ]ˢ   = (η ∣ e [ σ ]ˢ) ·* (T [ η ]ˢ)
+
+-- ══════════════ §6  Compositionality and coincidence ═══════════════
 opaque
   --! CompDefinition
   _,_∣_⨾ˢ_ : ∀ η₁ η₂ → (σ₁ : η₁ ∣ Γ₁ ⇒ˢ Γ₂) → (σ₂ : η₂ ∣ Γ₂ ⇒ˢ Γ₃) → (η₁ ⨟ˢ η₂) ∣ Γ₁ ⇒ˢ Γ₃
@@ -586,20 +680,20 @@ _⨾ˢ_ : η₁ ∣ Γ₁ ⇒ˢ Γ₂ → η₂ ∣ Γ₂ ⇒ˢ Γ₃ → (η₁
 _⨾ˢ_ {η₁ = η₁} {η₂ = η₂} σ₁ σ₂ = (η₁ , η₂ ∣ σ₁ ⨾ˢ σ₂)
 
 opaque
-  unfolding Idᴿ Wkᴿ wkᴿ* _,_∣_⨾ᴿ_ _∣_∙ᴿ_ _∣_∙ᴿ*_ _∣_&ᴿ_ _∣_⇑ᴿ_ _∣_↑ᴿ* _∣_[_]ᴿ _∣⟪_⟫ Idˢ Wkˢ wkˢ* _∣_∙ˢ_ _∣_∙ˢ*_ _,_∣_⨾ˢ_ _∣_&ˢ_ _∣_⇑ˢ_ _∣_⇑ˢ* _∣_[_]ˢ
+  unfolding Idᴿ Wkᴿ wkᴿ* _,_∣_⨾ᴿ_ _∣_∙ᴿ_ _∣_∙ᴿ*_ _∣_&ᴿ_ _∣_⇑ᴿ_ _∣_↑ᴿ* _∣⟪_⟫ _∣_∙ˢ_ _∣_∙ˢ*_ _,_∣_⨾ˢ_ _∣_&ˢ_ _∣_⇑ˢ_ _∣_⇑ˢ*
 
   --! EtaIdSub
   η-Idˢ : ⟨ idᴿ ⟩ ∣ (` zero) ∙ˢ (Wkˢ T) ≡ Idˢ {Γ = Γ ▷ T}
 
   η-Idˢ = fun-ext λ _ → fun-ext λ { zero → refl; (suc x) → refl }
 
-  η*-Id : ⟨ idᴿ ⟩ ∣ (Idˢ {Γ = Γ}) ⇑ˢ* ≡ Idˢ
-  η*-Id = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
+  η*-Idˢ : ⟨ idᴿ ⟩ ∣ (Idˢ {Γ = Γ}) ⇑ˢ* ≡ Idˢ
+  η*-Idˢ = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
 
   Identityᵣ : ∀ (e : Expr Γ T) → ⟨ idᴿ ⟩ ∣ e [ Idˢ ]ˢ ≡ e
   Identityᵣ (` x)      = refl
   Identityᵣ (λx e)     = cong λx (trans (cong (⟨ idᴿ ⟩ ∣ e [_]ˢ) η-Idˢ) (Identityᵣ e))
-  Identityᵣ (Λα e)     = cong Λα (trans (cong (⟨ idᴿ ⟩ ∣ e [_]ˢ) η*-Id) (Identityᵣ e))
+  Identityᵣ (Λα e)     = cong Λα (trans (cong (⟨ idᴿ ⟩ ∣ e [_]ˢ) η*-Idˢ) (Identityᵣ e))
   Identityᵣ (e₁ · e₂)  = cong₂ _·_ (Identityᵣ e₁) (Identityᵣ e₂)
   Identityᵣ (e ·* T′)  = cong (_·* T′) (Identityᵣ e)
 
@@ -638,8 +732,21 @@ opaque
   η-Idᴿ : idᴿ ∣ (zero {Γ = Γ} {T = T}) ∙ᴿ (Wkᴿ T) ≡ (Idᴿ {Γ = Γ ▷ T})
   η-Idᴿ = fun-ext λ _ → fun-ext λ { zero → refl; (suc x) → refl }
 
+  -- mirror of `lift-id, λ-dimension (the Λ-dimension is η*-Idᴿ below)
+  Lift-Idᴿ : idᴿ ∣ (Idᴿ {Γ = Γ}) ⇑ᴿ T ≡ Idᴿ
+  Lift-Idᴿ = fun-ext λ _ → fun-ext λ { zero → refl; (suc x) → refl }
+
   η*-Idᴿ : idᴿ ∣ (Idᴿ {Γ = Γ}) ↑ᴿ* ≡ Idᴿ
   η*-Idᴿ = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
+
+  -- mirror of identityᵣ (the registered ᴿ-flavour; Identityᵣ above is
+  -- the identityᵣˢ-mirror and stays a lemma, exactly as at type level)
+  Identityᵣᴿ : ∀ (e : Expr Γ T) → idᴿ ∣ e [ Idᴿ ]ᴿ ≡ e
+  Identityᵣᴿ (` x)      = refl
+  Identityᵣᴿ (λx e)     = cong λx (trans (cong (idᴿ ∣ e [_]ᴿ) Lift-Idᴿ) (Identityᵣᴿ e))
+  Identityᵣᴿ (Λα e)     = cong Λα (trans (cong (idᴿ ∣ e [_]ᴿ) η*-Idᴿ) (Identityᵣᴿ e))
+  Identityᵣᴿ (e₁ · e₂)  = cong₂ _·_ (Identityᵣᴿ e₁) (Identityᵣᴿ e₂)
+  Identityᵣᴿ (e ·* T′)  = cong (_·* T′) (Identityᵣᴿ e)
 
   Coincidence : ∀ (e : Expr Γ₁ T) (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
       ⟨ ζ ⟩ ∣ e [ ζ ∣⟪ ρ ⟫ ]ˢ ≡ (ζ ∣ e [ ρ ]ᴿ)
@@ -648,8 +755,10 @@ opaque
       _  ≡⟨ Identityᵣ (_ ∣ e [ ρ ]ᴿ) ⟩
       _  ∎
 
+
+
 opaque
-  unfolding Idᴿ Wkᴿ wkᴿ* _,_∣_⨾ᴿ_ _∣_∙ᴿ_ _∣_∙ᴿ*_ _∣_&ᴿ_ _∣_⇑ᴿ_ _∣_↑ᴿ* _∣_[_]ᴿ _∣⟪_⟫ Idˢ Wkˢ wkˢ* _∣_∙ˢ_ _∣_∙ˢ*_ _,_∣_⨾ˢ_ _∣_&ˢ_ _∣_⇑ˢ_ _∣_⇑ˢ* _∣_[_]ˢ
+  unfolding Idᴿ Wkᴿ wkᴿ* _,_∣_⨾ᴿ_ _∣_∙ᴿ_ _∣_∙ᴿ*_ _∣_&ᴿ_ _∣_⇑ᴿ_ _∣_↑ᴿ* _∣⟪_⟫ _∣_∙ˢ_ _∣_∙ˢ*_ _,_∣_⨾ˢ_ _∣_&ˢ_ _∣_⇑ˢ_ _∣_⇑ˢ*
 
   Lift-Dist-Compˢᴿ : (σ₁ : η₁ ∣ Γ₁ ⇒ˢ Γ₂) (ρ₂ : ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃) →
     η₁ , ⟨ ζ₂ ⟩ ∣ (η₁ ∣ σ₁ ⇑ˢ T) ⨾ˢ (ζ₂ ∣⟪ ζ₂ ∣ ρ₂ ⇑ᴿ (T [ η₁ ]ˢ) ⟫) ≡ ((η₁ ⨟ˢ ⟨ ζ₂ ⟩) ∣ (η₁ , ⟨ ζ₂ ⟩ ∣ σ₁ ⨾ˢ (ζ₂ ∣⟪ ρ₂ ⟫)) ⇑ˢ T)
@@ -722,18 +831,37 @@ opaque
       ≡⟨ cong (((η₁ ⨟ˢ η₂) ↑ˢ) ∣ e [_]ˢ) (Lift*-Dist-Compˢˢ η₁ η₂ σ₁ σ₂) ⟩
         ((η₁ ⨟ˢ η₂) ↑ˢ) ∣ e [ (η₁ ⨟ˢ η₂) ∣ (η₁ , η₂ ∣ σ₁ ⨾ˢ σ₂) ⇑ˢ* ]ˢ
       ∎)
-  Compositionalityˢˢ (e₁ · e₂)  η₁ η₂ σ₁ σ₂  = cong₂ _·_ 
+  Compositionalityˢˢ (e₁ · e₂)  η₁ η₂ σ₁ σ₂  = cong₂ _·_
       (Compositionalityˢˢ e₁ η₁ η₂ σ₁ σ₂) -- IH
       (Compositionalityˢˢ e₂ η₁ η₂ σ₁ σ₂) -- IH
-  Compositionalityˢˢ (e ·* T′)  η₁ η₂ σ₁ σ₂  = cong (_·* (T′ [ η₁ ⨟ˢ η₂ ]ˢ)) 
+  Compositionalityˢˢ (e ·* T′)  η₁ η₂ σ₁ σ₂  = cong (_·* (T′ [ η₁ ⨟ˢ η₂ ]ˢ))
     (Compositionalityˢˢ e η₁ η₂ σ₁ σ₂) -- IH
 
--- expression-level σ-calculus laws (mirroring the type-level laws above)
+
+
+-- ══════════════ §7  The expression-level equational theory ═════════
+-- Every law below mirrors a type-level law of §3 exactly, under the
+-- dictionary  Ren ↦ ⇒ᴿ,  Sub ↦ ⇒ˢ,  ⟨⟩ ↦ ⟪⟫,  ↑ ↦ ⇑ (λ-dimension) and
+-- ⇑* (Λ-dimension), and each is an Agda THEOREM.  As an equational
+-- theory the mirror is therefore exact.  As a REWRITE system it is
+-- not, for two independent reasons:
+--
+--   MATCHING.  A rule whose stored index is  T [ η₁ ]ˢ  fires only
+--   when T is a variable, because _[_]ˢ computes on every type
+--   constructor.  The index would have to be INERT to be matched and
+--   COMPUTING to be usable, and it is the same symbol.
+--
+--   CONFLUENCE.  Registering the mirror leaves critical pairs that do
+--   not join, and they are overwhelmingly pairs of an expression-level
+--   rule against a TYPE-level rule rather than against each other.
+--
+-- So none of these laws is registered.  Each is applied EXPLICITLY, by
+-- subst or cong, at its use sites.  That is transfer hell, stated
+-- rather than papered over.
 opaque
-  unfolding Idᴿ Wkᴿ wkᴿ* _,_∣_⨾ᴿ_ _∣_∙ᴿ_ _∣_∙ᴿ*_ _∣_&ᴿ_ _∣_⇑ᴿ_ _∣_↑ᴿ* _∣_[_]ᴿ _∣⟪_⟫ Idˢ Wkˢ wkˢ* _∣_∙ˢ_ _∣_∙ˢ*_ _,_∣_⨾ˢ_ _∣_&ˢ_ _∣_⇑ˢ_ _∣_⇑ˢ* _∣_[_]ˢ
+  unfolding Idᴿ Wkᴿ wkᴿ* _,_∣_⨾ᴿ_ _∣_∙ᴿ_ _∣_∙ᴿ*_ _∣_&ᴿ_ _∣_⇑ᴿ_ _∣_↑ᴿ* _∣⟪_⟫ _∣_∙ˢ_ _∣_∙ˢ*_ _,_∣_⨾ˢ_ _∣_&ˢ_ _∣_⇑ˢ_ _∣_⇑ˢ*
 
   --! ExprRenamingTraversal {
-  -- traversal clauses on expressions as rewrite rules (analog of traversal-* type-level)
   Traversal-Varᴿ : ∀ {ζ : Ren n₁ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                    (x : Γ₁ ∋ T) (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
                    ζ ∣ (` x) [ ρ ]ᴿ ≡ ` (ζ ∣ x &ᴿ ρ)
@@ -761,7 +889,6 @@ opaque
   --! }
 
   --! ExprSubstitutionTraversal {
-  -- traversal clauses on expressions for substitutions
   Traversal-Varˢ : ∀ {η : Sub n₁ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                    (x : Γ₁ ∋ T) (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
                    η ∣ (` x) [ σ ]ˢ ≡ η ∣ x &ˢ σ
@@ -782,14 +909,19 @@ opaque
                  η ∣ (e₁ · e₂) [ σ ]ˢ ≡ (η ∣ e₁ [ σ ]ˢ) · (η ∣ e₂ [ σ ]ˢ)
   Traversal-·ˢ _ _ _ = refl
 
-  Traversal-·ˢ* : ∀ {η : Sub n₁ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  Traversal-·*ˢ : ∀ {η : Sub n₁ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                   (e : Expr Γ₁ (∀α T)) (T′ : Type n₁) (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
                   η ∣ (e ·* T′) [ σ ]ˢ ≡ (η ∣ e [ σ ]ˢ) ·* (T′ [ η ]ˢ)
-  Traversal-·ˢ* _ _ _ = refl
+  Traversal-·*ˢ _ _ _ = refl
   --! }
 
+  -- weaken* computes on variables, the Λ-dimension analogue of the
+  -- ᴿ-traversal's `-clause at wkᴿ*
+  Weaken*-var : ∀ {n} {T} {Γ : Ctx n} (x : Γ ∋ T) →
+                weaken* (` x) ≡ ` (suc* x)
+  Weaken*-var _ = refl
+
   --! ExprRenamingBeta {
-  -- computing renamings on expressions (analog of `beta-* on type level)
   Beta-idᴿ : ∀ {T} {Γ : Ctx n} (x : Γ ∋ T) → idᴿ ∣ x &ᴿ Idᴿ ≡ x
   Beta-idᴿ _ = refl
 
@@ -814,15 +946,21 @@ opaque
                    (α ∙ᴿ ζ) ∣ (suc* x) &ᴿ (ζ ∣ α ∙ᴿ* ρ) ≡ ζ ∣ x &ᴿ ρ
   Beta-ext-suc*ᴿ _ _ _ = refl
 
+  -- composition at a variable FOLDS — the opposite of the type-level
+  -- `beta-comp!  The push orientation's LHS is inherently NON-linear
+  -- here: the composite ζ₁⨟ᴿζ₂ must be spelled both as the traversal
+  -- index and inside the ⨾ᴿ-term, so a type-level rule rewriting the
+  -- index occurrence alone (e.g. `lift-fusion-⨟) leaves a stuck term
+  -- push can never refire on.  The fold LHS mentions every index
+  -- exactly once (bare metas) and stays confluent.
   Beta-compᴿ : ∀ {ζ₁ : Ren n₁ n₂} {ζ₂ : Ren n₂ n₃} {T}
                {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} {Γ₃ : Ctx n₃}
                (x : Γ₁ ∋ T) (ρ₁ : ζ₁ ∣ Γ₁ ⇒ᴿ Γ₂) (ρ₂ : ζ₂ ∣ Γ₂ ⇒ᴿ Γ₃) →
-               (ζ₁ ⨟ᴿ ζ₂) ∣ x &ᴿ (ζ₁ , ζ₂ ∣ ρ₁ ⨾ᴿ ρ₂) ≡ ζ₂ ∣ (ζ₁ ∣ x &ᴿ ρ₁) &ᴿ ρ₂
+               ζ₂ ∣ (ζ₁ ∣ x &ᴿ ρ₁) &ᴿ ρ₂ ≡ (ζ₁ ⨟ᴿ ζ₂) ∣ x &ᴿ (ζ₁ , ζ₂ ∣ ρ₁ ⨾ᴿ ρ₂)
   Beta-compᴿ _ _ _ = refl
   --! }
 
   --! ExprSubstitutionBeta {
-  -- computing substitutions on expressions (analog of beta-* on type level)
   Beta-ext-zeroˢ : ∀ {η : Sub n₁ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                    (e : Expr Γ₂ (T [ η ]ˢ)) (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
                    η ∣ zero &ˢ (_∣_∙ˢ_ {T = T} η e σ) ≡ e
@@ -833,10 +971,10 @@ opaque
                   η ∣ (suc x') &ˢ (_∣_∙ˢ_ {T = T} η e σ) ≡ η ∣ x' &ˢ σ
   Beta-ext-sucˢ _ _ _ = refl
 
-  Beta-ext-sucˢ* : ∀ {η : Sub n₁ n₂} {T''} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  Beta-ext-suc*ˢ : ∀ {η : Sub n₁ n₂} {T''} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                    (T' : Type n₂) (x : Γ₁ ∋ T'') (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
                    (T' ∙ˢ η) ∣ (suc* x) &ˢ (η ∣ T' ∙ˢ* σ) ≡ η ∣ x &ˢ σ
-  Beta-ext-sucˢ* _ _ _ = refl
+  Beta-ext-suc*ˢ _ _ _ = refl
 
   Beta-renameˢ : ∀ {ζ : Ren n₁ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                  (x : Γ₁ ∋ T) (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
@@ -846,12 +984,70 @@ opaque
   Beta-compˢ : ∀ {η₁ : Sub n₁ n₂} {η₂ : Sub n₂ n₃} {T}
                {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} {Γ₃ : Ctx n₃}
                (x : Γ₁ ∋ T) (σ₁ : η₁ ∣ Γ₁ ⇒ˢ Γ₂) (σ₂ : η₂ ∣ Γ₂ ⇒ˢ Γ₃) →
-               (η₁ ⨟ˢ η₂) ∣ x &ˢ (η₁ , η₂ ∣ σ₁ ⨾ˢ σ₂) ≡ η₂ ∣ (η₁ ∣ x &ˢ σ₁) [ σ₂ ]ˢ
+               η₂ ∣ (η₁ ∣ x &ˢ σ₁) [ σ₂ ]ˢ ≡ (η₁ ⨟ˢ η₂) ∣ x &ˢ (η₁ , η₂ ∣ σ₁ ⨾ˢ σ₂)
   Beta-compˢ _ _ _ = refl
+
+  -- ⇑-applied rules: lifting is first-class (the ⇑-elimination rules
+  -- below are η-shaped lemmas), so applications compute via these
+  Beta-⇑ᴿ-zero : ∀ {ζ : Ren n₁ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} {T : Type n₁}
+                 (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
+                 ζ ∣ zero &ᴿ (ζ ∣ ρ ⇑ᴿ T) ≡ zero
+  Beta-⇑ᴿ-zero _ = refl
+
+  Beta-⇑ᴿ-suc : ∀ {ζ : Ren n₁ n₂} {T T''} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+                (x : Γ₁ ∋ T'') (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
+                ζ ∣ (suc {T′ = T} x) &ᴿ (ζ ∣ ρ ⇑ᴿ T) ≡ suc (ζ ∣ x &ᴿ ρ)
+  Beta-⇑ᴿ-suc _ _ = refl
+
+  Beta-↑ᴿ*-suc* : ∀ {ζ : Ren n₁ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+                  (x : Γ₁ ∋ T) (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
+                  (ζ ↑ᴿ) ∣ (suc* x) &ᴿ (ζ ∣ ρ ↑ᴿ*) ≡ suc* (ζ ∣ x &ᴿ ρ)
+  Beta-↑ᴿ*-suc* _ _ = refl
+
+  Beta-⇑ˢ-zero : ∀ {η : Sub n₁ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} {T : Type n₁}
+                 (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
+                 η ∣ zero &ˢ (η ∣ σ ⇑ˢ T) ≡ ` zero
+  Beta-⇑ˢ-zero _ = refl
+
+  Beta-⇑ˢ-suc : ∀ {η : Sub n₁ n₂} {T T''} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+                (x : Γ₁ ∋ T'') (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
+                η ∣ (suc {T′ = T} x) &ˢ (η ∣ σ ⇑ˢ T) ≡ idᴿ ∣ (η ∣ x &ˢ σ) [ Wkᴿ (T [ η ]ˢ) ]ᴿ
+  Beta-⇑ˢ-suc _ _ = refl
+
+  -- mirror of beta-lift-suc, Λ-dim: the RHS is spelled with the
+  -- first-class expression weaken* (opaque — the raw spelling
+  -- wkᴿ∣_[wkᴿ*]ᴿ and the index (weaken T)[η↑ˢ]ˢ normalize apart)
+  Beta-⇑ˢ*-suc* : ∀ {η : Sub n₁ n₂} {T''} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+                  (x : Γ₁ ∋ T'') (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
+                  (η ↑ˢ) ∣ (suc* x) &ˢ (η ∣ σ ⇑ˢ*) ≡ weaken* (η ∣ x &ˢ σ)
+  Beta-⇑ˢ*-suc* _ _ = refl
+
+  -- weakening by a type binder is undone by any Λ-dimension
+  -- extension: the mirror of the type-level `interact`.
+  Weaken*-cons : ∀ {η : Sub n₁ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+                 (e : Expr Γ₁ T) (A : Type n₂) (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
+                 (A ∙ˢ η) ∣ (weaken* e) [ η ∣ A ∙ˢ* σ ]ˢ ≡ η ∣ e [ σ ]ˢ
+  Weaken*-cons e A σ = Compositionalityᴿˢ e wkᴿ _ wkᴿ* (_ ∣ A ∙ˢ* σ)
   --! }
 
+  -- closure rules for the suc*-rules above: the type-level rules
+  -- `lift-id and lift-coincidence rewrite the ↑-node spelled in the
+  -- rules' index argument, so the instantiated forms need their own
+  -- (index-inert) rules — a finite family, since idᴿ/⟨⟩ are inert
+  Beta-↑ᴿ*-suc*-id : ∀ {T} {Γ₁ Γ₂ : Ctx n} (x : Γ₁ ∋ T) (ρ : idᴿ ∣ Γ₁ ⇒ᴿ Γ₂) →
+                     idᴿ ∣ (suc* x) &ᴿ (idᴿ ∣ ρ ↑ᴿ*) ≡ suc* (idᴿ ∣ x &ᴿ ρ)
+  Beta-↑ᴿ*-suc*-id _ _ = refl
+
+  Beta-⇑ˢ*-suc*-id : ∀ {T} {Γ₁ Γ₂ : Ctx n} (x : Γ₁ ∋ T) (σ : ⟨ idᴿ ⟩ ∣ Γ₁ ⇒ˢ Γ₂) →
+                     ⟨ idᴿ ⟩ ∣ (suc* x) &ˢ (⟨ idᴿ ⟩ ∣ σ ⇑ˢ*) ≡ weaken* (⟨ idᴿ ⟩ ∣ x &ˢ σ)
+  Beta-⇑ˢ*-suc*-id _ _ = refl
+
+  Beta-⇑ˢ*-suc*-⟨⟩ : ∀ {ζ : Ren n₁ n₂} {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+                     (x : Γ₁ ∋ T) (σ : ⟨ ζ ⟩ ∣ Γ₁ ⇒ˢ Γ₂) →
+                     ⟨ ζ ↑ᴿ ⟩ ∣ (suc* x) &ˢ (⟨ ζ ⟩ ∣ σ ⇑ˢ*) ≡ weaken* (⟨ ζ ⟩ ∣ x &ˢ σ)
+  Beta-⇑ˢ*-suc*-⟨⟩ _ _ = refl
+
   --! ExprRenLaws {
-  -- interaction between expression-renamings (analog of `associativity, etc.)
   Associativityᴿ : ∀ {n₁ n₂ n₃ n₄}
                    (ζ₁ : Ren n₁ n₂) (ζ₂ : Ren n₂ n₃) (ζ₃ : Ren n₃ n₄)
                    {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} {Γ₃ : Ctx n₃} {Γ₄ : Ctx n₄}
@@ -867,13 +1063,6 @@ opaque
                     (ζ , ζ′ ∣ (_∣_∙ᴿ_ {T = T} ζ x ρ₁) ⨾ᴿ ρ₂) ≡
                     (_∣_∙ᴿ_ {T = T} (ζ ⨟ᴿ ζ′) (ρ₂ (T [ ζ ]ᴿ) x) (ζ , ζ′ ∣ ρ₁ ⨾ᴿ ρ₂))
   Distributivityᴿ _ _ _ _ _ _ = fun-ext λ _ → fun-ext λ { zero → refl; (suc x) → refl }
-
-  Distributivity*ᴿ : ∀ {n₁ n₂ n₃} (ζ : Ren n₁ n₂) (ζ′ : Ren n₂ n₃)
-                     {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} {Γ₃ : Ctx n₃}
-                     (α : Var n₂) (ρ₁ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) (ρ₂ : ζ′ ∣ Γ₂ ⇒ᴿ Γ₃) →
-                     ((α ∙ᴿ ζ) , ζ′ ∣ (ζ ∣ α ∙ᴿ* ρ₁) ⨾ᴿ ρ₂) ≡
-                     ((ζ ⨟ᴿ ζ′) ∣ (α &ᴿ ζ′) ∙ᴿ* (ζ , ζ′ ∣ ρ₁ ⨾ᴿ ρ₂))
-  Distributivity*ᴿ _ _ _ _ _ = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
 
   Interactᴿ : ∀ {n₁ n₂} (ζ : Ren n₁ n₂) {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
               {x : Γ₂ ∋ (T [ ζ ]ᴿ)} (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
@@ -898,17 +1087,8 @@ opaque
            (ζ ∣ ρ T zero ∙ᴿ (idᴿ , ζ ∣ (Wkᴿ T) ⨾ᴿ ρ)) ≡ ρ
   η-lawᴿ _ = fun-ext λ _ → fun-ext λ { zero → refl; (suc x) → refl }
 
-  η-law*ᴿ : ∀ {n₁ n₂} {ζ : Ren (1 + n₁) n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
-            (ρ : ζ ∣ (Γ₁ ▷*) ⇒ᴿ Γ₂) →
-            ((wkᴿ ⨟ᴿ ζ) ∣ (zero &ᴿ ζ) ∙ᴿ* (wkᴿ , ζ ∣ wkᴿ* ⨾ᴿ ρ)) ≡ ρ
-  η-law*ᴿ _ = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
-
-  -- η-id*ᴿ: zero ∙ᴿ* wkᴿ* (an expression-renaming on (Γ ▷*) → (Γ ▷*)) ≡ Idᴿ
-  η-Id*ᴿ : ∀ {Γ : Ctx n} → (wkᴿ ∣ zero ∙ᴿ* (wkᴿ* {Γ = Γ})) ≡ Idᴿ
-  η-Id*ᴿ = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
   --! }
 
-  -- interaction between expression-substitutions (analog of `associativity, etc.)
   Associativityˢ : ∀ {n₁ n₂ n₃ n₄}
                    (η₁ : Sub n₁ n₂) (η₂ : Sub n₂ n₃) (η₃ : Sub n₃ n₄)
                    {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} {Γ₃ : Ctx n₃} {Γ₄ : Ctx n₄}
@@ -926,22 +1106,22 @@ opaque
                     (_∣_∙ˢ_ {T = T} (η ⨟ˢ η′) (η′ ∣ e [ σ₂ ]ˢ) (η , η′ ∣ σ₁ ⨾ˢ σ₂))
   Distributivityˢ _ _ _ _ _ _ = fun-ext λ _ → fun-ext λ { zero → refl; (suc x) → refl }
 
-  Distributivityˢ* : ∀ {n₁ n₂ n₃} (η : Sub n₁ n₂) (η′ : Sub n₂ n₃)
+  Distributivity*ˢ : ∀ {n₁ n₂ n₃} (η : Sub n₁ n₂) (η′ : Sub n₂ n₃)
                      {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} {Γ₃ : Ctx n₃}
                      (T : Type n₂) (σ₁ : η ∣ Γ₁ ⇒ˢ Γ₂) (σ₂ : η′ ∣ Γ₂ ⇒ˢ Γ₃) →
                      ((T ∙ˢ η) , η′ ∣ (η ∣ T ∙ˢ* σ₁) ⨾ˢ σ₂) ≡
                      ((η ⨟ˢ η′) ∣ (T [ η′ ]ˢ) ∙ˢ* (η , η′ ∣ σ₁ ⨾ˢ σ₂))
-  Distributivityˢ* _ _ _ _ _ = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
+  Distributivity*ˢ _ _ _ _ _ = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
 
   Interactˢ : ∀ {n₁ n₂} (η : Sub n₁ n₂) {T} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
               {e : Expr Γ₂ (T [ η ]ˢ)} (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
               (⟨ idᴿ ⟩ , η ∣ (Wkˢ T) ⨾ˢ (η ∣ e ∙ˢ σ)) ≡ σ
   Interactˢ _ _ = fun-ext λ _ → fun-ext λ _ → refl
 
-  Interactˢ* : ∀ {n₁ n₂} (η : Sub n₁ n₂) {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+  Interact*ˢ : ∀ {n₁ n₂} (η : Sub n₁ n₂) {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
                {T : Type n₂} (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
                (⟨ wkᴿ ⟩ , (T ∙ˢ η) ∣ wkˢ* ⨾ˢ (η ∣ T ∙ˢ* σ)) ≡ σ
-  Interactˢ* _ _ = fun-ext λ _ → fun-ext λ _ → refl
+  Interact*ˢ _ _ = fun-ext λ _ → fun-ext λ _ → refl
 
   Comp-idᵣˢ : ∀ {η : Sub n₁ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
               (η , ⟨ idᴿ ⟩ ∣ σ ⨾ˢ Idˢ) ≡ σ
@@ -957,31 +1137,11 @@ opaque
   η-lawˢ _ = fun-ext λ _ → fun-ext λ { zero → refl; (suc x) → refl }
 
 
-  η-lawˢ* : ∀ {n₁ n₂} {η : Sub (1 + n₁) n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
-            (σ : η ∣ (Γ₁ ▷*) ⇒ˢ Γ₂) →
-            --! EtaLawSub
-            ((⟨ wkᴿ ⟩ ⨟ˢ η) ∣ (zero &ˢ η) ∙ˢ* (⟨ wkᴿ ⟩ , η ∣ wkˢ* ⨾ˢ σ)) ≡ σ
-            
-  η-lawˢ* _ = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
-
-  -- η-idˢ*: (` zero) ∙ˢ* wkˢ* (an expression-substitution on (Γ ▷*) → (Γ ▷*)) ≡ Idˢ
-  --! EtaIdSubStar 
-  η-Idˢ* : ⟨ wkᴿ ⟩ ∣ (` zero) ∙ˢ* wkˢ* ≡ Idˢ {Γ = Γ ▷*}
-
-  η-Idˢ* = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
-
   --! ExprLiftBeta {
-  -- σ-calculus form of lifts (analog of type-level `beta-lift`):
-  -- ρ ⇑ᴿ T is the σ-form ` zero ∙ᴿ (ρ ⨾ᴿ Wkᴿ); similarly for ↑ᴿ*, ⇑ˢ, ⇑ˢ*.
   Beta-liftᴿ : ∀ {ζ : Ren n₁ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} {T : Type n₁}
                (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
                (ζ ∣ ρ ⇑ᴿ T) ≡ (ζ ∣ zero ∙ᴿ (ζ , idᴿ ∣ ρ ⨾ᴿ Wkᴿ (T [ ζ ]ᴿ)))
   Beta-liftᴿ _ = refl
-
-  Beta-lift*ᴿ : ∀ {ζ : Ren n₁ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
-                (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
-                (ζ ∣ ρ ↑ᴿ*) ≡ ((ζ ⨟ᴿ wkᴿ) ∣ zero ∙ᴿ* (ζ , wkᴿ ∣ ρ ⨾ᴿ wkᴿ*))
-  Beta-lift*ᴿ _ = refl
 
   Beta-liftˢ : ∀ {η : Sub n₁ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} {T : Type n₁}
                (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
@@ -990,82 +1150,23 @@ opaque
     { zero → refl
     ; (suc x) → sym (Coincidence (σ _ x) (Wkᴿ _))
     }
+  --! }
 
-  Beta-liftˢ* : ∀ {η : Sub n₁ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
-                (σ : η ∣ Γ₁ ⇒ˢ Γ₂) →
-                (η ∣ σ ⇑ˢ*) ≡ ((η ⨟ˢ ⟨ wkᴿ ⟩) ∣ (` zero) ∙ˢ* (η , ⟨ wkᴿ ⟩ ∣ σ ⨾ˢ wkˢ*))
-  Beta-liftˢ* σ = fun-ext λ _ → fun-ext λ
-    { (suc* x) → sym (Coincidence (σ _ x) wkᴿ*)
-    }
-  --! } 
+  -- the expression-level mirror of lift-coincidence: lifting an
+  -- embedded renaming collapses back into an embedding
+  ⟪⟫-⇑ : ∀ {ζ : Ren n₁ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂} {T : Type n₁}
+         (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
+         (⟨ ζ ⟩ ∣ (ζ ∣⟪ ρ ⟫) ⇑ˢ T) ≡ (ζ ∣⟪ ζ ∣ ρ ⇑ᴿ T ⟫)
+  ⟪⟫-⇑ _ = fun-ext λ _ → fun-ext λ { zero → refl; (suc x) → refl }
 
--- σ-calculus rewrite system on expressions (analog of the type-level REWRITE)
-{-# REWRITE
-  Traversal-Varᴿ
-  Traversal-λxᴿ
-  Traversal-Λαᴿ
-  Traversal-·ᴿ
-  Traversal-·*ᴿ
-
-  Traversal-Varˢ
-  Traversal-λxˢ
-  Traversal-Λαˢ
-  Traversal-·ˢ
-  Traversal-·ˢ*
-
-  Beta-idᴿ
-  Beta-wkᴿ
-  Beta-wk*ᴿ
-  Beta-ext-zeroᴿ
-  Beta-ext-sucᴿ
-  Beta-ext-suc*ᴿ
-  Beta-compᴿ
-
-  Beta-ext-zeroˢ
-  Beta-ext-sucˢ
-  Beta-ext-sucˢ*
-  Beta-liftᴿ
-  Beta-lift*ᴿ
-  Beta-liftˢ
-  Beta-liftˢ*
-  Beta-compˢ
-  Beta-renameˢ
-
-  Associativityˢ
-  Distributivityˢ
-  Distributivityˢ*
-  Interactˢ
-  Interactˢ*
-  Comp-idᵣˢ
-  Comp-idₗˢ
-  η-Idˢ
-  η-Idˢ*
-  η-lawˢ
-  η-lawˢ*
-
-  Associativityᴿ
-  Distributivityᴿ
-  Distributivity*ᴿ
-  Interactᴿ
-  Interact*ᴿ
-  Comp-idᵣᴿ
-  Comp-idₗᴿ
-  η-Idᴿ
-  η-Id*ᴿ
-  η-lawᴿ
-  η-law*ᴿ
-
-  Identityᵣ
-  Compositionalityᴿˢ
-  Compositionalityᴿᴿ
-  Compositionalityˢᴿ
-  Compositionalityˢˢ
-
-  Coincidence
-#-}
+  ⟪⟫-⇑* : ∀ {ζ : Ren n₁ n₂} {Γ₁ : Ctx n₁} {Γ₂ : Ctx n₂}
+          (ρ : ζ ∣ Γ₁ ⇒ᴿ Γ₂) →
+          (⟨ ζ ⟩ ∣ (ζ ∣⟪ ρ ⟫) ⇑ˢ*) ≡ ((ζ ↑ᴿ) ∣⟪ ζ ∣ ρ ↑ᴿ* ⟫)
+  ⟪⟫-⇑* _ = fun-ext λ _ → fun-ext λ { (suc* x) → refl }
 
 
--- single substitution, semantics, and progress
+
+-- ══════════════ §8  Semantics: full β-reduction and progress ═══════
 --! <
 --! Sem >
 --! SingleSub
@@ -1077,79 +1178,101 @@ _[*_*] : Expr (Γ ▷*) T → (T′ : Type n) → Expr Γ (T [ T′ ]*)
 e [* T′ *] = (T′ ∙ˢ idˢ) ∣ e [ idˢ ∣ T′ ∙ˢ* Idˢ ]ˢ
 
 --! Definition
+-- FULL β-reduction: a congruence rule for EVERY subterm position,
+-- including under λ and under Λ and in argument position.  Anything
+-- weaker cannot reach the canonical forms of System F, which live
+-- under three binders (Λα λx λy. x).
 data _⟶_ : Expr Γ T → Expr Γ T → Set where
   β-λ   :                (λx e₁ · e₂)  ⟶ (e₁ [ e₂ ])
   β-Λ   :                (Λα e ·* T′)  ⟶ (e [* T′ *])
-  ξ-·   : e₁ ⟶ e₁′  →  (e₁ · e₂)     ⟶ (e₁′ · e₂)
+  ξ-·₁  : e₁ ⟶ e₁′  →  (e₁ · e₂)     ⟶ (e₁′ · e₂)
+  ξ-·₂  : e₂ ⟶ e₂′  →  (e₁ · e₂)     ⟶ (e₁ · e₂′)
+  ξ-λ   : e ⟶ e′    →  (λx {T₁ = T₁} e) ⟶ (λx e′)
   ξ-·*  : e ⟶ e′    →  (e ·* T)      ⟶ (e′ ·* T)
   ξ-Λ   : e ⟶ e′    →  (Λα e)        ⟶ (Λα e′)
 
 data _⟶*_ : Expr Γ T → Expr Γ T → Set where
-  ⟶refl   : e ⟶* e
-  ⟶trans  : e₁ ⟶ e₂ → e₂ ⟶* e₃ → e₁ ⟶* e₃
+  ⟶refl  : e ⟶* e
+  ⟶step  : e₁ ⟶ e₂ → e₂ ⟶* e₃ → e₁ ⟶* e₃
 
 open import Data.Unit using (⊤; tt)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Relation.Nullary using (¬_)
 
+-- β-normal forms: under full reduction the right notion of "done" is a
+-- normal form, not a value.
 --! ProgressDefs {
-data Value : Expr Γ T → Set where
-  λx  : (e : Expr (Γ ▷ T₁) T₂)  → Value (λx e)
-  Λα  : (v : Value e)           → Value (Λα e)
-
+data Neutral : Expr Γ T → Set
+data Normal  : Expr Γ T → Set
+data Neutral where
+  `_    : (x : Γ ∋ T)                 → Neutral (` x)
+  _·_   : Neutral e₁ → Normal e₂      → Neutral (e₁ · e₂)
+  _·*_  : Neutral e → (T′ : Type n)   → Neutral (e ·* T′)
+data Normal where
+  ne    : Neutral e                   → Normal e
+  λx    : Normal e                    → Normal (λx {T₁ = T₁} e)
+  Λα    : Normal e                    → Normal (Λα e)
 data Progress : Expr Γ T → Set where
-  done  : (v : Value e)       → Progress e
+  done  : (nf : Normal e)     → Progress e
   step  : (e⟶e′ : e ⟶ e′)  → Progress e
 --! }
 
 
-module old where
-  --! NoVarDefs {
-  NoVar : Ctx n → Set
-  NoVar ∅        = ⊤
-  NoVar (Γ ▷ T)  = ⊥
-  NoVar (Γ ▷*)   = NoVar Γ
+--! NewNoVarDefs
+NoVar : Ctx n → Set
+NoVar Γ = ∀ {T′} → ¬ (Γ ∋ T′)
 
-  noVar : NoVar Γ → ¬ (Γ ∋ T)
-  noVar nv (suc* x) = noVar nv x
-  --! }
+--! NewProgress
+-- Under full reduction progress needs NO hypothesis on the context:
+-- every term either is normal or steps.  (NoVar re-enters only at the
+-- very end, to rule out the neutral normal forms.)
+progress : (e : Expr Γ T) → Progress e
+progress (` x)    = done (ne (` x))
+progress (λx e)
+  with progress e
+... | done nf      = done (λx nf)
+... | step e⟶e′  = step (ξ-λ e⟶e′)
+progress (Λα e)
+  with progress e
+... | done nf      = done (Λα nf)
+... | step e⟶e′  = step (ξ-Λ e⟶e′)
+progress (e₁ · e₂)
+  with progress e₁
+... | step e⟶e′  = step (ξ-·₁ e⟶e′)
+... | done (λx _)  = step β-λ
+... | done (ne n₁)
+  with progress e₂
+... | step e⟶e′  = step (ξ-·₂ e⟶e′)
+... | done nf₂     = done (ne (n₁ · nf₂))
+progress (e ·* T′)
+  with progress e
+... | step e⟶e′  = step (ξ-·* e⟶e′)
+... | done (Λα _)  = step β-Λ
+... | done (ne n)  = done (ne (n ·* T′))
 
+-- in a context with no term variables there are no neutral terms
+NoVar⇒¬Neutral : NoVar Γ → {e : Expr Γ T} → ¬ Neutral e
+NoVar⇒¬Neutral nv (` x)     = nv x
+NoVar⇒¬Neutral nv (n · _)   = NoVar⇒¬Neutral nv n
+NoVar⇒¬Neutral nv (n ·* _)  = NoVar⇒¬Neutral nv n
 
-  --! Progress
-  progress : NoVar Γ → (e : Expr Γ T) → Progress e
-  progress nv (` x)   = ⊥-elim (noVar nv x)
-  progress nv (λx e)  = done (λx e)
-  progress nv (e · e₁)
-    with progress nv e
-  ... | done (λx e₂)  = step β-λ
-  ... | step e⟶e′   = step (ξ-· e⟶e′)
-  progress nv (Λα e)
-    with progress nv e
-  ... | done v       = done (Λα v)
-  ... | step e⟶e′  = step (ξ-Λ e⟶e′)
-  progress nv (e ·* T′)
-    with progress nv e
-  ... | done (Λα v)  = step β-Λ
-  ... | step e⟶e′  = step (ξ-·* e⟶e′)
-
-module exp where
-  --! NewNoVarDefs
-  NoVar : Ctx n → Set
-  NoVar Γ = ∀ {T′} → ¬ (Γ ∋ T′)
-  
-  --! NewProgress
-  progress : NoVar Γ → (e : Expr Γ T) → Progress e
-  progress nv (` x)   = ⊥-elim (nv x)
-  progress nv (λx e)  = done (λx e)
-  progress nv (e · e₁)
-    with progress nv e
-  ... | done (λx e₂)  = step β-λ
-  ... | step e⟶e′   = step (ξ-· e⟶e′)
-  progress nv (Λα e)
-    with progress (λ{ (suc* x) → nv x}) e
-  ... | done v       = done (Λα v)
-  ... | step e⟶e′  = step (ξ-Λ e⟶e′)
-  progress nv (e ·* T′)
-    with progress nv e
-  ... | done (Λα v)  = step β-Λ
-  ... | step e⟶e′  = step (ξ-·* e⟶e′)
+-- ══════════════ §9  Church numerals, the running examples ══════════
+--! <
+--! <
+--! <
+--! FCNType
+ℕᶜ : Type 0
+ℕᶜ = ∀α ((` zero ⇒ ` zero) ⇒ (` zero ⇒ ` zero))
+--! FCNZero
+zeroᶜ : Expr ∅ ℕᶜ
+zeroᶜ = Λα (λx (λx (` zero)))
+--! FCNOne
+oneᶜ : Expr ∅ ℕᶜ
+oneᶜ = Λα (λx (λx ((` suc zero) · (` zero))))
+--! FCNSucc
+succᶜ : Expr ∅ (ℕᶜ ⇒ ℕᶜ)
+succᶜ = λx (Λα (λx (λx ((` suc zero) ·
+          ((((` suc (suc (suc* zero))) ·* (` zero)) · (` suc zero)) · (` zero))))))
+--! FCNTwo
+twoᶜ : Expr ∅ ℕᶜ
+twoᶜ = succᶜ · (succᶜ · zeroᶜ)

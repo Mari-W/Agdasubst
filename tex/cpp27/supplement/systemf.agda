@@ -724,9 +724,11 @@ data _⊢_∶_ : Ctx S → S ⊢ s → S ∶⊢ s → Set where
   ⊢` : ∀ {x : S ∋ s} {t} →
     Γ ∋ x ∶ t →
     Γ ⊢ (` x) ∶ t
+  --! TyLam {
   ⊢λ :
     (t ∷ₜ Γ) ⊢ e ∶ (weaken t′) →
     Γ ⊢ (λx e) ∶ (t ⇒ t′)
+  --! }
   ⊢Λ :
     (k ∷ₜ Γ) ⊢ e ∶ t →
     Γ ⊢ (Λα e) ∶ (∀[α∶ k ] t)
@@ -734,11 +736,13 @@ data _⊢_∶_ : Ctx S → S ⊢ s → S ∶⊢ s → Set where
     Γ ⊢ e₁ ∶ (t₁ ⇒ t₂) →
     Γ ⊢ e₂ ∶ t₁ →
     Γ ⊢ (e₁ · e₂) ∶ t₂
+  --! TyTApp {
   ⊢• :
     Γ ⊢ e ∶ (∀[α∶ k ] t′) →
     Γ ⊢ t ∶ k →
     (k ∷ₜ Γ) ⊢ t′ ∶ k′ →
     Γ ⊢ (e • t) ∶ (t′ [ t ]₀)
+  --! }
   ⊢* : {t : S ⊢ type} →
     Γ ⊢ t ∶ *
 
@@ -793,8 +797,11 @@ sub-pres : ∀ {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
   Γ₁ ⊢ e ∶ t → σ ∶ Γ₁ →ˢ Γ₂ →
   Γ₂ ⊢ (e [ σ ]ˢ) ∶ (t [ σ ]ˢ)
 --! }
-⊢↑ˢ : ∀ {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} → σ ∶ Γ₁ →ˢ Γ₂ →
-  (t : S₁ ∶⊢ s) → (σ ↑ˢ s) ∶ (t ∷ₜ Γ₁) →ˢ ((t [ σ ]ˢ) ∷ₜ Γ₂)
+--! LiftWT {
+⊢↑ˢ : ∀ {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} →
+  σ ∶ Γ₁ →ˢ Γ₂ → (t : S₁ ∶⊢ s) →
+  (σ ↑ˢ s) ∶ (t ∷ₜ Γ₁) →ˢ ((t [ σ ]ˢ) ∷ₜ Γ₂)
+--! }
 ⊢↑ˢ ⊢σ t _ zero    _ refl = ⊢` refl
 ⊢↑ˢ {σ = σ} ⊢σ t _ (suc x) _ refl = ren-pres (⊢σ _ x _ refl) (⊢wkᴿ (t [ σ ]ˢ))
 sub-pres (⊢` ⊢x)                     ⊢σ = ⊢σ _ _ _ ⊢x
@@ -816,8 +823,10 @@ sub-pres {σ = σ} (⊢• ⊢e ⊢t ⊢t′)      ⊢σ = ⊢• (sub-pres {σ 
 --! }
 sub-pres ⊢*                          ⊢σ = ⊢*
 
+--! SingleWT {
 ⊢[] : ∀ {Γ : Ctx S} {e : S ⊢ s} {t : S ∶⊢ s} →
   Γ ⊢ e ∶ t → (e ∙ˢ idˢ) ∶ (t ∷ₜ Γ) →ˢ Γ
+--! }
 ⊢[] ⊢e _ zero    _ refl = ⊢e
 ⊢[] ⊢e _ (suc x) _ refl = ⊢` refl
 
@@ -826,9 +835,11 @@ data Val : S ⊢ expr → Set where
   vΛ : Val (Λα e)
 
 data _↪_ : S ⊢ expr → S ⊢ expr → Set where
+  --! BetaLam {
   β-λ :
     Val e₂ →
     ((λx e₁) · e₂) ↪ (e₁ [ e₂ ]₀)
+  --! }
   β-Λ :
     ((Λα e) • t) ↪ (e [ t ]₀)
   ξ-·₁ :

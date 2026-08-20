@@ -92,6 +92,9 @@
       the primitives compute, and eligible for rewriting only if they are stuck.
       Opaque definitions satisfy both.
 
+      %%CHANGED (abstract): was the inductive-variables/surjective-pairing
+      %%sentence -- dropped as too technical; first-class renamings added,
+      %%and the close is now positive ("the rule set suffices throughout").
       We identify which version of the calculus can be oriented at all, and
       derive the rule set that follows. Renamings stay first-class in it, since
       a proof assistant needs them to define substitution by structural
@@ -110,6 +113,8 @@ Handling variable binding remains a central challenge in mechanizing
 programming language metatheory. Compared to pen-and-paper proofs,
 binders in proof assistants are a notorious source of uninteresting
 technicalities and boilerplate. Many representations have been proposed to
+%%CHANGED (intro para 1): three missing citations added (locally nameless,
+%%HOAS, de Bruijn), and de Bruijn credited with alpha-equivalence.
 contain them, among them locally nameless
 binders~\cite{Chargueraud2012}, nominal syntax~\cite{10.1007/11532231_4,
 Nominal2-AFP}, higher-order abstract syntax~\cite{PfenningElliott1988}, and
@@ -124,6 +129,8 @@ one instead works with parallel substitutions, which map variables to terms and
 replace all of them simultaneously. The $σ$-calculus~\cite{10.1145/96709.96712} makes
 such a map a first-class object with primitive syntactic operations for identity,
 weakening, extension, composition and lifting, together with a rewrite system
+%%CHANGED (intro): the de Bruijn algebra is now described for what it is,
+%%and cited to Schaefer-Smolka-Tebbi CPP'15 instead of the Autosubst paper.
 that normalizes expressions built from them. The de~Bruijn
 algebra~\cite{10.1145/2676724.2693163} interprets those operations over de~Bruijn
 terms, with substitutions modeled as functions from variables to terms. In that
@@ -143,17 +150,24 @@ Agda~\cite{cockx:LIPIcs.TYPES.2019.2, 10.1145/3434341} and
 Rocq~\cite{leray_et_al:LIPIcs.ITP.2024.26} offers to remove that step by
 promoting propositional equalities to definitional ones. Consistency is retained
 as long as the registered rules are supported by proofs and the resulting system
+%%CHANGED (intro): the orphaned "a syntactic condition comes with it" is
+%%folded in, and the condition is stated rather than named.
 is confluent and terminating~\cite{10.1145/3434341}. Agda additionally applies a
 rule by higher-order pattern unification~\cite{10.1007/978-3-642-21691-6_5}
 against its left-hand side, so that side must not reduce and must be headed by a
 defined symbol.
 
+%%CHANGED (intro): heading renamed; "no left-hand side is ever stuck"
+%%removed as too strong; the dangling "they" named.
 \emph{Modeling the primitives.} That requirement is about how the primitives are
 defined rather than about how substitutions are represented. Where the primitives
 are defined by recursion, as functions of a variable or as vectors of terms, they
 compute and the laws are provable. A definition that computes can also reduce
 inside a left-hand side. Where the primitives are constructors instead, as when
 the calculus's own syntax is the representation, every left-hand side is stuck
+%%CHANGED (intro): Wadler rewritten -- minimal version of the route,
+%%weakening only, and it costs pushing weakening inwards.  Our own
+%%suc-vs-wk tension is now acknowledged, with the rule that settles it.
 and nothing is derivable. Wadler takes a minimal version of
 that route, making weakening a constructor and nothing else, which already
 suffices to avoid renamings~\cite{Wadler_2024}. A constructor has nothing to
@@ -168,6 +182,7 @@ definitions~\cite{gratzer2022controlling} give both properties at once.
 An opaque symbol is stuck outside its block and computes inside it, so one
 definition can carry the proof of a law and also head that law's left-hand side.
 
+%%CHANGED: missing space in the run-in heading.
 \emph{Rewritable versions of the $σ$-calculus.} Not every version of the $σ$-calculus is
 a candidate. The original~\cite{10.1145/96709.96712} is confluent on ground
 terms but not on open ones, and open terms, those with metavariables, are the
@@ -785,6 +800,9 @@ instantiation for lookup and the two composition operators for everything else.
 
 \subsection*{Using Vectors instead of Functions}
 
+%%CHANGED (3.4): the old claim that the eta-laws are underivable under a
+%%vector encoding was backwards; probe-vec.agda proves them.  Now states
+%%the axiom ledger and why we keep functions.
 A vector-like data type is the other candidate representation, with the map a
 finite list of terms. Extension alone is a constructor. Identity, weakening,
 lifting and composition stay defined by recursion over the vector, so their
@@ -1112,6 +1130,7 @@ generation altogether.
 The \textsc{Abstract Binding Trees} library for Agda shares a goal with
 \textsc{Autosubst} and is used, for instance, in Siek's
 work~\cite{siek2021parameterized}. It builds an object language from a generic
+%%CHANGED (related work): one clause trimmed, for the page budget.
 syntax, but supports only extrinsic scoping and single-sorted syntax, and focuses
 on generic theorems about substitution. Its experimental support for rewriting
 with $σ$-calculus laws misses rules and does not pass the confluence check.
@@ -1145,6 +1164,8 @@ confluence hard to preserve.
 
 \section{Conclusion}\label{sec:con}
 
+%%CHANGED (conclusion): trimmed by ~4 lines to bring the body back to 12
+%%pages after the 3.4 rewrite grew.
 We have turned the normalization procedure of the $σ$-calculus into definitional
 equalities in Agda. Two contrary things are wanted at once. The
 primitives must compute, so that the theory can be instantiated with proofs, and

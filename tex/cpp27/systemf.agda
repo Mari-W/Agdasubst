@@ -796,10 +796,19 @@ _⊢⋯ˢ_ : ∀ {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
 ⊢↑ˢ ⊢σ t _ zero    _ refl = ⊢` refl
 ⊢↑ˢ {σ = σ} ⊢σ t _ (suc x) _ refl = (⊢σ _ x _ refl) ⊢⋯ᴿ ⊢wkᴿ (t [ σ ]ˢ)
 _⊢⋯ˢ_ (⊢` ⊢x)                ⊢σ = ⊢σ _ _ _ ⊢x
---! SubCases {
+--! CaseLam {
+-- the induction hypothesis types the body at (weaken t′) [ σ ↑ˢ _ ]ˢ,
+-- while ⊢λ demands weaken (t′ [ σ ]ˢ).  Discharged by wk-comm.
 _⊢⋯ˢ_ {σ = σ} (⊢λ ⊢e)        ⊢σ = ⊢λ (_⊢⋯ˢ_ {σ = σ ↑ˢ _} ⊢e (⊢↑ˢ {σ = σ} ⊢σ _))
+--! }
+-- ⊢Λ and ⊢· use no substitution law: neither typing rule moves a
+-- substitution past a binder in its conclusion.
 _⊢⋯ˢ_ {σ = σ} (⊢Λ ⊢e)        ⊢σ = ⊢Λ (_⊢⋯ˢ_ {σ = σ ↑ˢ _} ⊢e (⊢↑ˢ {σ = σ} ⊢σ _))
 _⊢⋯ˢ_ {σ = σ} (⊢· ⊢e₁ ⊢e₂)   ⊢σ = ⊢· (_⊢⋯ˢ_ {σ = σ} ⊢e₁ ⊢σ) (_⊢⋯ˢ_ {σ = σ} ⊢e₂ ⊢σ)
+--! CaseTApp {
+-- ⊢• concludes at t′ [ t ]₀, so the two sides are
+-- (t′ [ σ ↑ˢ _ ]ˢ) [ t [ σ ]ˢ ]₀  and  (t′ [ t ]₀) [ σ ]ˢ.
+-- Discharged by subst-commute.
 _⊢⋯ˢ_ {σ = σ} (⊢• ⊢e ⊢t ⊢t′) ⊢σ = ⊢• (_⊢⋯ˢ_ {σ = σ} ⊢e ⊢σ) (_⊢⋯ˢ_ {σ = σ} ⊢t ⊢σ)
                                     (_⊢⋯ˢ_ {σ = σ ↑ˢ _} ⊢t′ (⊢↑ˢ {σ = σ} ⊢σ _))
 --! }
@@ -838,12 +847,15 @@ sr :
   Γ ⊢ e ∶ t →
   e ↪ e′ →
   Γ ⊢ e′ ∶ t
---! SRCases {
+--! CaseBeta {
+-- ⊢λ stores the result type weakened, so the redex is typed at
+-- (weaken t₂) [ e₂ ]₀ where the goal is t₂.  Discharged by wk-cancel.
 sr (⊢· {e₂ = e₂} (⊢λ ⊢e₁) ⊢e₂) (β-λ v₂) =
   _⊢⋯ˢ_ {σ = e₂ ∙ˢ idˢ} ⊢e₁ (⊢[] ⊢e₂)
+--! }
+-- the type-application β-case uses no law: t′ [ t ]₀ IS t′ [ t ∙ˢ idˢ ]ˢ.
 sr (⊢• {t = t} (⊢Λ ⊢e) ⊢t ⊢t′) β-Λ =
   _⊢⋯ˢ_ {σ = t ∙ˢ idˢ} ⊢e (⊢[] ⊢t)
---! }
 sr (⊢· ⊢e₁ ⊢e₂) (ξ-·₁ st)       = ⊢· (sr ⊢e₁ st) ⊢e₂
 sr (⊢· ⊢e₁ ⊢e₂) (ξ-·₂ st v₁)    = ⊢· ⊢e₁ (sr ⊢e₂ st)
 sr (⊢• ⊢e ⊢t ⊢t′) (ξ-• st)      = ⊢• (sr ⊢e st) ⊢t ⊢t′

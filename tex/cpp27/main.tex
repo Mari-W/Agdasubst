@@ -580,12 +580,15 @@ theory~\cite{Hofmann1997}. We refer the reader to the supplement.
 
       \medskip
       \raggedright{}
-      \ESubCases{}
+      \ECaseLam{}
 
-      \ESRCases{}
+      \ECaseTApp{}
+
+      \ECaseBeta{}
       \caption{Substitution lemmas that hold by \AgdaInductiveConstructor{refl}
-            (top), and the cases of the System~F metatheory in which a manual
-            proof would have to apply them (bottom)}\label{fig:refl}
+            (top), and the only three cases of the System~F metatheory in which a
+            manual proof would have to apply one (bottom). Every remaining case
+            of both proofs uses none.}\label{fig:refl}
 \end{figure*}
 
 \subsection{What the Rules Buy}\label{sec:mis-ex-proof}
@@ -619,23 +622,31 @@ Five rules and no user intervention. Every intermediate term above is checked
 against the endpoint in the supplement, so the trace is the one Agda takes.
 A normal form is reached when no traversal can be pushed further, no composition
 can be fused, and no embedded renaming is left in the substitution world. On a
-closed term the substitution disappears entirely; on an abstract $t$ it survives
+closed term the substitution disappears entirely. On an abstract $t$ it survives
 as a single application to a right-nested, identity-free map, as here.
 
-The bottom of the figure shows where they are spent. It is the interesting part
-of the metatheory of the System~F of \cref{fig:pre-svm}, proved against a
-standard type system and a call-by-value small-step semantics, both in the
-supplement. Every clause is a bare constructor application, and each one silently
-uses one law from the top of the figure. In the \AgdaInductiveConstructor{⊢λ}
-case the induction hypothesis types the body at $(\mathsf{weaken}\ t')\,[\,\Uparrow σ\,]$ while \AgdaInductiveConstructor{⊢λ} demands
-$\mathsf{weaken}\,(t'\,[\,σ\,])$, which is $\mathsf{wk\text{-}comm}$. In the
-\AgdaInductiveConstructor{⊢•} case the two sides are
+The bottom of the figure shows where they are spent. Across substitution
+preservation and subject reduction for the System~F of \cref{fig:pre-svm}, proved
+against a standard type system and a call-by-value small-step semantics, exactly
+three clauses need a law, and the figure shows those three. In the
+\AgdaInductiveConstructor{⊢λ} case the induction hypothesis types the body at
+$(\mathsf{weaken}\ t')\,[\,\Uparrow σ\,]$ while \AgdaInductiveConstructor{⊢λ}
+demands $\mathsf{weaken}\,(t'\,[\,σ\,])$, which is $\mathsf{wk\text{-}comm}$. In
+the \AgdaInductiveConstructor{⊢•} case the two sides are
 $(t'\,[\,\Uparrow σ\,])\,[\,t\,[\,σ\,]\,]_0$ and $(t'\,[\,t\,]_0)\,[\,σ\,]$,
-which is $\mathsf{subst\text{-}commute}$. And the $β$-case for
-\AgdaInductiveConstructor{λx\_} types the redex at $(\mathsf{weaken}\
+which is $\mathsf{subst\text{-}commute}$. In the $β$-case for
+\AgdaInductiveConstructor{λx\_} the redex is typed at $(\mathsf{weaken}\
 t_2)\,[\,e_2\,]_0$ where the goal is $t_2$, which is
-$\mathsf{wk\text{-}cancel}$. A textbook proof states and applies all three. Here
-they are conversions, so the clauses have nothing left to say.
+$\mathsf{wk\text{-}cancel}$. A textbook proof states and applies all three.
+
+Every other clause of the two proofs needs nothing, and for two different
+reasons. \AgdaInductiveConstructor{⊢Λ} and \AgdaInductiveConstructor{⊢·}
+conclude at a type the substitution never has to be moved through, so no law
+arises. The $β$-case for \AgdaInductiveConstructor{Λα\_} does face a
+substitution equation, $t'\,[\,t\,]_0$ against $t'\,[\,t \bsym{\cdot}
+\bsym{\mathsf{id}}\,]$, but the two are the same term by the definition of
+single substitution. Here the three that do arise are conversions too, so every
+clause is a bare constructor application.
 
 One case does need help, and the cause is the rewriting itself. In the two
 $β$-cases we pass $σ$ explicitly, writing \AgdaFunction{\_⊢⋯ˢ\_}

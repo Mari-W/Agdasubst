@@ -90,25 +90,16 @@
       substitutions are normalized during conversion rather than by a tactic.
       Two requirements pull against each other. The rules are provable only if
       the primitives compute, and eligible for rewriting only if they are stuck.
-      Opaque definitions satisfy both. 
+      Opaque definitions satisfy both.
 
-      %this is not clear, and too technical i think? what is inductive variables and surjective paring, this is too technbical?
-      %also shouldnt we mention that we want first class renamings (one of our biggest burdons, which are required in proof assitants (and in some proofs))
-      We identify which variant of the calculus
-      can be oriented at all, since native inductive variables and surjective
-      pairing cannot coexist in one rewrite system, and derive the rule set that
-      follows. 
-      
-      %i dont like this sentence ("it")
-      A generator emits it from a syntax description. 
-      
-      Agda certifies
-      local confluence and AProVE termination. Solving the POPLmark Challenge
-      and POPLmark Reloaded on top exercises the result. 
-      
-      %the laws we cannot register seems bad, rephrase positelvy, the rule set suffices or something, but juist a single law resists blabla
-      The laws we cannot
-      register are never needed, and only a single law resists our orientation.
+      We identify which version of the calculus can be oriented at all, and
+      derive the rule set that follows. Renamings stay first-class in it, since
+      a proof assistant needs them to define substitution by structural
+      recursion and some proofs reason about them directly. A generator emits the whole development from a
+      syntax description. Agda certifies local confluence and AProVE
+      termination. Solving the POPLmark Challenge and POPLmark Reloaded on top
+      exercises the result. The rule set suffices throughout, and a single law
+      resists our orientation.
 \end{abstract}
 
 \maketitle
@@ -119,34 +110,29 @@ Handling variable binding remains a central challenge in mechanizing
 programming language metatheory. Compared to pen-and-paper proofs,
 binders in proof assistants are a notorious source of uninteresting
 technicalities and boilerplate. Many representations have been proposed to
-contain them, among them locally nameless binders%cite needed
-, nominal
-syntax~\cite{10.1007/11532231_4, Nominal2-AFP}, higher-order abstract syntax%cite needed
-,
-and de~Bruijn indices%originbal de bruijn paper cite need
-. 
-%mention they solve alpha equivalence for free somehow
-De~Bruijn syntax is canonical and easy
-to define, but a development built on it still pays for a long list of lemmas
-about substitution composition and about the interaction of substitution with
-binders.
+contain them, among them locally nameless
+binders~\cite{Chargueraud2012}, nominal syntax~\cite{10.1007/11532231_4,
+Nominal2-AFP}, higher-order abstract syntax~\cite{PfenningElliott1988}, and
+de~Bruijn indices~\cite{deBruijn1972}. De~Bruijn syntax makes $α$-equivalent
+terms syntactically identical, so $α$-equivalence never has to be reasoned about,
+and the syntax itself is easy to define. A development built on it still pays for
+a long list of lemmas about substitution composition and about the interaction of
+substitution with binders.
 
 \emph{The $σ$-calculus and \textsc{Autosubst}.} On paper, substitution usually replaces a single variable. In a proof assistant
 one instead works with parallel substitutions, which map variables to terms and
 replace all of them simultaneously. The $σ$-calculus~\cite{10.1145/96709.96712} makes
 such a map a first-class object with primitive syntactic operations for identity,
 weakening, extension, composition and lifting, together with a rewrite system
-that normalizes expressions built from them. 
-% is that true? check again, is it really functions and does the algebra model something?
-The de~Bruijn algebra, which models
-substitutions as functions, provides a semantic model in which those rules
-become provable~\cite{schafer2015autosubst}, and hence usable for equational
-reasoning. \textsc{Autosubst}~\cite{schafer2015autosubst} and its successor
+that normalizes expressions built from them. The de~Bruijn
+algebra~\cite{10.1145/2676724.2693163} interprets those operations over de~Bruijn
+terms, with substitutions modeled as functions from variables to terms. In that
+model the rules are theorems rather than postulates, which is what makes them
+usable for equational reasoning. \textsc{Autosubst}~\cite{schafer2015autosubst} and its successor
 \textsc{Autosubst 2}~\cite{10.1145/3293880.3294101} generate the operations,
 the proofs of the laws, and a tactic that normalizes substitutions inside a
 goal. \textsc{Autosubst 2} additionally supports intrinsically scoped syntax,
-packages substitutions over several sorts into vectors, 
-and promotes renamings,
+packages substitutions over several sorts into vectors, and promotes renamings,
 the substitutions that map variables to variables, to first-class citizens of
 the equational theory.
 
@@ -157,43 +143,32 @@ Agda~\cite{cockx:LIPIcs.TYPES.2019.2, 10.1145/3434341} and
 Rocq~\cite{leray_et_al:LIPIcs.ITP.2024.26} offers to remove that step by
 promoting propositional equalities to definitional ones. Consistency is retained
 as long as the registered rules are supported by proofs and the resulting system
-is confluent and terminating~\cite{10.1145/3434341}. 
-%dont like the flow here this next sentence stands alone and only makes sense with what follows
-A syntactic condition comes
-with it. Agda applies a rule by higher-order pattern
-unification~\cite{10.1007/978-3-642-21691-6_5} against its left-hand side, and
-therefore demands that this side be stuck on a defined symbol.
+is confluent and terminating~\cite{10.1145/3434341}. Agda additionally applies a
+rule by higher-order pattern unification~\cite{10.1007/978-3-642-21691-6_5}
+against its left-hand side, so that side must not reduce and must be headed by a
+defined symbol.
 
-%dont like the title, its not specific and uses non standard vocab
-\emph{Defined or declared.} 
-%its not called the "syntactic condition", describe it, it says that the LHS cannot reduce and must be a defined (function, in this case) symbol 
-The syntactic condition is a condition on
-definitions rather than on representations. Where the primitives are defined by
-recursion, as functions of a variable or as vectors of terms, they compute, the
-laws are provable, 
-% bold claim, removwe
-and no left-hand side is ever stuck. 
-
-%what is they
-Where they are
-constructors, as when the calculus's own syntax serves as the representation,
-every left-hand side is stuck and nothing is derivable. 
-%he doesnt fully take that route, only work weakening, whcih suffices to skip renamigns, so this is an mibnimal instace of it
-This is the route Wadler
-takes, and it avoids renamings altogether~\cite{Wadler_2024}. 
-% not true, read it, he doesnt have suc, to do suc he has wk 0 etc, so this is exactly what he spares, the rpoblem is he can have wk in the syntax also on ohter terms and they dont compute to the inside
-%ALSO but we exactly have the issue of suc vs wk?? 
-It costs the rule
-$x\,[\,\bsym{\mathsf{wk}}\,] = \bsym{\mathsf{suc}}\,x$, which is then no longer a
-theorem, so a variable acquires two inequivalent representations and every law
-that pushes weakening through a term stays propositional. 
-
-Agda's
-opaque definitions~\cite{gratzer2022controlling} give both properties at once.
+\emph{Modeling the primitives.} That requirement is about how the primitives are
+defined rather than about how substitutions are represented. Where the primitives
+are defined by recursion, as functions of a variable or as vectors of terms, they
+compute and the laws are provable. A definition that computes can also reduce
+inside a left-hand side. Where the primitives are constructors instead, as when
+the calculus's own syntax is the representation, every left-hand side is stuck
+and nothing is derivable. Wadler takes a minimal version of
+that route, making weakening a constructor and nothing else, which already
+suffices to avoid renamings~\cite{Wadler_2024}. A constructor has nothing to
+compute, so weakening does not push inwards. A weakened application stays
+weakened, and every law that moves weakening through a term is propositional. The
+same tension is present in our setting, between the variable constructor
+$\bsym{\mathsf{suc}}$ and the map $\bsym{\mathsf{wk}}$, and the rule
+$x\,[\,\bsym{\mathsf{wk}}\,] = \bsym{\mathsf{suc}}\,x$ settles it. That rule is
+available to us because both sides are definitions, and \cref{sec:pre-sig} shows
+what it costs elsewhere. Agda's opaque
+definitions~\cite{gratzer2022controlling} give both properties at once.
 An opaque symbol is stuck outside its block and computes inside it, so one
 definition can carry the proof of a law and also head that law's left-hand side.
 
-\emph{Rewritable versions of the$σ$-calculus.} Not every version of the $σ$-calculus is
+\emph{Rewritable versions of the $σ$-calculus.} Not every version of the $σ$-calculus is
 a candidate. The original~\cite{10.1145/96709.96712} is confluent on ground
 terms but not on open ones, and open terms, those with metavariables, are the
 setting of any mechanized development. The two variants that repair this differ

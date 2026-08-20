@@ -131,7 +131,7 @@ to define, but a development built on it still pays for a long list of lemmas
 about substitution composition and about the interaction of substitution with
 binders.
 
-On paper, substitution usually replaces a single variable. In a proof assistant
+\emph{The $σ$-calculus and \textsc{Autosubst}.} On paper, substitution usually replaces a single variable. In a proof assistant
 one instead works with parallel substitutions, which map variables to terms and
 replace all of them simultaneously. The $σ$-calculus~\cite{10.1145/96709.96712} makes
 such a map a first-class object with primitive syntactic operations for identity,
@@ -145,37 +145,55 @@ reasoning. \textsc{Autosubst}~\cite{schafer2015autosubst} and its successor
 \textsc{Autosubst 2}~\cite{10.1145/3293880.3294101} generate the operations,
 the proofs of the laws, and a tactic that normalizes substitutions inside a
 goal. \textsc{Autosubst 2} additionally supports intrinsically scoped syntax,
-packages substitutions over several sorts into vectors, and promotes renamings,
+packages substitutions over several sorts into vectors, 
+and promotes renamings,
 the substitutions that map variables to variables, to first-class citizens of
 the equational theory.
 
-The equalities so obtained are propositional. Normalization is a step the user
+\emph{Rewrite rules in proof assistants.} The equalities so obtained are propositional. Normalization is a step the user
 takes, and every goal that mentions a substitution has to be brought into normal
 form before it can be closed. Recent support for user-defined rewrite rules in
 Agda~\cite{cockx:LIPIcs.TYPES.2019.2, 10.1145/3434341} and
 Rocq~\cite{leray_et_al:LIPIcs.ITP.2024.26} offers to remove that step by
 promoting propositional equalities to definitional ones. Consistency is retained
 as long as the registered rules are supported by proofs and the resulting system
-is confluent and terminating~\cite{10.1145/3434341}. A syntactic condition comes
+is confluent and terminating~\cite{10.1145/3434341}. 
+%dont like the flow here this next sentence stands alone and only makes sense with what follows
+A syntactic condition comes
 with it. Agda applies a rule by higher-order pattern
 unification~\cite{10.1007/978-3-642-21691-6_5} against its left-hand side, and
 therefore demands that this side be stuck on a defined symbol.
 
-\emph{Defined or declared.} The syntactic condition is a condition on
+%dont like the title, its not specific and uses non standard vocab
+\emph{Defined or declared.} 
+%its not called the "syntactic condition", describe it, it says that the LHS cannot reduce and must be a defined (function, in this case) symbol 
+The syntactic condition is a condition on
 definitions rather than on representations. Where the primitives are defined by
 recursion, as functions of a variable or as vectors of terms, they compute, the
-laws are provable, and no left-hand side is ever stuck. Where they are
+laws are provable, 
+% bold claim, removwe
+and no left-hand side is ever stuck. 
+
+%what is they
+Where they are
 constructors, as when the calculus's own syntax serves as the representation,
-every left-hand side is stuck and nothing is derivable. This is the route Wadler
-takes, and it avoids renamings altogether~\cite{Wadler_2024}. It costs the rule
+every left-hand side is stuck and nothing is derivable. 
+%he doesnt fully take that route, only work weakening, whcih suffices to skip renamigns, so this is an mibnimal instace of it
+This is the route Wadler
+takes, and it avoids renamings altogether~\cite{Wadler_2024}. 
+% not true, read it, he doesnt have suc, to do suc he has wk 0 etc, so this is exactly what he spares, the rpoblem is he can have wk in the syntax also on ohter terms and they dont compute to the inside
+%ALSO but we exactly have the issue of suc vs wk?? 
+It costs the rule
 $x\,[\,\bsym{\mathsf{wk}}\,] = \bsym{\mathsf{suc}}\,x$, which is then no longer a
 theorem, so a variable acquires two inequivalent representations and every law
-that pushes weakening through a term stays propositional. Agda's
+that pushes weakening through a term stays propositional. 
+
+Agda's
 opaque definitions~\cite{gratzer2022controlling} give both properties at once.
 An opaque symbol is stuck outside its block and computes inside it, so one
 definition can carry the proof of a law and also head that law's left-hand side.
 
-\emph{Which calculus can be oriented.} Not every version of the $σ$-calculus is
+\emph{Rewritable versions of the$σ$-calculus.} Not every version of the $σ$-calculus is
 a candidate. The original~\cite{10.1145/96709.96712} is confluent on ground
 terms but not on open ones, and open terms, those with metavariables, are the
 setting of any mechanized development. The two variants that repair this differ
@@ -800,11 +818,11 @@ is needed all the same.
 
 Nothing is lost on the side of provability, and the supplement carries the
 experiment. With maps as vectors every law of \cref{sec:mis-sig} is a theorem
-under \texttt{--safe}, the four $η$-laws included, each of the four by case
-analysis on the map. The function model derives them from function
-extensionality, which we postulate. Since the laws are theorems under either
-representation, we can report that the $η$-laws are never once applied by hand
-across the POPLmark development.
+under \texttt{--safe}, the four $η$-laws included. Equality of vectors is
+equality of data, so that variant assumes nothing, where ours postulates
+function extensionality. We keep functions as the more intuitive model. The laws
+are theorems either way, so we can report that the $η$-laws are never once
+applied by hand across the POPLmark development.
 
 The designs differ on cost. Every vector operation recurses on the scope, so
 laws the function model closes by \AgdaFunction{refl} become inductions the
@@ -816,11 +834,10 @@ symbol. Transparency buys $η$ and forbids rules. Opacity buys rules and forbids
 $η$. We take opacity, and drop $η$ for the independent reason of
 \cref{sec:pre-sig}.
 
-The vector representation remains the right choice where functions are not
-available, notably when formalizing type theory in type
-theory~\cite{10.1145/2914770.2837638}, and it is what the uniform
-renaming/substitution treatments~\cite{altenkirch2025substitution, ren-sub} of
-\cref{sec:rwk} use.
+Vectors remain the right choice where functions are not available, notably when
+formalizing type theory in type theory~\cite{10.1145/2914770.2837638}, and they
+are what the uniform renaming/substitution
+treatments~\cite{altenkirch2025substitution, ren-sub} of \cref{sec:rwk} use.
 
 The original $σ$-calculus treats its symbols purely syntactically, describing
 lookup itself through instantiation. The de~Bruijn algebra then supplied a
@@ -1121,9 +1138,8 @@ The \textsc{Abstract Binding Trees} library for Agda shares a goal with
 \textsc{Autosubst} and is used, for instance, in Siek's
 work~\cite{siek2021parameterized}. It builds an object language from a generic
 syntax, but supports only extrinsic scoping and single-sorted syntax, and focuses
-on generic theorems about substitution and on abstractions over predicates. It
-also offers incomplete experimental support for rewriting with $σ$-calculus laws,
-but misses rules and therefore does not pass the confluence check.
+on generic theorems about substitution. Its experimental support for rewriting
+with $σ$-calculus laws misses rules and does not pass the confluence check.
 
 Wadler experiments with explicit substitutions and implements weakening as a
 constructor, thereby avoiding renamings~\cite{Wadler_2024}. He rewrites some of
@@ -1154,21 +1170,18 @@ confluence hard to preserve.
 
 \section{Conclusion}\label{sec:con}
 
-We have shown how to turn the normalization procedure of the $σ$-calculus into
-definitional equalities in Agda. The central tension is that two contrary things
-are wanted at once: full computational behavior, so that the equational theory
-can be instantiated with proofs, and symbolic behavior, so that the rules are
-eligible for rewriting and higher-order pattern unification. Opaque definitions
+We have turned the normalization procedure of the $σ$-calculus into definitional
+equalities in Agda. Two contrary things are wanted at once. The
+primitives must compute, so that the theory can be instantiated with proofs, and
+stay symbolic, so that the rules are eligible for rewriting. Opaque definitions
 resolve it.
 
-The theory we register is $σ_\Uparrow$ instantiated twice, once for renamings and
-once for substitutions, together with the rules that first-class renamings force
-between the two. Which laws survive is forced. Native inductive
-variables and surjective pairing cannot coexist in one rewrite system, and that
-single fact fixes most of the design. Agda certifies the resulting system locally confluent, and AProVE proves it
-confluent and terminating. A generator emits it from a syntax description, and
-the POPLmark Challenge and POPLmark Reloaded exercise it at scale. One law
-resists our orientation, and we have said precisely why.
+The theory we register is $σ_\Uparrow$ instantiated once per world, with the rules
+that first-class renamings force between the two. Which laws survive is forced,
+because native inductive variables and surjective pairing cannot coexist in one
+rewrite system. Agda certifies local confluence and AProVE termination, a
+generator emits the system from a syntax description, and the POPLmark
+challenges exercise it at scale. One law resists orientation, and we say why.
 
 \bibliographystyle{ACM-Reference-Format} \bibliography{references}
 

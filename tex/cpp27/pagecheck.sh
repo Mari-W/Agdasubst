@@ -25,9 +25,15 @@ total = len([p for p in pages if p.strip()])
 body = total
 for i, p in enumerate(pages, 1):
     if 'References' in p:
-        body = i - 1 + (0 if p.strip().startswith('References') else 0)
-        # the page where references start is partly body; count it as body
-        body = i
+        # The references page counts as a body page only if body text
+        # precedes the heading on it.  Drop the line-number column and the
+        # running head, then look at what comes before "References".
+        import re as _re
+        lines = [l for l in p.split("\n")
+                 if l.strip() and not _re.fullmatch(r"\d{3,4}", l.strip())
+                 and 'CPP ' not in l and 'Rewrite Rules' not in l]
+        before = lines[:lines.index('References')] if 'References' in lines else lines
+        body = i if before else i - 1
         break
 print("total pages      :", total)
 print("references start :", i if 'References' in "".join(pages) else "n/a")

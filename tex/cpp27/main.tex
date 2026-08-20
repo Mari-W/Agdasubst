@@ -2,14 +2,17 @@
 % Sources of truth:
 %   systemf.agda   the 72 registered rules and the 9 unregistered lemmas
 %   closure.agda   the eight refl assertions certifying the absences
-%   TRS.md         the rule-by-rule provenance table
-%   supplement/    the generator, the POPLmark development, the TRS export
+%   trs/TRS.md     the rule-by-rule provenance table (NOT shipped)
+%   supplement/    the Agda, the generator, the POPLmark development
 % Figures are extracted by agdatex from the marker regions in systemf.agda
 % and examples.agda; blank lines inside an indented or opaque marker region
 % break AgdaAlign, so do not insert any.
 % =====================================================================
 \documentclass[sigplan,anonymous,review]{acmart}
 \usepackage{microtype}
+% Long \texttt option names and \mathsf lemma names are unbreakable; without
+% this a handful of lines overrun the column by a few points.
+\setlength{\emergencystretch}{2em}
 % acmart already defines \Bbbk (via newtxmath); amssymb then refuses to
 % redefine it.  Let it through rather than dropping amssymb.
 \let\Bbbk\relax
@@ -87,13 +90,25 @@
       substitutions are normalized during conversion rather than by a tactic.
       Two requirements pull against each other. The rules are provable only if
       the primitives compute, and eligible for rewriting only if they are stuck.
-      Opaque definitions satisfy both. We identify which variant of the calculus
+      Opaque definitions satisfy both. 
+
+      %this is not clear, and too technical i think? what is inductive variables and surjective paring, this is too technbical?
+      %also shouldnt we mention that we want first class renamings (one of our biggest burdons, which are required in proof assitants (and in some proofs))
+      We identify which variant of the calculus
       can be oriented at all, since native inductive variables and surjective
       pairing cannot coexist in one rewrite system, and derive the rule set that
-      follows. A generator emits it from a syntax description. Agda certifies
+      follows. 
+      
+      %i dont like this sentence ("it")
+      A generator emits it from a syntax description. 
+      
+      Agda certifies
       local confluence and AProVE termination. Solving the POPLmark Challenge
-      and POPLmark Reloaded on top exercises the result. The laws we cannot
-      register are never needed, and a single law resists our orientation.
+      and POPLmark Reloaded on top exercises the result. 
+      
+      %the laws we cannot register seems bad, rephrase positelvy, the rule set suffices or something, but juist a single law resists blabla
+      The laws we cannot
+      register are never needed, and only a single law resists our orientation.
 \end{abstract}
 
 \maketitle
@@ -104,19 +119,26 @@ Handling variable binding remains a central challenge in mechanizing
 programming language metatheory. Compared to pen-and-paper proofs,
 binders in proof assistants are a notorious source of uninteresting
 technicalities and boilerplate. Many representations have been proposed to
-contain them, among them locally nameless binders, nominal
-syntax~\cite{10.1007/11532231_4, Nominal2-AFP}, higher-order abstract syntax,
-and de~Bruijn indices. De~Bruijn syntax is canonical and easy
+contain them, among them locally nameless binders%cite needed
+, nominal
+syntax~\cite{10.1007/11532231_4, Nominal2-AFP}, higher-order abstract syntax%cite needed
+,
+and de~Bruijn indices%originbal de bruijn paper cite need
+. 
+%mention they solve alpha equivalence for free somehow
+De~Bruijn syntax is canonical and easy
 to define, but a development built on it still pays for a long list of lemmas
 about substitution composition and about the interaction of substitution with
 binders.
 
 On paper, substitution usually replaces a single variable. In a proof assistant
 one instead works with parallel substitutions, which map variables to terms and
-replace all of them at once. The $σ$-calculus~\cite{10.1145/96709.96712} makes
-such a map a first-class object with primitive operations for identity,
+replace all of them simultaneously. The $σ$-calculus~\cite{10.1145/96709.96712} makes
+such a map a first-class object with primitive syntactic operations for identity,
 weakening, extension, composition and lifting, together with a rewrite system
-that normalizes expressions built from them. The de~Bruijn algebra, which models
+that normalizes expressions built from them. 
+% is that true? check again, is it really functions and does the algebra model something?
+The de~Bruijn algebra, which models
 substitutions as functions, provides a semantic model in which those rules
 become provable~\cite{schafer2015autosubst}, and hence usable for equational
 reasoning. \textsc{Autosubst}~\cite{schafer2015autosubst} and its successor
@@ -139,16 +161,16 @@ with it. Agda applies a rule by higher-order pattern
 unification~\cite{10.1007/978-3-642-21691-6_5} against its left-hand side, and
 therefore demands that this side be stuck on a defined symbol.
 
-\emph{Functions or constructors.} There are two ways to model a parallel
-substitution, and the syntactic condition tells them apart. Modeled as
-functions, the primitives compute, so the laws are provable, but composition
-unfolds to a lambda abstraction and no left-hand side is ever stuck. Modeled as
-syntax, with extension a term former, every left-hand side is stuck by
-construction. This is the route Wadler takes, and it avoids renamings
-altogether~\cite{Wadler_2024}. What it costs is that a constructor has nothing
-to compute, so the rule $x\,[\,\bsym{\mathsf{wk}}\,] = \bsym{\mathsf{suc}}\,x$ is
-no longer derivable, a variable acquires two inequivalent representations, and
-every law that pushes weakening through a term stays propositional. Agda's
+\emph{Defined or declared.} The syntactic condition is a condition on
+definitions rather than on representations. Where the primitives are defined by
+recursion, as functions of a variable or as vectors of terms, they compute, the
+laws are provable, and no left-hand side is ever stuck. Where they are
+constructors, as when the calculus's own syntax serves as the representation,
+every left-hand side is stuck and nothing is derivable. This is the route Wadler
+takes, and it avoids renamings altogether~\cite{Wadler_2024}. It costs the rule
+$x\,[\,\bsym{\mathsf{wk}}\,] = \bsym{\mathsf{suc}}\,x$, which is then no longer a
+theorem, so a variable acquires two inequivalent representations and every law
+that pushes weakening through a term stays propositional. Agda's
 opaque definitions~\cite{gratzer2022controlling} give both properties at once.
 An opaque symbol is stuck outside its block and computes inside it, so one
 definition can carry the proof of a law and also head that law's left-hand side.
@@ -376,8 +398,8 @@ matter of taste. Which rules each answer buys is \cref{sec:mis-sig}'s subject
 and is deliberately kept out of the figure.
 
 For the semantics we use the de~Bruijn algebra, which models substitutions as
-functions and thereby makes the rules provable rather than
-postulated~\cite{schafer2015autosubst}. Variables are natural numbers, terms are
+functions and in which the rules are theorems rather than
+postulates~\cite{schafer2015autosubst}. Variables are natural numbers, terms are
 $t := x \mid \bsym{λ.}\, t \mid t_1\, t_2$, and a substitution maps variables to
 terms. Reading $σ$ as a list $[t_0, t_1, \dots]$ motivates the primitives:
 \begin{align*}
@@ -770,21 +792,29 @@ instantiation for lookup and the two composition operators for everything else.
 
 \subsection*{Using Vectors instead of Functions}
 
-A vector-like data type whose extension is a constructor is the other candidate
-representation. As in \cref{sec:introduction} it is stuck by construction, so it
-needs no opacity machinery, and composition by case distinction on the vector is
-a legal rewrite pattern.
+A vector-like data type is the other candidate representation, with the map a
+finite list of terms. Extension alone is a constructor. Identity, weakening,
+lifting and composition stay defined by recursion over the vector, so their
+clauses compete with the rules exactly as the function model's do, and opacity
+is needed all the same.
 
-We drop $η$ too, for the independent reason of \cref{sec:pre-sig}, so on that
-axis the two designs agree. They differ on what can be proved. In our development
-all 72 registered rules and the nine unregistered ones are theorems, discharged
-against the function model, and that is what makes the exclusions measurable. Because we can state and prove the
-$η$-laws, we can also report that they are never once applied by hand across the
-whole POPLmark development. Under a constructor encoding those laws are not
-derivable, since a constructor has no computation rules to derive them from, so
-they would have to be postulated or the type quotiented. Postulating forfeits
-exactly the consistency argument that makes us prove rules before registering
-them, and quotienting reintroduces the transports we set out to remove.
+Nothing is lost on the side of provability, and the supplement carries the
+experiment. With maps as vectors every law of \cref{sec:mis-sig} is a theorem
+under \texttt{--safe}, the four $η$-laws included, each of the four by case
+analysis on the map. The function model derives them from function
+extensionality, which we postulate. Since the laws are theorems under either
+representation, we can report that the $η$-laws are never once applied by hand
+across the POPLmark development.
+
+The designs differ on cost. Every vector operation recurses on the scope, so
+laws the function model closes by \AgdaFunction{refl} become inductions the
+generator has to emit. Making the map a tuple by recursion on the scope instead
+buys the $η$-laws definitionally, from Agda's $η$-rule for records, and forfeits
+the rules, because the operations then reduce on their own and every rule
+mentioning one overlaps its defining clauses unjoinably. The trade is made per
+symbol. Transparency buys $η$ and forbids rules. Opacity buys rules and forbids
+$η$. We take opacity, and drop $η$ for the independent reason of
+\cref{sec:pre-sig}.
 
 The vector representation remains the right choice where functions are not
 available, notably when formalizing type theory in type
@@ -1098,9 +1128,7 @@ but misses rules and therefore does not pass the confluence check.
 Wadler experiments with explicit substitutions and implements weakening as a
 constructor, thereby avoiding renamings~\cite{Wadler_2024}. He rewrites some of
 the $σ$-calculus laws but does not pass the confluence checker.
-\Cref{sec:introduction} discussed what that representation costs. He also uses
-vectors for substitutions, and so cannot instantiate the full rule set with
-proofs.
+\Cref{sec:introduction} discussed what that representation costs.
 
 Wadler and colleagues also investigate a uniform treatment of renamings and
 substitutions in a simply typed setting~\cite{altenkirch2025substitution},

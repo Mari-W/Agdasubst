@@ -71,7 +71,7 @@ Three rules were removed after measurement: `⟨⟩-wk-lift`, `⟨⟩-wk-cons` a
 other rule's number is stable). Each is derivable from `⟨⟩-comp` together with
 its ᴿ-original, and dropping all three keeps the system at **0 non-joinable
 critical pairs**. Their `-⨟` continuation forms are *not* derivable and stay:
-dropping `⟨⟩-wk-lift-⨟`, `⟨⟩-wk-cons-⨟` or `⟨⟩-lift-lift-⨟` costs 6, 3 and 5
+dropping `⟨⟩-comp-⨟-lift-wkᴿ`, `⟨⟩-comp-⨟-interactᴿ` or `⟨⟩-comp-⨟-lift-dist-compᴿᴿ` costs 6, 3 and 5
 pairs respectively.
 
 `⟨⟩-split-⨟` looks like the same kind of rule — it un-collapses `⟨ ξ₁ ⨟ᴿ ξ₂ ⟩`
@@ -90,8 +90,8 @@ The exported TRS shrinks from 79 to 75 first-order rules. Every one of the 75
 appears verbatim in the archived termination and confluence proofs, so the
 shipped system is a subset of a system proved SN; with Agda's 0 non-joinable
 pairs, Newman's lemma gives confluence without re-running the provers. This is
-checked mechanically by `check_archives.py` (in [`coco/`](coco/) here, and
-shipped next to this file in the supplement), not asserted from memory.
+checked mechanically by `check_archives.py`, next to this file, not
+asserted from memory.
 
 ### 2.1 A load-bearing asymmetry: MapEnv
 
@@ -189,12 +189,12 @@ composition needs a variant that sees through a continuation `ξ′`.
 ### Iˢ. Applied rules — 5
 
 There is no `def-idˢ` and no `def-wkˢ`: `idˢ = ⟨ idᴿ ⟩` and `wkˢ = ⟨ wkᴿ ⟩` are
-*embedded renamings*, so their applied rules are instances of `beta-rename`.
+*embedded renamings*, so their applied rules are instances of `coincidence-var`.
 Likewise σ⇑'s **Id** on terms is covered by `coincidence` then `right-idᴿ`.
 
 | # | Agda | Rule | Origin | Purpose |
 |---|---|---|---|---|
-| 28 | `beta-rename` | `x [ ⟨ ξ ⟩ ]ˢ → ` (x [ ξ ]ᴿ)` | **new** | the coercion's applied rule; subsumes σ⇑'s VarShift1 and Id at variables |
+| 28 | `coincidence-var` | `x [ ⟨ ξ ⟩ ]ˢ → ` (x [ ξ ]ᴿ)` | **new** | the coercion's applied rule; subsumes σ⇑'s VarShift1 and Id at variables |
 | 29 | `def-∙ˢ-zero` | `zero [ (t ∙ˢ σ) ]ˢ → t` | σw **FVar** | cons at the head |
 | 30 | `def-∙ˢ-suc` | `suc x [ (t ∙ˢ σ) ]ˢ → x [ σ ]ˢ` | σw **RVar** | cons under a successor |
 | 31 | `def-↑ˢ-zero` | `zero [ (σ ↑ˢ s) ]ˢ → ` zero` | σ⇑ **FVarLift1** | lift fixes the bound variable |
@@ -241,7 +241,7 @@ the `⨟`-stuck formers `⟨_⟩`, `↑ˢ`* — which is why the cons rules have
 
 | # | Agda | Rule | Origin |
 |---|---|---|---|
-| 51 | `def-⟨⟩-⨟` | `x [ (⟨ ξ ⟩ ⨟ σ) ]ˢ → (x [ ξ ]ᴿ) [ σ ]ˢ` | σ⇑ **VarShift2**, generalised from `↑` to an arbitrary embedded renaming |
+| 51 | `compositionalityᴿˢ-⨟-var` | `x [ (⟨ ξ ⟩ ⨟ σ) ]ˢ → (x [ ξ ]ᴿ) [ σ ]ˢ` | σ⇑ **VarShift2**, generalised from `↑` to an arbitrary embedded renaming |
 | 52 | `def-↑ˢ-zero-⨟` | `zero [ ((σ ↑ˢ s) ⨟ τ) ]ˢ → zero [ τ ]ˢ` | σ⇑ **FVarLift2** |
 | 53 | `def-↑ˢ-suc-⨟` | `suc x [ ((σ ↑ˢ s) ⨟ τ) ]ˢ → x [ (σ ⨟ (⟨ wkᴿ s ⟩ ⨟ τ)) ]ˢ` | σ⇑ **RVarLift2** |
 | 54 | `lift-wk-⨟` | `⟨ wkᴿ s ⟩ ⨟ ((σ ↑ˢ s) ⨟ τ) → σ ⨟ (⟨ wkᴿ s ⟩ ⨟ τ)` | σ⇑ **ShiftLift2** |
@@ -257,16 +257,16 @@ context-morphism lemmas and anti-renaming statable at all.
 
 | # | Agda | Rule | Purpose |
 |---|---|---|---|
-| 56 | `compositionalityᴿˢ` | `(t [ ξ₁ ]ᴿ) [ σ₂ ]ˢ → t [ (⟨ ξ₁ ⟩ ⨟ σ₂) ]ˢ` | Autosubst's `compRenSubst`. **T-only**: its V-instance is `def-⟨⟩-⨟` read backwards, and registering both **loops** — 56 folds `(x [ ξ ]ᴿ) [ σ ]ˢ` into `x [ (⟨ξ⟩ ⨟ σ) ]ˢ` and 51 pushes it straight back |
+| 56 | `compositionalityᴿˢ` | `(t [ ξ₁ ]ᴿ) [ σ₂ ]ˢ → t [ (⟨ ξ₁ ⟩ ⨟ σ₂) ]ˢ` | Autosubst's `compRenSubst`. **T-only**: its V-instance is `compositionalityᴿˢ-⨟-var` read backwards, and registering both **loops** — 56 folds `(x [ ξ ]ᴿ) [ σ ]ˢ` into `x [ (⟨ξ⟩ ⨟ σ) ]ˢ` and 51 pushes it straight back |
 | 57 | `compositionalityˢᴿ` | `(x/t [ σ₁ ]ˢ) [ ξ₂ ]ᴿ → x/t [ (σ₁ ⨟ ⟨ ξ₂ ⟩) ]ˢ` | Autosubst's `compSubstRen`. Mode-generic (the result of `_[_]ˢ` is a term either way) |
 | 58 | `lift-dist-compᴿˢ` | `⟨ ξ ↑ᴿ s ⟩ ⨟ (σ ↑ˢ s) → (⟨ ξ ⟩ ⨟ σ) ↑ˢ s` | mixed **Lift1**, RS direction |
 | 59 | `lift-dist-compˢᴿ` | `(σ ↑ˢ s) ⨟ ⟨ ξ ↑ᴿ s ⟩ → (σ ⨟ ⟨ ξ ⟩) ↑ˢ s` | mixed **Lift1**, SR direction |
 | 60 | `lift-dist-compᴿˢ-⨟` | `⟨ ξ ↑ᴿ s ⟩ ⨟ ((σ ↑ˢ s) ⨟ τ) → ((⟨ ξ ⟩ ⨟ σ) ↑ˢ s) ⨟ τ` | mixed **Lift2** — same completion pattern as 55, one level up |
 | 61 | `lift-dist-compˢᴿ-⨟` | `(σ ↑ˢ s) ⨟ (⟨ ξ ↑ᴿ s ⟩ ⨟ τ) → ((σ ⨟ ⟨ ξ ⟩) ↑ˢ s) ⨟ τ` | mixed **Lift2** |
-| 62 | `beta-ren-↑ˢ` | `(x [ (ξ ↑ᴿ s) ]ᴿ) [ (σ ↑ˢ s) ]ˢ → x [ ((⟨ ξ ⟩ ⨟ σ) ↑ˢ s) ]ˢ` | variable-level mixed fusion: the join of 51 with 58 at an abstract variable |
-| 63 | `beta-ren-↑ˢ-⨟` | `(x [ (ξ ↑ᴿ s) ]ᴿ) [ ((σ ↑ˢ s) ⨟ τ) ]ˢ → x [ (((⟨ ξ ⟩ ⨟ σ) ↑ˢ s) ⨟ τ) ]ˢ` | continuation form of 62 |
-| 64 | `beta-ren-∙` | `(x [ (ξ ↑ᴿ s) ]ᴿ) [ (t ∙ˢ σ) ]ˢ → x [ (t ∙ˢ (⟨ ξ ⟩ ⨟ σ)) ]ˢ` | variable-level LiftEnv against a lifted embedded renaming |
-| 65 | `⟨⟩-↑ˢ-cons` | `⟨ ξ ↑ᴿ s ⟩ ⨟ (t ∙ˢ σ) → t ∙ˢ (⟨ ξ ⟩ ⨟ σ)` | σ⇑'s **LiftEnv**, `⟨_⟩`-flavoured |
+| 62 | `lift-dist-compᴿˢ-var` | `(x [ (ξ ↑ᴿ s) ]ᴿ) [ (σ ↑ˢ s) ]ˢ → x [ ((⟨ ξ ⟩ ⨟ σ) ↑ˢ s) ]ˢ` | variable-level mixed fusion: the join of 51 with 58 at an abstract variable |
+| 63 | `lift-dist-compᴿˢ-⨟-var` | `(x [ (ξ ↑ᴿ s) ]ᴿ) [ ((σ ↑ˢ s) ⨟ τ) ]ˢ → x [ (((⟨ ξ ⟩ ⨟ σ) ↑ˢ s) ⨟ τ) ]ˢ` | continuation form of 62 |
+| 64 | `⟨⟩-lift-cons-var` | `(x [ (ξ ↑ᴿ s) ]ᴿ) [ (t ∙ˢ σ) ]ˢ → x [ (t ∙ˢ (⟨ ξ ⟩ ⨟ σ)) ]ˢ` | variable-level LiftEnv against a lifted embedded renaming |
+| 65 | `⟨⟩-lift-cons` | `⟨ ξ ↑ᴿ s ⟩ ⨟ (t ∙ˢ σ) → t ∙ˢ (⟨ ξ ⟩ ⨟ σ)` | σ⇑'s **LiftEnv**, `⟨_⟩`-flavoured |
 
 ---
 
@@ -283,10 +283,10 @@ its ᴿ-original does, and push it back into the ᴿ world.
 | 67 | `⟨⟩-comp` | `⟨ ξ₁ ⟩ ⨟ ⟨ ξ₂ ⟩ → ⟨ ξ₁ ⨟ᴿ ξ₂ ⟩` | the coercion is a homomorphism for composition |
 | 68 | `⟨⟩-split-⨟` | `⟨ ξ₁ ⨟ᴿ ξ₂ ⟩ ⨟ σ → ⟨ ξ₁ ⟩ ⨟ (⟨ ξ₂ ⟩ ⨟ σ)` | re-splits under a continuation, where 67 cannot see |
 | 69 | `⟨⟩-lift` | `⟨ ξ ⟩ ↑ˢ s → ⟨ ξ ↑ᴿ s ⟩` | homomorphism for lifting |
-| 71 | `⟨⟩-wk-lift-⨟` | `⟨ wkᴿ s ⟩ ⨟ (⟨ ξ ↑ᴿ s ⟩ ⨟ τ) → ⟨ ξ ⟩ ⨟ (⟨ wkᴿ s ⟩ ⨟ τ)` | continuation form; **not** derivable from 67, which cannot see through an abstract `τ` |
-| 73 | `⟨⟩-wk-cons-⨟` | `⟨ wkᴿ s ⟩ ⨟ (⟨ x ∙ᴿ ξ ⟩ ⨟ τ) → ⟨ ξ ⟩ ⨟ τ` | continuation form |
-| 75 | `⟨⟩-lift-lift-⨟` | `⟨ ξ₁ ↑ᴿ s ⟩ ⨟ (⟨ ξ₂ ↑ᴿ s ⟩ ⨟ τ) → ⟨ (ξ₁ ⨟ᴿ ξ₂) ↑ᴿ s ⟩ ⨟ τ` | continuation form |
-| 76 | `⟨⟩-lift-SR-comp` | `(σ ↑ˢ s) ⨟ ⟨ (ξ ↑ᴿ s) ⨟ᴿ ξ′ ⟩ → ((σ ⨟ ⟨ ξ ⟩) ↑ˢ s) ⨟ ⟨ ξ′ ⟩` | the SR-fusion against a *continued* embedded renaming: the join of 61 with 67 |
+| 71 | `⟨⟩-comp-⨟-lift-wkᴿ` | `⟨ wkᴿ s ⟩ ⨟ (⟨ ξ ↑ᴿ s ⟩ ⨟ τ) → ⟨ ξ ⟩ ⨟ (⟨ wkᴿ s ⟩ ⨟ τ)` | continuation form; **not** derivable from 67, which cannot see through an abstract `τ` |
+| 73 | `⟨⟩-comp-⨟-interactᴿ` | `⟨ wkᴿ s ⟩ ⨟ (⟨ x ∙ᴿ ξ ⟩ ⨟ τ) → ⟨ ξ ⟩ ⨟ τ` | continuation form |
+| 75 | `⟨⟩-comp-⨟-lift-dist-compᴿᴿ` | `⟨ ξ₁ ↑ᴿ s ⟩ ⨟ (⟨ ξ₂ ↑ᴿ s ⟩ ⨟ τ) → ⟨ (ξ₁ ⨟ᴿ ξ₂) ↑ᴿ s ⟩ ⨟ τ` | continuation form |
+| 76 | `⟨⟩-split-tail` | `(σ ↑ˢ s) ⨟ ⟨ (ξ ↑ᴿ s) ⨟ᴿ ξ′ ⟩ → ((σ ⨟ ⟨ ξ ⟩) ↑ˢ s) ⨟ ⟨ ξ′ ⟩` | the SR-fusion against a *continued* embedded renaming: the join of 61 with 67 |
 
 The bare forms (70, 72, 74) are mostly derivable via `⟨⟩-comp`; the
 `⨟`-continued ones (71, 73, 75) are **not** — an abstract continuation is opaque
@@ -294,7 +294,9 @@ to 67. This is the same phenomenon as σ⇑'s 2-rules, transposed to the coercio
 
 ---
 
-## 7. Proved but *not* registered — 10
+## 7. Proved but *not* registered — 9
+
+(Ten rows below; `⟨⟩-cons` was retired outright and is no longer in the file.)
 
 Every one of these is a **theorem** of the development; none is a rewrite rule.
 Their absence is the design, not a gap.
@@ -313,7 +315,7 @@ Their absence is the design, not a gap.
 | `lift-id` | `⟨ idᴿ ⟩ ↑ˢ s ≡ ⟨ idᴿ ⟩` | σ⇑ **LiftId** | **subsumed**, not excluded: `⟨⟩-lift` plus `lift-idᴿ` already reach the same normal form, so registering it adds nothing (§2, *Retired and subsumed*) |
 
 Measured consequence: across the ~8700 lines of POPLmark metatheory built on this
-system, **none of these ten is ever applied by hand**, and no `subst` transports
+system, **none of these nine is ever applied by hand**, and no `subst` transports
 along a σ-law.
 
 ---
@@ -323,11 +325,11 @@ along a σ-law.
 | Group | Registered | of which new |
 |---|---|---|
 | Iᴿ–VIᴿ renaming world | 27 | 3 (`compositionalityᴿᴿ-var`, `lift-dist-compᴿᴿ-var`, `interactᴿ-⨟ᴿ`) |
-| Iˢ–VIˢ substitution world | 27 | 1 (`beta-rename`) + 1 generalised (`def-⟨⟩-⨟`) |
+| Iˢ–VIˢ substitution world | 27 | 1 (`coincidence-var`) + 1 generalised (`compositionalityᴿˢ-⨟-var`) |
 | cross-world | 10 | 10 |
 | `⟨⟩`-collapse | 8 | 8 |
 | **total** | **72** | **22** |
-| stated as lemmas only | 10 | — |
+| stated as lemmas only | 9 | — |
 
 Signature-dependent: 16 of the 72 (`instᴿ-*`, `inst-*`), i.e. two per
 constructor. Everything else is schematic — which is why
@@ -337,6 +339,6 @@ constructor list from a `.sg` file.
 **50 of 72 rules are σw/σ⇑ rules or their exact two-world duplicates.** The
 system is not a new calculus: it is σ⇑ instantiated twice — once erased, once
 not — plus 19 rules that reconcile the two copies (10 cross-world, 8 collapse,
-and `beta-rename`), plus 3 forced by native inductive variables and the
+and `coincidence-var`), plus 3 forced by native inductive variables and the
 resulting V/T mode split (`compositionalityᴿᴿ-var`, `lift-dist-compᴿᴿ-var`,
 `interactᴿ-⨟ᴿ`).

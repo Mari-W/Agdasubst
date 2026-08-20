@@ -639,28 +639,28 @@ opaque
     --! }
   id-unfolded = refl
 
---! ByRefl {
 var-zero : ∀ {t′ : S ⊢ s′} → (` zero) [ t′ ]₀ ≡ t′
 var-zero = refl
 var-suc : ∀ {x : S ∋ s} {t′ : S ⊢ s′} → (` suc x) [ t′ ]₀ ≡ ` x
 var-suc = refl
+--! LawsUsed {
 wk-cancel : ∀ {t : S ⊢ s} {t′ : S ⊢ s′} → (weaken t) [ t′ ]₀ ≡ t
 wk-cancel = refl
 wk-comm : ∀ {t : S₁ ⊢ s} {σ : S₁ →ˢ S₂} →
   (weaken {s′ = s′} t) [ (σ ↑ˢ s′) ]ˢ ≡ weaken (t [ σ ]ˢ)
 wk-comm = refl
-subst-commute : ∀ {t : (s′ ∷ S₁) ⊢ s} {t′ : S₁ ⊢ s′} {σ : S₁ →ˢ S₂} →
+subst-commute : ∀ {t : (s′ ∷ S₁) ⊢ s} {t′ : S₁ ⊢ s′}
+  {σ : S₁ →ˢ S₂} →
   (t [ (σ ↑ˢ s′) ]ˢ) [ t′ [ σ ]ˢ ]₀ ≡ (t [ t′ ]₀) [ σ ]ˢ
 subst-commute = refl
+--! }
 subst-subst : ∀ {t : (s₁ ∷ s₂ ∷ S) ⊢ s} {t′ : (s₂ ∷ S) ⊢ s₁} {t₂ : S ⊢ s₂} →
   (t [ t′ ]₀) [ t₂ ]₀ ≡ (t [ ((t₂ ∙ˢ idˢ) ↑ˢ s₁) ]ˢ) [ t′ [ t₂ ]₀ ]₀
 subst-subst = refl
 lift-comp : ∀ {t : (s′ ∷ S₁) ⊢ s} {σ₁ : S₁ →ˢ S₂} {σ₂ : S₂ →ˢ S₃} →
   (t [ (σ₁ ↑ˢ s′) ]ˢ) [ (σ₂ ↑ˢ s′) ]ˢ ≡ t [ ((σ₁ ⨟ σ₂) ↑ˢ s′) ]ˢ
 lift-comp = refl
---! }
 
---! ByReflR {
 renᴿ-id : ∀ {x/t : S ⊢[ m ] s} → x/t [ idᴿ ]ᴿ ≡ x/t
 renᴿ-id = refl
 renᴿ-comp : ∀ {t : S₁ ⊢ s} {ξ₁ : S₁ →ᴿ S₂} {ξ₂ : S₂ →ᴿ S₃} →
@@ -677,7 +677,6 @@ mixed-SR : ∀ {t : S₁ ⊢ s} {σ : S₁ →ˢ S₂} {ξ : S₂ →ᴿ S₃} �
 mixed-SR = refl
 emb-collapse : ∀ {t : S₁ ⊢ s} {ξ : S₁ →ᴿ S₂} → t [ ⟨ ξ ⟩ ]ˢ ≡ t [ ξ ]ᴿ
 emb-collapse = refl
---! }
 
 
 -- ─── subject reduction ──────────────────────────────────────────────
@@ -775,44 +774,47 @@ _∶_→ᴿ_ {S₁} ξ Γ₁ Γ₂ = ∀ s (x : S₁ ∋ s) (t : S₁ ∶⊢ s) 
 ⊢↑ᴿ ⊢ξ t _ zero    _ refl = refl
 ⊢↑ᴿ ⊢ξ t _ (suc x) _ refl = cong weaken (⊢ξ _ x _ refl)
 
-_⊢⋯ᴿ_ : ∀ {ξ : S₁ →ᴿ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
+ren-pres : ∀ {ξ : S₁ →ᴿ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
   {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} →
   Γ₁ ⊢ e ∶ t → ξ ∶ Γ₁ →ᴿ Γ₂ → Γ₂ ⊢ (e [ ξ ]ᴿ) ∶ (t [ ξ ]ᴿ)
-(⊢` ⊢x)        ⊢⋯ᴿ ⊢ξ = ⊢` (⊢ξ _ _ _ ⊢x)   -- no transport, no Σ
-(⊢λ ⊢e)        ⊢⋯ᴿ ⊢ξ = ⊢λ (⊢e ⊢⋯ᴿ ⊢↑ᴿ ⊢ξ _)
-(⊢Λ ⊢e)        ⊢⋯ᴿ ⊢ξ = ⊢Λ (⊢e ⊢⋯ᴿ ⊢↑ᴿ ⊢ξ _)
-(⊢· ⊢e₁ ⊢e₂)   ⊢⋯ᴿ ⊢ξ = ⊢· (⊢e₁ ⊢⋯ᴿ ⊢ξ) (⊢e₂ ⊢⋯ᴿ ⊢ξ)
-(⊢• ⊢e ⊢t ⊢t′) ⊢⋯ᴿ ⊢ξ = ⊢• (⊢e ⊢⋯ᴿ ⊢ξ) (⊢t ⊢⋯ᴿ ⊢ξ) (⊢t′ ⊢⋯ᴿ ⊢↑ᴿ ⊢ξ _)
-⊢*             ⊢⋯ᴿ ⊢ξ = ⊢*
+ren-pres (⊢` ⊢x) ⊢ξ = ⊢` (⊢ξ _ _ _ ⊢x)   -- no transport, no Σ
+ren-pres (⊢λ ⊢e) ⊢ξ = ⊢λ (ren-pres ⊢e (⊢↑ᴿ ⊢ξ _))
+ren-pres (⊢Λ ⊢e) ⊢ξ = ⊢Λ (ren-pres ⊢e (⊢↑ᴿ ⊢ξ _))
+ren-pres (⊢· ⊢e₁ ⊢e₂) ⊢ξ = ⊢· (ren-pres ⊢e₁ ⊢ξ) (ren-pres ⊢e₂ ⊢ξ)
+ren-pres (⊢• ⊢e ⊢t ⊢t′) ⊢ξ = ⊢• (ren-pres ⊢e ⊢ξ) (ren-pres ⊢t ⊢ξ) (ren-pres ⊢t′ (⊢↑ᴿ ⊢ξ _))
+ren-pres ⊢*             ⊢ξ = ⊢*
 
--- phase 2: the entry typings go through _⊢⋯ᴿ_, so this stays structural
+-- phase 2: the entry typings go through ren-pres, so this stays structural
 -- the binder cases pin the lifted σ: the goal's type index is already
 -- rewritten, so it no longer determines σ by unification
-_⊢⋯ˢ_ : ∀ {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
+--! SubPresSig {
+sub-pres : ∀ {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
   {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} →
-  Γ₁ ⊢ e ∶ t → σ ∶ Γ₁ →ˢ Γ₂ → Γ₂ ⊢ (e [ σ ]ˢ) ∶ (t [ σ ]ˢ)
+  Γ₁ ⊢ e ∶ t → σ ∶ Γ₁ →ˢ Γ₂ →
+  Γ₂ ⊢ (e [ σ ]ˢ) ∶ (t [ σ ]ˢ)
+--! }
 ⊢↑ˢ : ∀ {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} → σ ∶ Γ₁ →ˢ Γ₂ →
   (t : S₁ ∶⊢ s) → (σ ↑ˢ s) ∶ (t ∷ₜ Γ₁) →ˢ ((t [ σ ]ˢ) ∷ₜ Γ₂)
 ⊢↑ˢ ⊢σ t _ zero    _ refl = ⊢` refl
-⊢↑ˢ {σ = σ} ⊢σ t _ (suc x) _ refl = (⊢σ _ x _ refl) ⊢⋯ᴿ ⊢wkᴿ (t [ σ ]ˢ)
-_⊢⋯ˢ_ (⊢` ⊢x)                ⊢σ = ⊢σ _ _ _ ⊢x
+⊢↑ˢ {σ = σ} ⊢σ t _ (suc x) _ refl = ren-pres (⊢σ _ x _ refl) (⊢wkᴿ (t [ σ ]ˢ))
+sub-pres (⊢` ⊢x)                     ⊢σ = ⊢σ _ _ _ ⊢x
 --! CaseLam {
 -- the induction hypothesis types the body at (weaken t′) [ σ ↑ˢ _ ]ˢ,
 -- while ⊢λ demands weaken (t′ [ σ ]ˢ).  Discharged by wk-comm.
-_⊢⋯ˢ_ {σ = σ} (⊢λ ⊢e)        ⊢σ = ⊢λ (_⊢⋯ˢ_ {σ = σ ↑ˢ _} ⊢e (⊢↑ˢ {σ = σ} ⊢σ _))
+sub-pres {σ = σ} (⊢λ ⊢e)             ⊢σ = ⊢λ (sub-pres {σ = σ ↑ˢ _} ⊢e (⊢↑ˢ {σ = σ} ⊢σ _))
 --! }
 -- ⊢Λ and ⊢· use no substitution law: neither typing rule moves a
 -- substitution past a binder in its conclusion.
-_⊢⋯ˢ_ {σ = σ} (⊢Λ ⊢e)        ⊢σ = ⊢Λ (_⊢⋯ˢ_ {σ = σ ↑ˢ _} ⊢e (⊢↑ˢ {σ = σ} ⊢σ _))
-_⊢⋯ˢ_ {σ = σ} (⊢· ⊢e₁ ⊢e₂)   ⊢σ = ⊢· (_⊢⋯ˢ_ {σ = σ} ⊢e₁ ⊢σ) (_⊢⋯ˢ_ {σ = σ} ⊢e₂ ⊢σ)
+sub-pres {σ = σ} (⊢Λ ⊢e)             ⊢σ = ⊢Λ (sub-pres {σ = σ ↑ˢ _} ⊢e (⊢↑ˢ {σ = σ} ⊢σ _))
+sub-pres {σ = σ} (⊢· ⊢e₁ ⊢e₂)        ⊢σ = ⊢· (sub-pres {σ = σ} ⊢e₁ ⊢σ) (sub-pres {σ = σ} ⊢e₂ ⊢σ)
 --! CaseTApp {
 -- ⊢• concludes at t′ [ t ]₀, so the two sides are
 -- (t′ [ σ ↑ˢ _ ]ˢ) [ t [ σ ]ˢ ]₀  and  (t′ [ t ]₀) [ σ ]ˢ.
 -- Discharged by subst-commute.
-_⊢⋯ˢ_ {σ = σ} (⊢• ⊢e ⊢t ⊢t′) ⊢σ = ⊢• (_⊢⋯ˢ_ {σ = σ} ⊢e ⊢σ) (_⊢⋯ˢ_ {σ = σ} ⊢t ⊢σ)
-                                    (_⊢⋯ˢ_ {σ = σ ↑ˢ _} ⊢t′ (⊢↑ˢ {σ = σ} ⊢σ _))
+sub-pres {σ = σ} (⊢• ⊢e ⊢t ⊢t′)      ⊢σ = ⊢• (sub-pres {σ = σ} ⊢e ⊢σ) (sub-pres {σ = σ} ⊢t ⊢σ)
+                                         (sub-pres {σ = σ ↑ˢ _} ⊢t′ (⊢↑ˢ {σ = σ} ⊢σ _))
 --! }
-_⊢⋯ˢ_ ⊢*                     ⊢σ = ⊢*
+sub-pres ⊢*                          ⊢σ = ⊢*
 
 ⊢[] : ∀ {Γ : Ctx S} {e : S ⊢ s} {t : S ∶⊢ s} →
   Γ ⊢ e ∶ t → (e ∙ˢ idˢ) ∶ (t ∷ₜ Γ) →ˢ Γ
@@ -843,19 +845,18 @@ data _↪_ : S ⊢ expr → S ⊢ expr → Set where
 -- the two β-cases pin σ explicitly: with the two-world rule set the
 -- index of the goal has already been rewritten, so Agda can no longer
 -- read σ back off  e [ σ ]ˢ ≟ e [ (v ]ˢ ∙ˢ idˢ)
-sr :
-  Γ ⊢ e ∶ t →
-  e ↪ e′ →
-  Γ ⊢ e′ ∶ t
+--! SRSig {
+sr : Γ ⊢ e ∶ t → e ↪ e′ → Γ ⊢ e′ ∶ t
+--! }
 --! CaseBeta {
 -- ⊢λ stores the result type weakened, so the redex is typed at
 -- (weaken t₂) [ e₂ ]₀ where the goal is t₂.  Discharged by wk-cancel.
 sr (⊢· {e₂ = e₂} (⊢λ ⊢e₁) ⊢e₂) (β-λ v₂) =
-  _⊢⋯ˢ_ {σ = e₂ ∙ˢ idˢ} ⊢e₁ (⊢[] ⊢e₂)
+  sub-pres {σ = e₂ ∙ˢ idˢ} ⊢e₁ (⊢[] ⊢e₂)
 --! }
 -- the type-application β-case uses no law: t′ [ t ]₀ IS t′ [ t ∙ˢ idˢ ]ˢ.
 sr (⊢• {t = t} (⊢Λ ⊢e) ⊢t ⊢t′) β-Λ =
-  _⊢⋯ˢ_ {σ = t ∙ˢ idˢ} ⊢e (⊢[] ⊢t)
+  sub-pres {σ = t ∙ˢ idˢ} ⊢e (⊢[] ⊢t)
 sr (⊢· ⊢e₁ ⊢e₂) (ξ-·₁ st)       = ⊢· (sr ⊢e₁ st) ⊢e₂
 sr (⊢· ⊢e₁ ⊢e₂) (ξ-·₂ st v₁)    = ⊢· ⊢e₁ (sr ⊢e₂ st)
 sr (⊢• ⊢e ⊢t ⊢t′) (ξ-• st)      = ⊢• (sr ⊢e st) ⊢t ⊢t′

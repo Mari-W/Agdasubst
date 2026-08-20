@@ -175,5 +175,6 @@ constructors yields `75 + 2·(n+1)`.
 | `S₁ →ᴿ S₂`, `S₁ →ˢ S₂` | the two map spaces |
 | `S ⊢[ m ] s` | the syntax at mode `m` — `S ∋ s` at `V`, `S ⊢ s` at `T` |
 
-The **typing** judgment keeps the older spelling `_⊢⋯ᴿ_` / `_⊢⋯ˢ_`,
-deliberately: it transports a derivation, not a term.
+The preservation lemmas are `ren-pres` and `sub-pres` in `systemf.agda`. The
+POPLmark modules keep the older infix spelling `_⊢⋯ᴿ_` / `_⊢⋯ˢ_` for the same
+two statements.

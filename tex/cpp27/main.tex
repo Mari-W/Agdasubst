@@ -568,14 +568,18 @@ theory~\cite{Hofmann1997}. We refer the reader to the supplement.
 \begin{figure*}[!t]
       \AgdaNoSpaceAroundCode{}
       \setlength{\mathindent}{0pt}
-      \begin{minipage}[t]{0.48\linewidth}
+      \begin{minipage}[t]{0.47\linewidth}
             \raggedright{}
-            \EByRefl{}
+            \ELawsUsed{}
       \end{minipage}
       \hfill
-      \begin{minipage}[t]{0.48\linewidth}
+      \begin{minipage}[t]{0.50\linewidth}
             \raggedright{}
-            \EByReflR{}
+            \EWTS{}
+
+            \ESubPresSig{}
+
+            \ESRSig{}
       \end{minipage}
 
       \medskip
@@ -585,27 +589,42 @@ theory~\cite{Hofmann1997}. We refer the reader to the supplement.
       \ECaseTApp{}
 
       \ECaseBeta{}
-      \caption{Substitution lemmas that hold by \AgdaInductiveConstructor{refl}
-            (top), and the only three cases of the System~F metatheory in which a
-            manual proof would have to apply one (bottom). Every remaining case
-            of both proofs uses none.}\label{fig:refl}
+      \caption{Left, the three substitution lemmas the System~F metatheory needs,
+            each holding by \AgdaInductiveConstructor{refl}. Right, the two
+            statements that use them. Below, the only three clauses of either
+            proof in which a law is spent, with the law named. Every other clause
+            needs none.}\label{fig:refl}
 \end{figure*}
 
 \subsection{What the Rules Buy}\label{sec:mis-ex-proof}
 
-The top of \cref{fig:refl} lists the substitution facts a de~Bruijn development
-normally proves by hand and then applies by name. Under our rule set each of them
-holds by \AgdaInductiveConstructor{refl}. On the left are the substitution-world
-facts, among them that weakening cancels against a single substitution, that
-weakening commutes with a lifted substitution, and that a single substitution
-commutes with a parallel one. On the right are the renaming-world facts and the
-two mixed laws, which a development without first-class renamings cannot state at
-all.
+We exercise the rule set on the standard metatheory of the System~F of
+\cref{fig:pre-svm}, against a typing judgment \AgdaDatatype{\_⊢\_∶\_} and a
+call-by-value small-step semantics \AgdaDatatype{\_↪\_}, both in the supplement.
+A context \AgdaDatatype{Ctx} \AgdaBound{S} assigns to every variable in scope
+\AgdaBound{S} a type one sort up, so \AgdaBound{Γ} \AgdaFunction{⊢} \AgdaBound{e}
+\AgdaFunction{∶} \AgdaBound{t} reads as usual.
 
-Each is a normalization, not a lemma. The rules turn both sides of the equation
-into the same normal form, and \AgdaInductiveConstructor{refl} sees that they
-agree. Written out for $\mathsf{subst\text{-}commute}$, the classic substitution
-lemma, the two branches are
+\Cref{fig:refl} (right) shows the two statements. A substitution is well typed,
+written \AgdaBound{σ} \AgdaFunction{∶} \AgdaBound{Γ₁} \AgdaFunction{→ˢ}
+\AgdaBound{Γ₂}, when it sends every variable \AgdaBound{x} typed
+\AgdaBound{t} in \AgdaBound{Γ₁} to a term \AgdaBound{x} \AgdaFunction{[}
+\AgdaBound{σ} \AgdaFunction{]ˢ} typed \AgdaBound{t} \AgdaFunction{[}
+\AgdaBound{σ} \AgdaFunction{]ˢ} in \AgdaBound{Γ₂}. The type of a variable is
+substituted along with the term, which is what makes the statement compose.
+\AgdaFunction{sub-pres} then says that applying such a substitution to a well
+typed term preserves typing, and \AgdaFunction{sr} is subject reduction. The
+proofs are the expected inductions, with one helper: \AgdaFunction{⊢↑ˢ} lifts a
+well typed substitution under a binder, and it is proved from the corresponding
+statement for renamings, which is what keeps the recursion structural.
+
+\Cref{fig:refl} (left) shows the three substitution lemmas the two proofs need.
+A de~Bruijn development states and applies each of them by hand. Here each holds
+by \AgdaInductiveConstructor{refl}, because each is a normalization rather than a
+lemma: the rules turn both sides into the same normal form, and
+\AgdaInductiveConstructor{refl} sees that they agree. Written out for
+$\mathsf{subst\text{-}commute}$, the classic substitution lemma, the two branches
+are
 {\small\begin{align*}
        & (t\,[\,{\Uparrow}σ\,])\,[\,t'[σ]\,]_0
       \;=\; (t\,[\,{\Uparrow}σ\,])\,[\,t'[σ] \bsym{\cdot} \bsym{\mathsf{id}}\,]                                         \\
@@ -617,39 +636,43 @@ lemma, the two branches are
       \to\; & t\,[\,(t' \bsym{\cdot} \bsym{\mathsf{id}}) \fatsemi σ\,]                 &  & \mathsf{compositionality}   \\
       \to\; & t\,[\,t'[σ] \bsym{\cdot} (\bsym{\mathsf{id}} \fatsemi σ)\,]              &  & \mathsf{dist}               \\
       \to\; & t\,[\,t'[σ] \bsym{\cdot} σ\,]                                            &  & \mathsf{comp\text{-}id}_l
-\end{align*}}
+\end{align*}}%
 Five rules and no user intervention. Every intermediate term above is checked
-against the endpoint in the supplement, so the trace is the one Agda takes.
-A normal form is reached when no traversal can be pushed further, no composition
+against the endpoint in the supplement, so the trace is the one Agda takes. A
+normal form is reached when no traversal can be pushed further, no composition
 can be fused, and no embedded renaming is left in the substitution world. On a
 closed term the substitution disappears entirely. On an abstract $t$ it survives
 as a single application to a right-nested, identity-free map, as here.
 
-The bottom of the figure shows where they are spent. Across substitution
-preservation and subject reduction for the System~F of \cref{fig:pre-svm}, proved
-against a standard type system and a call-by-value small-step semantics, exactly
-three clauses need a law, and the figure shows those three. In the
-\AgdaInductiveConstructor{⊢λ} case the induction hypothesis types the body at
-$(\mathsf{weaken}\ t')\,[\,\Uparrow σ\,]$ while \AgdaInductiveConstructor{⊢λ}
-demands $\mathsf{weaken}\,(t'\,[\,σ\,])$, which is $\mathsf{wk\text{-}comm}$. In
-the \AgdaInductiveConstructor{⊢•} case the two sides are
-$(t'\,[\,\Uparrow σ\,])\,[\,t\,[\,σ\,]\,]_0$ and $(t'\,[\,t\,]_0)\,[\,σ\,]$,
-which is $\mathsf{subst\text{-}commute}$. In the $β$-case for
-\AgdaInductiveConstructor{λx\_} the redex is typed at $(\mathsf{weaken}\
-t_2)\,[\,e_2\,]_0$ where the goal is $t_2$, which is
-$\mathsf{wk\text{-}cancel}$. A textbook proof states and applies all three.
+The bottom of the figure shows where each law is spent. In the \AgdaInductiveConstructor{⊢λ} case the induction hypothesis
+types the body at $(\mathsf{weaken}\ t')\,[\,\Uparrow σ\,]$ while
+\AgdaInductiveConstructor{⊢λ} demands $\mathsf{weaken}\,(t'\,[\,σ\,])$, which is
+$\mathsf{wk\text{-}comm}$. In the \AgdaInductiveConstructor{⊢•} case the two
+sides are $(t'\,[\,\Uparrow σ\,])\,[\,t\,[\,σ\,]\,]_0$ and
+$(t'\,[\,t\,]_0)\,[\,σ\,]$, which is $\mathsf{subst\text{-}commute}$. In the
+$β$-case for \AgdaInductiveConstructor{λx\_} the redex is typed at
+$(\mathsf{weaken}\ t_2)\,[\,e_2\,]_0$ where the goal is $t_2$, which is
+$\mathsf{wk\text{-}cancel}$.
 
-Every other clause of the two proofs needs nothing, and for two different
-reasons. \AgdaInductiveConstructor{⊢Λ} and \AgdaInductiveConstructor{⊢·}
-conclude at a type the substitution never has to be moved through, so no law
-arises. The $β$-case for \AgdaInductiveConstructor{Λα\_} does face a
-substitution equation, $t'\,[\,t\,]_0$ against $t'\,[\,t \bsym{\cdot}
-\bsym{\mathsf{id}}\,]$, but the two are the same term by the definition of
-single substitution. Here the three that do arise are conversions too, so every
-clause is a bare constructor application.
+Every other clause of either proof needs nothing, and for two different reasons.
+\AgdaInductiveConstructor{⊢Λ}, \AgdaInductiveConstructor{⊢·} and
+\AgdaInductiveConstructor{⊢*} conclude at a type the substitution never has to be
+moved through, so no equation arises. The $β$-case for
+\AgdaInductiveConstructor{Λα\_} does face one, $t'\,[\,t\,]_0$ against
+$t'\,[\,t \bsym{\cdot} \bsym{\mathsf{id}}\,]$, but the two are the same term by
+the definition of single substitution. Since the three that do arise are
+conversions as well, every clause of both proofs is a bare constructor
+application.
+
+The three are not special. The same holds for the laws we do not need here,
+among them that two single substitutions can be exchanged and that lifting
+distributes over composition, and for their renaming-world twins and the two
+mixed laws relating the worlds, which a development without first-class
+renamings cannot even state. The supplement checks all of them, and all of them
+are \AgdaInductiveConstructor{refl}.
 
 One case does need help, and the cause is the rewriting itself. In the two
-$β$-cases we pass $σ$ explicitly, writing \AgdaFunction{\_⊢⋯ˢ\_}
+$β$-cases we pass $σ$ explicitly, writing \AgdaFunction{sub-pres}
 \AgdaSymbol{\{}\AgdaBound{σ} \AgdaSymbol{=} \AgdaBound{e₂} \AgdaFunction{∙ˢ}
 \AgdaFunction{idˢ}\AgdaSymbol{\}}. By the time Agda sees the goal, the rules have
 normalized the type index, so $σ$ can no longer be recovered by unifying against

@@ -193,16 +193,19 @@ renamings are first class, is the contribution of this work.
 
 \subsection*{Structure}
 
-\Cref{sec:pre} fixes the scoped syntax and defines renaming and substitution
-over it. \Cref{sec:mis} states the conditions Agda puts on a rewrite rule,
-identifies the $σ$-calculus variant that meets them, derives the rule set that
-follows, and shows what it buys on the metatheory of System~F. \Cref{sec:ext}
-establishes confluence and termination. \Cref{sec:fwk} generates the
-infrastructure from a syntax description and measures it on the POPLmark
-Challenge. \Cref{sec:rwk} discusses related work, \cref{sec:future} collects
-what remains, and \cref{sec:con} concludes.
+\Cref{sec:pre} reviews Agda's rewrite rules and opaque blocks, our scoped
+syntax, and the $σ$-calculus. \Cref{sec:mis} develops the rule set for System~F
+and explains what makes it registrable. \Cref{sec:fwk} reports the generator,
+the POPLmark evaluation, the external proofs, and future work. \Cref{sec:rwk}
+discusses related work and \cref{sec:con} concludes.
 
-\section{Scoped Syntax, Renaming and Substitution}\label{sec:pre}
+\section{Preliminaries}\label{sec:pre}
+
+We review the two Agda features the construction rests on, the scoped syntax we
+use, and the $σ$-calculus itself. All Agda code shown in this paper is in the
+supplement.
+
+\subsection{Agda and Relevant Language Features}\label{sec:pre-agd}
 
 Agda is a dependently typed functional language and proof assistant based on
 Martin-Löf type theory~\cite{MARTINLOF197573}, where proofs are verified by
@@ -215,15 +218,48 @@ reduces manual effort. Beyond standard features such as indexed inductive types
 and dependent pattern matching~\cite{10.1145/3236770}, this work rests on two
 more advanced ones.
 
+\subsection*{Rewrite Rules}
+User-defined rewrite rules~\cite{10.1145/3434341, cockx:LIPIcs.TYPES.2019.2}
+extend Agda's normalization-by-evaluation approach for definitional equalities
+by treating propositional equalities as reduction rules. A proof of
+$\AgdaFunction{f}\, p_1 \ldots p_n \AgdaFunction{≡} v$ is eligible if
+\AgdaFunction{f} is a postulate, defined function or constructor, if every
+variable bound in the statement occurs in a pattern position among $p_1,
+      \ldots, p_n$, and if the left-hand side is stuck. For example, the right
+identity of addition qualifies: \ERewrite{} Once it is registered via
+\ERewriteIt{}, Agda treats \AgdaBound{n} \AgdaFunction{+} \AgdaNumber{0} as
+definitionally equal to \AgdaBound{n}: \ERewriteEx{}
 
-\Cref{sec:pre-syn} fixes the multi-sorted scoped syntax of the paper and
-\cref{sec:mis-sub} defines renaming and substitution over it. All Agda code
-shown in this paper is in the supplement.
+Beyond the syntactic restriction, the rule set as a whole has to be well
+behaved. We rely throughout on the following, which is the criterion under
+which Agda's rewrite rules are known to be sound~\cite{10.1145/3434341}.
+
+\begin{quote}\itshape
+      If every registered rule is inhabited by a proof of the corresponding
+      propositional equality, and the resulting rewrite system is confluent and
+      terminating, then adding it preserves consistency and subject reduction.
+\end{quote}
+
+\noindent We discharge the three obligations separately. Every rule is proved
+before it is registered (\cref{sec:mis-sig}), Agda's local-confluence check
+joins every critical pair, and termination is established externally
+(\cref{sec:ext}), which with local confluence gives confluence by Newman's
+lemma. Termination is the obligation that has to leave
+Agda, because Agda never checks it: a non-terminating rule set simply makes the
+type checker loop.
+
+\subsection*{Opaque Blocks}
+Opaque definitions~\cite{gratzer2022controlling} let the user treat code as
+non-unfolding symbols. A definition inside an \AgdaKeyword{opaque} block is
+visible but does not reduce outside it, and the \AgdaKeyword{unfolding} keyword
+exposes its computational behavior where that is wanted. The feature exists to
+improve type checking times, because ordinarily one wants everything to unfold.
+Here it serves the opposite purpose. Declaring the substitution operations
+opaque makes them stuck symbols and thereby qualifies them for rewriting, while
+the proofs of the rules unfold them and use their computational behavior.
 
 \subsection{Multi-Sorted and Scoped Syntax}\label{sec:pre-syn}
 \begin{figure*}[t]
-      \AgdaNoSpaceAroundCode{}
-      \setlength{\mathindent}{0pt}
       \begin{minipage}[t]{0.44\linewidth}
             \raggedright{}
             \EScoped{}
@@ -278,115 +314,7 @@ which the applied rules can match again, whereas substituting one yields a
 term, which they cannot. Several rules therefore exist in two versions pointing
 in opposite directions, and \cref{sec:mis-sig} shows where this is forced.
 
-\subsection{Renaming and Substitution}\label{sec:mis-sub}
-
-Termination is the first obstacle. Defining instantiation by mutual recursion
-with composition is not structurally recursive, and Agda offers no way to
-justify it by well-founded recursion. We follow Adams~\cite{10.1007/11617990_1}
-and define instantiation with renamings first. The equational theory then has
-to cover renamings as well as substitutions, and to relate the two.
-
-\begin{figure*}[t]
-      \AgdaNoSpaceAroundCode{}
-      \setlength{\mathindent}{0pt}
-      \setlength{\AgdaEmptySkip}{\smallskipamount}
-      \begin{minipage}[t]{0.46\linewidth}
-            \raggedright{}
-            \ERen{}
-            \ERenOps{}
-            \ERenComp{}
-      \end{minipage}
-      \hfill
-      \begin{minipage}[t]{0.50\linewidth}
-            \raggedright{}
-            \ESub{}
-            \ESubEmb{}
-            \ESubT{}
-            \ESubComp{}
-      \end{minipage}
-      \caption{The operations for renaming (left) and for substitution (right).
-            Every operation sits in an \AgdaKeyword{opaque} block, which is what
-            gives a rewrite rule the stuck left-hand side it needs. Lifting
-            \AgdaFunction{\_↑ᴿ\_} and \AgdaFunction{\_↑ˢ\_} is primitive here,
-            and \AgdaFunction{idˢ} and \AgdaFunction{wkˢ} are renamings embedded
-            through the coercion \AgdaFunction{⟨\_⟩}}\label{fig:mis-ras}
-\end{figure*}
-
-\Cref{fig:mis-ras} gives the operations. Renamings \AgdaFunction{\_→ᴿ\_} map
-variables of sort \AgdaBound{s} to variables of the same sort, and substitutions
-\AgdaFunction{\_→ˢ\_} map them to terms. The definitions themselves are the
-expected ones. What to read the figure for is the \AgdaKeyword{opaque} blocks
-around them, and the three places where a definition is shaped by what the rules
-will later need.
-
-Every operation sits in an \AgdaKeyword{opaque}
-block~\cite{gratzer2022controlling}. A definition inside such a block is visible
-but does not reduce outside it, and an \AgdaKeyword{unfolding} declaration lets a
-later block see through it again. We block the operations so that they behave as
-symbols rather than as functions wherever we need that, and unfold them in the
-proofs that need their computational behaviour. This includes both lifting
-operators. Lifting is
-\emph{primitive} here rather than defined as $\bsym{\mathsf{zero}} \bsym{\cdot}
-      (σ \bsym{⨟} \bsym{\mathsf{wk}})$, which is decision~4 of \cref{fig:decisions}
-and the reason the applied and lifting rules do not collapse into $η$. The
-identity renaming takes its sort argument explicitly, as Agda frequently fails
-to infer it. The constants \AgdaFunction{idˢ} and \AgdaFunction{wkˢ} are
-embedded renamings, obtained through the coercion \AgdaFunction{⟨\_⟩}, and are
-\AgdaKeyword{INLINE}d so that they do not reduce on a left-hand side.
-
-Two definitions are shaped by later needs. Lifting a substitution is defined by
-instantiation with the weakening \emph{renaming}, which is what makes the
-mutual recursion structural. And instantiation \AgdaFunction{\_[\_]ᴿ} and
-\AgdaFunction{\_[\_]ˢ} is defined across both modes, so that looking a variable
-up in a map is written \AgdaBound{x} \AgdaFunction{[} \AgdaBound{σ}
-\AgdaFunction{]ˢ} rather than as the application \AgdaBound{σ} \AgdaBound{\_}
-\AgdaBound{x}. A rule may mention stuck symbols only, with no lambdas and no
-function application, so lookup has to be spelled as instantiation everywhere.
-
-\section{The Search for a Rewritable $σ$-Calculus}\label{sec:mis}
-
-Agda accepts an equation as a rewrite rule only under conditions, and not every
-$σ$-calculus meets them. \Cref{sec:pre-agd} states the conditions,
-\cref{sec:pre-sig} identifies the variant that meets them, \cref{sec:mis-sig}
-derives the rule set that follows, \cref{sec:mis-ex} says why the operations
-must stay blocked, and \cref{sec:mis-ex-proof} shows what the result buys on the
-metatheory of System~F. Throughout, the multi-sorted scoped System~F of
-\cref{fig:pre-svm} is the running example, and the construction applies to any
-multi-sorted scoped syntax, and to simple intrinsically typed syntax whose type
-index lives in \AgdaDatatype{Set}.
-
-\subsection{Rewrite Rules in Agda}\label{sec:pre-agd}
-
-User-defined rewrite rules~\cite{10.1145/3434341, cockx:LIPIcs.TYPES.2019.2}
-extend Agda's normalization-by-evaluation approach for definitional equalities
-by treating propositional equalities as reduction rules. A proof of
-$\AgdaFunction{f}\, p_1 \ldots p_n \AgdaFunction{≡} v$ is eligible if
-\AgdaFunction{f} is a postulate, defined function or constructor, if every
-variable bound in the statement occurs in a pattern position among $p_1,
-      \ldots, p_n$, and if the left-hand side is stuck. For example, the right
-identity of addition qualifies: \ERewrite{} Once it is registered via
-\ERewriteIt{}, Agda treats \AgdaBound{n} \AgdaFunction{+} \AgdaNumber{0} as
-definitionally equal to \AgdaBound{n}: \ERewriteEx{}
-
-Beyond the syntactic restriction, the rule set as a whole has to be well
-behaved. We rely throughout on the following, which is the criterion under
-which Agda's rewrite rules are known to be sound~\cite{10.1145/3434341}.
-
-\begin{quote}\itshape
-      If every registered rule is inhabited by a proof of the corresponding
-      propositional equality, and the resulting rewrite system is confluent and
-      terminating, then adding it preserves consistency and subject reduction.
-\end{quote}
-
-\noindent We discharge the three obligations separately. Every rule is proved
-before it is registered (\cref{sec:mis-sig}), Agda's local-confluence check
-joins every critical pair, and termination is established externally
-(\cref{sec:ext}), which with local confluence gives confluence by Newman's
-lemma. Termination is the obligation that has to leave
-Agda, because Agda never checks it: a non-terminating rule set simply makes the
-type checker loop.
-
-\subsection{Which Variant Can Be Registered}\label{sec:pre-sig}
+\subsection{A Short History of the Sigma Calculus}\label{sec:pre-sig}
 
 Explicit-substitution calculi turn substitutions into syntax, so that
 $t\,[\,σ\,]$ is a term and $σ$ itself can be composed, extended and pushed
@@ -479,6 +407,77 @@ Instantiation is then defined mutually with composition and lifting:
 \end{align*}
 Lifting fixes the bound variable and weakens the rest, and composition looks a
 variable up in the first map and instantiates the result with the second.
+
+\section{Rewriting the Sigma Calculus}\label{sec:mis}
+
+This section builds the rule set and says what fixes it. We give the operations
+and the reason each one is opaque (\cref{sec:mis-sub}), the rules and the
+argument that determines them (\cref{sec:mis-sig}), what they buy in a worked
+metatheory (\cref{sec:mis-ex-proof}), and why the operations must not unfold,
+together with what the alternative representation would cost
+(\cref{sec:mis-ex}). Throughout, the multi-sorted scoped System~F of
+\cref{fig:pre-svm} is the running example, and the construction applies to any
+multi-sorted scoped syntax, and to simple intrinsically typed syntax whose type
+index lives in \AgdaDatatype{Set}.
+
+Termination is the first obstacle. Defining instantiation by mutual recursion
+with composition is not structurally recursive, and Agda offers no way to
+justify it by well-founded recursion. We follow Adams~\cite{10.1007/11617990_1}
+and define instantiation with renamings first. The equational theory then has
+to cover renamings as well as substitutions, and to relate the two.
+
+\subsection{Renaming and Substitution}\label{sec:mis-sub}
+\begin{figure*}[t]
+      \AgdaNoSpaceAroundCode{}
+      \setlength{\mathindent}{0pt}
+      \setlength{\AgdaEmptySkip}{\smallskipamount}
+      \begin{minipage}[t]{0.46\linewidth}
+            \raggedright{}
+            \ERen{}
+            \ERenOps{}
+            \ERenComp{}
+      \end{minipage}
+      \hfill
+      \begin{minipage}[t]{0.50\linewidth}
+            \raggedright{}
+            \ESub{}
+            \ESubEmb{}
+            \ESubT{}
+            \ESubComp{}
+      \end{minipage}
+      \caption{The operations for renaming (left) and for substitution (right).
+            Every operation sits in an \AgdaKeyword{opaque} block, which is what
+            gives a rewrite rule the stuck left-hand side it needs. Lifting
+            \AgdaFunction{\_↑ᴿ\_} and \AgdaFunction{\_↑ˢ\_} is primitive here,
+            and \AgdaFunction{idˢ} and \AgdaFunction{wkˢ} are renamings embedded
+            through the coercion \AgdaFunction{⟨\_⟩}}\label{fig:mis-ras}
+\end{figure*}
+
+\Cref{fig:mis-ras} gives the operations. Renamings \AgdaFunction{\_→ᴿ\_} map
+variables of sort \AgdaBound{s} to variables of the same sort, and substitutions
+\AgdaFunction{\_→ˢ\_} map them to terms. The definitions themselves are the
+expected ones. What to read the figure for is the \AgdaKeyword{opaque} blocks
+around them, and the three places where a definition is shaped by what the rules
+will later need.
+
+Every operation is \AgdaKeyword{opaque}, because a rewrite rule needs a stuck
+left-hand side. This includes both lifting operators. Lifting is
+\emph{primitive} here rather than defined as $\bsym{\mathsf{zero}} \bsym{\cdot}
+      (σ \bsym{⨟} \bsym{\mathsf{wk}})$, which is decision~4 of \cref{fig:decisions}
+and the reason the applied and lifting rules do not collapse into $η$. The
+identity renaming takes its sort argument explicitly, as Agda frequently fails
+to infer it. The constants \AgdaFunction{idˢ} and \AgdaFunction{wkˢ} are
+embedded renamings, obtained through the coercion \AgdaFunction{⟨\_⟩}, and are
+\AgdaKeyword{INLINE}d so that they do not reduce on a left-hand side.
+
+Two definitions are shaped by later needs. Lifting a substitution is defined by
+instantiation with the weakening \emph{renaming}, which is what makes the
+mutual recursion structural. And instantiation \AgdaFunction{\_[\_]ᴿ} and
+\AgdaFunction{\_[\_]ˢ} is defined across both modes, so that looking a variable
+up in a map is written \AgdaBound{x} \AgdaFunction{[} \AgdaBound{σ}
+\AgdaFunction{]ˢ} rather than as the application \AgdaBound{σ} \AgdaBound{\_}
+\AgdaBound{x}. A rule may mention stuck symbols only, with no lambdas and no
+function application, so lookup has to be spelled as instantiation everywhere.
 
 \subsection{The Sigma Calculus Rules}\label{sec:mis-sig}
 \begin{figure*}[t]
@@ -608,68 +607,6 @@ All rules are proved before being registered, which is what preserves
 consistency. The proofs unfold the opaque definitions and use function
 extensionality, which is conservative over Agda's theory~\cite{Hofmann1997}. We
 refer the reader to the supplement.
-
-\subsection{Why the Definitions Must Not Unfold}\label{sec:mis-ex}
-
-Blocking the reduction of the operations is what lets us register every rule.
-We now explain why, and why the alternatives fail.
-
-The immediate problem is that composition unfolds to a lambda abstraction.
-Unfolded, the left-hand side of \AgdaFunction{comp-idₗ} reduces
-to~\EIdLawUnfolded{}~, which is not a stuck symbol. But once composition is
-blocked, we still have to say how a variable is looked up in a composite.
-
-Our first attempt kept function application for lookup, by rewriting
-\EFunAppInterp{}. Agda accepts this alongside the interaction rules, but then
-misbehaves during higher-order pattern unification and stops applying the
-$η$-laws, which propositional reasoning still discharges by hand. We think Agda
-should reject the construction rather than accept it and degrade.
-
-Instead we use the instantiation operator for lookup, which has to be
-propagated through every rule. Function application and lambda-built maps
-remain available to the user but yield fewer definitional equalities, so we
-recommend instantiation for lookup and the two composition operators for
-everything else.
-
-\subsection*{Using Vectors instead of Functions}
-
-%%CHANGED (3.4): the old claim that the eta-laws are underivable under a
-%%vector encoding was backwards; probe-vec.agda proves them.  Now states
-%%the axiom ledger and why we keep functions.
-A vector-like data type is the other candidate representation, with the map a
-finite list of terms. Extension alone is a constructor. Identity, weakening,
-lifting and composition stay defined by recursion over the vector, so their
-clauses compete with the rules exactly as the function model's do, and opacity
-is needed all the same.
-
-Nothing is lost on the side of provability, and the supplement carries the
-experiment. With maps as vectors every law of \cref{sec:mis-sig} is a theorem
-under \texttt{--safe}, the four $η$-laws included. Equality of vectors is
-equality of data, so that variant assumes nothing, where ours postulates
-function extensionality. We keep functions as the more intuitive model. The
-laws are theorems either way, so we can report that the $η$-laws are never once
-applied by hand across the POPLmark development.
-
-The designs differ on cost. Every vector operation recurses on the scope, so
-laws the function model closes by \AgdaFunction{refl} become inductions the
-generator has to emit. Making the map a tuple by recursion on the scope instead
-buys the $η$-laws definitionally, from Agda's $η$-rule for records, and
-forfeits the rules, because the operations then reduce on their own and every
-rule mentioning one overlaps its defining clauses unjoinably. The trade is made
-per symbol. Transparency buys $η$ and forbids rules. Opacity buys rules and
-forbids $η$. We take opacity, and drop $η$ for the independent reason of
-\cref{sec:pre-sig}.
-
-Vectors remain the right choice where functions are not available, notably when
-formalizing type theory in type theory~\cite{10.1145/2914770.2837638}, and they
-are what the uniform renaming/substitution
-treatments~\cite{altenkirch2025substitution, ren-sub} of \cref{sec:rwk} use.
-
-The original $σ$-calculus treats its symbols purely syntactically, describing
-lookup itself through instantiation. The de~Bruijn algebra then supplied a
-semantic model in functions, which made the rules provable and usable for
-automated propositional reasoning. This work does both at once. The model
-proves the laws, and the syntactic reading makes them apply.
 
 \begin{figure*}[!t]
       \AgdaNoSpaceAroundCode{}
@@ -822,56 +759,76 @@ of the index is normalized before unification, the less of it is left to read a
 metavariable off. The cost is one implicit argument, and no substitution law is
 applied by hand.
 
-\section{Correctness}\label{sec:ext}
+\subsection{Why the Definitions Must Not Unfold}\label{sec:mis-ex}
 
-\Cref{sec:pre-agd} left three obligations. Every rule is proved before it is
-registered, which \cref{sec:mis-sig} did. This section discharges the other
-two.
+Blocking the reduction of the operations is what lets us register every rule.
+We now explain why, and why the alternatives fail.
 
-Agda's \texttt{--local-confluence-check} certifies that every critical pair
-joins. It says nothing about termination, which Agda does not check for rewrite
-rules at all. We therefore export the system as a first-order term rewriting
-system, with scope indices erased, and hand the resulting 75 rules to external
-provers. AProVE proves termination in 23.9\,s and confluence in 24.9\,s. Local
-confluence plus termination gives confluence by Newman's lemma, so the two
-results agree by independent routes, and the obligations of \cref{sec:pre-agd}
-are discharged.
+The immediate problem is that composition unfolds to a lambda abstraction.
+Unfolded, the left-hand side of \AgdaFunction{comp-idₗ} reduces
+to~\EIdLawUnfolded{}~, which is not a stuck symbol. But once composition is
+blocked, we still have to say how a variable is looked up in a composite.
 
-The system does \emph{not} pass Agda's global \texttt{--confluence-check}, and
-the reason matters, because an artifact reviewer will flip the pragma. Turning
-it on reports 277 errors, every one of them \texttt{RewriteAmbiguousRules} and
-none of them a missing rule or a non-joinable pair. The global check asks that
-no two left-hand sides overlap at all, which is a stricter condition than
-confluence, and a $σ$-calculus cannot satisfy it. $\mathsf{assoc}$ overlaps
-every rule whose left-hand side mentions $\fatsemi$, by construction. Overlaps
-are exactly what the local check examines, as critical pairs, and it finds
-every one of them joinable. This is a property of the calculus, not of our
-encoding or of the generator, and the hand-written core fails the global check
-too.
+Our first attempt kept function application for lookup, by rewriting
+\EFunAppInterp{}. Agda accepts this alongside the interaction rules, but then
+misbehaves during higher-order pattern unification and stops applying the
+$η$-laws, which propositional reasoning still discharges by hand. We think Agda
+should reject the construction rather than accept it and degrade.
 
-\emph{Cost.} Definitional equalities are paid for at type-checking time. Measured
-on one core under Agda~2.8, a module that does nothing but import a generated
-core costs about 70\,s, against 1\,s for a comparable module importing only the
-standard library. The figure is flat in the size of the rule set, 69\,s at 77
-rules and 66\,s at 111. Per-module times across the development run from 74 to
-120\,s, so that fixed import cost dominates and the proof content is cheap. The
-Part~3 animation is the exception, at about 76 minutes, and there the rules are
-doing evaluation instead of conversion.
+Instead we use the instantiation operator for lookup, which has to be
+propagated through every rule. Function application and lambda-built maps
+remain available to the user but yield fewer definitional equalities, so we
+recommend instantiation for lookup and the two composition operators for
+everything else.
 
-Two controls make the verdicts meaningful. Both properties hold at two
-signature sizes, three and eight constructors, which is what licenses the
-generator claim. And the setup has a falsifier that fires, because adding the
-two $η$-laws is refuted for confluence by three independent tools, as
-\cref{sec:pre-sig} predicts. Evidence at two sizes is not a proof schematic in
-the signature, and obtaining one would mean decomposing the system along the
-lines of compositional confluence criteria~\cite{Shintani_2024}.
+\subsection*{Using Vectors instead of Functions}
+
+%%CHANGED (3.4): the old claim that the eta-laws are underivable under a
+%%vector encoding was backwards; probe-vec.agda proves them.  Now states
+%%the axiom ledger and why we keep functions.
+A vector-like data type is the other candidate representation, with the map a
+finite list of terms. Extension alone is a constructor. Identity, weakening,
+lifting and composition stay defined by recursion over the vector, so their
+clauses compete with the rules exactly as the function model's do, and opacity
+is needed all the same.
+
+Nothing is lost on the side of provability, and the supplement carries the
+experiment. With maps as vectors every law of \cref{sec:mis-sig} is a theorem
+under \texttt{--safe}, the four $η$-laws included. Equality of vectors is
+equality of data, so that variant assumes nothing, where ours postulates
+function extensionality. We keep functions as the more intuitive model. The
+laws are theorems either way, so we can report that the $η$-laws are never once
+applied by hand across the POPLmark development.
+
+The designs differ on cost. Every vector operation recurses on the scope, so
+laws the function model closes by \AgdaFunction{refl} become inductions the
+generator has to emit. Making the map a tuple by recursion on the scope instead
+buys the $η$-laws definitionally, from Agda's $η$-rule for records, and
+forfeits the rules, because the operations then reduce on their own and every
+rule mentioning one overlaps its defining clauses unjoinably. The trade is made
+per symbol. Transparency buys $η$ and forbids rules. Opacity buys rules and
+forbids $η$. We take opacity, and drop $η$ for the independent reason of
+\cref{sec:pre-sig}.
+
+Vectors remain the right choice where functions are not available, notably when
+formalizing type theory in type theory~\cite{10.1145/2914770.2837638}, and they
+are what the uniform renaming/substitution
+treatments~\cite{altenkirch2025substitution, ren-sub} of \cref{sec:rwk} use.
+
+The original $σ$-calculus treats its symbols purely syntactically, describing
+lookup itself through instantiation. The de~Bruijn algebra then supplied a
+semantic model in functions, which made the rules provable and usable for
+automated propositional reasoning. This work does both at once. The model
+proves the laws, and the syntactic reading makes them apply.
 
 \section{Implementation and Evaluation}\label{sec:fwk}
 
-A construction shown on one language is a claim about that language. This
+A construction shown on one language, with the proof obligations of
+\cref{sec:pre-agd} half discharged, is a claim about that language. This
 section turns it into a claim about the method. \Cref{sec:gen} generates the
-infrastructure from a syntax description and \cref{sec:eval} measures what it
-buys on the POPLmark Challenge.
+infrastructure from a syntax description, \cref{sec:eval} measures what it buys
+on the POPLmark Challenge, and \cref{sec:ext} discharges the obligation Agda
+leaves open. \Cref{sec:future} collects what remains.
 
 \subsection{Code Generation}\label{sec:gen}
 
@@ -1006,6 +963,78 @@ checks in the ordinary sense and is then rejected by
 $(\forall\!\!\ldots)\,[\,ξ\,]^{\mathsf{R}}$ into the clause's left-hand side,
 where it overlaps a traversal rule unjoinably.
 
+\subsection{External Verification}\label{sec:ext}
+
+Agda's \texttt{--local-confluence-check} certifies that every critical pair
+joins. It says nothing about termination, which Agda does not check for rewrite
+rules at all. We therefore export the system as a first-order term rewriting
+system, with scope indices erased, and hand the resulting 75 rules to external
+provers. AProVE proves termination in 23.9\,s and confluence in 24.9\,s. Local
+confluence plus termination gives confluence by Newman's lemma, so the two
+results agree by independent routes, and the obligations of \cref{sec:pre-agd}
+are discharged.
+
+The system does \emph{not} pass Agda's global \texttt{--confluence-check}, and
+the reason matters, because an artifact reviewer will flip the pragma. Turning
+it on reports 277 errors, every one of them \texttt{RewriteAmbiguousRules} and
+none of them a missing rule or a non-joinable pair. The global check asks that
+no two left-hand sides overlap at all, which is a stricter condition than
+confluence, and a $σ$-calculus cannot satisfy it. $\mathsf{assoc}$ overlaps
+every rule whose left-hand side mentions $\fatsemi$, by construction. Overlaps
+are exactly what the local check examines, as critical pairs, and it finds
+every one of them joinable. This is a property of the calculus, not of our
+encoding or of the generator, and the hand-written core fails the global check
+too.
+
+\emph{Cost.} Definitional equalities are paid for at type-checking time. Measured
+on one core under Agda~2.8, a module that does nothing but import a generated
+core costs about 70\,s, against 1\,s for a comparable module importing only the
+standard library. The figure is flat in the size of the rule set, 69\,s at 77
+rules and 66\,s at 111. Per-module times across the development run from 74 to
+120\,s, so that fixed import cost dominates and the proof content is cheap. The
+Part~3 animation is the exception, at about 76 minutes, and there the rules are
+doing evaluation instead of conversion.
+
+Two controls make the verdicts meaningful. Both properties hold at two
+signature sizes, three and eight constructors, which is what licenses the
+generator claim. And the setup has a falsifier that fires, because adding the
+two $η$-laws is refuted for confluence by three independent tools, as
+\cref{sec:pre-sig} predicts. Evidence at two sizes is not a proof schematic in
+the signature, and obtaining one would mean decomposing the system along the
+lines of compositional confluence criteria~\cite{Shintani_2024}.
+
+\subsection{Future Work}\label{sec:future}
+
+\subsubsection*{Opaque Definitions for Rewriting}
+The construction suggests a general recipe for integrating normalization for
+suitable algebraic structures into a proof assistant: define symbols for the
+structure; establish a confluent rewrite system over them; instantiate the
+structure with an underlying model and prove the laws inside \AgdaKeyword{opaque}
+blocks; and, with the model hidden, \AgdaKeyword{REWRITE} the equations.
+
+Classical sets are one candidate. Reasoning about them in Agda usually means
+lists up to permutation together with a uniqueness predicate, which is tedious
+and generates a great deal of uninteresting code. Their characteristic function
+supplies the model the recipe asks for. Sets become \ESetProp\, for some
+$\mathcal{A}$ : \AgdaDatatype{Set} \AgdaBound{ℓ}, the operations become opaque
+functions \ESetOps{} and laws such as \ESetLawEx{} become provable and
+registrable. The boolean ring interpretation~\cite{HSIANG1985255} is a natural
+starting point for the rule set, but it needs rewriting modulo associativity
+and commutativity. Dedukti~\cite{assaf2023deduktilogicalframeworkbased}
+supports this and Agda does not, which is the missing ingredient.
+
+\subsubsection*{Implications for Intrinsically Typed Syntax}
+The phenomenon known as transport hell is worst where a substitution sits in the
+type index, and the transfer lemma (\AgdaFunction{subst} in Agda) has to carry
+every step of every proof about it. Intrinsically typed System~F has been formalized in Agda before, executably and
+in full~\cite{10.1007/978-3-030-33636-3_10}, and a binary logical relation over
+it~\cite{10.1145/3678000.3678201} is a close example of the cost. Type-in-type and expression-in-expression reasoning stays easy, but
+type-in-expression substitution also affects the index of the expression
+substituted into, and the authors spend thousands of lines on the resulting
+transports. Rewriting the $σ$-calculus rules on the syntax of the typing index
+should remove them, and should generalize to other intrinsically typed
+formalizations.
+
 \section{Related Work}\label{sec:rwk}
 
 Three lines of work meet here. Solutions to the POPLmark Challenge fix the
@@ -1116,38 +1145,6 @@ normalizing expressions in the lattice of \AgdaDatatype{Mode}s generated by
 \AgdaInductiveConstructor{T}~\cite{altenkirch2025substitution}, and one for the
 adapted $σ$-calculus. In our experiments the interaction of the two layers made
 confluence hard to preserve.
-
-\section{Future Work}\label{sec:future}
-
-\subsection*{Opaque Definitions for Rewriting}
-The construction suggests a general recipe for integrating normalization for
-suitable algebraic structures into a proof assistant: define symbols for the
-structure; establish a confluent rewrite system over them; instantiate the
-structure with an underlying model and prove the laws inside \AgdaKeyword{opaque}
-blocks; and, with the model hidden, \AgdaKeyword{REWRITE} the equations.
-
-Classical sets are one candidate. Reasoning about them in Agda usually means
-lists up to permutation together with a uniqueness predicate, which is tedious
-and generates a great deal of uninteresting code. Their characteristic function
-supplies the model the recipe asks for. Sets become \ESetProp\, for some
-$\mathcal{A}$ : \AgdaDatatype{Set} \AgdaBound{ℓ}, the operations become opaque
-functions \ESetOps{} and laws such as \ESetLawEx{} become provable and
-registrable. The boolean ring interpretation~\cite{HSIANG1985255} is a natural
-starting point for the rule set, but it needs rewriting modulo associativity
-and commutativity. Dedukti~\cite{assaf2023deduktilogicalframeworkbased}
-supports this and Agda does not, which is the missing ingredient.
-
-\subsection*{Implications for Intrinsically Typed Syntax}
-The phenomenon known as transport hell is worst where a substitution sits in the
-type index, and the transfer lemma (\AgdaFunction{subst} in Agda) has to carry
-every step of every proof about it. Intrinsically typed System~F has been formalized in Agda before, executably and
-in full~\cite{10.1007/978-3-030-33636-3_10}, and a binary logical relation over
-it~\cite{10.1145/3678000.3678201} is a close example of the cost. Type-in-type and expression-in-expression reasoning stays easy, but
-type-in-expression substitution also affects the index of the expression
-substituted into, and the authors spend thousands of lines on the resulting
-transports. Rewriting the $σ$-calculus rules on the syntax of the typing index
-should remove them, and should generalize to other intrinsically typed
-formalizations.
 
 \section{Conclusion}\label{sec:con}
 

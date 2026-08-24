@@ -225,7 +225,7 @@ for src_path, tgt_path in zip(src_paths, tgt_paths):
             elif "]" in l:
                 if mode == "hide":
                     mode = "command"
-                    tgt += "\\end{code} \\ \n"
+                    tgt += "\\end{code}\\AgdaHideGap{}\n"
                     tgt += "\\begin{code}" + opt + "\n"
                 else:
                     print(f"ERROR: Line {line_num+1} stops a hiding block outside of hiding mode:\n  {line}")

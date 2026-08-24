@@ -34,22 +34,22 @@ c2-comp-idᵣᴿ : ∀ {ξ : S₁ →ᴿ S₂} {ξ′ : S₂ →ᴿ S₃} → ξ
 c2-comp-idᵣᴿ = refl
 
 -- comp-idᵣ, likewise, in the substitution world
-c2-comp-idᵣ : ∀ {σ : S₁ →ˢ S₂} {τ : S₂ →ˢ S₃} → σ ⨟ (⟨ idᴿ ⟩ ⨟ τ) ≡ σ ⨟ τ
+c2-comp-idᵣ : ∀ {σ : S₁ →ˢ S₂} {τ : S₂ →ˢ S₃} → σ ⨟ˢ (⟨ idᴿ ⟩ ⨟ˢ τ) ≡ σ ⨟ˢ τ
 c2-comp-idᵣ = refl
 
--- interact escapes because (t ∙ˢ τ) ⨟ ρ fires `dist` and lands cons-shaped again
+-- interact escapes because (t ∙ˢ τ) ⨟ˢ ρ fires `dist` and lands cons-shaped again
 c2-interact : ∀ {τ : S₂ →ˢ S₃} {t : S₃ ⊢ s} {ρ : S₃ →ˢ S₄} →
-  ⟨ wkᴿ s ⟩ ⨟ ((t ∙ˢ τ) ⨟ ρ) ≡ τ ⨟ ρ
+  ⟨ wkᴿ s ⟩ ⨟ˢ ((t ∙ˢ τ) ⨟ˢ ρ) ≡ τ ⨟ˢ ρ
 c2-interact = refl
 
 -- lift-cons: same escape
 c2-lift-cons : ∀ {σ : S₁ →ˢ S₂} {τ : S₂ →ˢ S₃} {t : S₃ ⊢ s} {ρ : S₃ →ˢ S₄} →
-  (σ ↑ˢ s) ⨟ ((t ∙ˢ τ) ⨟ ρ) ≡ (t [ ρ ]ˢ) ∙ˢ (σ ⨟ (τ ⨟ ρ))
+  (σ ↑ˢ s) ⨟ˢ ((t ∙ˢ τ) ⨟ˢ ρ) ≡ (t [ ρ ]ˢ) ∙ˢ (σ ⨟ˢ (τ ⨟ˢ ρ))
 c2-lift-cons = refl
 
 -- ⟨⟩-lift-cons: same escape, one level up
 c2-⟨⟩-cons : ∀ {ξ : S₁ →ᴿ S₂} {τ : S₂ →ˢ S₃} {t : S₃ ⊢ s} {ρ : S₃ →ˢ S₄} →
-  ⟨ ξ ↑ᴿ s ⟩ ⨟ ((t ∙ˢ τ) ⨟ ρ) ≡ (t [ ρ ]ˢ) ∙ˢ (⟨ ξ ⟩ ⨟ (τ ⨟ ρ))
+  ⟨ ξ ↑ᴿ s ⟩ ⨟ˢ ((t ∙ˢ τ) ⨟ˢ ρ) ≡ (t [ ρ ]ˢ) ∙ˢ (⟨ ξ ⟩ ⨟ˢ (τ ⨟ˢ ρ))
 c2-⟨⟩-cons = refl
 
 -- ══ C4: ⟨⟩-split-tail is the TAIL companion of ⟨⟩-split-⨟, and is needed
@@ -57,7 +57,7 @@ c2-⟨⟩-cons = refl
 --    by lift-dist-compˢᴿ-⨟ already does the job, which is why there is no
 --    `⟨⟩-split-tail-⨟`.
 c4-tail : ∀ {σ : S₁ →ˢ S₂} {ξ : S₂ →ᴿ S₃} {ξ′ : (s ∷ S₃) →ᴿ S₄} {τ : S₄ →ˢ S₅} →
-  (σ ↑ˢ s) ⨟ (⟨ (ξ ↑ᴿ s) ⨟ᴿ ξ′ ⟩ ⨟ τ) ≡ ((σ ⨟ ⟨ ξ ⟩) ↑ˢ s) ⨟ (⟨ ξ′ ⟩ ⨟ τ)
+  (σ ↑ˢ s) ⨟ˢ (⟨ (ξ ↑ᴿ s) ⨟ᴿ ξ′ ⟩ ⨟ˢ τ) ≡ ((σ ⨟ˢ ⟨ ξ ⟩) ↑ˢ s) ⨟ˢ (⟨ ξ′ ⟩ ⨟ˢ τ)
 c4-tail = refl
 
 -- ══ THE DISPLAYED NORMALIZATION (paper, §3.3) ═══════════════════════
@@ -76,9 +76,9 @@ module Trace {S₁ S₂ : Scope} {s s′ : Sort}
   l0 = refl
   l1 : (t [ (σ ↑ˢ s′) ]ˢ) [ ((t′ [ σ ]ˢ) ∙ˢ idˢ) ]ˢ                   ≡ nf
   l1 = refl
-  l2 : t [ ((σ ↑ˢ s′) ⨟ ((t′ [ σ ]ˢ) ∙ˢ idˢ)) ]ˢ                      ≡ nf
+  l2 : t [ ((σ ↑ˢ s′) ⨟ˢ ((t′ [ σ ]ˢ) ∙ˢ idˢ)) ]ˢ                      ≡ nf
   l2 = refl
-  l3 : t [ ((t′ [ σ ]ˢ) ∙ˢ (σ ⨟ idˢ)) ]ˢ                              ≡ nf
+  l3 : t [ ((t′ [ σ ]ˢ) ∙ˢ (σ ⨟ˢ idˢ)) ]ˢ                              ≡ nf
   l3 = refl
 
   -- right branch:  (t [ t′ ]₀) [ σ ]  ↠  nf
@@ -86,9 +86,9 @@ module Trace {S₁ S₂ : Scope} {s s′ : Sort}
   r0 = refl
   r1 : (t [ (t′ ∙ˢ idˢ) ]ˢ) [ σ ]ˢ                                    ≡ nf
   r1 = refl
-  r2 : t [ ((t′ ∙ˢ idˢ) ⨟ σ) ]ˢ                                       ≡ nf
+  r2 : t [ ((t′ ∙ˢ idˢ) ⨟ˢ σ) ]ˢ                                       ≡ nf
   r2 = refl
-  r3 : t [ ((t′ [ σ ]ˢ) ∙ˢ (idˢ ⨟ σ)) ]ˢ                              ≡ nf
+  r3 : t [ ((t′ [ σ ]ˢ) ∙ˢ (idˢ ⨟ˢ σ)) ]ˢ                              ≡ nf
   r3 = refl
 
 -- ══ lift-id (σ⇑'s LiftId) is SUBSUMED, not excluded: its left-hand side is a

@@ -84,17 +84,14 @@ variable
 
 -- ─── maps ───────────────────────────────────────────────────────────
 
-_→[_]_ : Scope → Mode → Scope → Set
-S₁ →[ m ] S₂ = ∀ s → S₁ ∋ s → S₂ ⊢[ m ] s
-
 --! Ren {
 _→ᴿ_ : Scope → Scope → Set
-S₁ →ᴿ S₂ = S₁ →[ V ] S₂
+S₁ →ᴿ S₂ = ∀ s → S₁ ∋ s → S₂ ∋ s
 --! }
 
 --! Sub {
 _→ˢ_ : Scope → Scope → Set
-S₁ →ˢ S₂ = S₁ →[ T ] S₂
+S₁ →ˢ S₂ = ∀ s → S₁ ∋ s → S₂ ⊢ s
 --! }
 
 variable
@@ -124,17 +121,17 @@ opaque
 
   _[_]ᴿ : S₁ ⊢[ m ] s → S₁ →ᴿ S₂ → S₂ ⊢[ m ] s
   _[_]ᴿ {m = V} x ξ   = ξ _ x
---! }
   (` x)         [ ξ ]ᴿ = ` (x [ ξ ]ᴿ)
   (λx e)        [ ξ ]ᴿ = λx (e [ (ξ ↑ᴿ _) ]ᴿ)
+  (e₁ · e₂)     [ ξ ]ᴿ = (e₁ [ ξ ]ᴿ) · (e₂ [ ξ ]ᴿ)
+  -- ...
+--! [
   (Λα e)        [ ξ ]ᴿ = Λα (e [ (ξ ↑ᴿ _) ]ᴿ)
   (∀[α∶ k ] t)  [ ξ ]ᴿ = ∀[α∶ k [ ξ ]ᴿ ] (t [ (ξ ↑ᴿ _) ]ᴿ)
-  (e₁ · e₂)     [ ξ ]ᴿ = (e₁ [ ξ ]ᴿ) · (e₂ [ ξ ]ᴿ)
   (e • t)       [ ξ ]ᴿ = (e [ ξ ]ᴿ) • (t [ ξ ]ᴿ)
   (t₁ ⇒ t₂)     [ ξ ]ᴿ = (t₁ [ ξ ]ᴿ) ⇒ (t₂ [ ξ ]ᴿ)
   *             [ ξ ]ᴿ = *
-
---! RenComp {
+--! ]
   _⨟ᴿ_ : S₁ →ᴿ S₂ → S₂ →ᴿ S₃ → S₁ →ᴿ S₃
   (ξ₁ ⨟ᴿ ξ₂) _ x = (ξ₁ _ x) [ ξ₂ ]ᴿ
 --! }
@@ -144,44 +141,42 @@ opaque
 -- the σ-world's constants ARE embedded renamings: with the canonical
 -- direction pointing at ᴿ, giving them their own symbols would only
 -- create extra normal forms
---! SubEmb {
+--! SubT {
 opaque
   ⟨_⟩ : S₁ →ᴿ S₂ → S₁ →ˢ S₂
   ⟨ ξ ⟩ _ x = ` (x [ ξ ]ᴿ)
-idˢ : S →ˢ S
-idˢ = ⟨ idᴿ ⟩
-wkˢ : ∀ s′ → S →ˢ (s′ ∷ S)
-wkˢ s′ = ⟨ wkᴿ s′ ⟩
---! }
 
---! SubT {
-opaque
   _∙ˢ_ : S₂ ⊢ s → S₁ →ˢ S₂ → (s ∷ S₁) →ˢ S₂
   (t ∙ˢ σ) _ zero    = t
   (t ∙ˢ σ) _ (suc x) = σ _ x
-opaque
-  unfolding _∙ˢ_
-  _[_]ˢ : S₁ ⊢[ m ] s → S₁ →ˢ S₂ → S₂ ⊢ s
+
   _↑ˢ_  : S₁ →ˢ S₂ → ∀ s → (s ∷ S₁) →ˢ (s ∷ S₂)
   (σ ↑ˢ _) _ zero    = ` zero
   (σ ↑ˢ _) _ (suc x) = (σ _ x) [ wkᴿ _ ]ᴿ
-  _[_]ˢ {m = V} x σ   = σ _ x
---! }
 
---! SubTraversal {
+  _[_]ˢ : S₁ ⊢[ m ] s → S₁ →ˢ S₂ → S₂ ⊢ s
+  _[_]ˢ {m = V} x σ   = σ _ x
   (` x)         [ σ ]ˢ = σ _ x
   (λx e)        [ σ ]ˢ = λx (e [ (σ ↑ˢ _) ]ˢ)
+  (e₁ · e₂)     [ σ ]ˢ = (e₁ [ σ ]ˢ) · (e₂ [ σ ]ˢ)
+  -- ...
+--! [
   (Λα e)        [ σ ]ˢ = Λα (e [ (σ ↑ˢ _) ]ˢ)
   (∀[α∶ k ] t)  [ σ ]ˢ = ∀[α∶ k [ σ ]ˢ ] (t [ (σ ↑ˢ _) ]ˢ)
-  (e₁ · e₂)     [ σ ]ˢ = (e₁ [ σ ]ˢ) · (e₂ [ σ ]ˢ)
   (e • t)       [ σ ]ˢ = (e [ σ ]ˢ) • (t [ σ ]ˢ)
   (t₁ ⇒ t₂)     [ σ ]ˢ = (t₁ [ σ ]ˢ) ⇒ (t₂ [ σ ]ˢ)
   *             [ σ ]ˢ = *
+--! ]
+  _⨟ˢ_ : S₁ →ˢ S₂ → S₂ →ˢ S₃ → S₁ →ˢ S₃
+  (σ₁ ⨟ˢ σ₂) _ x = (σ₁ _ x) [ σ₂ ]ˢ
 --! }
 
---! SubComp {
-  _⨟_ : S₁ →ˢ S₂ → S₂ →ˢ S₃ → S₁ →ˢ S₃
-  (σ₁ ⨟ σ₂) _ x = (σ₁ _ x) [ σ₂ ]ˢ
+--! SubIdWk {
+idˢ : S →ˢ S
+idˢ = ⟨ idᴿ ⟩
+
+wkˢ : ∀ s′ → S →ˢ (s′ ∷ S)
+wkˢ s′ = ⟨ wkᴿ s′ ⟩
 --! }
 
 _[_]₀ : (s′ ∷ S) ⊢ s → S ⊢ s′ → S ⊢ s
@@ -190,7 +185,7 @@ t [ t′ ]₀ = t [ (t′ ∙ˢ idˢ) ]ˢ
 -- ─── the two-world rewrite system ───────────────────────────────────
 
 opaque
-  unfolding idᴿ wkᴿ _∙ᴿ_ _↑ᴿ_ _[_]ᴿ _⨟ᴿ_ ⟨_⟩ _∙ˢ_ _[_]ˢ _↑ˢ_ _⨟_
+  unfolding idᴿ wkᴿ _∙ᴿ_ _↑ᴿ_ _[_]ᴿ _⨟ᴿ_ ⟨_⟩ _∙ˢ_ _[_]ˢ _↑ˢ_ _⨟ˢ_
 
   -- ══ Iᴿ. applied rules, renaming world ═════════════════════════════
   def-wkᴿ     : x [ wkᴿ s′ ]ᴿ ≡ suc x
@@ -263,7 +258,7 @@ opaque
   def-∙ˢ-zero     : zero [ (t ∙ˢ σ) ]ˢ ≡ t
   def-∙ˢ-suc      : (suc {s′ = s′} x) [ (t ∙ˢ σ) ]ˢ ≡ x [ σ ]ˢ
   def-↑ˢ-zero     : zero [ (σ ↑ˢ s) ]ˢ ≡ ` zero
-  def-↑ˢ-suc      : (suc x) [ (σ ↑ˢ s) ]ˢ ≡ x [ (σ ⨟ ⟨ wkᴿ s ⟩) ]ˢ
+  def-↑ˢ-suc      : (suc x) [ (σ ↑ˢ s) ]ˢ ≡ x [ (σ ⨟ˢ ⟨ wkᴿ s ⟩) ]ˢ
   --! }
 
   -- ══ IIˢ. traversal rules, substitution world ═════════════════════
@@ -279,29 +274,29 @@ opaque
   --! }
 
   -- ══ VIˢ. completion companions, substitution world ══════════════
-  compositionalityᴿˢ-⨟-var : x [ (⟨ ξ ⟩ ⨟ σ) ]ˢ ≡ (x [ ξ ]ᴿ) [ σ ]ˢ
-  def-↑ˢ-zero-⨟            : zero [ ((σ ↑ˢ s) ⨟ τ) ]ˢ ≡ zero [ τ ]ˢ
-  def-↑ˢ-suc-⨟             : (suc x) [ ((σ ↑ˢ s) ⨟ τ) ]ˢ ≡ x [ (σ ⨟ (⟨ wkᴿ s ⟩ ⨟ τ)) ]ˢ
-  lift-wk-⨟                : ⟨ wkᴿ s ⟩ ⨟ ((σ ↑ˢ s) ⨟ τ) ≡ σ ⨟ (⟨ wkᴿ s ⟩ ⨟ τ)
-  lift-dist-compˢˢ-⨟       : (σ₁ ↑ˢ s) ⨟ ((σ₂ ↑ˢ s) ⨟ τ) ≡ ((σ₁ ⨟ σ₂) ↑ˢ s) ⨟ τ
+  compositionalityᴿˢ-⨟-var : x [ (⟨ ξ ⟩ ⨟ˢ σ) ]ˢ ≡ (x [ ξ ]ᴿ) [ σ ]ˢ
+  def-↑ˢ-zero-⨟            : zero [ ((σ ↑ˢ s) ⨟ˢ τ) ]ˢ ≡ zero [ τ ]ˢ
+  def-↑ˢ-suc-⨟             : (suc x) [ ((σ ↑ˢ s) ⨟ˢ τ) ]ˢ ≡ x [ (σ ⨟ˢ (⟨ wkᴿ s ⟩ ⨟ˢ τ)) ]ˢ
+  lift-wk-⨟                : ⟨ wkᴿ s ⟩ ⨟ˢ ((σ ↑ˢ s) ⨟ˢ τ) ≡ σ ⨟ˢ (⟨ wkᴿ s ⟩ ⨟ˢ τ)
+  lift-dist-compˢˢ-⨟       : (σ₁ ↑ˢ s) ⨟ˢ ((σ₂ ↑ˢ s) ⨟ˢ τ) ≡ ((σ₁ ⨟ˢ σ₂) ↑ˢ s) ⨟ˢ τ
 
   -- ══ IIIˢ/IVˢ. map algebra and lifting, substitution world ════════
   --! InteractLaws {
-  interact         : ⟨ wkᴿ s ⟩ ⨟ (t ∙ˢ σ) ≡ σ
-  comp-idₗ         : ⟨ idᴿ {S₁} ⟩ ⨟ σ ≡ σ
-  comp-idᵣ         : σ ⨟ ⟨ idᴿ ⟩ ≡ σ
-  lift-wk          : ⟨ wkᴿ s ⟩ ⨟ (σ ↑ˢ s) ≡ σ ⨟ ⟨ wkᴿ s ⟩
-  assoc            : (σ₁ ⨟ σ₂) ⨟ σ₃ ≡ σ₁ ⨟ (σ₂ ⨟ σ₃)
-  dist             : (t ∙ˢ σ₁) ⨟ σ₂ ≡ (t [ σ₂ ]ˢ) ∙ˢ (σ₁ ⨟ σ₂)
-  lift-cons        : (σ ↑ˢ s) ⨟ (t ∙ˢ τ) ≡ t ∙ˢ (σ ⨟ τ)
-  lift-dist-compˢˢ : ((σ₁ ↑ˢ s) ⨟ (σ₂ ↑ˢ s)) ≡ ((σ₁ ⨟ σ₂) ↑ˢ s)
+  interact         : ⟨ wkᴿ s ⟩ ⨟ˢ (t ∙ˢ σ) ≡ σ
+  comp-idₗ         : ⟨ idᴿ {S₁} ⟩ ⨟ˢ σ ≡ σ
+  comp-idᵣ         : σ ⨟ˢ ⟨ idᴿ ⟩ ≡ σ
+  lift-wk          : ⟨ wkᴿ s ⟩ ⨟ˢ (σ ↑ˢ s) ≡ σ ⨟ˢ ⟨ wkᴿ s ⟩
+  assoc            : (σ₁ ⨟ˢ σ₂) ⨟ˢ σ₃ ≡ σ₁ ⨟ˢ (σ₂ ⨟ˢ σ₃)
+  dist             : (t ∙ˢ σ₁) ⨟ˢ σ₂ ≡ (t [ σ₂ ]ˢ) ∙ˢ (σ₁ ⨟ˢ σ₂)
+  lift-cons        : (σ ↑ˢ s) ⨟ˢ (t ∙ˢ τ) ≡ t ∙ˢ (σ ⨟ˢ τ)
+  lift-dist-compˢˢ : ((σ₁ ↑ˢ s) ⨟ˢ (σ₂ ↑ˢ s)) ≡ ((σ₁ ⨟ˢ σ₂) ↑ˢ s)
   --! }
 
   -- ══ Vˢ. monad laws, substitution world ═══════════════════════════
   --! MonadLaws {
   compositionalityˢˢ : ∀ (x/t : S₁ ⊢[ m ] s)
     {σ₁ : S₁ →ˢ S₂} {σ₂ : S₂ →ˢ S₃} →
-    (x/t [ σ₁ ]ˢ) [ σ₂ ]ˢ ≡ x/t [ (σ₁ ⨟ σ₂) ]ˢ
+    (x/t [ σ₁ ]ˢ) [ σ₂ ]ˢ ≡ x/t [ (σ₁ ⨟ˢ σ₂) ]ˢ
   --! }
 
   -- ══ the two mixed compositionality laws ══════════════════════════
@@ -309,35 +304,35 @@ opaque
   -- left, since the input may be a variable
   -- T-ONLY.  Its V-instance would be compositionalityᴿˢ-⨟-var read backwards, and
   -- registering both LOOPS: compositionalityᴿˢ folds (x [ ξ) ]ᴿ [ σ ]ˢ into
-  -- x [ (⟨ξ⟩ ]ˢ ⨟ σ) and compositionalityᴿˢ-⨟-var pushes it straight back.  The systematic
+  -- x [ (⟨ξ⟩ ]ˢ ⨟ˢ σ) and compositionalityᴿˢ-⨟-var pushes it straight back.  The systematic
   -- rule for the two-world system is: at mode V everything PUSHES, at
   -- mode T everything FOLDS (cf. compositionalityᴿᴿ-var vs compositionalityᴿᴿ).
   compositionalityᴿˢ : ∀ (t : S₁ ⊢ s) {ξ₁ : S₁ →ᴿ S₂} {σ₂ : S₂ →ˢ S₃} →
-    (t [ ξ₁ ]ᴿ) [ σ₂ ]ˢ ≡ t [ (⟨ ξ₁ ⟩ ⨟ σ₂) ]ˢ
+    (t [ ξ₁ ]ᴿ) [ σ₂ ]ˢ ≡ t [ (⟨ ξ₁ ⟩ ⨟ˢ σ₂) ]ˢ
   compositionalityˢᴿ : ∀ (x/t : S₁ ⊢[ m ] s) {σ₁ : S₁ →ˢ S₂} {ξ₂ : S₂ →ᴿ S₃} →
-    (x/t [ σ₁ ]ˢ) [ ξ₂ ]ᴿ ≡ x/t [ (σ₁ ⨟ ⟨ ξ₂ ⟩) ]ˢ
+    (x/t [ σ₁ ]ˢ) [ ξ₂ ]ᴿ ≡ x/t [ (σ₁ ⨟ˢ ⟨ ξ₂ ⟩) ]ˢ
 
   -- the ⨟-companions of the two mixed fusions (same completion pattern
   -- as ShiftLift2/Lift2, one level up)
   lift-dist-compᴿˢ-⨟ : ∀ {S₄} {ξ : S₁ →ᴿ S₂} {σ : S₂ →ˢ S₃} {τ : (s ∷ S₃) →ˢ S₄} →
-    ⟨ ξ ↑ᴿ s ⟩ ⨟ ((σ ↑ˢ s) ⨟ τ) ≡ ((⟨ ξ ⟩ ⨟ σ) ↑ˢ s) ⨟ τ
+    ⟨ ξ ↑ᴿ s ⟩ ⨟ˢ ((σ ↑ˢ s) ⨟ˢ τ) ≡ ((⟨ ξ ⟩ ⨟ˢ σ) ↑ˢ s) ⨟ˢ τ
   lift-dist-compˢᴿ-⨟ : ∀ {S₄} {σ : S₁ →ˢ S₂} {ξ : S₂ →ᴿ S₃} {τ : (s ∷ S₃) →ˢ S₄} →
-    (σ ↑ˢ s) ⨟ (⟨ ξ ↑ᴿ s ⟩ ⨟ τ) ≡ ((σ ⨟ ⟨ ξ ⟩) ↑ˢ s) ⨟ τ
+    (σ ↑ˢ s) ⨟ˢ (⟨ ξ ↑ᴿ s ⟩ ⨟ˢ τ) ≡ ((σ ⨟ˢ ⟨ ξ ⟩) ↑ˢ s) ⨟ˢ τ
   -- the VARIABLE-level mixed fusions: the join of compositionalityᴿˢ-⨟-var with
   -- lift-dist-compᴿˢ resp. of the σ-applied rules with lift-dist-compˢᴿ, at an
   -- abstract variable (neither side can case-split on it)
-  lift-dist-compᴿˢ-var   : (x [ (ξ ↑ᴿ s) ]ᴿ) [ (σ ↑ˢ s) ]ˢ ≡ x [ ((⟨ ξ ⟩ ⨟ σ) ↑ˢ s) ]ˢ
+  lift-dist-compᴿˢ-var   : (x [ (ξ ↑ᴿ s) ]ᴿ) [ (σ ↑ˢ s) ]ˢ ≡ x [ ((⟨ ξ ⟩ ⨟ˢ σ) ↑ˢ s) ]ˢ
   lift-dist-compᴿˢ-⨟-var : ∀ {S₄} {ξ : S₁ →ᴿ S₂} {σ : S₂ →ˢ S₃} {τ : (s ∷ S₃) →ˢ S₄} →
-    (x [ (ξ ↑ᴿ s) ]ᴿ) [ ((σ ↑ˢ s) ⨟ τ) ]ˢ ≡ x [ (((⟨ ξ ⟩ ⨟ σ) ↑ˢ s) ⨟ τ) ]ˢ
+    (x [ (ξ ↑ᴿ s) ]ᴿ) [ ((σ ↑ˢ s) ⨟ˢ τ) ]ˢ ≡ x [ (((⟨ ξ ⟩ ⨟ˢ σ) ↑ˢ s) ⨟ˢ τ) ]ˢ
 
   -- cons absorbs a lifted embedded renaming, at the map and at the
   -- variable level (σ⇑'s LiftEnv, ⟨_⟩-flavoured)
-  ⟨⟩-lift-cons     : ⟨ ξ ↑ᴿ s ⟩ ⨟ (t ∙ˢ σ) ≡ t ∙ˢ (⟨ ξ ⟩ ⨟ σ)
-  ⟨⟩-lift-cons-var : (x [ (ξ ↑ᴿ s) ]ᴿ) [ (t ∙ˢ σ) ]ˢ ≡ x [ (t ∙ˢ (⟨ ξ ⟩ ⨟ σ)) ]ˢ
+  ⟨⟩-lift-cons     : ⟨ ξ ↑ᴿ s ⟩ ⨟ˢ (t ∙ˢ σ) ≡ t ∙ˢ (⟨ ξ ⟩ ⨟ˢ σ)
+  ⟨⟩-lift-cons-var : (x [ (ξ ↑ᴿ s) ]ᴿ) [ (t ∙ˢ σ) ]ˢ ≡ x [ (t ∙ˢ (⟨ ξ ⟩ ⨟ˢ σ)) ]ˢ
 
   -- ⟨⟩-comp needs a C2 continuation image, because assoc right-nests ⨟
-  -- and ⟨ξ₁⟩ ⨟ ⟨ξ₂⟩ is then not a subterm of ⟨ξ₁⟩ ⨟ (⟨ξ₂⟩ ⨟ τ).  The
-  -- GENERAL image ⟨ξ₁⟩ ⨟ (⟨ξ₂⟩ ⨟ τ) → ⟨ξ₁ ⨟ᴿ ξ₂⟩ ⨟ τ is the exact
+  -- and ⟨ξ₁⟩ ⨟ˢ ⟨ξ₂⟩ is then not a subterm of ⟨ξ₁⟩ ⨟ˢ (⟨ξ₂⟩ ⨟ˢ τ).  The
+  -- GENERAL image ⟨ξ₁⟩ ⨟ˢ (⟨ξ₂⟩ ⨟ˢ τ) → ⟨ξ₁ ⨟ᴿ ξ₂⟩ ⨟ˢ τ is the exact
   -- inverse of ⟨⟩-split-⨟ and LOOPS with it -- the one completion image
   -- in the whole system that cannot be taken.  What survives is that
   -- image restricted to the prefixes on which the ᴿ world can make
@@ -346,24 +341,24 @@ opaque
   -- exactly the three ᴿ-rules that themselves needed C2 images --- the
   -- same set, twice --- and each rule is named for the one it fires.
   ⟨⟩-comp-⨟-lift-wkᴿ : ∀ {S₄} {ξ : S₁ →ᴿ S₂} {τ : (s ∷ S₂) →ˢ S₄} →
-    ⟨ wkᴿ s ⟩ ⨟ (⟨ ξ ↑ᴿ s ⟩ ⨟ τ) ≡ ⟨ ξ ⟩ ⨟ (⟨ wkᴿ s ⟩ ⨟ τ)
+    ⟨ wkᴿ s ⟩ ⨟ˢ (⟨ ξ ↑ᴿ s ⟩ ⨟ˢ τ) ≡ ⟨ ξ ⟩ ⨟ˢ (⟨ wkᴿ s ⟩ ⨟ˢ τ)
   ⟨⟩-comp-⨟-interactᴿ : ∀ {ξ : S₁ →ᴿ S₂} {x : S₂ ∋ s} {τ : S₂ →ˢ S₃} →
-    ⟨ wkᴿ s ⟩ ⨟ (⟨ x ∙ᴿ ξ ⟩ ⨟ τ) ≡ ⟨ ξ ⟩ ⨟ τ
+    ⟨ wkᴿ s ⟩ ⨟ˢ (⟨ x ∙ᴿ ξ ⟩ ⨟ˢ τ) ≡ ⟨ ξ ⟩ ⨟ˢ τ
   ⟨⟩-comp-⨟-lift-dist-compᴿᴿ : ∀ {S₄} {ξ₁ : S₁ →ᴿ S₂} {ξ₂ : S₂ →ᴿ S₃} {τ : (s ∷ S₃) →ˢ S₄} →
-    ⟨ ξ₁ ↑ᴿ s ⟩ ⨟ (⟨ ξ₂ ↑ᴿ s ⟩ ⨟ τ) ≡ ⟨ (ξ₁ ⨟ᴿ ξ₂) ↑ᴿ s ⟩ ⨟ τ
+    ⟨ ξ₁ ↑ᴿ s ⟩ ⨟ˢ (⟨ ξ₂ ↑ᴿ s ⟩ ⨟ˢ τ) ≡ ⟨ (ξ₁ ⨟ᴿ ξ₂) ↑ᴿ s ⟩ ⨟ˢ τ
   -- the TAIL companion of ⟨⟩-split-⨟: same split, but where the coerced
   -- composite is the right operand and so has no continuation for
   -- ⟨⟩-split-⨟ to match.  With a continuation present it is derivable
   -- (⟨⟩-split-⨟ then lift-dist-compˢᴿ-⨟), which is why there is no
   -- ⟨⟩-split-tail-⨟ -- see closure.agda.
   ⟨⟩-split-tail : ∀ {S₄} {σ : S₁ →ˢ S₂} {ξ : S₂ →ᴿ S₃} {ξ′ : (s ∷ S₃) →ᴿ S₄} →
-    (σ ↑ˢ s) ⨟ ⟨ (ξ ↑ᴿ s) ⨟ᴿ ξ′ ⟩ ≡ ((σ ⨟ ⟨ ξ ⟩) ↑ˢ s) ⨟ ⟨ ξ′ ⟩
+    (σ ↑ˢ s) ⨟ˢ ⟨ (ξ ↑ᴿ s) ⨟ᴿ ξ′ ⟩ ≡ ((σ ⨟ˢ ⟨ ξ ⟩) ↑ˢ s) ⨟ˢ ⟨ ξ′ ⟩
 
   -- ══ the collapse family: ⟨_⟩ is pushed back into the ᴿ world ═════
   --! CoincidenceLaws {
   coincidence : ∀ (t : S ⊢ s) (ξ : S →ᴿ S₂) → t [ ⟨ ξ ⟩ ]ˢ ≡ t [ ξ ]ᴿ
-  ⟨⟩-comp    : ⟨ ξ₁ ⟩ ⨟ ⟨ ξ₂ ⟩ ≡ ⟨ ξ₁ ⨟ᴿ ξ₂ ⟩
-  ⟨⟩-split-⨟ : ⟨ ξ₁ ⨟ᴿ ξ₂ ⟩ ⨟ σ ≡ ⟨ ξ₁ ⟩ ⨟ (⟨ ξ₂ ⟩ ⨟ σ)
+  ⟨⟩-comp    : ⟨ ξ₁ ⟩ ⨟ˢ ⟨ ξ₂ ⟩ ≡ ⟨ ξ₁ ⨟ᴿ ξ₂ ⟩
+  ⟨⟩-split-⨟ : ⟨ ξ₁ ⨟ᴿ ξ₂ ⟩ ⨟ˢ σ ≡ ⟨ ξ₁ ⟩ ⨟ˢ (⟨ ξ₂ ⟩ ⨟ˢ σ)
   ⟨⟩-lift    : (⟨ ξ ⟩ ↑ˢ s) ≡ ⟨ ξ ↑ᴿ s ⟩
   --! }
 
@@ -377,9 +372,9 @@ opaque
   η-idᴿ  : (zero {s = s} {S = S}) ∙ᴿ (wkᴿ s) ≡ idᴿ
   η-lawᴿ : (zero [ ξ ]ᴿ) ∙ᴿ (wkᴿ s ⨟ᴿ ξ) ≡ ξ
   η-id   : (` zero) ∙ˢ (wkˢ s) ≡ idˢ {S = s ∷ S}
-  η-law  : (zero [ σ ]ˢ) ∙ˢ (wkˢ s ⨟ σ) ≡ σ
+  η-law  : (zero [ σ ]ˢ) ∙ˢ (wkˢ s ⨟ˢ σ) ≡ σ
   def-↑ᴿ : ξ ↑ᴿ s ≡ zero ∙ᴿ (ξ ⨟ᴿ wkᴿ s)
-  def-↑ˢ : σ ↑ˢ s ≡ (` zero) ∙ˢ (σ ⨟ wkˢ s)
+  def-↑ˢ : σ ↑ˢ s ≡ (` zero) ∙ˢ (σ ⨟ˢ wkˢ s)
 
   -- ── proofs ────────────────────────────────────────────────────────
 
@@ -458,11 +453,11 @@ opaque
   lift-id   = ext λ { zero → refl ; (suc x) → refl }
   lift-wk-⨟ {s = s} {σ = σ} {τ = τ} =
     trans (sym (assoc {σ₁ = ⟨ wkᴿ s ⟩} {σ₂ = σ ↑ˢ s} {σ₃ = τ}))
-          (trans (cong (_⨟ τ) (lift-wk {s = s} {σ = σ}))
+          (trans (cong (_⨟ˢ τ) (lift-wk {s = s} {σ = σ}))
                  (assoc {σ₁ = σ} {σ₂ = ⟨ wkᴿ s ⟩} {σ₃ = τ}))
   lift-dist-compˢˢ-⨟ {σ₁ = σ₁} {s = s} {σ₂ = σ₂} {τ = τ} =
     trans (sym (assoc {σ₁ = σ₁ ↑ˢ s} {σ₂ = σ₂ ↑ˢ s} {σ₃ = τ}))
-          (cong (_⨟ τ) (lift-dist-compˢˢ {σ₁ = σ₁} {s = s} {σ₂ = σ₂}))
+          (cong (_⨟ˢ τ) (lift-dist-compˢˢ {σ₁ = σ₁} {s = s} {σ₂ = σ₂}))
 
   inst-x = refl
   inst-λ = refl
@@ -477,7 +472,7 @@ opaque
   -- compositionalityᴿˢ needs only ᴿ-facts, compositionalityˢᴿ needs compositionalityᴿᴿ, and the
   -- σ-fusion needs both
   lift-dist-compᴿˢ : ∀ {ξ : S₁ →ᴿ S₂} {σ : S₂ →ˢ S₃} →
-    (⟨ ξ ↑ᴿ s ⟩ ⨟ (σ ↑ˢ s)) ≡ ((⟨ ξ ⟩ ⨟ σ) ↑ˢ s)
+    (⟨ ξ ↑ᴿ s ⟩ ⨟ˢ (σ ↑ˢ s)) ≡ ((⟨ ξ ⟩ ⨟ˢ σ) ↑ˢ s)
   lift-dist-compᴿˢ = ext λ { zero → refl ; (suc x) → refl }
 
   compositionalityᴿˢ (` x)        = refl
@@ -491,7 +486,7 @@ opaque
   compositionalityᴿˢ *            = refl
 
   lift-dist-compˢᴿ : ∀ {σ : S₁ →ˢ S₂} {ξ : S₂ →ᴿ S₃} →
-    ((σ ↑ˢ s) ⨟ ⟨ ξ ↑ᴿ s ⟩) ≡ ((σ ⨟ ⟨ ξ ⟩) ↑ˢ s)
+    ((σ ↑ˢ s) ⨟ˢ ⟨ ξ ↑ᴿ s ⟩) ≡ ((σ ⨟ˢ ⟨ ξ ⟩) ↑ˢ s)
   lift-dist-compˢᴿ {s = s} {σ = σ} {ξ = ξ} = ext λ where
     zero    → refl
     (suc x) → let t = σ _ x in
@@ -550,10 +545,10 @@ opaque
 
   lift-dist-compᴿˢ-⨟ {s = s} {ξ = ξ} {σ = σ} {τ = τ} =
     trans (sym (assoc {σ₁ = ⟨ ξ ↑ᴿ s ⟩} {σ₂ = σ ↑ˢ s} {σ₃ = τ}))
-          (cong (_⨟ τ) (lift-dist-compᴿˢ {s = s} {ξ = ξ} {σ = σ}))
+          (cong (_⨟ˢ τ) (lift-dist-compᴿˢ {s = s} {ξ = ξ} {σ = σ}))
   lift-dist-compˢᴿ-⨟ {s = s} {σ = σ} {ξ = ξ} {τ = τ} =
     trans (sym (assoc {σ₁ = σ ↑ˢ s} {σ₂ = ⟨ ξ ↑ᴿ s ⟩} {σ₃ = τ}))
-          (cong (_⨟ τ) (lift-dist-compˢᴿ {s = s} {σ = σ} {ξ = ξ}))
+          (cong (_⨟ˢ τ) (lift-dist-compˢᴿ {s = s} {σ = σ} {ξ = ξ}))
   lift-dist-compᴿˢ-var {x = zero}  = refl
   lift-dist-compᴿˢ-var {x = suc x} = refl
   lift-dist-compᴿˢ-⨟-var {x = zero}  = refl
@@ -617,27 +612,9 @@ opaque
 --! }
 
 -- ─── the theory is definitional, in BOTH worlds ─────────────────────
--- The same user-facing suite as sized-ren.agda, plus its ᴿ-flavoured
--- twin.  Every one of these holds by refl.
 
 weaken : S ⊢ s → (s′ ∷ S) ⊢ s
 weaken t = t [ wkᴿ _ ]ᴿ
-
--- composition read pointwise, and the identity substitution unfolded
-opaque
-  unfolding idᴿ ⟨_⟩ _[_]ˢ _⨟_
-
-  comp-pointwise : ∀ {σ₁ : S₁ →ˢ S₂} {σ₂ : S₂ →ˢ S₃} {x : S₁ ∋ s} →
-    --!! FunAppInterp {
-    (σ₁ ⨟ σ₂) _ x ≡ (x [ σ₁ ]ˢ) [ σ₂ ]ˢ
-    --! }
-  comp-pointwise = refl
-
-  id-unfolded : ∀ {S} →  idˢ {S = S} ≡
-    --!! IdLawUnfolded {
-    ⟨ idᴿ ⟩
-    --! }
-  id-unfolded = refl
 
 var-zero : ∀ {t′ : S ⊢ s′} → (` zero) [ t′ ]₀ ≡ t′
 var-zero = refl
@@ -658,7 +635,7 @@ subst-subst : ∀ {t : (s₁ ∷ s₂ ∷ S) ⊢ s} {t′ : (s₂ ∷ S) ⊢ s�
   (t [ t′ ]₀) [ t₂ ]₀ ≡ (t [ ((t₂ ∙ˢ idˢ) ↑ˢ s₁) ]ˢ) [ t′ [ t₂ ]₀ ]₀
 subst-subst = refl
 lift-comp : ∀ {t : (s′ ∷ S₁) ⊢ s} {σ₁ : S₁ →ˢ S₂} {σ₂ : S₂ →ˢ S₃} →
-  (t [ (σ₁ ↑ˢ s′) ]ˢ) [ (σ₂ ↑ˢ s′) ]ˢ ≡ t [ ((σ₁ ⨟ σ₂) ↑ˢ s′) ]ˢ
+  (t [ (σ₁ ↑ˢ s′) ]ˢ) [ (σ₂ ↑ˢ s′) ]ˢ ≡ t [ ((σ₁ ⨟ˢ σ₂) ↑ˢ s′) ]ˢ
 lift-comp = refl
 
 renᴿ-id : ∀ {x/t : S ⊢[ m ] s} → x/t [ idᴿ ]ᴿ ≡ x/t
@@ -670,10 +647,10 @@ renᴿ-lift : ∀ {ξ₁ : S₁ →ᴿ S₂} {ξ₂ : S₂ →ᴿ S₃} →
   ((ξ₁ ↑ᴿ s) ⨟ᴿ (ξ₂ ↑ᴿ s)) ≡ ((ξ₁ ⨟ᴿ ξ₂) ↑ᴿ s)
 renᴿ-lift = refl
 mixed-RS : ∀ {t : S₁ ⊢ s} {ξ : S₁ →ᴿ S₂} {σ : S₂ →ˢ S₃} →
-  (t [ ξ ]ᴿ) [ σ ]ˢ ≡ t [ (⟨ ξ ⟩ ⨟ σ) ]ˢ
+  (t [ ξ ]ᴿ) [ σ ]ˢ ≡ t [ (⟨ ξ ⟩ ⨟ˢ σ) ]ˢ
 mixed-RS = refl
 mixed-SR : ∀ {t : S₁ ⊢ s} {σ : S₁ →ˢ S₂} {ξ : S₂ →ᴿ S₃} →
-  (t [ σ ]ˢ) [ ξ ]ᴿ ≡ t [ (σ ⨟ ⟨ ξ ⟩) ]ˢ
+  (t [ σ ]ˢ) [ ξ ]ᴿ ≡ t [ (σ ⨟ˢ ⟨ ξ ⟩) ]ˢ
 mixed-SR = refl
 emb-collapse : ∀ {t : S₁ ⊢ s} {ξ : S₁ →ᴿ S₂} → t [ ⟨ ξ ⟩ ]ˢ ≡ t [ ξ ]ᴿ
 emb-collapse = refl

@@ -13,16 +13,12 @@ from enum import Enum, auto
 # ==========================================
 
 
-# The per-argument proof an induction splices in: `f(argument, var_name)`.
 ArgProof = Callable[["Argument", str], str]
 
 
 @dataclass
 class SortDecl:
     name: str
-    # EXTENSION: a sort may be INDEXED BY DATA -- `pat : ℕ -> ℕ -> Type`
-    # declares `pat : ℕ → ℕ → Sort`.  Uses then carry index expressions,
-    # `pat 0 n`.  This is Sigma/FsubPatterns.agda's pattern sort.
     index_types: list[str] = field(default_factory=list[str])
 
     @property
@@ -35,21 +31,12 @@ class Argument:
     binder_types: list[str]
     target_type: str
     external: bool = False
-    # EXTENSION: `#n` -- a ℕ-valued INDEX argument, emitted as `(n : ℕ)`.
-    # It is a real dependent argument: later argument types may mention it.
     index: bool = False
-    # EXTENSION: `(b ^ n -> t)` -- a binder of VARIABLE ARITY.  The scope of
-    # the body is extended by n copies of sort b, i.e. `ext* b n S`, and the
-    # traversal pushes the map under all n at once with `↑ᴿ*[ b ] n`.
     iter_sort: str | None = None
     iter_arity: str | None = None
-    # for an APPLIED sort (`pat 0 n`) the head, used to name variables
     sort_head: str | None = None
 
     def __post_init__(self) -> None:
-        # A variable-arity binder is `(b ^ n -> t)`: it always has BOTH a
-        # binder sort and an arity.  Half of one is a parser bug, and it
-        # would otherwise surface much later as a `None` in emitted Agda.
         if (self.iter_sort is None) != (self.iter_arity is None):
             raise ValueError(
                 "a variable-arity binder needs both a sort and an arity, got "
@@ -61,11 +48,6 @@ class Argument:
 
     @property
     def iterated(self) -> tuple[str, str]:
-        """The (binder sort, arity) of a variable-arity binder.
-
-        Use this rather than the two optional fields wherever the value is
-        needed as a string: it is the one place the invariant is turned
-        back into a non-optional pair."""
         if self.iter_sort is None or self.iter_arity is None:
             raise ValueError(f"not a variable-arity binder: {self!r}")
         return self.iter_sort, self.iter_arity
@@ -125,14 +107,14 @@ class Signature:
 
 class TokenType(Enum):
     ID = auto()
-    ARROW = auto()  # ->
-    COLON = auto()  # :
-    CARET = auto()  # ^  (variable-arity binder)
-    NUMBER = auto()  # a literal index, e.g. the 0 in `pat 0 n`
-    LPAREN = auto()  # (
-    RPAREN = auto()  # )
-    TYPE_KW = auto()  # Type
-    STRING_LITERAL = auto()  # "..."
+    ARROW = auto()
+    COLON = auto()
+    CARET = auto()
+    NUMBER = auto()
+    LPAREN = auto()
+    RPAREN = auto()
+    TYPE_KW = auto()
+    STRING_LITERAL = auto()
     EOF = auto()
 
 
@@ -145,10 +127,6 @@ class Token:
 
 
 TOKEN_SPEC: list[tuple[TokenType | None, str]] = [
-    # EXTENSION: a BACKTICK-QUOTED identifier.  Agda names may contain
-    # characters the bare `.sg` identifier syntax reserves -- ':' and '-'
-    # above all -- so `∀[<:_]_` names the F<: universal quantifier and
-    # `_+_`-style names become writable.  The backticks are stripped.
     (TokenType.ID, r"`[^`\n]+`"),
     (None, r"begin[^\n]*"),
     (None, r"end[^\n]*"),
@@ -212,20 +190,10 @@ def tokenize(source: str) -> list[Token]:
 # ==========================================
 
 
-# The arity of each INDEXED sort, filled in by parse_signature as the
-# declarations are read, and consulted by parse_argument so that `pat 0 n`
-# is read as one applied sort rather than three separate arguments.
-# Parser state, module-level so that `parse_argument` can see how many
-# index expressions an APPLIED sort consumes (`pat 0 n` takes two).
-# `parse_signature` clears it before every parse and is the only writer, so
-# a signature can never see another signature's arities.  Not reentrant:
-# one parse at a time.
 sort_arity: dict[str, int] = {}
 
 
 def parse_index(tokens: list[Token], pos: int) -> str:
-    """One index expression: a literal, a variable, or a parenthesised
-    application such as `(suc n)`."""
     t = peek(tokens, pos)
     if t.type in (TokenType.NUMBER, TokenType.ID):
         return t.value
@@ -248,7 +216,7 @@ def skip_index(tokens: list[Token], pos: int) -> int:
     pos += 1
     while peek(tokens, pos).type in (TokenType.ID, TokenType.NUMBER):
         pos += 1
-    return pos + 1          # past the ')'
+    return pos + 1
 
 
 def peek(tokens: list[Token], pos: int, offset: int = 0) -> Token:
@@ -278,8 +246,6 @@ def parse_signature(tokens: list[Token]) -> Signature:
         id_token, pos = consume(tokens, pos, TokenType.ID)
         _, pos = consume(tokens, pos, TokenType.COLON)
 
-        # A declaration whose chain ends in `Type` is a SORT declaration;
-        # anything before the `Type` is the sort's index telescope.
         look = pos
         idx_types: list[str] = []
         while peek(tokens, look).type == TokenType.ID:
@@ -319,7 +285,28 @@ def parse_signature(tokens: list[Token]) -> Signature:
                 )
             )
 
+    check_names(sig)
     return sig
+
+
+# Names the emitted proofs bind as pattern variables.  A constructor with one
+# of these names is read as that constructor where a fresh variable is meant,
+# and the clause silently stops covering everything else.
+PATTERN_VARS = {
+    "u", "t", "t′", "x", "x′", "y", "s", "s′", "n", "m", "b",
+    "σ", "σ₁", "σ₂", "σ₃", "τ", "ξ", "ξ₁", "ξ₂", "ξ₃", "ξ′",
+    "S", "S₁", "S₂", "S₃", "S₄", "Γ", "e", "e₁", "e₂",
+}
+
+
+def check_names(sig: Signature) -> None:
+    clash = sorted({c.name for c in sig.constructors} & PATTERN_VARS)
+    if clash:
+        raise ValueError(
+            "constructor name(s) " + ", ".join(repr(n) for n in clash) +
+            " collide with pattern variables the generated proofs bind. "
+            "Rename the constructor in the signature."
+        )
 
 
 def parse_type_chain(tokens: list[Token], pos: int) -> tuple[list[Argument], int]:
@@ -372,8 +359,6 @@ def parse_argument(tokens: list[Token], pos: int) -> tuple[Argument, int]:
 
     elif peek(tokens, pos).type == TokenType.ID:
         token, pos = consume(tokens, pos, TokenType.ID)
-        # EXTENSION: an INDEXED sort consumes exactly its declared number of
-        # index expressions -- `pat 0 n`, `rpat n₂ n₃`, `pat n (suc n)`.
         arity = sort_arity.get(token.value, 0)
         if arity:
             idx: list[str] = []
@@ -383,13 +368,11 @@ def parse_argument(tokens: list[Token], pos: int) -> tuple[Argument, int]:
             return Argument(binder_types=[],
                             target_type=f"{token.value} {' '.join(idx)}",
                             sort_head=token.value), pos
-        # EXTENSION: `#n` is a ℕ-valued index argument.
         if token.value.startswith("#"):
             name = token.value[1:]
             if not name:
                 raise SyntaxError(f"empty index name at line {token.line}")
             return Argument(binder_types=[], target_type=name, index=True), pos
-        # EXTENSION: `b ^ n` is a variable-arity binder position.
         if peek(tokens, pos).type == TokenType.CARET:
             _, pos = consume(tokens, pos, TokenType.CARET)
             arity_tok, pos = consume(tokens, pos, TokenType.ID)
@@ -587,7 +570,7 @@ COMPANION_S = r'''
   ⟨⟩-split-⨟   : ⟨ ξ₁ ⨟ᴿ ξ₂ ⟩ ⨟ σ ≡ ⟨ ξ₁ ⟩ ⨟ (⟨ ξ₂ ⟩ ⨟ σ)
   ⟨⟩-lift      : (⟨ ξ ⟩ ↑ˢ s) ≡ ⟨ ξ ↑ᴿ s ⟩
 
-  -- ══ SUBSUMED: σ⇑'s LiftId is a lemma, not a rule ════════════════
+  -- ══ subsumed: σ⇑'s LiftId is a lemma, not a rule ════════════════
   -- ⟨⟩-lift already sends its LHS to ⟨ idᴿ ↑ᴿ s ⟩, where lift-idᴿ
   -- finishes under the coercion.  A base rule subsumed by its own
   -- coercion image is redundant; it still holds by refl for user code.
@@ -635,9 +618,9 @@ PROOF_MID = r'''
     trans (sym (assocᴿ {ξ₁ = wkᴿ s} {ξ₂ = ξ ↑ᴿ s} {ξ₃ = ξ′}))
           (trans (cong (_⨟ᴿ ξ′) (lift-wkᴿ {s = s} {ξ = ξ}))
                  (assocᴿ {ξ₁ = ξ} {ξ₂ = wkᴿ s} {ξ₃ = ξ′}))
-  lift-dist-compᴿᴿ-⨟ᴿ {ξ₁ = ξ₁} {s = s} {ξ₂ = ξ₂} {ξ′ = ξ′} =
-    trans (sym (assocᴿ {ξ₁ = ξ₁ ↑ᴿ s} {ξ₂ = ξ₂ ↑ᴿ s} {ξ₃ = ξ′}))
-          (cong (_⨟ᴿ ξ′) (lift-dist-compᴿᴿ {ξ₁ = ξ₁} {s = s} {ξ₂ = ξ₂}))
+  lift-dist-compᴿᴿ-⨟ᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂} {ξ′ = ξ′} =
+    trans (sym (assocᴿ {ξ₁ = ξ₁ ↑ᴿ _} {ξ₂ = ξ₂ ↑ᴿ _} {ξ₃ = ξ′}))
+          (cong (_⨟ᴿ ξ′) (lift-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂}))
 
   coincidence-var = refl
   def-∙ˢ-zero  = refl
@@ -759,23 +742,7 @@ t [ t′ ]₀ = t [ (t′ ∙ˢ idˢ) ]ˢ'''
 
 
 # ==========================================
-# 3b. THE VECTOR BACKEND
 # ==========================================
-#
-# Same σ-calculus, same rule names, same user layer -- but maps are
-# inductive VECTORS (one image per variable in the domain scope) instead
-# of functions.  Extension is then a CONSTRUCTOR and equality of maps is
-# equality of data, so nothing here needs function extensionality.
-#
-# Two operations exist that the function model does not need.  `wk*ᴿ`
-# post-composes a renaming with weakening and `_⨟ˢᴿ_` post-composes a
-# substitution with a renaming; both break the ↑ˢ/⨟/[_]ˢ recursion cycle
-# that a vector model would otherwise have.  Neither appears in a rule.
-#
-# The rule set is SMALLER: the `-⨟` continuation companions, the mode-V
-# `-var` companions and the coercion family are all subsumed, because a
-# vector composition reduces structurally where a function composition is
-# stuck.  closure-vec.agda checks every one of those absences.
 
 MAPS_VEC = r'''-- ─── maps as vectors ────────────────────────────────────────────────
 
@@ -858,8 +825,8 @@ wkˢ s′ = ⟨ wkᴿ s′ ⟩
 RW_VEC = r'''-- ─── the two-world rewrite system ───────────────────────────────────
 
 opaque
-  unfolding wk*ᴿ idᴿ wkᴿ _↑ᴿ_ _[_]ᴿ _⨟ᴿ_
-
+  unfolding wk*ᴿ idᴿ wkᴿ _↑ᴿ_ _[_]ᴿ _⨟ᴿ_ ⟨_⟩ _⨟ˢᴿ_ _↑ˢ_ _[_]ˢ _⨟_
+«STAR_DECLS»
   -- ══ Iᴿ. applied rules, renaming world ═════════════════════════════
   def-∙ᴿ-zero : zero [ (x ∙ᴿ ξ) ]ᴿ ≡ x
   def-∙ᴿ-zero = refl
@@ -939,22 +906,49 @@ ALG_R_VEC = r'''
     (trans (cong (wk*ᴿ _) comp-idₗᴿ)
     (sym (trans (⨟ᴿ-wk*ᴿ ξ idᴿ) (cong (wk*ᴿ _) comp-idᵣᴿ))))
 
+  -- ══ VIᴿ. completion companions, renaming world ═══════════════════
+  -- `assocᴿ` right-nests ⨟ᴿ, so a rule whose right operand is not a
+  -- metavariable stops matching once a continuation is appended.
+  interactᴿ-⨟ᴿ : ∀ {x : S₂ ∋ s} {ξ : S₁ →ᴿ S₂} {ξ′ : S₂ →ᴿ S₃} →
+    wkᴿ s ⨟ᴿ ((x ∙ᴿ ξ) ⨟ᴿ ξ′) ≡ ξ ⨟ᴿ ξ′
+  interactᴿ-⨟ᴿ {s = s} {x = x} {ξ = ξ} {ξ′ = ξ′} =
+    trans (sym (assocᴿ {ξ₁ = wkᴿ s} {ξ₂ = x ∙ᴿ ξ} {ξ₃ = ξ′}))
+          (cong (_⨟ᴿ ξ′) (interactᴿ {s = s} {x = x} {ξ = ξ}))
+
+  lift-wkᴿ-⨟ᴿ : ∀ {ξ : S₁ →ᴿ S₂} {ξ′ : (s ∷ S₂) →ᴿ S₃} →
+    wkᴿ s ⨟ᴿ ((ξ ↑ᴿ s) ⨟ᴿ ξ′) ≡ ξ ⨟ᴿ (wkᴿ s ⨟ᴿ ξ′)
+  lift-wkᴿ-⨟ᴿ {s = s} {ξ = ξ} {ξ′ = ξ′} =
+    trans (sym (assocᴿ {ξ₁ = wkᴿ s} {ξ₂ = ξ ↑ᴿ s} {ξ₃ = ξ′}))
+          (trans (cong (_⨟ᴿ ξ′) (lift-wkᴿ {s = s} {ξ = ξ}))
+                 (assocᴿ {ξ₁ = ξ} {ξ₂ = wkᴿ s} {ξ₃ = ξ′}))
+
+  lift-dist-compᴿᴿ-⨟ᴿ : ∀ {S₄ : Scope} {ξ₁ : S₁ →ᴿ S₂} {ξ₂ : S₂ →ᴿ S₃}
+    {ξ′ : (s ∷ S₃) →ᴿ S₄} →
+    (ξ₁ ↑ᴿ s) ⨟ᴿ ((ξ₂ ↑ᴿ s) ⨟ᴿ ξ′) ≡ ((ξ₁ ⨟ᴿ ξ₂) ↑ᴿ s) ⨟ᴿ ξ′
+  lift-dist-compᴿᴿ-⨟ᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂} {ξ′ = ξ′} =
+    trans (sym (assocᴿ {ξ₁ = ξ₁ ↑ᴿ _} {ξ₂ = ξ₂ ↑ᴿ _} {ξ₃ = ξ′}))
+          (cong (_⨟ᴿ ξ′) (lift-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂}))
+
+  lift-dist-compᴿᴿ-var : ∀ {x : (s ∷ S₁) ∋ s′} {ξ₁ : S₁ →ᴿ S₂} {ξ₂ : S₂ →ᴿ S₃} →
+    (x [ (ξ₁ ↑ᴿ s) ]ᴿ) [ (ξ₂ ↑ᴿ s) ]ᴿ ≡ x [ ((ξ₁ ⨟ᴿ ξ₂) ↑ᴿ s) ]ᴿ
+  lift-dist-compᴿᴿ-var {x = x} {ξ₁ = ξ₁} {ξ₂ = ξ₂} =
+    trans (sym (compositionalityᴿᴿ-var x {ξ₁ = ξ₁ ↑ᴿ _} {ξ₂ = ξ₂ ↑ᴿ _}))
+          (cong (λ z → x [ z ]ᴿ) (lift-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂}))
+
   -- ══ Vᴿ. monad laws, renaming world ═══════════════════════════════
   right-idᴿ : ∀ (x/t : S ⊢[ m ] s) → x/t [ idᴿ ]ᴿ ≡ x/t
   right-idᴿ zero    = refl
   right-idᴿ (suc x) = lookup-idᴿ (suc x)'''
 
 CRR_VEC = r'''
-  compositionalityᴿᴿ : ∀ (x/t : S₁ ⊢[ m ] s) {ξ₁ : S₁ →ᴿ S₂} {ξ₂ : S₂ →ᴿ S₃} →
-    (x/t [ ξ₁ ]ᴿ) [ ξ₂ ]ᴿ ≡ x/t [ (ξ₁ ⨟ᴿ ξ₂) ]ᴿ
-  compositionalityᴿᴿ zero    {ξ₁ = y ∙ᴿ ξ₁} = refl
-  compositionalityᴿᴿ (suc x) {ξ₁ = y ∙ᴿ ξ₁} = compositionalityᴿᴿ x'''
+  -- T-only.  Its V-instance is compositionalityᴿᴿ-var read backwards, and
+  -- registering both loops: this rule folds (x [ ξ₁ ]ᴿ) [ ξ₂ ]ᴿ into
+  -- x [ ξ₁ ⨟ᴿ ξ₂ ]ᴿ and compositionalityᴿᴿ-var pushes it straight back.
+  compositionalityᴿᴿ : ∀ (t : S₁ ⊢ s) {ξ₁ : S₁ →ᴿ S₂} {ξ₂ : S₂ →ᴿ S₃} →
+    (t [ ξ₁ ]ᴿ) [ ξ₂ ]ᴿ ≡ t [ (ξ₁ ⨟ᴿ ξ₂) ]ᴿ'''
 
 SW_VEC = r'''
--- ─── the substitution world ─────────────────────────────────────────
-
-opaque
-  unfolding wk*ᴿ idᴿ wkᴿ _↑ᴿ_ _[_]ᴿ _⨟ᴿ_ ⟨_⟩ _⨟ˢᴿ_ _↑ˢ_ _[_]ˢ _⨟_
+  -- ─── the substitution world ───────────────────────────────────────
 
   ⟨⟩-⨟ˢᴿ-wk : ∀ (ξ : S₁ →ᴿ S₂) → ⟨ ξ ⟩ ⨟ˢᴿ wkᴿ s ≡ ⟨ wk*ᴿ s ξ ⟩
   ⟨⟩-⨟ˢᴿ-wk []       = refl
@@ -993,6 +987,11 @@ SW_VEC_B = r'''
   lookup-⨟ˢᴿ zero    (t ∙ˢ σ) ξ = refl
   lookup-⨟ˢᴿ (suc x) (t ∙ˢ σ) ξ = lookup-⨟ˢᴿ x σ ξ
 
+  lookup-⨟ˢ : ∀ (x : S₁ ∋ s) (σ₁ : S₁ →ˢ S₂) (σ₂ : S₂ →ˢ S₃) →
+    x [ σ₁ ⨟ σ₂ ]ˢ ≡ (x [ σ₁ ]ˢ) [ σ₂ ]ˢ
+  lookup-⨟ˢ zero    (t ∙ˢ σ₁) σ₂ = refl
+  lookup-⨟ˢ (suc x) (t ∙ˢ σ₁) σ₂ = lookup-⨟ˢ x σ₁ σ₂
+
   -- ══ IIIˢ/IVˢ. map algebra and lifting, substitution world ════════
   dist : (t ∙ˢ σ₁) ⨟ σ₂ ≡ (t [ σ₂ ]ˢ) ∙ˢ (σ₁ ⨟ σ₂)
   dist = refl
@@ -1018,10 +1017,17 @@ SW_VEC_B = r'''
   lift-dist-compᴿˢ {ξ = ξ} {σ = σ} = cong ((«VAR» zero) ∙ˢ_) (⟨wk*⟩-lift ξ σ)
 
   -- ══ the mixed compositionality laws, stratified ══════════════════
-  compositionalityᴿˢ : ∀ (x/t : S₁ ⊢[ m ] s) {ξ : S₁ →ᴿ S₂} {σ : S₂ →ˢ S₃} →
-    (x/t [ ξ ]ᴿ) [ σ ]ˢ ≡ x/t [ (⟨ ξ ⟩ ⨟ σ) ]ˢ
-  compositionalityᴿˢ zero    {ξ = y ∙ᴿ ξ} = refl
-  compositionalityᴿˢ (suc x) {ξ = y ∙ᴿ ξ} = compositionalityᴿˢ x'''
+  -- the variable instance, kept separate: registering it alongside a
+  -- mode-generic compositionalityᴿˢ would loop, since at mode V the two
+  -- are inverse.  At V everything pushes, at T everything folds.
+  compositionalityᴿˢ-var : ∀ (x : S₁ ∋ s) {ξ : S₁ →ᴿ S₂} {σ : S₂ →ˢ S₃} →
+    (x [ ξ ]ᴿ) [ σ ]ˢ ≡ x [ (⟨ ξ ⟩ ⨟ σ) ]ˢ
+  compositionalityᴿˢ-var zero    {ξ = y ∙ᴿ ξ} = refl
+  compositionalityᴿˢ-var (suc x) {ξ = y ∙ᴿ ξ} = compositionalityᴿˢ-var x
+
+  -- T-only, for the same reason compositionalityᴿᴿ is.
+  compositionalityᴿˢ : ∀ (t : S₁ ⊢ s) {ξ : S₁ →ᴿ S₂} {σ : S₂ →ˢ S₃} →
+    (t [ ξ ]ᴿ) [ σ ]ˢ ≡ t [ (⟨ ξ ⟩ ⨟ σ) ]ˢ'''
 
 SW_VEC_C = r'''
   ⨟ˢᴿ-lift : ∀ (σ : S₁ →ˢ S₂) (ξ : S₂ →ᴿ S₃) →
@@ -1099,18 +1105,118 @@ SW_VEC_E = r'''
 
   ⟨⟩-split-⨟ : ⟨ ξ₁ ⨟ᴿ ξ₂ ⟩ ⨟ σ ≡ ⟨ ξ₁ ⟩ ⨟ (⟨ ξ₂ ⟩ ⨟ σ)
   ⟨⟩-split-⨟ {ξ₁ = []}      = refl
-  ⟨⟩-split-⨟ {ξ₁ = x ∙ᴿ ξ₁} = cong2 _∙ˢ_ (compositionalityᴿˢ x) ⟨⟩-split-⨟
+  ⟨⟩-split-⨟ {ξ₁ = x ∙ᴿ ξ₁} = cong2 _∙ˢ_ (compositionalityᴿˢ-var x) ⟨⟩-split-⨟
 
   ⟨⟩-lift-cons : ⟨ ξ ↑ᴿ s ⟩ ⨟ (t ∙ˢ σ) ≡ t ∙ˢ (⟨ ξ ⟩ ⨟ σ)
   ⟨⟩-lift-cons {ξ = ξ} {t = t} {σ = σ} = cong (t ∙ˢ_) (⟨wk*⟩-cons ξ t σ)
+
+
+  -- ══ VIˢ. completion companions, substitution world ═══════════════
+  lift-wk-⨟ : ∀ {σ : S₁ →ˢ S₂} {τ : (s ∷ S₂) →ˢ S₃} →
+    ⟨ wkᴿ s ⟩ ⨟ ((σ ↑ˢ s) ⨟ τ) ≡ σ ⨟ (⟨ wkᴿ s ⟩ ⨟ τ)
+  lift-wk-⨟ {σ = σ} {τ = τ} =
+    trans (sym (assoc {σ₁ = ⟨ wkᴿ _ ⟩} {σ₂ = σ ↑ˢ _} {σ₃ = τ}))
+          (trans (cong (_⨟ τ) (lift-wk {σ = σ}))
+                 (assoc {σ₁ = σ} {σ₂ = ⟨ wkᴿ _ ⟩} {σ₃ = τ}))
+
+  lift-dist-compˢˢ-⨟ : ∀ {S₄ : Scope} {σ₁ : S₁ →ˢ S₂} {σ₂ : S₂ →ˢ S₃}
+    {τ : (s ∷ S₃) →ˢ S₄} →
+    (σ₁ ↑ˢ s) ⨟ ((σ₂ ↑ˢ s) ⨟ τ) ≡ ((σ₁ ⨟ σ₂) ↑ˢ s) ⨟ τ
+  lift-dist-compˢˢ-⨟ {σ₁ = σ₁} {σ₂ = σ₂} {τ = τ} =
+    trans (sym (assoc {σ₁ = σ₁ ↑ˢ _} {σ₂ = σ₂ ↑ˢ _} {σ₃ = τ}))
+          (cong (_⨟ τ) (lift-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂}))
+
+  lift-dist-compᴿˢ-⨟ : ∀ {S₄ : Scope} {ξ : S₁ →ᴿ S₂} {σ : S₂ →ˢ S₃}
+    {τ : (s ∷ S₃) →ˢ S₄} →
+    ⟨ ξ ↑ᴿ s ⟩ ⨟ ((σ ↑ˢ s) ⨟ τ) ≡ ((⟨ ξ ⟩ ⨟ σ) ↑ˢ s) ⨟ τ
+  lift-dist-compᴿˢ-⨟ {ξ = ξ} {σ = σ} {τ = τ} =
+    trans (sym (assoc {σ₁ = ⟨ ξ ↑ᴿ _ ⟩} {σ₂ = σ ↑ˢ _} {σ₃ = τ}))
+          (cong (_⨟ τ) (lift-dist-compᴿˢ {ξ = ξ} {σ = σ}))
+
+  lift-dist-compˢᴿ-⨟ : ∀ {S₄ : Scope} {σ : S₁ →ˢ S₂} {ξ : S₂ →ᴿ S₃}
+    {τ : (s ∷ S₃) →ˢ S₄} →
+    (σ ↑ˢ s) ⨟ (⟨ ξ ↑ᴿ s ⟩ ⨟ τ) ≡ ((σ ⨟ ⟨ ξ ⟩) ↑ˢ s) ⨟ τ
+  lift-dist-compˢᴿ-⨟ {σ = σ} {ξ = ξ} {τ = τ} =
+    trans (sym (assoc {σ₁ = σ ↑ˢ _} {σ₂ = ⟨ ξ ↑ᴿ _ ⟩} {σ₃ = τ}))
+          (cong (_⨟ τ) (lift-dist-compˢᴿ {σ = σ} {ξ = ξ}))
+
+  ⟨⟩-comp-⨟-interactᴿ : ∀ {ξ : S₁ →ᴿ S₂} {x : S₂ ∋ s} {τ : S₂ →ˢ S₃} →
+    ⟨ wkᴿ s ⟩ ⨟ (⟨ x ∙ᴿ ξ ⟩ ⨟ τ) ≡ ⟨ ξ ⟩ ⨟ τ
+  ⟨⟩-comp-⨟-interactᴿ {ξ = ξ} {x = x} {τ = τ} =
+    trans (sym (assoc {σ₁ = ⟨ wkᴿ _ ⟩} {σ₂ = ⟨ x ∙ᴿ ξ ⟩} {σ₃ = τ}))
+          (trans (cong (_⨟ τ) (⟨⟩-comp {ξ₁ = wkᴿ _} {ξ₂ = x ∙ᴿ ξ}))
+                 (cong (λ z → ⟨ z ⟩ ⨟ τ) (interactᴿ {x = x} {ξ = ξ})))
+
+  ⟨⟩-comp-⨟-lift-wkᴿ : ∀ {S₄ : Scope} {ξ : S₁ →ᴿ S₂} {τ : (s ∷ S₂) →ˢ S₄} →
+    ⟨ wkᴿ s ⟩ ⨟ (⟨ ξ ↑ᴿ s ⟩ ⨟ τ) ≡ ⟨ ξ ⟩ ⨟ (⟨ wkᴿ s ⟩ ⨟ τ)
+  ⟨⟩-comp-⨟-lift-wkᴿ {ξ = ξ} {τ = τ} =
+    trans (sym (assoc {σ₁ = ⟨ wkᴿ _ ⟩} {σ₂ = ⟨ ξ ↑ᴿ _ ⟩} {σ₃ = τ}))
+          (trans (cong (_⨟ τ) (⟨⟩-comp {ξ₁ = wkᴿ _} {ξ₂ = ξ ↑ᴿ _}))
+          (trans (cong (λ z → ⟨ z ⟩ ⨟ τ) (lift-wkᴿ {ξ = ξ}))
+          (trans (cong (_⨟ τ) (sym (⟨⟩-comp {ξ₁ = ξ} {ξ₂ = wkᴿ _})))
+                 (assoc {σ₁ = ⟨ ξ ⟩} {σ₂ = ⟨ wkᴿ _ ⟩} {σ₃ = τ}))))
+
+  ⟨⟩-comp-⨟-lift-dist-compᴿᴿ : ∀ {S₄ : Scope} {ξ₁ : S₁ →ᴿ S₂} {ξ₂ : S₂ →ᴿ S₃}
+    {τ : (s ∷ S₃) →ˢ S₄} →
+    ⟨ ξ₁ ↑ᴿ s ⟩ ⨟ (⟨ ξ₂ ↑ᴿ s ⟩ ⨟ τ) ≡ ⟨ (ξ₁ ⨟ᴿ ξ₂) ↑ᴿ s ⟩ ⨟ τ
+  ⟨⟩-comp-⨟-lift-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂} {τ = τ} =
+    trans (sym (assoc {σ₁ = ⟨ ξ₁ ↑ᴿ _ ⟩} {σ₂ = ⟨ ξ₂ ↑ᴿ _ ⟩} {σ₃ = τ}))
+          (trans (cong (_⨟ τ) (⟨⟩-comp {ξ₁ = ξ₁ ↑ᴿ _} {ξ₂ = ξ₂ ↑ᴿ _}))
+                 (cong (λ z → ⟨ z ⟩ ⨟ τ) (lift-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂})))
+
+  ⟨⟩-split-tail : ∀ {S₄ : Scope} {σ : S₁ →ˢ S₂} {ξ : S₂ →ᴿ S₃}
+    {ξ′ : (s ∷ S₃) →ᴿ S₄} →
+    (σ ↑ˢ s) ⨟ ⟨ (ξ ↑ᴿ s) ⨟ᴿ ξ′ ⟩ ≡ ((σ ⨟ ⟨ ξ ⟩) ↑ˢ s) ⨟ ⟨ ξ′ ⟩
+  ⟨⟩-split-tail {σ = σ} {ξ = ξ} {ξ′ = ξ′} =
+    trans (cong ((σ ↑ˢ _) ⨟_) (sym (⟨⟩-comp {ξ₁ = ξ ↑ᴿ _} {ξ₂ = ξ′})))
+          (trans (sym (assoc {σ₁ = σ ↑ˢ _} {σ₂ = ⟨ ξ ↑ᴿ _ ⟩} {σ₃ = ⟨ ξ′ ⟩}))
+                 (cong (_⨟ ⟨ ξ′ ⟩) (lift-dist-compˢᴿ {σ = σ} {ξ = ξ})))
+
+  compositionalityᴿˢ-⨟-var : ∀ {x : S₁ ∋ s} {ξ : S₁ →ᴿ S₂} {σ : S₂ →ˢ S₃} →
+    x [ (⟨ ξ ⟩ ⨟ σ) ]ˢ ≡ (x [ ξ ]ᴿ) [ σ ]ˢ
+  compositionalityᴿˢ-⨟-var {x = x} = sym (compositionalityᴿˢ-var x)
+
+  lift-dist-compᴿˢ-var : ∀ {x : (s ∷ S₁) ∋ s′} {ξ : S₁ →ᴿ S₂} {σ : S₂ →ˢ S₃} →
+    (x [ (ξ ↑ᴿ s) ]ᴿ) [ (σ ↑ˢ s) ]ˢ ≡ x [ ((⟨ ξ ⟩ ⨟ σ) ↑ˢ s) ]ˢ
+  lift-dist-compᴿˢ-var {x = x} {ξ = ξ} {σ = σ} =
+    trans (compositionalityᴿˢ-var x)
+          (cong (λ z → x [ z ]ˢ) (lift-dist-compᴿˢ {ξ = ξ} {σ = σ}))
+
+  lift-dist-compᴿˢ-⨟-var : ∀ {S₄ : Scope} {x : (s ∷ S₁) ∋ s′} {ξ : S₁ →ᴿ S₂}
+    {σ : S₂ →ˢ S₃} {τ : (s ∷ S₃) →ˢ S₄} →
+    (x [ (ξ ↑ᴿ s) ]ᴿ) [ ((σ ↑ˢ s) ⨟ τ) ]ˢ ≡ x [ (((⟨ ξ ⟩ ⨟ σ) ↑ˢ s) ⨟ τ) ]ˢ
+  lift-dist-compᴿˢ-⨟-var {x = x} {ξ = ξ} {σ = σ} {τ = τ} =
+    trans (compositionalityᴿˢ-var x)
+          (trans (cong (λ z → x [ z ]ˢ)
+                       (sym (assoc {σ₁ = ⟨ ξ ↑ᴿ _ ⟩} {σ₂ = σ ↑ˢ _} {σ₃ = τ})))
+                 (cong (λ z → x [ (z ⨟ τ) ]ˢ) (lift-dist-compᴿˢ {ξ = ξ} {σ = σ})))
+
+  ⟨⟩-lift-cons-var : ∀ {x : (s ∷ S₁) ∋ s′} {ξ : S₁ →ᴿ S₂} {t : S₃ ⊢ s}
+    {σ : S₂ →ˢ S₃} →
+    (x [ (ξ ↑ᴿ s) ]ᴿ) [ (t ∙ˢ σ) ]ˢ ≡ x [ (t ∙ˢ (⟨ ξ ⟩ ⨟ σ)) ]ˢ
+  ⟨⟩-lift-cons-var {x = x} {ξ = ξ} {t = t} {σ = σ} =
+    trans (compositionalityᴿˢ-var x)
+          (cong (λ z → x [ z ]ˢ) (⟨⟩-lift-cons {ξ = ξ} {t = t} {σ = σ}))
+
+  def-↑ˢ-zero-⨟ : ∀ {σ : S₁ →ˢ S₂} {τ : (s ∷ S₂) →ˢ S₃} →
+    zero [ ((σ ↑ˢ s) ⨟ τ) ]ˢ ≡ zero [ τ ]ˢ
+  def-↑ˢ-zero-⨟ {σ = σ} {τ = τ} = lookup-⨟ˢ zero (σ ↑ˢ _) τ
+
+  def-↑ˢ-suc-⨟ : ∀ {x : S₁ ∋ s′} {σ : S₁ →ˢ S₂} {τ : (s ∷ S₂) →ˢ S₃} →
+    (suc x) [ ((σ ↑ˢ s) ⨟ τ) ]ˢ ≡ x [ (σ ⨟ (⟨ wkᴿ s ⟩ ⨟ τ)) ]ˢ
+  def-↑ˢ-suc-⨟ {x = x} {σ = σ} {τ = τ} =
+    trans (lookup-⨟ˢ (suc x) (σ ↑ˢ _) τ)
+          (trans (cong (_[ τ ]ˢ) (def-↑ˢ-suc {x = x} {σ = σ}))
+                 (trans (sym (lookup-⨟ˢ x (σ ⨟ ⟨ wkᴿ _ ⟩) τ))
+                        (cong (x [_]ˢ) (assoc {σ₁ = σ} {σ₂ = ⟨ wkᴿ _ ⟩} {σ₃ = τ}))))
 
   lift-id : (⟨ idᴿ {S} ⟩ ↑ˢ s) ≡ ⟨ idᴿ ⟩
   lift-id = ⟨⟩-lift
 '''
 
-REWRITE_VEC_HEAD = r'''-- ═══ THE COMPLETED TWO-WORLD SYSTEM ════════════════════════════════
+REWRITE_VEC_HEAD = r'''-- ═══ The completed two-world system ════════════════════════════════
 --
--- The vector model needs NO completion families.  The `-⨟` continuation
+-- The vector model needs no completion families.  The `-⨟` continuation
 -- companions, the mode-V `-var` companions and the coercion family that
 -- the function model registers are all subsumed here, because a vector
 -- composition reduces structurally where a function composition is
@@ -1122,10 +1228,10 @@ HEADER_VEC = r"""{-# OPTIONS «OPTIONS» #-}
 
 -- Generated by gen/agdasubst.py --model=vectors.  DO NOT EDIT.
 --
--- The multi-sorted, mode-merged σ-calculus with FIRST-CLASS RENAMINGS,
+-- The multi-sorted, mode-merged σ-calculus with first-class renamings,
 -- installed as a locally confluent Agda REWRITE system.  Maps are
--- inductive VECTORS, so equality of maps is equality of data and the
--- module assumes NOTHING: no function extensionality, no postulates.
+-- inductive vectors, so equality of maps is equality of data and the
+-- module assumes nothing: no function extensionality, no postulates.
 
 module «MODULE» where
 
@@ -1139,7 +1245,7 @@ open import Data.Nat using (ℕ; zero; suc)
 """
 
 
-def generate_rewrite_block_vec(sig: Signature) -> str:
+def generate_rewrite_block_vec(sig: Signature, emit_star: bool = True) -> str:
     def wrap(names: list[str]) -> str:
         out: list[str] = []
         line = "  "
@@ -1155,7 +1261,7 @@ def generate_rewrite_block_vec(sig: Signature) -> str:
     instS = wrap(["inst-var"] + [f"inst-{c.name}" for c in sig.constructors])
     n_inst = 2 * (len(sig.constructors) + 1)
     n_star = len(STAR_RULES)
-    star = wrap(STAR_RULES)
+    star = wrap(STAR_RULES) if emit_star else ""
     return f"""{REWRITE_VEC_HEAD}
 -- {33 + n_star + n_inst} rules -- 33 signature-independent, {n_star} for the
 -- iterated (variable-arity) lifting, {n_inst} traversal rules (one instᴿ-*
@@ -1167,319 +1273,96 @@ def generate_rewrite_block_vec(sig: Signature) -> str:
   assocᴿ comp-idₗᴿ comp-idᵣᴿ interactᴿ
   lift-idᴿ lift-dist-compᴿᴿ lift-wkᴿ
   right-idᴿ compositionalityᴿᴿ-var compositionalityᴿᴿ
+  lift-dist-compᴿᴿ-var interactᴿ-⨟ᴿ lift-wkᴿ-⨟ᴿ lift-dist-compᴿᴿ-⨟ᴿ
   coincidence-var def-∙ˢ-zero def-∙ˢ-suc def-↑ˢ-zero def-↑ˢ-suc
 {instS}
   assoc dist interact comp-idₗ comp-idᵣ
-  lift-wk lift-cons lift-dist-compˢˢ
-  compositionalityˢˢ compositionalityᴿˢ compositionalityˢᴿ lift-dist-compᴿˢ
+  lift-wk lift-cons lift-dist-compˢˢ lift-wk-⨟ lift-dist-compˢˢ-⨟
+  compositionalityᴿˢ-⨟-var def-↑ˢ-zero-⨟ def-↑ˢ-suc-⨟
+  compositionalityˢˢ compositionalityᴿˢ compositionalityˢᴿ
+  lift-dist-compᴿˢ lift-dist-compˢᴿ lift-dist-compᴿˢ-⨟ lift-dist-compˢᴿ-⨟
+  lift-dist-compᴿˢ-var lift-dist-compᴿˢ-⨟-var ⟨⟩-lift-cons-var
+  ⟨⟩-comp-⨟-lift-wkᴿ ⟨⟩-comp-⨟-interactᴿ ⟨⟩-comp-⨟-lift-dist-compᴿᴿ ⟨⟩-split-tail
   coincidence ⟨⟩-comp ⟨⟩-split-⨟ ⟨⟩-lift ⟨⟩-lift-cons
 {star}
 #-}}
 """
 
 
-
 # ── the iterated-lifting family, over the vector model ───────────────
-#
-# `ext*`, `_↑ᴿ*[_]_` and `_↑ˢ*[_]_` never mention how a map is
-# represented, so STAR_EXT, STAR_LIFT_R, STAR_LIFT_S and STAR_DECLS are
-# shared with the function backend verbatim.  Only the PROOFS differ, and
-# they differ in one systematic way: every step that the function backend
-# discharges by citing a single-lifting completion companion is `refl`
-# here, because the vector rule set subsumes that companion (closure-vec
-# .agda checks each one).  `trans refl p` then collapses to `p`.
-#
-# The star rules themselves are still needed.  `_↑ᴿ*[ b ] n` recurses on
-# n, so it is stuck for abstract n whatever a map is made of.
+
+
+STAR_DECLS_VEC = r'''
+  -- vector-model only, and NOT registered: the n-fold companion of the
+  -- internal `_⨟ˢᴿ_`, needed by the compositionalityˢᴿ induction for a
+  -- variable-arity binder.  The registered rule set is unaffected.
+  lift*-⨟ˢᴿ : ∀ b n {σ : S₁ →ˢ S₂} {ξ : S₂ →ᴿ S₃} →
+    ((σ ↑ˢ*[ b ] n) ⨟ˢᴿ (ξ ↑ᴿ*[ b ] n)) ≡ ((σ ⨟ˢᴿ ξ) ↑ˢ*[ b ] n)'''
 
 STAR_PROOFS_VEC = r"""  lift*-idᴿ b zero    = refl
-  lift*-idᴿ b (suc n) = trans (cong (_↑ᴿ b) (lift*-idᴿ b n)) lift-idᴿ
+  lift*-idᴿ {S = S} b (suc n) =
+    trans (cong (_↑ᴿ b) {x = idᴿ {S} ↑ᴿ*[ b ] n} {y = idᴿ} (lift*-idᴿ {S = S} b n))
+          (lift-idᴿ {S = ext* b n S} {s = b})
   lift*-dist-compᴿᴿ b zero = refl
   lift*-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂} b (suc n) =
-    cong (_↑ᴿ b) (lift*-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂} b n)
+    trans (lift-dist-compᴿᴿ {ξ₁ = ξ₁ ↑ᴿ*[ b ] n} {s = b} {ξ₂ = ξ₂ ↑ᴿ*[ b ] n})
+          (cong (_↑ᴿ b) {x = (ξ₁ ↑ᴿ*[ b ] n) ⨟ᴿ (ξ₂ ↑ᴿ*[ b ] n)} {y = (ξ₁ ⨟ᴿ ξ₂) ↑ᴿ*[ b ] n} (lift*-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂} b n))
   lift*-dist-compᴿˢ b zero = refl
   lift*-dist-compᴿˢ b (suc n) {ξ = ξ} {σ = σ} =
-    cong (_↑ˢ b) (lift*-dist-compᴿˢ b n {ξ = ξ} {σ = σ})
+    trans (lift-dist-compᴿˢ {ξ = ξ ↑ᴿ*[ b ] n} {s = b} {σ = σ ↑ˢ*[ b ] n})
+          (cong (_↑ˢ b) {x = ⟨ ξ ↑ᴿ*[ b ] n ⟩ ⨟ (σ ↑ˢ*[ b ] n)} {y = (⟨ ξ ⟩ ⨟ σ) ↑ˢ*[ b ] n} (lift*-dist-compᴿˢ b n {ξ = ξ} {σ = σ}))
   lift*-dist-compˢᴿ b zero = refl
   lift*-dist-compˢᴿ b (suc n) {σ = σ} {ξ = ξ} =
-    cong (_↑ˢ b) (lift*-dist-compˢᴿ b n {σ = σ} {ξ = ξ})
+    trans (lift-dist-compˢᴿ {s = b} {σ = σ ↑ˢ*[ b ] n} {ξ = ξ ↑ᴿ*[ b ] n})
+          (cong (_↑ˢ b) {x = (σ ↑ˢ*[ b ] n) ⨟ ⟨ ξ ↑ᴿ*[ b ] n ⟩} {y = (σ ⨟ ⟨ ξ ⟩) ↑ˢ*[ b ] n} (lift*-dist-compˢᴿ b n {σ = σ} {ξ = ξ}))
   lift*-dist-compˢˢ b zero = refl
   lift*-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂} b (suc n) =
-    cong (_↑ˢ b) (lift*-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂} b n)
+    trans (lift-dist-compˢˢ {σ₁ = σ₁ ↑ˢ*[ b ] n} {s = b} {σ₂ = σ₂ ↑ˢ*[ b ] n})
+          (cong (_↑ˢ b) {x = (σ₁ ↑ˢ*[ b ] n) ⨟ (σ₂ ↑ˢ*[ b ] n)} {y = (σ₁ ⨟ σ₂) ↑ˢ*[ b ] n} (lift*-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂} b n))
+  lift*-⨟ˢᴿ b zero = refl
+  lift*-⨟ˢᴿ b (suc n) {σ = σ} {ξ = ξ} =
+    trans (lift-⨟ˢᴿ {σ = σ ↑ˢ*[ b ] n} {ξ = ξ ↑ᴿ*[ b ] n})
+          (cong (_↑ˢ b) {x = (σ ↑ˢ*[ b ] n) ⨟ˢᴿ (ξ ↑ᴿ*[ b ] n)}
+                        {y = (σ ⨟ˢᴿ ξ) ↑ˢ*[ b ] n}
+                (lift*-⨟ˢᴿ b n {σ = σ} {ξ = ξ}))
   ⟨⟩-lift* b zero    = refl
-  ⟨⟩-lift* {ξ = ξ} b (suc n) = trans (cong (_↑ˢ b) (⟨⟩-lift* {ξ = ξ} b n)) ⟨⟩-lift
+  ⟨⟩-lift* {ξ = ξ} b (suc n) =
+    trans (cong (_↑ˢ b) {x = ⟨ ξ ⟩ ↑ˢ*[ b ] n} {y = ⟨ ξ ↑ᴿ*[ b ] n ⟩} (⟨⟩-lift* {ξ = ξ} b n))
+          (⟨⟩-lift {ξ = ξ ↑ᴿ*[ b ] n} {s = b})
 
   lift*-dist-compᴿᴿ-var b n {x = x} {ξ₁ = ξ₁} {ξ₂ = ξ₂} =
-    cong (λ z → x [ z ]ᴿ) (lift*-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂} b n)
+    trans (sym (compositionalityᴿᴿ-var x {ξ₁ = ξ₁ ↑ᴿ*[ b ] n} {ξ₂ = ξ₂ ↑ᴿ*[ b ] n}))
+          (cong (λ z → x [ z ]ᴿ) {x = (ξ₁ ↑ᴿ*[ b ] n) ⨟ᴿ (ξ₂ ↑ᴿ*[ b ] n)} {y = (ξ₁ ⨟ᴿ ξ₂) ↑ᴿ*[ b ] n} (lift*-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂} b n))
   lift*-dist-compᴿᴿ-⨟ᴿ b n {ξ₁ = ξ₁} {ξ₂ = ξ₂} {ξ′ = ξ′} =
-    cong (_⨟ᴿ ξ′) (lift*-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂} b n)
+    trans (sym (assocᴿ {ξ₁ = ξ₁ ↑ᴿ*[ b ] n} {ξ₂ = ξ₂ ↑ᴿ*[ b ] n} {ξ₃ = ξ′}))
+          (cong (_⨟ᴿ ξ′) {x = (ξ₁ ↑ᴿ*[ b ] n) ⨟ᴿ (ξ₂ ↑ᴿ*[ b ] n)} {y = (ξ₁ ⨟ᴿ ξ₂) ↑ᴿ*[ b ] n} (lift*-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂} b n))
   lift*-dist-compˢˢ-⨟ b n {σ₁ = σ₁} {σ₂ = σ₂} {τ = τ} =
-    cong (_⨟ τ) (lift*-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂} b n)
+    trans (sym (assoc {σ₁ = σ₁ ↑ˢ*[ b ] n} {σ₂ = σ₂ ↑ˢ*[ b ] n} {σ₃ = τ}))
+          (cong (_⨟ τ) {x = (σ₁ ↑ˢ*[ b ] n) ⨟ (σ₂ ↑ˢ*[ b ] n)} {y = (σ₁ ⨟ σ₂) ↑ˢ*[ b ] n} (lift*-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂} b n))
   lift*-dist-compᴿˢ-⨟ b n {ξ = ξ} {σ = σ} {τ = τ} =
-    cong (_⨟ τ) (lift*-dist-compᴿˢ b n {ξ = ξ} {σ = σ})
+    trans (sym (assoc {σ₁ = ⟨ ξ ↑ᴿ*[ b ] n ⟩} {σ₂ = σ ↑ˢ*[ b ] n} {σ₃ = τ}))
+          (cong (_⨟ τ) {x = ⟨ ξ ↑ᴿ*[ b ] n ⟩ ⨟ (σ ↑ˢ*[ b ] n)} {y = (⟨ ξ ⟩ ⨟ σ) ↑ˢ*[ b ] n} (lift*-dist-compᴿˢ b n {ξ = ξ} {σ = σ}))
   lift*-dist-compˢᴿ-⨟ b n {σ = σ} {ξ = ξ} {τ = τ} =
-    cong (_⨟ τ) (lift*-dist-compˢᴿ b n {σ = σ} {ξ = ξ})
+    trans (sym (assoc {σ₁ = σ ↑ˢ*[ b ] n} {σ₂ = ⟨ ξ ↑ᴿ*[ b ] n ⟩} {σ₃ = τ}))
+          (cong (_⨟ τ) {x = (σ ↑ˢ*[ b ] n) ⨟ ⟨ ξ ↑ᴿ*[ b ] n ⟩} {y = (σ ⨟ ⟨ ξ ⟩) ↑ˢ*[ b ] n} (lift*-dist-compˢᴿ b n {σ = σ} {ξ = ξ}))
   lift*-dist-compᴿˢ-var b n {x = x} {ξ = ξ} {σ = σ} =
-    cong (λ z → x [ z ]ˢ) (lift*-dist-compᴿˢ b n {ξ = ξ} {σ = σ})
+    trans (compositionalityᴿˢ-var x {ξ = ξ ↑ᴿ*[ b ] n} {σ = σ ↑ˢ*[ b ] n})
+          (cong (λ z → x [ z ]ˢ) {x = ⟨ ξ ↑ᴿ*[ b ] n ⟩ ⨟ (σ ↑ˢ*[ b ] n)} {y = (⟨ ξ ⟩ ⨟ σ) ↑ˢ*[ b ] n} (lift*-dist-compᴿˢ b n {ξ = ξ} {σ = σ}))
   ⟨⟩-comp-⨟-lift*-dist-compᴿᴿ b n {ξ₁ = ξ₁} {ξ₂ = ξ₂} {τ = τ} =
-    cong (λ z → ⟨ z ⟩ ⨟ τ) (lift*-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂} b n)
+    trans (sym (assoc {σ₁ = ⟨ ξ₁ ↑ᴿ*[ b ] n ⟩} {σ₂ = ⟨ ξ₂ ↑ᴿ*[ b ] n ⟩} {σ₃ = τ}))
+          (trans (cong (_⨟ τ) {x = ⟨ ξ₁ ↑ᴿ*[ b ] n ⟩ ⨟ ⟨ ξ₂ ↑ᴿ*[ b ] n ⟩} {y = ⟨ (ξ₁ ↑ᴿ*[ b ] n) ⨟ᴿ (ξ₂ ↑ᴿ*[ b ] n) ⟩} (⟨⟩-comp {ξ₁ = ξ₁ ↑ᴿ*[ b ] n} {ξ₂ = ξ₂ ↑ᴿ*[ b ] n}))
+                 (cong (λ z → ⟨ z ⟩ ⨟ τ) {x = (ξ₁ ↑ᴿ*[ b ] n) ⨟ᴿ (ξ₂ ↑ᴿ*[ b ] n)} {y = (ξ₁ ⨟ᴿ ξ₂) ↑ᴿ*[ b ] n} (lift*-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂} b n)))
   lift*-dist-compᴿˢ-⨟-var b n {x = x} {ξ = ξ} {σ = σ} {τ = τ} =
-    cong (λ z → x [ (z ⨟ τ) ]ˢ) (lift*-dist-compᴿˢ b n {ξ = ξ} {σ = σ})
+    trans (compositionalityᴿˢ-var x {ξ = ξ ↑ᴿ*[ b ] n} {σ = (σ ↑ˢ*[ b ] n) ⨟ τ})
+          (trans (cong (λ z → x [ z ]ˢ) {x = ⟨ ξ ↑ᴿ*[ b ] n ⟩ ⨟ ((σ ↑ˢ*[ b ] n) ⨟ τ)} {y = (⟨ ξ ↑ᴿ*[ b ] n ⟩ ⨟ (σ ↑ˢ*[ b ] n)) ⨟ τ}
+                       (sym (assoc {σ₁ = ⟨ ξ ↑ᴿ*[ b ] n ⟩} {σ₂ = σ ↑ˢ*[ b ] n} {σ₃ = τ})))
+                 (cong (λ z → x [ (z ⨟ τ) ]ˢ) {x = ⟨ ξ ↑ᴿ*[ b ] n ⟩ ⨟ (σ ↑ˢ*[ b ] n)} {y = (⟨ ξ ⟩ ⨟ σ) ↑ˢ*[ b ] n} (lift*-dist-compᴿˢ b n {ξ = ξ} {σ = σ})))
   ⟨⟩-split*-tail b n {σ = σ} {ξ = ξ} {ξ′ = ξ′} =
-    cong (_⨟ ⟨ ξ′ ⟩) (lift*-dist-compˢᴿ b n {σ = σ} {ξ = ξ})"""
+    trans (cong ((σ ↑ˢ*[ b ] n) ⨟_) {x = ⟨ (ξ ↑ᴿ*[ b ] n) ⨟ᴿ ξ′ ⟩} {y = ⟨ ξ ↑ᴿ*[ b ] n ⟩ ⨟ ⟨ ξ′ ⟩}
+                (sym (⟨⟩-comp {ξ₁ = ξ ↑ᴿ*[ b ] n} {ξ₂ = ξ′})))
+          (trans (sym (assoc {σ₁ = σ ↑ˢ*[ b ] n} {σ₂ = ⟨ ξ ↑ᴿ*[ b ] n ⟩} {σ₃ = ⟨ ξ′ ⟩}))
+                 (cong (_⨟ ⟨ ξ′ ⟩) {x = (σ ↑ˢ*[ b ] n) ⨟ ⟨ ξ ↑ᴿ*[ b ] n ⟩} {y = (σ ⨟ ⟨ ξ ⟩) ↑ˢ*[ b ] n} (lift*-dist-compˢᴿ b n {σ = σ} {ξ = ξ})))"""
 
-
-
-# The iterated-lifting family, proved AFTER the base rules are registered.
-# Outside the opaque blocks `_↑ᴿ_` and `_↑ˢ_` are stuck, so `cong (_↑ᴿ b)`
-# has a rigid head and its argument is inferable; inside the block they
-# unfold and the same `cong` is ambiguous.  With the base rules active
-# every single-lifting step below is already `refl`, which is why each
-# proof is a bare induction on n.
-
-STAR_VEC_BLOCK = r"""
--- ─── iterated lifting: the laws ─────────────────────────────────────
---
--- Stated OUTSIDE the opaque block, where `_↑ᴿ_` and `_↑ˢ_` are stuck, so
--- that `cong (_↑ᴿ b)` has a rigid head; inside the block they unfold to
--- a cons over `wk*ᴿ` and the same `cong` cannot be solved.  Still before
--- the REWRITE block: every proof below is a theorem of the base laws.
---
--- EVERY implicit is pinned.  These are inductions on n whose goals carry
--- an `↑*` chain, and leaving a map or a sort to unification makes the
--- elaborator search that chain at every step.
-
-lift*-idᴿ : ∀ b n → (idᴿ {S} ↑ᴿ*[ b ] n) ≡ idᴿ
-lift*-idᴿ b zero    = refl
-lift*-idᴿ {S = S} b (suc n) =
-  trans (cong (_↑ᴿ b) (lift*-idᴿ {S = S} b n)) (lift-idᴿ {S = S} {s = b})
-
-lift*-dist-compᴿᴿ : ∀ b n → ((ξ₁ ↑ᴿ*[ b ] n) ⨟ᴿ (ξ₂ ↑ᴿ*[ b ] n)) ≡ ((ξ₁ ⨟ᴿ ξ₂) ↑ᴿ*[ b ] n)
-lift*-dist-compᴿᴿ b zero = refl
-lift*-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂} b (suc n) =
-  trans (lift-dist-compᴿᴿ {ξ₁ = ξ₁ ↑ᴿ*[ b ] n} {s = b} {ξ₂ = ξ₂ ↑ᴿ*[ b ] n})
-        (cong (_↑ᴿ b) (lift*-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂} b n))
-
-lift*-dist-compᴿˢ : ∀ b n {ξ : S₁ →ᴿ S₂} {σ : S₂ →ˢ S₃} →
-  (⟨ ξ ↑ᴿ*[ b ] n ⟩ ⨟ (σ ↑ˢ*[ b ] n)) ≡ ((⟨ ξ ⟩ ⨟ σ) ↑ˢ*[ b ] n)
-lift*-dist-compᴿˢ b zero = refl
-lift*-dist-compᴿˢ b (suc n) {ξ = ξ} {σ = σ} =
-  trans (lift-dist-compᴿˢ {ξ = ξ ↑ᴿ*[ b ] n} {s = b} {σ = σ ↑ˢ*[ b ] n})
-        (cong (_↑ˢ b) (lift*-dist-compᴿˢ b n {ξ = ξ} {σ = σ}))
-
-lift*-dist-compˢᴿ : ∀ b n {σ : S₁ →ˢ S₂} {ξ : S₂ →ᴿ S₃} →
-  ((σ ↑ˢ*[ b ] n) ⨟ ⟨ ξ ↑ᴿ*[ b ] n ⟩) ≡ ((σ ⨟ ⟨ ξ ⟩) ↑ˢ*[ b ] n)
-lift*-dist-compˢᴿ b zero = refl
-lift*-dist-compˢᴿ b (suc n) {σ = σ} {ξ = ξ} =
-  trans (lift-dist-compˢᴿ {s = b} {σ = σ ↑ˢ*[ b ] n} {ξ = ξ ↑ᴿ*[ b ] n})
-        (cong (_↑ˢ b) (lift*-dist-compˢᴿ b n {σ = σ} {ξ = ξ}))
-
-lift*-dist-compˢˢ : ∀ b n → ((σ₁ ↑ˢ*[ b ] n) ⨟ (σ₂ ↑ˢ*[ b ] n)) ≡ ((σ₁ ⨟ σ₂) ↑ˢ*[ b ] n)
-lift*-dist-compˢˢ b zero = refl
-lift*-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂} b (suc n) =
-  trans (lift-dist-compˢˢ {σ₁ = σ₁ ↑ˢ*[ b ] n} {s = b} {σ₂ = σ₂ ↑ˢ*[ b ] n})
-        (cong (_↑ˢ b) (lift*-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂} b n))
-
-⟨⟩-lift* : ∀ b n → (⟨ ξ ⟩ ↑ˢ*[ b ] n) ≡ ⟨ ξ ↑ᴿ*[ b ] n ⟩
-⟨⟩-lift* b zero    = refl
-⟨⟩-lift* {ξ = ξ} b (suc n) =
-  trans (cong (_↑ˢ b) (⟨⟩-lift* {ξ = ξ} b n)) (⟨⟩-lift {ξ = ξ ↑ᴿ*[ b ] n} {s = b})
-
--- The completion companions of the iterated layer, each a theorem of the
--- base algebra plus the star law above it.  Pinned throughout.
-
-lift*-dist-compᴿᴿ-var : ∀ {S₁ S₂ S₃} (b : Sort) (n : ℕ) {s} {x : (ext* b n S₁) ∋ s}
-  {ξ₁ : S₁ →ᴿ S₂} {ξ₂ : S₂ →ᴿ S₃} →
-  (x [ (ξ₁ ↑ᴿ*[ b ] n) ]ᴿ) [ (ξ₂ ↑ᴿ*[ b ] n) ]ᴿ ≡ x [ ((ξ₁ ⨟ᴿ ξ₂) ↑ᴿ*[ b ] n) ]ᴿ
-lift*-dist-compᴿᴿ-var b n {x = x} {ξ₁ = ξ₁} {ξ₂ = ξ₂} =
-  trans (compositionalityᴿᴿ x {ξ₁ = ξ₁ ↑ᴿ*[ b ] n} {ξ₂ = ξ₂ ↑ᴿ*[ b ] n})
-        (cong (λ z → x [ z ]ᴿ) (lift*-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂} b n))
-
-lift*-dist-compᴿᴿ-⨟ᴿ : ∀ {S₁ S₂ S₃ S₄} (b : Sort) (n : ℕ) {ξ₁ : S₁ →ᴿ S₂} {ξ₂ : S₂ →ᴿ S₃}
-  {ξ′ : (ext* b n S₃) →ᴿ S₄} →
-  (ξ₁ ↑ᴿ*[ b ] n) ⨟ᴿ ((ξ₂ ↑ᴿ*[ b ] n) ⨟ᴿ ξ′) ≡ ((ξ₁ ⨟ᴿ ξ₂) ↑ᴿ*[ b ] n) ⨟ᴿ ξ′
-lift*-dist-compᴿᴿ-⨟ᴿ b n {ξ₁ = ξ₁} {ξ₂ = ξ₂} {ξ′ = ξ′} =
-  trans (sym (assocᴿ {ξ₁ = ξ₁ ↑ᴿ*[ b ] n} {ξ₂ = ξ₂ ↑ᴿ*[ b ] n} {ξ₃ = ξ′}))
-        (cong (_⨟ᴿ ξ′) (lift*-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂} b n))
-
-lift*-dist-compˢˢ-⨟ : ∀ {S₁ S₂ S₃} (b : Sort) (n : ℕ) {S₄} {σ₁ : S₁ →ˢ S₂} {σ₂ : S₂ →ˢ S₃}
-  {τ : (ext* b n S₃) →ˢ S₄} →
-  (σ₁ ↑ˢ*[ b ] n) ⨟ ((σ₂ ↑ˢ*[ b ] n) ⨟ τ) ≡ ((σ₁ ⨟ σ₂) ↑ˢ*[ b ] n) ⨟ τ
-lift*-dist-compˢˢ-⨟ b n {σ₁ = σ₁} {σ₂ = σ₂} {τ = τ} =
-  trans (sym (assoc {σ₁ = σ₁ ↑ˢ*[ b ] n} {σ₂ = σ₂ ↑ˢ*[ b ] n} {σ₃ = τ}))
-        (cong (_⨟ τ) (lift*-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂} b n))
-
-lift*-dist-compᴿˢ-⨟ : ∀ {S₁ S₂ S₃} (b : Sort) (n : ℕ) {S₄} {ξ : S₁ →ᴿ S₂} {σ : S₂ →ˢ S₃}
-  {τ : (ext* b n S₃) →ˢ S₄} →
-  ⟨ ξ ↑ᴿ*[ b ] n ⟩ ⨟ ((σ ↑ˢ*[ b ] n) ⨟ τ) ≡ ((⟨ ξ ⟩ ⨟ σ) ↑ˢ*[ b ] n) ⨟ τ
-lift*-dist-compᴿˢ-⨟ b n {ξ = ξ} {σ = σ} {τ = τ} =
-  trans (sym (assoc {σ₁ = ⟨ ξ ↑ᴿ*[ b ] n ⟩} {σ₂ = σ ↑ˢ*[ b ] n} {σ₃ = τ}))
-        (cong (_⨟ τ) (lift*-dist-compᴿˢ b n {ξ = ξ} {σ = σ}))
-
-lift*-dist-compˢᴿ-⨟ : ∀ {S₁ S₂ S₃} (b : Sort) (n : ℕ) {S₄} {σ : S₁ →ˢ S₂} {ξ : S₂ →ᴿ S₃}
-  {τ : (ext* b n S₃) →ˢ S₄} →
-  (σ ↑ˢ*[ b ] n) ⨟ (⟨ ξ ↑ᴿ*[ b ] n ⟩ ⨟ τ) ≡ ((σ ⨟ ⟨ ξ ⟩) ↑ˢ*[ b ] n) ⨟ τ
-lift*-dist-compˢᴿ-⨟ b n {σ = σ} {ξ = ξ} {τ = τ} =
-  trans (sym (assoc {σ₁ = σ ↑ˢ*[ b ] n} {σ₂ = ⟨ ξ ↑ᴿ*[ b ] n ⟩} {σ₃ = τ}))
-        (cong (_⨟ τ) (lift*-dist-compˢᴿ b n {σ = σ} {ξ = ξ}))
-
-lift*-dist-compᴿˢ-var : ∀ {S₁ S₂ S₃} (b : Sort) (n : ℕ) {s} {x : (ext* b n S₁) ∋ s}
-  {ξ : S₁ →ᴿ S₂} {σ : S₂ →ˢ S₃} →
-  (x [ (ξ ↑ᴿ*[ b ] n) ]ᴿ) [ (σ ↑ˢ*[ b ] n) ]ˢ ≡ x [ ((⟨ ξ ⟩ ⨟ σ) ↑ˢ*[ b ] n) ]ˢ
-lift*-dist-compᴿˢ-var b n {x = x} {ξ = ξ} {σ = σ} =
-  trans (compositionalityᴿˢ x {ξ = ξ ↑ᴿ*[ b ] n} {σ = σ ↑ˢ*[ b ] n})
-        (cong (λ z → x [ z ]ˢ) (lift*-dist-compᴿˢ b n {ξ = ξ} {σ = σ}))
-
-⟨⟩-comp-⨟-lift*-dist-compᴿᴿ : ∀ {S₁ S₂ S₃} (b : Sort) (n : ℕ) {S₄} {ξ₁ : S₁ →ᴿ S₂} {ξ₂ : S₂ →ᴿ S₃}
-  {τ : (ext* b n S₃) →ˢ S₄} →
-  ⟨ ξ₁ ↑ᴿ*[ b ] n ⟩ ⨟ (⟨ ξ₂ ↑ᴿ*[ b ] n ⟩ ⨟ τ) ≡ ⟨ (ξ₁ ⨟ᴿ ξ₂) ↑ᴿ*[ b ] n ⟩ ⨟ τ
-⟨⟩-comp-⨟-lift*-dist-compᴿᴿ b n {ξ₁ = ξ₁} {ξ₂ = ξ₂} {τ = τ} =
-  trans (sym (assoc {σ₁ = ⟨ ξ₁ ↑ᴿ*[ b ] n ⟩} {σ₂ = ⟨ ξ₂ ↑ᴿ*[ b ] n ⟩} {σ₃ = τ}))
-        (trans (cong (_⨟ τ) (⟨⟩-comp {ξ₁ = ξ₁ ↑ᴿ*[ b ] n} {ξ₂ = ξ₂ ↑ᴿ*[ b ] n}))
-               (cong (λ z → ⟨ z ⟩ ⨟ τ) (lift*-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂} b n)))
-
-lift*-dist-compᴿˢ-⨟-var : ∀ {S₁ S₂ S₃} (b : Sort) (n : ℕ) {S₄} {s} {x : (ext* b n S₁) ∋ s}
-  {ξ : S₁ →ᴿ S₂} {σ : S₂ →ˢ S₃} {τ : (ext* b n S₃) →ˢ S₄} →
-  (x [ (ξ ↑ᴿ*[ b ] n) ]ᴿ) [ ((σ ↑ˢ*[ b ] n) ⨟ τ) ]ˢ ≡ x [ (((⟨ ξ ⟩ ⨟ σ) ↑ˢ*[ b ] n) ⨟ τ) ]ˢ
-lift*-dist-compᴿˢ-⨟-var b n {x = x} {ξ = ξ} {σ = σ} {τ = τ} =
-  trans (compositionalityᴿˢ x {ξ = ξ ↑ᴿ*[ b ] n} {σ = (σ ↑ˢ*[ b ] n) ⨟ τ})
-        (trans (cong (λ z → x [ z ]ˢ)
-                     (sym (assoc {σ₁ = ⟨ ξ ↑ᴿ*[ b ] n ⟩} {σ₂ = σ ↑ˢ*[ b ] n} {σ₃ = τ})))
-               (cong (λ z → x [ (z ⨟ τ) ]ˢ) (lift*-dist-compᴿˢ b n {ξ = ξ} {σ = σ})))
-
-⟨⟩-split*-tail : ∀ {S₁ S₂ S₃} (b : Sort) (n : ℕ) {S₄} {σ : S₁ →ˢ S₂} {ξ : S₂ →ᴿ S₃}
-  {ξ′ : (ext* b n S₃) →ᴿ S₄} →
-  (σ ↑ˢ*[ b ] n) ⨟ ⟨ (ξ ↑ᴿ*[ b ] n) ⨟ᴿ ξ′ ⟩ ≡ ((σ ⨟ ⟨ ξ ⟩) ↑ˢ*[ b ] n) ⨟ ⟨ ξ′ ⟩
-⟨⟩-split*-tail b n {σ = σ} {ξ = ξ} {ξ′ = ξ′} =
-  trans (cong ((σ ↑ˢ*[ b ] n) ⨟_)
-              (sym (⟨⟩-comp {ξ₁ = ξ ↑ᴿ*[ b ] n} {ξ₂ = ξ′})))
-        (trans (sym (assoc {σ₁ = σ ↑ˢ*[ b ] n} {σ₂ = ⟨ ξ ↑ᴿ*[ b ] n ⟩} {σ₃ = ⟨ ξ′ ⟩}))
-               (cong (_⨟ ⟨ ξ′ ⟩) (lift*-dist-compˢᴿ b n {σ = σ} {ξ = ξ})))
-"""
-
-
-
-# The iterated-lifting family, proved AFTER the base rules are registered.
-# Outside the opaque blocks `_↑ᴿ_` and `_↑ˢ_` are stuck, so `cong (_↑ᴿ b)`
-# has a rigid head and its argument is inferable; inside the block they
-# unfold and the same `cong` is ambiguous.  With the base rules active
-# every single-lifting step below is already `refl`, which is why each
-# proof is a bare induction on n.
-
-STAR_VEC_BLOCK = r"""
--- ─── iterated lifting: the laws ─────────────────────────────────────
---
--- Stated OUTSIDE the opaque block, where `_↑ᴿ_` and `_↑ˢ_` are stuck, so
--- that `cong (_↑ᴿ b)` has a rigid head; inside the block they unfold to
--- a cons over `wk*ᴿ` and the same `cong` cannot be solved.  Still before
--- the REWRITE block: every proof below is a theorem of the base laws.
-
-lift*-idᴿ : ∀ b n → (idᴿ {S} ↑ᴿ*[ b ] n) ≡ idᴿ
-lift*-idᴿ b zero    = refl
-lift*-idᴿ b (suc n) = trans (cong (_↑ᴿ b) (lift*-idᴿ b n)) lift-idᴿ
-
-lift*-dist-compᴿᴿ : ∀ b n → ((ξ₁ ↑ᴿ*[ b ] n) ⨟ᴿ (ξ₂ ↑ᴿ*[ b ] n)) ≡ ((ξ₁ ⨟ᴿ ξ₂) ↑ᴿ*[ b ] n)
-lift*-dist-compᴿᴿ b zero = refl
-lift*-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂} b (suc n) =
-  trans lift-dist-compᴿᴿ (cong (_↑ᴿ b) (lift*-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂} b n))
-
-lift*-dist-compᴿˢ : ∀ b n {ξ : S₁ →ᴿ S₂} {σ : S₂ →ˢ S₃} →
-  (⟨ ξ ↑ᴿ*[ b ] n ⟩ ⨟ (σ ↑ˢ*[ b ] n)) ≡ ((⟨ ξ ⟩ ⨟ σ) ↑ˢ*[ b ] n)
-lift*-dist-compᴿˢ b zero = refl
-lift*-dist-compᴿˢ b (suc n) {ξ = ξ} {σ = σ} =
-  trans lift-dist-compᴿˢ (cong (_↑ˢ b) (lift*-dist-compᴿˢ b n {ξ = ξ} {σ = σ}))
-
-lift*-dist-compˢᴿ : ∀ b n {σ : S₁ →ˢ S₂} {ξ : S₂ →ᴿ S₃} →
-  ((σ ↑ˢ*[ b ] n) ⨟ ⟨ ξ ↑ᴿ*[ b ] n ⟩) ≡ ((σ ⨟ ⟨ ξ ⟩) ↑ˢ*[ b ] n)
-lift*-dist-compˢᴿ b zero = refl
-lift*-dist-compˢᴿ b (suc n) {σ = σ} {ξ = ξ} =
-  trans lift-dist-compˢᴿ (cong (_↑ˢ b) (lift*-dist-compˢᴿ b n {σ = σ} {ξ = ξ}))
-
-lift*-dist-compˢˢ : ∀ b n → ((σ₁ ↑ˢ*[ b ] n) ⨟ (σ₂ ↑ˢ*[ b ] n)) ≡ ((σ₁ ⨟ σ₂) ↑ˢ*[ b ] n)
-lift*-dist-compˢˢ b zero = refl
-lift*-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂} b (suc n) =
-  trans lift-dist-compˢˢ (cong (_↑ˢ b) (lift*-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂} b n))
-
-⟨⟩-lift* : ∀ b n → (⟨ ξ ⟩ ↑ˢ*[ b ] n) ≡ ⟨ ξ ↑ᴿ*[ b ] n ⟩
-⟨⟩-lift* b zero    = refl
-⟨⟩-lift* {ξ = ξ} b (suc n) = trans (cong (_↑ˢ b) (⟨⟩-lift* {ξ = ξ} b n)) ⟨⟩-lift
-
--- The completion companions of the iterated layer, each a theorem of the
--- base algebra plus the star law above it.
-
-lift*-dist-compᴿᴿ-var : ∀ {S₁ S₂ S₃} (b : Sort) (n : ℕ) {s} {x : (ext* b n S₁) ∋ s}
-  {ξ₁ : S₁ →ᴿ S₂} {ξ₂ : S₂ →ᴿ S₃} →
-  (x [ (ξ₁ ↑ᴿ*[ b ] n) ]ᴿ) [ (ξ₂ ↑ᴿ*[ b ] n) ]ᴿ ≡ x [ ((ξ₁ ⨟ᴿ ξ₂) ↑ᴿ*[ b ] n) ]ᴿ
-lift*-dist-compᴿᴿ-var b n {x = x} {ξ₁ = ξ₁} {ξ₂ = ξ₂} =
-  trans (compositionalityᴿᴿ x)
-        (cong (λ z → x [ z ]ᴿ) (lift*-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂} b n))
-
-lift*-dist-compᴿᴿ-⨟ᴿ : ∀ {S₁ S₂ S₃ S₄} (b : Sort) (n : ℕ) {ξ₁ : S₁ →ᴿ S₂} {ξ₂ : S₂ →ᴿ S₃}
-  {ξ′ : (ext* b n S₃) →ᴿ S₄} →
-  (ξ₁ ↑ᴿ*[ b ] n) ⨟ᴿ ((ξ₂ ↑ᴿ*[ b ] n) ⨟ᴿ ξ′) ≡ ((ξ₁ ⨟ᴿ ξ₂) ↑ᴿ*[ b ] n) ⨟ᴿ ξ′
-lift*-dist-compᴿᴿ-⨟ᴿ b n {ξ₁ = ξ₁} {ξ₂ = ξ₂} {ξ′ = ξ′} =
-  trans (sym assocᴿ) (cong (_⨟ᴿ ξ′) (lift*-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂} b n))
-
-lift*-dist-compˢˢ-⨟ : ∀ {S₁ S₂ S₃} (b : Sort) (n : ℕ) {S₄} {σ₁ : S₁ →ˢ S₂} {σ₂ : S₂ →ˢ S₃}
-  {τ : (ext* b n S₃) →ˢ S₄} →
-  (σ₁ ↑ˢ*[ b ] n) ⨟ ((σ₂ ↑ˢ*[ b ] n) ⨟ τ) ≡ ((σ₁ ⨟ σ₂) ↑ˢ*[ b ] n) ⨟ τ
-lift*-dist-compˢˢ-⨟ b n {σ₁ = σ₁} {σ₂ = σ₂} {τ = τ} =
-  trans (sym assoc) (cong (_⨟ τ) (lift*-dist-compˢˢ {σ₁ = σ₁} {σ₂ = σ₂} b n))
-
-lift*-dist-compᴿˢ-⨟ : ∀ {S₁ S₂ S₃} (b : Sort) (n : ℕ) {S₄} {ξ : S₁ →ᴿ S₂} {σ : S₂ →ˢ S₃}
-  {τ : (ext* b n S₃) →ˢ S₄} →
-  ⟨ ξ ↑ᴿ*[ b ] n ⟩ ⨟ ((σ ↑ˢ*[ b ] n) ⨟ τ) ≡ ((⟨ ξ ⟩ ⨟ σ) ↑ˢ*[ b ] n) ⨟ τ
-lift*-dist-compᴿˢ-⨟ b n {ξ = ξ} {σ = σ} {τ = τ} =
-  trans (sym assoc) (cong (_⨟ τ) (lift*-dist-compᴿˢ b n {ξ = ξ} {σ = σ}))
-
-lift*-dist-compˢᴿ-⨟ : ∀ {S₁ S₂ S₃} (b : Sort) (n : ℕ) {S₄} {σ : S₁ →ˢ S₂} {ξ : S₂ →ᴿ S₃}
-  {τ : (ext* b n S₃) →ˢ S₄} →
-  (σ ↑ˢ*[ b ] n) ⨟ (⟨ ξ ↑ᴿ*[ b ] n ⟩ ⨟ τ) ≡ ((σ ⨟ ⟨ ξ ⟩) ↑ˢ*[ b ] n) ⨟ τ
-lift*-dist-compˢᴿ-⨟ b n {σ = σ} {ξ = ξ} {τ = τ} =
-  trans (sym assoc) (cong (_⨟ τ) (lift*-dist-compˢᴿ b n {σ = σ} {ξ = ξ}))
-
-lift*-dist-compᴿˢ-var : ∀ {S₁ S₂ S₃} (b : Sort) (n : ℕ) {s} {x : (ext* b n S₁) ∋ s}
-  {ξ : S₁ →ᴿ S₂} {σ : S₂ →ˢ S₃} →
-  (x [ (ξ ↑ᴿ*[ b ] n) ]ᴿ) [ (σ ↑ˢ*[ b ] n) ]ˢ ≡ x [ ((⟨ ξ ⟩ ⨟ σ) ↑ˢ*[ b ] n) ]ˢ
-lift*-dist-compᴿˢ-var b n {x = x} {ξ = ξ} {σ = σ} =
-  trans (compositionalityᴿˢ x)
-        (cong (λ z → x [ z ]ˢ) (lift*-dist-compᴿˢ b n {ξ = ξ} {σ = σ}))
-
-⟨⟩-comp-⨟-lift*-dist-compᴿᴿ : ∀ {S₁ S₂ S₃} (b : Sort) (n : ℕ) {S₄} {ξ₁ : S₁ →ᴿ S₂} {ξ₂ : S₂ →ᴿ S₃}
-  {τ : (ext* b n S₃) →ˢ S₄} →
-  ⟨ ξ₁ ↑ᴿ*[ b ] n ⟩ ⨟ (⟨ ξ₂ ↑ᴿ*[ b ] n ⟩ ⨟ τ) ≡ ⟨ (ξ₁ ⨟ᴿ ξ₂) ↑ᴿ*[ b ] n ⟩ ⨟ τ
-⟨⟩-comp-⨟-lift*-dist-compᴿᴿ b n {ξ₁ = ξ₁} {ξ₂ = ξ₂} {τ = τ} =
-  trans (sym assoc)
-        (trans (cong (_⨟ τ) ⟨⟩-comp)
-               (cong (λ z → ⟨ z ⟩ ⨟ τ) (lift*-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂} b n)))
-
-lift*-dist-compᴿˢ-⨟-var : ∀ {S₁ S₂ S₃} (b : Sort) (n : ℕ) {S₄} {s} {x : (ext* b n S₁) ∋ s}
-  {ξ : S₁ →ᴿ S₂} {σ : S₂ →ˢ S₃} {τ : (ext* b n S₃) →ˢ S₄} →
-  (x [ (ξ ↑ᴿ*[ b ] n) ]ᴿ) [ ((σ ↑ˢ*[ b ] n) ⨟ τ) ]ˢ ≡ x [ (((⟨ ξ ⟩ ⨟ σ) ↑ˢ*[ b ] n) ⨟ τ) ]ˢ
-lift*-dist-compᴿˢ-⨟-var b n {x = x} {ξ = ξ} {σ = σ} {τ = τ} =
-  trans (compositionalityᴿˢ x)
-        (trans (cong (λ z → x [ z ]ˢ) (sym assoc))
-               (cong (λ z → x [ (z ⨟ τ) ]ˢ) (lift*-dist-compᴿˢ b n {ξ = ξ} {σ = σ})))
-
-⟨⟩-split*-tail : ∀ {S₁ S₂ S₃} (b : Sort) (n : ℕ) {S₄} {σ : S₁ →ˢ S₂} {ξ : S₂ →ᴿ S₃}
-  {ξ′ : (ext* b n S₃) →ᴿ S₄} →
-  (σ ↑ˢ*[ b ] n) ⨟ ⟨ (ξ ↑ᴿ*[ b ] n) ⨟ᴿ ξ′ ⟩ ≡ ((σ ⨟ ⟨ ξ ⟩) ↑ˢ*[ b ] n) ⨟ ⟨ ξ′ ⟩
-⟨⟩-split*-tail b n {σ = σ} {ξ = ξ} {ξ′ = ξ′} =
-  trans (cong ((σ ↑ˢ*[ b ] n) ⨟_) (sym ⟨⟩-comp))
-        (trans (sym assoc) (cong (_⨟ ⟨ ξ′ ⟩) (lift*-dist-compˢᴿ b n {σ = σ} {ξ = ξ})))
-"""
-
-
-def generate_star_rewrite_block() -> str:
-    out: list[str] = []
-    line = "  "
-    for n in STAR_RULES:
-        if len(line) + len(n) > 76 and line.strip():
-            out.append(line.rstrip()); line = "  "
-        line += n + " "
-    if line.strip():
-        out.append(line.rstrip())
-    return "{-# REWRITE\n" + "\n".join(out) + "\n#-}\n"
 
 # ── END TEMPLATE CHUNKS ──
 
@@ -1489,10 +1372,10 @@ def generate_star_rewrite_block() -> str:
 # DO NOT EDIT BY HAND.
 
 STAR_EXT = r'''
--- ─── iterated lifting: a binder of VARIABLE ARITY ───────────────────
+-- ─── iterated lifting: a binder of variable arity ───────────────────
 --
--- `ext* b n S` extends a scope by n copies of ONE sort.  DERIVED and
--- TRANSPARENT: it computes on n, so the rewrite system needs rules only
+-- `ext* b n S` extends a scope by n copies of one sort.  derived and
+-- transparent: it computes on n, so the rewrite system needs rules only
 -- for the case where n is abstract.
 --
 -- Generalized from gen/Reference/FsubPatterns.agda, which fixes b := expr.
@@ -1504,7 +1387,7 @@ ext* b (suc n) S = b ∷ ext* b n S
 
 STAR_LIFT_R = r'''
 -- The n-fold renaming lift.  Derived and transparent, and defined
--- BETWEEN the _↑ᴿ_ block and the _[_]ᴿ block, because the traversal of a
+-- between the _↑ᴿ_ block and the _[_]ᴿ block, because the traversal of a
 -- variable-arity binder uses it.
 
 _↑ᴿ*[_]_ : S₁ →ᴿ S₂ → ∀ b n → (ext* b n S₁) →ᴿ (ext* b n S₂)
@@ -1521,8 +1404,8 @@ _↑ˢ*[_]_ : S₁ →ˢ S₂ → ∀ b n → (ext* b n S₁) →ˢ (ext* b n S�
 '''
 
 STAR_DECLS = r'''
-  -- ITERATED lifting.  Unlike records, patterns FORCE these to be
-  -- REWRITE RULES: without lift*-idᴿ the pair (right-idᴿ, instᴿ-let) is
+  -- iterated lifting.  Unlike records, patterns force these to be
+  -- REWRITE rules: without lift*-idᴿ the pair (right-idᴿ, instᴿ-let) is
   -- not joinable, because `e₂ [ idᴿ ↑ᴿ*[ b ] n ]ᴿ` is stuck for abstract n.
   lift*-idᴿ         : ∀ b n → (idᴿ {S} ↑ᴿ*[ b ] n) ≡ idᴿ
   lift*-dist-compᴿᴿ : ∀ b n → ((ξ₁ ↑ᴿ*[ b ] n) ⨟ᴿ (ξ₂ ↑ᴿ*[ b ] n)) ≡ ((ξ₁ ⨟ᴿ ξ₂) ↑ᴿ*[ b ] n)
@@ -1532,8 +1415,7 @@ STAR_DECLS = r'''
     ((σ ↑ˢ*[ b ] n) ⨟ ⟨ ξ ↑ᴿ*[ b ] n ⟩) ≡ ((σ ⨟ ⟨ ξ ⟩) ↑ˢ*[ b ] n)
   lift*-dist-compˢˢ : ∀ b n → ((σ₁ ↑ˢ*[ b ] n) ⨟ (σ₂ ↑ˢ*[ b ] n)) ≡ ((σ₁ ⨟ σ₂) ↑ˢ*[ b ] n)
   ⟨⟩-lift*          : ∀ b n → (⟨ ξ ⟩ ↑ˢ*[ b ] n) ≡ ⟨ ξ ↑ᴿ*[ b ] n ⟩
-
-  -- THE ITERATED COMPLETION COMPANIONS.  One for each `-var` / `-⨟ᴿ` /
+  -- the iterated completion companions.  One for each `-var` / `-⨟ᴿ` /
   -- `-⨟` companion of the single-lifting layer; each closes exactly the
   -- pair that its single-lifting counterpart closes, one level up.
   lift*-dist-compᴿᴿ-var : ∀ {S₁ S₂ S₃} (b : Sort) (n : ℕ) {s} {x : (ext* b n S₁) ∋ s}
@@ -1640,26 +1522,6 @@ STAR_RULES = ['lift*-idᴿ', 'lift*-dist-compᴿᴿ', 'lift*-dist-compᴿˢ', 'l
 # ==========================================
 # 4. Agda code generation
 # ==========================================
-#
-# The emitted module carries the CURATED (locally confluent) rule set of
-# the hand-written reference core, gen/Reference/Fsub.agda.  Everything
-# that is syntax-independent is the verbatim text of that file (the chunk
-# constants above, produced by `extract_template.py`); the emitter below
-# supplies only the syntax-dependent parts:
-#
-#   * data Sort, the constructor declarations, the variable block
-#   * the `_[_]ᴿ` / `_[_]ˢ` clauses
-#   * the `instᴿ-*` / `inst-*` rules and their `refl` proofs
-#   * the constructor cases of right-idᴿ, compositionality{ᴿᴿ,ᴿˢ,ˢᴿ,ˢˢ}
-#     and coincidence
-#   * the {-# REWRITE #-} block
-#
-# EXTENSION over the hand-written core: a binder may bind SEVERAL variables
-# (`lam : ty -> (vl -> tm -> tm) -> vl`).  The hand core only ever lifts a
-# map once; here a k-ary binder lifts k times, `((ξ ↑ᴿ b₁) ↑ᴿ b₂)`, and the
-# five structural inductions chain their lifting lemma k times.  No new
-# REWRITE rule is needed — iterated lifting is iterated use of the same
-# single-lift rules.
 
 
 def get_max_arity(sig: Signature) -> int:
@@ -1719,8 +1581,6 @@ def all_nat_vars(sig: Signature) -> list[str]:
 
 
 def index_vars(sig: Signature) -> list[str]:
-    """Every identifier that occurs in an index position and is not a
-    literal or a ℕ constructor.  These become generalizable ℕ variables."""
     out: list[str] = []
 
     def scan(applied: str) -> None:
@@ -1775,7 +1635,7 @@ def arg_names(c: ConstructorDecl) -> list[str]:
     names: list[str] = []
     counts: dict[str, int] = {}
     for arg in c.arguments:
-        if arg.index:                       # `#n` is referred to by its own name
+        if arg.index:
             names.append(arg.target_type)
             continue
         base = arg.var_base
@@ -1786,7 +1646,6 @@ def arg_names(c: ConstructorDecl) -> list[str]:
 
 
 def ctor_index_vars(c: ConstructorDecl) -> list[str]:
-    """Index variables this constructor mentions, anywhere."""
     out: list[str] = []
 
     def scan(applied: str) -> None:
@@ -1805,9 +1664,6 @@ def ctor_index_vars(c: ConstructorDecl) -> list[str]:
 
 
 def target_only_index_vars(c: ConstructorDecl) -> list[str]:
-    """Index variables that occur ONLY in the conclusion.  Nothing in the
-    arguments determines them, so a rewrite rule must pin them explicitly --
-    this is `nilP {S = S} {n = n}` in ../Sigma/FsubPatterns.agda."""
     in_args: set[str] = set()
     for a in c.arguments:
         if a.sort_head is not None:
@@ -1830,10 +1686,6 @@ def mentions_index(c: ConstructorDecl) -> bool:
 
 
 def iter_pins(c: ConstructorDecl) -> str:
-    """Pins the induction clauses need: the arity of a variable-arity binder
-    is mentioned by the proof body, so it must be bound by the pattern.  If
-    the arity is an explicit `#n` argument it is already bound and must NOT
-    be pinned -- it is not an implicit argument at all."""
     explicit = {a.target_type for a in c.arguments if a.index}
     return "".join(f" {{{a.iter_arity} = {a.iter_arity}}}"
                    for a in c.arguments
@@ -1841,7 +1693,6 @@ def iter_pins(c: ConstructorDecl) -> str:
 
 
 def arg_agda_type(arg: Argument) -> str:
-    """The Agda type of a constructor argument, in scope `S`."""
     if arg.index:
         return "ℕ"
     if arg.external:
@@ -1854,11 +1705,6 @@ def arg_agda_type(arg: Argument) -> str:
 
 
 def needs_dep_cong(c: ConstructorDecl) -> bool:
-    """A constructor carrying a ℕ index is a DEPENDENT function -- a later
-    argument's type mentions the index -- so the non-dependent `congN`
-    helpers do not apply to it.  It gets its own congruence instead, with
-    the index (and any external parameter) held FIXED on both sides.  This
-    is what ../Sigma/FsubPatterns.agda writes by hand as `cong-let`."""
     return any(a.index for a in c.arguments) or mentions_index(c)
 
 
@@ -1878,8 +1724,6 @@ def generate_dep_congs(sig: Signature) -> str:
         rhs = " ".join(v if (a.index or a.external) else v + "′"
                        for a, v in zip(c.arguments, names, strict=True))
         fixed_binds = "".join(f" {{{v} : {arg_agda_type(a)}}}" for a, v in fixed)
-        # An index variable that occurs ONLY in the conclusion is determined by
-        # nothing in the premises, so pin it on both sides or it stays a meta.
         pins = "".join(f" {{{v} = {v}}}" for v in target_only_index_vars(c))
         head = f"{c.name}{pins}"
         out.append(f"cong-{c.name} :{fixed_binds} {binds} →")
@@ -1894,13 +1738,13 @@ def generate_variables(sig: Signature) -> str:
     used_vars_type: dict[str, str] = {}
     used_vars_external: dict[str, bool] = {}
 
-    index_names: list[str] = []      # now declared in the EARLY variable block
+    index_names: list[str] = []
     for c in sig.constructors:
         for arg, var_name in zip(c.arguments, arg_names(c), strict=True):
             if arg.index:
-                continue          # declared in the EARLY variable block
+                continue
             if arg.sort_head is not None:
-                continue          # bound explicitly per rule, not generalized
+                continue
             if var_name in used_vars and (
                 used_vars_type[var_name] != arg.target_type
                 or used_vars_external[var_name] != arg.external
@@ -1936,36 +1780,58 @@ def generate_variables(sig: Signature) -> str:
 
 
 def lifted(map_var: str, binders: list[str], lift_op: str) -> str:
-    """`ξ`, `(ξ ↑ᴿ b₁)`, `((ξ ↑ᴿ b₁) ↑ᴿ b₂)`, … — the map under a binder.
-
-    The constructor's scope extension is `(bₖ ∷ … ∷ b₁ ∷ S)` (the binder
-    list reversed), so b₁ is lifted first."""
     e = map_var
     for b in binders:
         e = f"({e} {lift_op} {b})"
     return e
 
 
-def chain(binders: list[str], base: str, step_fun: str, base_first: bool) -> str:
-    """Iterate a single-lift lemma over a k-ary binder.
-
-    base_first = True  : Pₖ = trans (cong step Pₖ₋₁) base   (lemma applies OUTSIDE)
-    base_first = False : Pₖ = trans base (cong step Pₖ₋₁)   (lemma applies at the top)
-    """
+def chain(binders: list[str], base: str, step_fun: str) -> str:
     p = base
     for b in binders[1:]:
-        if base_first:
-            p = f"(trans (cong ({step_fun} {b}) {p}) {base})"
-        else:
-            p = f"(trans {base} (cong ({step_fun} {b}) {p}))"
+        p = f"(trans (cong ({step_fun} {b}) {p}) {base})"
     return p
+
+
+# ── k-ary binders: the iterated lift congruence has to be PINNED ─────
+COMP_SPEC: dict[str, tuple[str, str, str, str, str, str, str]] = {
+    "compositionalityᴿᴿ":  ("ξ₁", "ξ₂", "ξ₁", "ξ₂", "↑ᴿ", "↑ᴿ", "↑ᴿ"),
+    "compositionalityᴿˢ":  ("ξ",  "σ",  "ξ",  "σ",  "↑ᴿ", "↑ˢ", "↑ˢ"),
+    "compositionalityˢᴿ":  ("σ",  "ξ",  "σ₁", "ξ₂", "↑ˢ", "↑ᴿ", "↑ˢ"),
+    "compositionalityˢᴿ′": ("σ",  "ξ",  "σ",  "ξ",  "↑ˢ", "↑ᴿ", "↑ˢ"),
+    "compositionalityˢˢ":  ("σ₁", "σ₂", "σ₁", "σ₂", "↑ˢ", "↑ˢ", "↑ˢ"),
+}
+
+
+def comp_chain(binders: list[str], base: str, lemma: str,
+               vars: tuple[str, str] | None = None) -> str:
+    k1, k2, v1, v2, l1, l2, lr = COMP_SPEC[lemma]
+    if vars is not None:
+        v1, v2 = vars
+
+    def at(d: int) -> str:
+        if d == 0 and len(binders) == 1:
+            return base
+        return (f"({base} {{{k1} = {lifted(v1, binders[:d], l1)}}}"
+                f" {{{k2} = {lifted(v2, binders[:d], l2)}}})")
+
+    p = at(0)
+    for d, b in enumerate(binders[1:], start=1):
+        p = f"(trans {at(d)} (cong (_{lr} {b}) {p}))"
+    return p
+
+
+def comp_head_pins(lemma: str, vars: tuple[str, str] | None = None) -> str:
+    _, _, v1, v2, *_ = COMP_SPEC[lemma]
+    if vars is not None:
+        v1, v2 = vars
+    return f"{{{v1} = {v1}}} {{{v2} = {v2}}}"
 
 
 # ── the syntax-dependent blocks ──────────────────────────────────────
 
 
 def unparen(t: str) -> str:
-    """Drop one fully-enclosing paren pair: inside `[ … ]ᴿ` it is redundant."""
     if not (t.startswith("(") and t.endswith(")")):
         return t
     depth = 0
@@ -1980,14 +1846,9 @@ def unparen(t: str) -> str:
 
 
 def generate_map_clauses(sig: Signature, op: str, map_var: str, lift_op: str) -> str:
-    """`op` is the WORLD SUFFIX (ᴿ / ˢ): the traversal is the mixfix `_[_]ᴿ`."""
     data: list[tuple[str, str]] = []
     for c in sig.constructors:
         names = arg_names(c)
-        # In a DEFINING CLAUSE a generalizable variable is not in scope, so an
-        # arity that comes from an indexed sort is written `_` and inferred.
-        # An arity introduced by an explicit `#n` argument is bound by the
-        # pattern and is written by name.
         bound = {a.target_type for a in c.arguments if a.index}
         rhs_args: list[str] = []
         for arg, v in zip(c.arguments, names, strict=True):
@@ -2037,9 +1898,6 @@ def generate_inst_decls(sig: Signature, prefix: str, op: str, map_var: str,
             lhs = f"{head} {{S = S}} [ {map_var} ]{op}" if not pins else \
                   f"{head[:len(c.name)]} {{S = S}}{pins} [ {map_var} ]{op}"
         rhs = f"{c.name} {' '.join(rhs_args)}" if rhs_args else f"{c.name}"
-        # An index-carrying constructor gets an EXPLICIT telescope, because the
-        # global `variable` block cannot express the index linkage between its
-        # arguments (consP : pat n₁ n₂ → rpat n₂ n₃ → rpat n₁ n₃).
         tele = ""
         if mentions_index(c):
             binds = " ".join(f"{{{v} : {arg_agda_type(a)}}}"
@@ -2064,15 +1922,15 @@ def generate_refl_proofs(sig: Signature, prefix: str) -> str:
 
 
 def generate_induction(sig: Signature, lemma: str,
-                       arg_proof: ArgProof) -> str:
-    """One structural induction: one clause per constructor, `congN` of the
-    per-argument proofs supplied by `arg_proof(arg, var_name)`."""
+                       arg_proof: ArgProof, head_pins: str = "") -> str:
     data: list[tuple[str, str]] = []
     for c in sig.constructors:
         names = arg_names(c)
         pat = " ".join(names)
         head = c.name + iter_pins(c)
         lhs = f"{lemma} ({head} {pat})" if pat else f"{lemma} {c.name}"
+        if head_pins and any(len(a.binder_types) > 1 for a in c.arguments):
+            lhs += " " + head_pins
         if needs_dep_cong(c):
             proofs = [arg_proof(a, v) for a, v in zip(c.arguments, names, strict=True)
                       if not (a.index or a.external)]
@@ -2092,12 +1950,13 @@ def right_idR_arg(arg: Argument, v: str) -> str:
         return (f"(trans (cong ({v} [_]ᴿ) (lift*-idᴿ {arg.iter_sort} {arg.iter_arity})) "
                 f"(right-idᴿ {v}))")
     if arg.is_binder:
-        p = chain(arg.binder_types, "lift-idᴿ", "_↑ᴿ", base_first=True)
+        p = chain(arg.binder_types, "lift-idᴿ", "_↑ᴿ")
         return f"(trans (cong ({v} [_]ᴿ) {p}) (right-idᴿ {v}))"
     return f"(right-idᴿ {v})"
 
 
-def comp_arg(lemma: str, op: str, base: str, lift_op: str) -> ArgProof:
+def comp_arg(lemma: str, op: str, base: str, lift_op: str,
+             vars: tuple[str, str] | None = None) -> ArgProof:
     def go(arg: Argument, v: str) -> str:
         if arg.external or arg.index:
             return "refl"
@@ -2106,10 +1965,18 @@ def comp_arg(lemma: str, op: str, base: str, lift_op: str) -> ArgProof:
             return (f"(trans ({lemma} {v}) (cong ({v} {op}) "
                     f"({star} {arg.iter_sort} {arg.iter_arity})))")
         if arg.is_binder:
-            p = chain(arg.binder_types, base, f"_{lift_op}", base_first=False)
+            p = comp_chain(arg.binder_types, base, lemma, vars)
             return f"(trans ({lemma} {v}) (cong ({v} {op}) {p}))"
         return f"({lemma} {v})"
     return go
+
+
+def coin_chain(binders: list[str]) -> str:
+    p = "(⟨⟩-lift {ξ = ξ})"
+    for d, b in enumerate(binders[1:], start=1):
+        p = (f"(trans (cong (_↑ˢ {b}) {p}) "
+             f"(⟨⟩-lift {{ξ = {lifted('ξ', binders[:d], '↑ᴿ')}}}))")
+    return p
 
 
 def coincidence_arg(arg: Argument, v: str) -> str:
@@ -2120,9 +1987,7 @@ def coincidence_arg(arg: Argument, v: str) -> str:
         return (f"(trans (cong ({v} [_]ˢ) (⟨⟩-lift* {{ξ = ξ}} {b} {n})) "
                 f"(coincidence {v} (ξ ↑ᴿ*[ {b} ] {n})))")
     if arg.is_binder:
-        p = chain(arg.binder_types, "⟨⟩-lift", "_↑ˢ", base_first=True)
-        if len(arg.binder_types) == 1:
-            p = "(⟨⟩-lift {ξ = ξ})"
+        p = coin_chain(arg.binder_types)
         return (f"(trans (cong ({v} [_]ˢ) {p}) "
                 f"(coincidence {v} {lifted('ξ', arg.binder_types, '↑ᴿ')}))")
     return f"(coincidence {v} ξ)"
@@ -2162,15 +2027,11 @@ def generate_rewrite_block(sig: Signature, register_star: bool = True) -> str:
 
     instR = wrap(["instᴿ-var"] + [f"instᴿ-{c.name}" for c in sig.constructors])
     instS = wrap(["inst-var"] + [f"inst-{c.name}" for c in sig.constructors])
-    # With register_star = False the 15 iterated-lifting laws are still DECLARED
-    # AND PROVED but not registered as rewrite rules.  That is the "zero new
-    # rewrite rules" position; it does not reach local confluence for a
-    # signature with a variable-arity binder, and test_agdasubst.py pins it.
     star = wrap(STAR_RULES) if register_star else ""
 
-    n_inst = 2 * (len(sig.constructors) + 1)   # instᴿ-*/inst-*, plus the two var rules
+    n_inst = 2 * (len(sig.constructors) + 1)
     n_star = len(STAR_RULES)
-    return f"""-- ═══ THE COMPLETED TWO-WORLD SYSTEM ════════════════════════════════
+    return f"""-- ═══ The completed two-world system ════════════════════════════════
 --
 -- The curated, locally confluent rule set of gen/Reference/Fsub.agda:
 -- {60 + n_star + n_inst} rules -- 60 signature-independent, {n_star} for the
@@ -2205,7 +2066,7 @@ HEADER = r"""{-# OPTIONS «OPTIONS» #-}
 
 -- Generated by gen/agdasubst.py.  DO NOT EDIT.
 --
--- The multi-sorted, mode-merged σ-calculus with FIRST-CLASS RENAMINGS,
+-- The multi-sorted, mode-merged σ-calculus with first-class renamings,
 -- installed as a locally confluent Agda REWRITE system.  Every part that
 -- does not mention the signature is the verbatim text of the verified
 -- hand-written reference core, gen/Reference/Fsub.agda.
@@ -2289,14 +2150,12 @@ def render(sig: Signature, module_name: str, preamble: str, options: str,
         add("\n" + v + "\n")
     dc = generate_dep_congs(sig)
     if dc:
-        add("\n-- congruences for the constructors that carry a ℕ INDEX: those are\n"
+        add("\n-- congruences for the constructors that carry a ℕ index: those are\n"
             "-- dependent functions, so the non-dependent congN helpers do not apply.\n"
             + dc)
 
     add("\n" + MAPS_REN_A + "\n")
     add(STAR_LIFT_R)
-    # GLUE: the traversal gets its own opaque block so that the n-fold lift
-    # above can sit between it and _↑ᴿ_.  Same layout as ../Sigma/FsubPatterns.agda.
     add("\nopaque\n  unfolding wkᴿ _↑ᴿ_\n\n")
     add(MAPS_REN_B + "\n")
     add("  («VAR» x) [ ξ ]ᴿ = «VAR» (x [ ξ ]ᴿ)\n")
@@ -2337,7 +2196,8 @@ def render(sig: Signature, module_name: str, preamble: str, options: str,
         "cong «VAR» (sym (compositionalityᴿᴿ-var x {ξ₁ = ξ₁} {ξ₂ = ξ₂}))\n")
     add(generate_induction(sig, "compositionalityᴿᴿ",
                            comp_arg("compositionalityᴿᴿ", "[_]ᴿ",
-                                    "lift-dist-compᴿᴿ", "↑ᴿ")) + "\n")
+                                    "lift-dist-compᴿᴿ", "↑ᴿ"),
+                           comp_head_pins("compositionalityᴿᴿ")) + "\n")
 
     add(PROOF_MID + "\n")
     add("  inst-var = refl\n")
@@ -2347,21 +2207,25 @@ def render(sig: Signature, module_name: str, preamble: str, options: str,
     add("  compositionalityᴿˢ («VAR» x) = refl\n")
     add(generate_induction(sig, "compositionalityᴿˢ",
                            comp_arg("compositionalityᴿˢ", "[_]ˢ",
-                                    "lift-dist-compᴿˢ", "↑ˢ")) + "\n")
+                                    "lift-dist-compᴿˢ", "↑ˢ",
+                                    vars=("ξ₁", "σ₂")),
+                           comp_head_pins("compositionalityᴿˢ", ("ξ₁", "σ₂"))) + "\n")
 
     add(LDC_SR + "\n")
     add("  compositionalityˢᴿ {m = V} x {σ₁ = σ₁} {ξ₂ = ξ₂} = sym (coincidence (σ₁ _ x) ξ₂)\n")
     add("  compositionalityˢᴿ («VAR» x) {σ₁ = σ₁} {ξ₂ = ξ₂} = sym (coincidence (σ₁ _ x) ξ₂)\n")
     add(generate_induction(sig, "compositionalityˢᴿ",
                            comp_arg("compositionalityˢᴿ", "[_]ˢ",
-                                    "lift-dist-compˢᴿ", "↑ˢ")) + "\n")
+                                    "lift-dist-compˢᴿ", "↑ˢ"),
+                           comp_head_pins("compositionalityˢᴿ")) + "\n")
 
     add(LDC_SS + "\n")
     add("  compositionalityˢˢ {m = V} x = refl\n")
     add("  compositionalityˢˢ («VAR» x)   = refl\n")
     add(generate_induction(sig, "compositionalityˢˢ",
                            comp_arg("compositionalityˢˢ", "[_]ˢ",
-                                    "lift-dist-compˢˢ", "↑ˢ")) + "\n")
+                                    "lift-dist-compˢˢ", "↑ˢ"),
+                           comp_head_pins("compositionalityˢˢ")) + "\n")
 
     add(ASSOC_DIST + "\n")
     add("  coincidence («VAR» x) ξ = refl\n")
@@ -2374,25 +2238,15 @@ def render(sig: Signature, module_name: str, preamble: str, options: str,
 
     body = "".join(parts).replace("«VAR»", var_name)
     if funext_name != "ext":
-        # `ext` as a whole word, but never `ext*` and never inside a longer name
         body = re.sub(r"\bext(?![*\w])", funext_name, body)
     if epilogue:
         body += "\n" + epilogue + "\n"
     return body
 
 
-
-
 def render_vec(sig: Signature, module_name: str, preamble: str, options: str,
-               epilogue: str = "", var_name: str = "var") -> str:
-    """Render the core over the VECTOR map model.
-
-    Every signature-dependent piece is produced by the same generators the
-    function backend uses -- the traversal clauses, the instᴿ-*/inst-*
-    rules and the congruence inductions are facts about the SYNTAX, not
-    about how a map is represented, so they carry over untouched.  Only
-    the map layer and the proofs of the map laws differ.
-    """
+               epilogue: str = "", var_name: str = "var",
+               emit_star: bool = True) -> str:
     congs = generate_congs(get_max_arity(sig))
     parts: list[str] = []
     add = parts.append
@@ -2406,7 +2260,7 @@ def render_vec(sig: Signature, module_name: str, preamble: str, options: str,
     nats = all_nat_vars(sig)
     add(SYNTAX_HEAD
         .replace("«IDX_VARS»", f"\n  {' '.join(nats)} : ℕ" if nats else "")
-        .replace("«STAR_EXT»", STAR_EXT))
+        .replace("«STAR_EXT»", STAR_EXT if emit_star else ""))
     add(generate_constructors(sig, var_name))
     add("\n")
     add(TERM_VARS)
@@ -2418,14 +2272,14 @@ def render_vec(sig: Signature, module_name: str, preamble: str, options: str,
         add("\n" + dc)
 
     add("\n" + MAPS_VEC + "\n")
-    add(STAR_LIFT_R)
+    if emit_star: add(STAR_LIFT_R)
     add("\nopaque\n  unfolding wk*ᴿ idᴿ wkᴿ _↑ᴿ_\n\n")
     add(INST_R_HEAD_VEC + "\n")
     add("  («VAR» x) [ ξ ]ᴿ = «VAR» (x [ ξ ]ᴿ)\n")
     add(generate_map_clauses(sig, "ᴿ", "ξ", "↑ᴿ") + "\n")
 
     add("\n" + SUB_VEC + "\n")
-    add(STAR_LIFT_S)
+    if emit_star: add(STAR_LIFT_S)
     add("\nopaque\n  unfolding wk*ᴿ idᴿ wkᴿ _↑ᴿ_ _[_]ᴿ ⟨_⟩ _⨟ˢᴿ_ _↑ˢ_\n\n")
     add(INST_S_HEAD_VEC + "\n")
     add("  («VAR» x) [ σ ]ˢ = x [ σ ]ˢ\n")
@@ -2433,7 +2287,8 @@ def render_vec(sig: Signature, module_name: str, preamble: str, options: str,
     add("\n" + SEQ_VEC + "\n")
 
     # ── the renaming world ──
-    add(RW_VEC)
+    add(RW_VEC.replace("«STAR_DECLS»",
+                       STAR_DECLS + "\n" + STAR_DECLS_VEC if emit_star else ""))
     add("\n  -- ══ IIᴿ. traversal rules, renaming world ═════════════════════════\n")
     add("  instᴿ-var : («VAR» x) [ ξ ]ᴿ ≡ «VAR» (x [ ξ ]ᴿ)\n")
     add(generate_inst_decls(sig, "instᴿ", "ᴿ", "ξ", "↑ᴿ") + "\n")
@@ -2443,35 +2298,41 @@ def render_vec(sig: Signature, module_name: str, preamble: str, options: str,
     add("  right-idᴿ («VAR» x)   = cong «VAR» (lookup-idᴿ x)\n")
     add(generate_induction(sig, "right-idᴿ", right_idR_arg) + "\n")
     add(CRR_VEC + "\n")
-    add("  compositionalityᴿᴿ («VAR» x) = cong «VAR» (compositionalityᴿᴿ x)\n")
+    add("  compositionalityᴿᴿ («VAR» x) {ξ₁ = ξ₁} {ξ₂ = ξ₂} = "
+        "cong «VAR» (sym (compositionalityᴿᴿ-var x {ξ₁ = ξ₁} {ξ₂ = ξ₂}))\n")
     add(generate_induction(sig, "compositionalityᴿᴿ",
                            comp_arg("compositionalityᴿᴿ", "[_]ᴿ",
-                                    "lift-dist-compᴿᴿ", "↑ᴿ")) + "\n")
+                                    "lift-dist-compᴿᴿ", "↑ᴿ"),
+                           comp_head_pins("compositionalityᴿᴿ")) + "\n")
 
     # ── the substitution world ──
     add(SW_VEC + "\n")
     add("  coincidence («VAR» x) ξ = coincidence-var x ξ\n")
     add(generate_coincidence(sig) + "\n")
     add(SW_VEC_B + "\n")
-    add("  compositionalityᴿˢ («VAR» x) = compositionalityᴿˢ x\n")
+    add("  compositionalityᴿˢ («VAR» x) = compositionalityᴿˢ-var x\n")
     add(generate_induction(sig, "compositionalityᴿˢ",
                            comp_arg("compositionalityᴿˢ", "[_]ˢ",
-                                    "lift-dist-compᴿˢ", "↑ˢ")) + "\n")
+                                    "lift-dist-compᴿˢ", "↑ˢ"),
+                           comp_head_pins("compositionalityᴿˢ")) + "\n")
     add(SW_VEC_C + "\n")
     add("  compositionalityˢᴿ′ («VAR» x) = compositionalityˢᴿ′ x\n")
     add(generate_induction(sig, "compositionalityˢᴿ′",
                            comp_arg("compositionalityˢᴿ′", "[_]ˢ",
-                                    "lift-⨟ˢᴿ", "↑ˢ")) + "\n")
+                                    "lift-⨟ˢᴿ", "↑ˢ"),
+                           comp_head_pins("compositionalityˢᴿ′")) + "\n")
     add(SW_VEC_D + "\n")
     add("  compositionalityˢˢ («VAR» x) = compositionalityˢˢ x\n")
     add(generate_induction(sig, "compositionalityˢˢ",
                            comp_arg("compositionalityˢˢ", "[_]ˢ",
-                                    "lift-dist-compˢˢ", "↑ˢ")) + "\n")
+                                    "lift-dist-compˢˢ", "↑ˢ"),
+                           comp_head_pins("compositionalityˢˢ")) + "\n")
     add(SW_VEC_E + "\n")
 
     add("\n" + generate_inst_decls_s_head(sig) + "\n")
-    add(STAR_VEC_BLOCK + "\n")
-    add(generate_rewrite_block_vec(sig))
+    if emit_star:
+        add(STAR_PROOFS_VEC + "\n\n")
+    add(generate_rewrite_block_vec(sig, emit_star))
     add("\n" + EPILOGUE + "\n")
 
     body = "".join(parts).replace("«VAR»", var_name)
@@ -2481,10 +2342,7 @@ def render_vec(sig: Signature, module_name: str, preamble: str, options: str,
 
 
 def generate_inst_decls_s_head(sig: Signature) -> str:
-    """The substitution-world traversal rules, declared and proved."""
-    out = ["opaque",
-           "  unfolding wk*ᴿ idᴿ wkᴿ _↑ᴿ_ _[_]ᴿ _⨟ᴿ_ ⟨_⟩ _⨟ˢᴿ_ _↑ˢ_ _[_]ˢ _⨟_",
-           "",
+    out = ["",
            "  -- ══ IIˢ. traversal rules, substitution world ═════════════════════",
            "  inst-var : («VAR» x) [ σ ]ˢ ≡ x [ σ ]ˢ",
            generate_inst_decls(sig, "inst", "ˢ", "σ", "↑ˢ"),
@@ -2494,41 +2352,12 @@ def generate_inst_decls_s_head(sig: Signature) -> str:
 
 
 # ==========================================
-# 4b. Preamble directives
 # ==========================================
-#
-# A line of a `.sg` file that begins with `%` is copied VERBATIM into the
-# generated module, just after the standard imports and before the `Sort`
-# datatype.  This is what makes quoted external argument types
-# (`c : "Label" -> ty -> ty`) usable end to end -- the preamble is where
-# the import or definition of `Label` goes -- and it is also where fixity
-# declarations go, since they must precede the constructor they govern.
 
 
 def split_directives(
     source: str,
 ) -> tuple[str, str, str, str, str | None, str]:
-    """Split a `.sg` source into its directives and its body.
-
-    Returns (preamble, epilogue, var-constructor, funext helper, module
-    name or None, body).
-
-    `%  <text>`   preamble line, copied verbatim before `data Sort`.
-    `%%module M`  the name of the emitted module.  Needed when the module
-                  is QUALIFIED and so does not match the output file's
-                  basename: `Sigma/Fsub.agda` holds `module Sigma.Fsub`.
-                  Defaults to the basename of the output file.
-    `%%funext N`  EXTENSION: the name of the function-extensionality helper
-                  (default `ext`; rename it when the signature needs `ext`).
-    `%%var NAME`  EXTENSION: the name of the variable constructor
-                  (default `var`; `Sigma/Fsub.agda` calls it `` `_ ``).
-    `%%epilogue`  EXTENSION: everything after this line is copied verbatim
-                  after the REWRITE block.  This is where a signature puts
-                  the Agda text that DEPENDS on its own syntax and belongs
-                  to the core module -- the F<: context machinery
-                  (`↑ˢᵗ_`, `Ctx`, `_∷ₜ_`, `wk-telescope`, `_∋_∶_`) and the
-                  generalizable variables the metatheory expects.
-    """
     pre: list[str] = []
     epi: list[str] = []
     body: list[str] = []
@@ -2549,10 +2378,6 @@ def split_directives(
             elif directive.startswith("module "):
                 module_name = directive[7:].strip()
             elif directive.startswith("funext "):
-                # EXTENSION: rename the function-extensionality helper.  The
-                # default `ext` collides with Sigma/FsubPatterns.agda's scope
-                # extension `ext : ℕ → Scope → Scope`, which is why that file
-                # calls the helper `ext-f`.
                 funext_name = directive[7:].strip()
             else:
                 raise SyntaxError(f"unknown %% directive: {line!r}")
@@ -2577,6 +2402,9 @@ def main() -> None:
                "(signature on stdin).  --model=vectors is the default.")
     parser.add_argument("files", nargs="+", metavar="FILE",
                         help="[input.sg] output.agda")
+    parser.add_argument("--no-star", action="store_true",
+                        help="omit the iterated-lifting family, which only a signature "
+                             "with a variable-arity binder needs")
     parser.add_argument("--model", default="vectors",
                         choices=["vec", "vectors", "fun", "functions"],
                         help="how to model a map.  \"vectors\" (the default) "
@@ -2594,8 +2422,8 @@ def main() -> None:
         output_path = args.files[0]
         if sys.stdin.isatty():
             print("Reading from stdin... (Press Ctrl+D to finish)", file=sys.stderr)
-        if hasattr(sys.stdin, "reconfigure"):        # signatures are UTF-8
-            sys.stdin.reconfigure(encoding="utf-8") # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+        if hasattr(sys.stdin, "reconfigure"):
+            sys.stdin.reconfigure(encoding="utf-8")
         input_source = sys.stdin.read()
     elif len(args.files) == 2:
         input_path = args.files[0]
@@ -2626,7 +2454,8 @@ def main() -> None:
         if args.model in ("vec", "vectors"):
             agda_code = render_vec(signature, module_name, preamble,
                                    "--rewriting --local-confluence-check",
-                                   epilogue=epilogue, var_name=var_name)
+                                   epilogue=epilogue, var_name=var_name,
+                                   emit_star=not args.no_star)
         else:
             agda_code = render(signature, module_name, preamble,
                                "--rewriting --local-confluence-check",
@@ -2648,7 +2477,6 @@ def main() -> None:
         print(f"Syntax Error: {e}", file=sys.stderr)
         sys.exit(1)
     except ValueError as e:
-        # a signature that parses but violates an invariant of the AST
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 

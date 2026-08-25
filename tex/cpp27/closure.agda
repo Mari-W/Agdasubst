@@ -1,16 +1,16 @@
 {-# OPTIONS --rewriting #-}
 
--- Why the rule set has exactly the rules it has: the ABSENCES, checked.
+-- Why the rule set has exactly the rules it has: the absences, checked.
 --
 -- TRS.md derives the 72 rules as a small base closed under four completion
 -- operators (C1 two worlds, C2 continuations, C3 mode V, C4 coercion).  Each
--- operator comes with a side condition saying when an image is NOT needed.
+-- operator comes with a side condition saying when an image is not needed.
 -- Those side conditions are the interesting part of the account -- they are
 -- what makes the rule set a derivation rather than a list -- and they are what
 -- this module checks.  Every proof is `refl`, so each one says: the redex the
 -- missing rule would have handled already reduces without it.
 --
--- Checked from OUTSIDE systemf's `opaque` block, on purpose: inside it the
+-- Checked from outside systemf's `opaque` block, on purpose: inside it the
 -- definitions unfold and the rules no longer match, so a `refl` there would
 -- prove something else.
 
@@ -24,12 +24,12 @@ open import systemf
 private variable
   S₄ S₅ : Scope
 
--- ══ C2: `assoc` right-nests `⨟`, so a rule matching a non-variable RIGHT
+-- ══ C2: `assoc` right-nests `⨟`, so a rule matching a non-variable right
 --    operand can no longer see it inside a chain and needs a `-⨟` image.
---    FIVE rules match a non-variable right operand and have NO such image.
+--    five rules match a non-variable right operand and have no such image.
 --    The claim is that each continued redex escapes by an inner step.
 
--- comp-idᵣᴿ escapes because idᴿ is also a LEFT unit
+-- comp-idᵣᴿ escapes because idᴿ is also a left unit
 c2-comp-idᵣᴿ : ∀ {ξ : S₁ →ᴿ S₂} {ξ′ : S₂ →ᴿ S₃} → ξ ⨟ᴿ (idᴿ ⨟ᴿ ξ′) ≡ ξ ⨟ᴿ ξ′
 c2-comp-idᵣᴿ = refl
 
@@ -52,7 +52,7 @@ c2-⟨⟩-cons : ∀ {ξ : S₁ →ᴿ S₂} {τ : S₂ →ˢ S₃} {t : S₃ �
   ⟨ ξ ↑ᴿ s ⟩ ⨟ˢ ((t ∙ˢ τ) ⨟ˢ ρ) ≡ (t [ ρ ]ˢ) ∙ˢ (⟨ ξ ⟩ ⨟ˢ (τ ⨟ˢ ρ))
 c2-⟨⟩-cons = refl
 
--- ══ C4: ⟨⟩-split-tail is the TAIL companion of ⟨⟩-split-⨟, and is needed
+-- ══ C4: ⟨⟩-split-tail is the tail companion of ⟨⟩-split-⨟, and is needed
 --    only in tail position.  With a continuation present, ⟨⟩-split-⨟ followed
 --    by lift-dist-compˢᴿ-⨟ already does the job, which is why there is no
 --    `⟨⟩-split-tail-⨟`.
@@ -60,7 +60,7 @@ c4-tail : ∀ {σ : S₁ →ˢ S₂} {ξ : S₂ →ᴿ S₃} {ξ′ : (s ∷ S�
   (σ ↑ˢ s) ⨟ˢ (⟨ (ξ ↑ᴿ s) ⨟ᴿ ξ′ ⟩ ⨟ˢ τ) ≡ ((σ ⨟ˢ ⟨ ξ ⟩) ↑ˢ s) ⨟ˢ (⟨ ξ′ ⟩ ⨟ˢ τ)
 c4-tail = refl
 
--- ══ THE DISPLAYED NORMALIZATION (paper, §3.3) ═══════════════════════
+-- ══ The displayed normalization (paper, §3.3) ══════════════════════
 --    Every intermediate term of the two branches shown in the paper is the
 --    same normal form, so each step below holds by `refl`.  This is what
 --    licenses the claim that the displayed trace is the one Agda takes.
@@ -91,7 +91,7 @@ module Trace {S₁ S₂ : Scope} {s s′ : Sort}
   r3 : t [ ((t′ [ σ ]ˢ) ∙ˢ (idˢ ⨟ˢ σ)) ]ˢ                              ≡ nf
   r3 = refl
 
--- ══ lift-id (σ⇑'s LiftId) is SUBSUMED, not excluded: its left-hand side is a
+-- ══ lift-id (σ⇑'s LiftId) is subsumed, not excluded: its left-hand side is a
 --    strict instance of ⟨⟩-lift's, which sends it to ⟨ idᴿ ↑ᴿ s ⟩, where
 --    lift-idᴿ finishes under the coercion.  Deregistering it therefore costs
 --    no definitional equality -- this is that claim, stated as user code.

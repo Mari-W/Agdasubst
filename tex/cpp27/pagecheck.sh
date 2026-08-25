@@ -3,6 +3,7 @@
 # not counted.  CPP allows 12 pages excluding the bibliography.
 set -eu
 cd "$(dirname "$0")"
+mkdir -p build
 python3 - <<'PY'
 t = open('main.tex').read()
 t = t.replace("\\newcommand{\\RWnote}[1]{{\\color{rewC}\\sffamily\\bfseries\\small$\\blacktriangleright$\\,REWRITTEN: #1}}",
@@ -13,14 +14,14 @@ t = t.replace("""\\newcommand{\\MarkBlock}[2]{%
   \\par\\nopagebreak\\noindent{\\color{#1}\\sffamily\\footnotesize #2}%
   \\par\\nopagebreak\\noindent\\textcolor{#1}{\\rule{\\linewidth}{0.9pt}}\\par\\smallskip}""",
               "\\newcommand{\\MarkBlock}[2]{}")
-open('main-sub.tex','w').write(t)
+open('build/main-sub.tex','w').write(t)
 PY
-cp -f main.bbl main-sub.bbl 2>/dev/null || true
-pdflatex -interaction=nonstopmode -halt-on-error main-sub >/dev/null 2>&1
-pdflatex -interaction=nonstopmode -halt-on-error main-sub >/dev/null 2>&1
-pdftotext main-sub.pdf main-sub.txt 2>/dev/null
+cp -f main.bbl build/main-sub.bbl 2>/dev/null || true
+pdflatex -interaction=nonstopmode -halt-on-error -output-directory=build build/main-sub >/dev/null 2>&1
+pdflatex -interaction=nonstopmode -halt-on-error -output-directory=build build/main-sub >/dev/null 2>&1
+pdftotext build/main-sub.pdf build/main-sub.txt 2>/dev/null
 python3 - <<'PY'
-pages = open('main-sub.txt').read().split(chr(12))
+pages = open('build/main-sub.txt').read().split(chr(12))
 total = len([p for p in pages if p.strip()])
 body = total
 for i, p in enumerate(pages, 1):

@@ -1,29 +1,18 @@
 {-# OPTIONS --rewriting --local-confluence-check #-}
 
--- ═══ POPLMark Reloaded STLC+, Challenges 2a and 2b (WITH SUMS) ══════
---   [Abel, Allais, Hameer, Pientka, Momigliano, Schäfer, Stark, JFP 2019]
+-- ═══ POPLmark Reloaded STLC+, Challenges 2a and 2b (with sums) ═════
 --
---   2a  properties of the inductive SN:  renaming, ANTI-renaming,
---       extensionality                                 (Lemmas 3.17-3.19)
+--   2a  renaming, anti-renaming and extensionality of the inductive SN
+--                                                    (Lemmas 3.17-3.19)
 --   2b  the Kripke logical predicate R, CR1-CR3, semantic substitutions,
---       the Fundamental Lemma, and  ⊢ M : A  ⟹  M ∈ SN
---                                       (Thm 3.3, Def 3.3, Lem 3.20, Cor 3.4)
+--       the Fundamental Lemma, and ⊢ M : A ⟹ M ∈ SN
+--                                    (Thm 3.3, Def 3.3, Lem 3.20, Cor 3.4)
 --
--- The terms are INTRINSICALLY SCOPED, not intrinsically typed:
--- Languages/STLCSums.agda is the reference development's multi-sorted
--- σ-calculus at the closed sort set {expr}.  The simple types (now with
--- `_+ᵗ_`) are the separate datatype `Ty` below, and the typing judgment
--- `Γ ⊢ e ∶ A` is a separate inductive family.  See the header of
--- Reloaded/Normalization.agda for why the logical predicate is indexed by a
--- TYPE and a scoped term rather than by a typing derivation; with sums
--- the argument is the same, and `SNsum` below inherits it.
---
--- Challenges 1a/1b are in Reloaded/SumsSoundness.agda.
---
--- THE ANSWER TO THE STRUCTURAL QUESTION is at `R` below: the arrow case
--- stays a Π-type defined by recursion on the type, but the SUM case
--- CANNOT -- it has to be an inductive closure (`SNsum`).  So the
--- logical predicate needed RESTRUCTURING, not just more cases.
+-- Challenges 1a and 1b are in Reloaded/SumsSoundness.agda.
+-- Reloaded/Normalization.agda carries the same structure without sums,
+-- and its header explains why the syntax is intrinsically scoped rather
+-- than intrinsically typed.  The permutative conversions are out of
+-- scope; Reloaded/SumsCommuting.agda measures what they would cost.
 
 module Reloaded.SumsNormalization where
 
@@ -35,7 +24,7 @@ open import Data.List using (List; []; _∷_)
 
 -- ─── the language-specific layer this metatheory sits on ────────────
 -- Moved out of Languages.STLCSums: none of it is σ-calculus.  It is contexts,
--- generalizable variables and congruences for THIS language, so it
+-- generalizable variables and congruences for this language, so it
 -- belongs with the proofs and not in generated output.
 
 -- the three-argument congruence the metatheory of `case` uses
@@ -44,7 +33,7 @@ cong-case : ∀ {S} {e e′ : S ⊢ expr} {u u′ v v′ : (expr ∷ S) ⊢ expr
 cong-case refl refl refl = refl
 
 
--- ═══ THE OBJECT LANGUAGE'S TYPES AND TYPING JUDGMENT ════════════════
+-- ═══ the object language'S types and typing judgment ════════════════
 
 infixr 6 _⇒ᵗ_
 infixr 6 _+ᵗ_
@@ -166,7 +155,7 @@ _⊢⋯ˢ_ {σ = σ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} (⊢case {A = A} {B = B} d 
 
 -- ─── the inductive characterisation of strong normalisation ─────────
 -- Fig. 3 of the challenge, transcribed rule for rule, plus the sum
--- rules.  The paper's typing premises are DROPPED, not hidden in the
+-- rules.  The paper's typing premises are dropped, not hidden in the
 -- indices: SN is a predicate on raw scoped terms.
 
 data SNe    : ∀ {S} → S ⊢ expr → Set
@@ -200,7 +189,7 @@ data _⟶SN_ where
   cseSN : ∀ {S} {e e′ : S ⊢ expr} {u v : (expr ∷ S) ⊢ expr} →
           e ⟶SN e′ → (case e u v) ⟶SN (case e′ u v)
 
--- ═══ CHALLENGE 2a ═══════════════════════════════════════════════════
+-- ═══ challenge 2a ═══════════════════════════════════════════════════
 
 -- ─── Lemma 3.17: renaming ───────────────────────────────────────────
 -- The βSN case needs  (e [ n ]₀) [ ξ ]ᴿ ≡ (e [ (ξ ↑ᴿ expr) ]ᴿ) [ n [ ξ ]ᴿ ]₀.
@@ -228,15 +217,15 @@ ren-⟶SN (βinl m v) ξ = βinl (ren-SN m ξ) (ren-SN v (ξ ↑ᴿ _))
 ren-⟶SN (βinr m u) ξ = βinr (ren-SN m ξ) (ren-SN u (ξ ↑ᴿ _))
 ren-⟶SN (cseSN st) ξ = cseSN (ren-⟶SN st ξ)
 
--- ─── Lemma 3.18: ANTI-renaming ──────────────────────────────────────
+-- ─── Lemma 3.18: anti-renaming ──────────────────────────────────────
 -- The paper's flagged pain point: it must invert through `e [ ξ ]ᴿ`, so
--- it holds for renamings only.  Here the term is scrutinised FIRST --
+-- it holds for renamings only.  Here the term is scrutinised first --
 -- for a constructor term the rewrite rules make `e [ ξ ]ᴿ` reduce to a
 -- constructor form, and the SN/SNe/⟶SN derivation can then be matched
 -- directly.  That is "pattern matching modulo the equational theory of
 -- renamings" obtained for free from conversion.
 --
--- NOTE: every absurd pattern below is absurd for a SYNTACTIC reason (no
+-- NOTE: every absurd pattern below is absurd for a syntactic reason (no
 -- constructor of the inductive family matches the head of the term),
 -- never because two object-language types differ.  That is why dropping
 -- intrinsic typing costs this proof nothing.
@@ -301,33 +290,12 @@ anti-⟶SN (case (f · a) u v) {ξ = ξ} (cseSN st) with anti-⟶SN (f · a) {ξ
 anti-⟶SN (case (case c w z) u v) {ξ = ξ} (cseSN st) with anti-⟶SN (case c w z) {ξ = ξ} st
 ... | (e′ , st′ , refl) = case e′ u v , cseSN st′ , refl
 
--- ─── substituting a VARIABLE is a renaming ──────────────────────────
--- THE ONE SUBSTITUTION FACT THIS DEVELOPMENT HAS TO PROVE BY HAND.
--- `t [ ` x ]₀` and `t [ x ∙ᴿ idᴿ ]ᴿ` are two DISTINCT normal forms of
--- the rewrite system.  `t [ ` x ]₀` unfolds to `t [ (` x) ∙ˢ idˢ ]ˢ`, and
--- `idˢ` IS `⟨ idᴿ ⟩` -- but the map is cons-shaped, not `⟨ _ ⟩`-shaped, so
--- `coincidence` (whose left-hand side needs a syntactic `⟨ ξ ⟩`) cannot
--- fire on it.
---
--- The rule that would fix this is `(` x) ∙ˢ ⟨ ξ ⟩ → ⟨ x ∙ᴿ ξ ⟩`: the
--- S -> R orientation that `⟨⟩-comp`, `⟨⟩-lift` and `coincidence` all
--- have, and which `⟨⟩-cons` -- a LEMMA here, not a registered rule --
--- points the other way round.  With it, `t [ ` x ]₀` would collapse into
--- the renaming world and this file's `[]-as-ren` would be a conversion.
---
--- It cannot be registered.  Measured on this rule set: the rule alone
--- costs 4 non-joinable critical pairs; adding the ⨟-continued companions
--- that close two of them costs 5; adding `distᴿ` and `lift-consᴿ` on top
--- costs 4.  The pair that survives every round is
---
---   (x [ ξ ↑ᴿ s ]ᴿ) [ (` y) ∙ˢ ⟨ ξ₁ ⟩ ]ˢ
---
--- whose two reducts meet only if composition at a VARIABLE folds, so that
--- `lift-consᴿ` can fire -- and composition at mode V pushes, because
--- folding there overlaps `def-wkᴿ` unjoinably.  So this is the same
--- obstruction as the push-at-V/fold-at-T decision, seen from the
--- substitution side.  We supply the missing join as an induction on the
--- term.
+-- ─── substituting a variable is a renaming ──────────────────────────
+-- The one substitution fact this development proves by hand.
+-- `t [ ` x ]₀` unfolds to `t [ (` x) ∙ˢ idˢ ]ˢ`, which is cons-shaped,
+-- so `coincidence`, whose left-hand side needs a syntactic `⟨ ξ ⟩`,
+-- cannot reach the renaming world.  The rule that would bridge them
+-- cannot be registered; supplement/README.md and §5 say why.
 
 ren-as-sub : ∀ {S₁ S₂ s} (t : S₁ ⊢ s) (σ : S₁ →ˢ S₂) (ξ : S₁ →ᴿ S₂) →
   (∀ {s′} (y : S₁ ∋ s′) → y [ σ ]ˢ ≡ ` (y [ ξ ]ᴿ)) → t [ σ ]ˢ ≡ t [ ξ ]ᴿ
@@ -349,7 +317,7 @@ ren-as-sub (case e u v) σ ξ h = cong-case (ren-as-sub e σ ξ h)
 
 -- ─── Lemma 3.19: extensionality of SN ───────────────────────────────
 -- In the β case the redex contracts to `b [ ` x ]₀`, which by the lemma
--- above is a RENAMING, so anti-renaming (3.18) applies.
+-- above is a renaming, so anti-renaming (3.18) applies.
 
 ext-SN : ∀ {S} {e : S ⊢ expr} {x : S ∋ expr} → SN (e · (` x)) → SN e
 ext-SN (neu (app r n))     = neu r
@@ -357,15 +325,15 @@ ext-SN (red (applSN st) d) = red st (ext-SN d)
 ext-SN {x = x} (red (βSN {e = b} _) d) =
   abs (anti-SN b {ξ = x ∙ᴿ idᴿ} (subst SN ([]-as-ren b x) d))
 
--- ═══ CHALLENGE 2b: the Kripke logical predicate ═════════════════════
+-- ═══ challenge 2b: the Kripke logical predicate ═════════════════════
 
--- THE RESTRUCTURING.  For ⇒ the predicate is a Π-type produced by
+-- the restructuring.  For ⇒ the predicate is a Π-type produced by
 -- recursion on the type.  For + that is impossible: the set of
 -- reducible terms at A + B must contain the injections of reducible
--- terms, but ALSO every neutral term (CR3) and be closed under
+-- terms, but also every neutral term (CR3) and be closed under
 -- ⟶SN-expansion (CR2), and those closure conditions cannot be written
--- as a Π-type over the injections.  So the sum case is an INDUCTIVE
--- CLOSURE, parameterised by the two recursive calls:
+-- as a Π-type over the injections.  So the sum case is an inductive
+-- closure, parameterised by the two recursive calls:
 
 data SNsum {S} (P : S ⊢ expr → Set) (Q : S ⊢ expr → Set) : S ⊢ expr → Set where
   r-inl : ∀ {m} → P m → SNsum P Q (inl m)
@@ -394,7 +362,7 @@ R-ren (A ⇒ᵗ B)  f ξ = λ ξ′ n rn → f (ξ ⨟ᴿ ξ′) n rn
 R-ren (A +ᵗ B)  d ξ = SNsum-map ξ (λ p → R-ren A p ξ) (λ q → R-ren B q ξ) d
 
 -- ─── Theorem 3.3: the reducibility candidate conditions ─────────────
--- At `+ᵗ`, CR2 and CR3 are the CONSTRUCTORS of SNsum.
+-- At `+ᵗ`, CR2 and CR3 are the constructors of SNsum.
 cr1 : ∀ {S} (A : Ty) {e : S ⊢ expr} → R A e → SN e
 cr2 : ∀ {S} (A : Ty) {e e′ : S ⊢ expr} → e ⟶SN e′ → R A e′ → R A e
 cr3 : ∀ {S} (A : Ty) {e : S ⊢ expr} → SNe e → R A e
@@ -414,7 +382,7 @@ cr3 (A ⇒ᵗ B) ne    = λ ξ n rn → cr3 B (app (ren-SNe ne ξ) (cr1 A rn))
 cr3 (A +ᵗ B) ne    = r-ne ne
 
 -- ─── Definition 3.3: semantic substitutions ─────────────────────────
--- THIS is where the typing context enters.
+-- this is where the typing context enters.
 Rˢ : ∀ {S₁ S₂} → Ctx S₁ → S₁ →ˢ S₂ → Set
 Rˢ {S₁} Γ σ = ∀ (x : S₁ ∋ expr) → R (Γ x) (x [ σ ]ˢ)
 
@@ -428,7 +396,7 @@ Rˢ-ext σ n rn rσ zero    = rn
 Rˢ-ext σ n rn rσ (suc x) = rσ x
 
 -- lifting a semantic substitution under a binder: needed for the two
--- BRANCHES of a case, which must be shown SN as OPEN terms
+-- branches of a case, which must be shown SN as open terms
 Rˢ-↑ : ∀ {S₁ S₂} {Γ : Ctx S₁} (σ : S₁ →ˢ S₂) (A : Ty) → Rˢ Γ σ →
   Rˢ (A ∷ₜ Γ) (σ ↑ˢ expr)
 Rˢ-↑ σ A rσ zero    = cr3 A (var zero)
@@ -449,7 +417,7 @@ R-case {C = C}         (r-red st d) hu hv su sv =
   cr2 C (cseSN st) (R-case d hu hv su sv)
 
 -- ─── Lemma 3.20: the fundamental lemma ──────────────────────────────
--- INDUCTION ON THE TYPING DERIVATION.
+-- induction on the typing derivation.
 fund : ∀ {S₁ S₂} {Γ : Ctx S₁} {e : S₁ ⊢ expr} {A} {σ : S₁ →ˢ S₂} →
   Γ ⊢ e ∶ A → Rˢ Γ σ → R A (e [ σ ]ˢ)
 fund (⊢` {x = x} refl) rσ = rσ x
@@ -487,7 +455,7 @@ self-app = (` zero) · (` zero)
 Ω : [] ⊢ expr
 Ω = (λx self-app) · (λx self-app)
 
--- ═══ CHALLENGE-REFERENCING NAMES ════════════════════════════════════
+-- ═══ challenge-referencing names ════════════════════════════════════
 
 -- Lemma 3.2/3.3 [Weakening and anti-renaming for typing]
 lemma-3-2-typed-renaming : ∀ {S₁ S₂} {ξ : S₁ →ᴿ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}

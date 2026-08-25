@@ -29,3 +29,4 @@ Cargo.lock
 .DS_Store
 __pycache__/
 main-sub.*
+build/

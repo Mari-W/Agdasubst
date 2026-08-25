@@ -1,29 +1,20 @@
 {-# OPTIONS --rewriting --local-confluence-check #-}
 
--- ═══ POPLMark Reloaded, Challenges 1a and 1b ════════════════════════
+-- ═══ POPLmark Reloaded, Challenges 1a and 1b ════════════════════════
 --
---   1a  properties of the accessibility predicate `sn`: subterm and
---       expansion closure, closure of neutrals, CONFLUENCE ("weak
---       standardisation") and BACKWARD CLOSURE   (Lemmas 3.8-3.13)
+--   1a  subterm and expansion closure of `sn`, closure of neutrals,
+--       confluence and backward closure          (Lemmas 3.8-3.13)
 --   1b  soundness of the inductive characterisation:
---       SN ⟹ sn,  SNe ⟹ sn,  ⟶SN ⟹ ⟶sn        (Lemma 3.14, Thm 3.1)
+--       SN ⟹ sn,  SNe ⟹ sn,  ⟶SN ⟹ ⟶sn       (Lemma 3.14, Thm 3.1)
 --
--- Together with Reloaded/Normalization.agda (2a/2b) this closes the STLC
--- half of the challenge:  every WELL-TYPED term is strongly normalising
--- in the classical, accessibility sense.
+-- With Reloaded/Normalization.agda (2a/2b) this closes the STLC half.
+-- Built on Languages/STLC.agda, so `_↝_`, `sn`, `ne` and `_⟶sn_` are
+-- relations on raw terms; typing enters only at `preservation` and
+-- `corollary-3-4-sn`.
 --
--- The syntax is intrinsically SCOPED (Languages/STLC.agda), so `_↝_`,
--- `sn`, `ne` and `_⟶sn_` are relations on raw λ-terms and every lemma
--- of 1a is a statement about arbitrary terms, typed or not.  Typing
--- enters in exactly two places: `preservation` (the challenge's Lemma
--- 3.1, which the intrinsically typed encoding got for free and which is
--- proved below in four lines) and `corollary-3-4-sn`.
---
--- The σ-calculus contribution here is Lemma 3.7 (`sub-↝`, `ren-↝`):
--- reduction is closed under substitution because
+-- The σ-calculus contribution is Lemma 3.7 (`sub-↝`, `ren-↝`):
 --   (b [ n ]₀) [ σ ]ˢ ≡ (b [ (σ ↑ˢ expr) ]ˢ) [ n [ σ ]ˢ ]₀
--- holds DEFINITIONALLY, so the β case of each of those lemmas is a bare
--- constructor.  Everything else is ordinary induction on derivations.
+-- holds definitionally, so each β case is a bare constructor.
 
 module Reloaded.Soundness where
 
@@ -69,7 +60,7 @@ data _⟶sn_ : ∀ {S} → S ⊢ expr → S ⊢ expr → Set where
            e ⟶sn e′ → (e · n) ⟶sn (e′ · n)
 
 -- ─── Lemma 3.1: reduction preserves typing ──────────────────────────
--- NOT vacuous any more -- the syntax is scoped, not typed -- but the β
+-- not vacuous any more -- the syntax is scoped, not typed -- but the β
 -- case is exactly the substitution lemma `⊢[]` of Reloaded.Normalization,
 -- whose own proof is definitional in the σ-calculus.
 
@@ -128,7 +119,7 @@ ren-↝* : ∀ {S₁ S₂} {e e′ : S₁ ⊢ expr} → e ↝* e′ → (ξ : S�
 ren-↝* done     ξ = done
 ren-↝* (st ◅ r) ξ = ren-↝ st ξ ◅ ren-↝* r ξ
 
--- Lemma 3.6(5): reducing INSIDE the substitution.  Stated pointwise, as
+-- Lemma 3.6(5): reducing inside the substitution.  Stated pointwise, as
 -- the map-level statement the two-world system wants.
 sub-↝* : ∀ {S₁ S₂} (t : S₁ ⊢ expr) (σ σ′ : S₁ →ˢ S₂) →
   (∀ (y : S₁ ∋ expr) → (y [ σ ]ˢ) ↝* (y [ σ′ ]ˢ)) → (t [ σ ]ˢ) ↝* (t [ σ′ ]ˢ)
@@ -239,7 +230,7 @@ sn-⟶sn-exp (βsn {b = b} {n = n} snn) h =
 sn-⟶sn-exp (applsn st₀) h =
   sn-app-exp (sn-app₂ h) (sn-⟶sn-exp st₀ (sn-app₁ h)) st₀ h
 
--- ═══ CHALLENGE 1b: soundness of the inductive definition ════════════
+-- ═══ challenge 1b: soundness of the inductive definition ════════════
 
 -- Lemma 3.14
 SNe→ne : ∀ {S} {e : S ⊢ expr} → SNe e → ne e
@@ -261,8 +252,8 @@ sound-SN (red st d) = sn-⟶sn-exp (sound-⟶SN st) (sound-SN d)
 sound-⟶SN (βSN n)     = βsn (sound-SN n)
 sound-⟶SN (applSN st) = applsn (sound-⟶SN st)
 
--- ═══ THE CHALLENGE, ASSEMBLED ═══════════════════════════════════════
--- every WELL-TYPED term is strongly normalising, in the classical
+-- ═══ the challenge, assembled ═══════════════════════════════════════
+-- every well-typed term is strongly normalising, in the classical
 -- accessibility sense (Cor. 3.4 + Thm 3.1)
 
 strongly-normalising : ∀ {S} {Γ : Ctx S} {e : S ⊢ expr} {A} →
@@ -297,8 +288,8 @@ sn-redex : sn redex
 sn-redex = strongly-normalising ⊢redex
 
 -- ─── and the typing hypothesis is doing real work ───────────────────
--- `Ω` (defined in Reloaded/Normalization.agda) is a well-SCOPED term that
--- is NOT strongly normalising.  Under the old intrinsically typed
+-- `Ω` (defined in Reloaded/Normalization.agda) is a well-scoped term that
+-- is not strongly normalising.  Under the old intrinsically typed
 -- encoding it could not even be written down, which is exactly why
 -- `corollary-3-4-sn` was vacuous there and is not vacuous here.
 -- `Ω ↝ Ω` is `β↝` on the nose: the σ-calculus computes the contractum
@@ -310,7 +301,7 @@ sn-redex = strongly-normalising ⊢redex
 ¬sn-Ω : sn Ω → ⊥
 ¬sn-Ω (acc f) = ¬sn-Ω (f Ω Ω-loops)
 
--- ═══ CHALLENGE-REFERENCING NAMES ════════════════════════════════════
+-- ═══ challenge-referencing names ════════════════════════════════════
 
 -- Lemma 3.1 [Reduction preserves typing]
 lemma-3-1-preservation : ∀ {S} {Γ : Ctx S} {e e′ : S ⊢ expr} {A} →

@@ -1,4 +1,4 @@
-{-# OPTIONS --rewriting --local-confluence-check --double-check --allow-unsolved-metas #-}
+{-# OPTIONS --rewriting --local-confluence-check --allow-unsolved-metas #-}
 module examples where
 
 open import Data.List.Membership.Propositional  
@@ -20,16 +20,28 @@ open import Data.String using (String)
 open import Agda.Builtin.Equality.Rewrite public
 
 
+data Tm (n : Nat) : Set where
+  `_   : Fin n → Tm n
+  _·_  : Tm n → Tm n → Tm n
+
+idᴿ : ∀ {n} → Fin n → Fin n
+idᴿ x = x
+
+_[_] : ∀ {n m} → Tm n → (Fin n → Fin m) → Tm m
+(` x)     [ ξ ] = ` (ξ x)
+(t₁ · t₂) [ ξ ] = (t₁ [ ξ ]) · (t₂ [ ξ ])
+
 --! Rewrite
-+–idᵣ : ∀ n → n + 0 ≡ n
-+–idᵣ zero     = refl
-+–idᵣ (suc n)  = cong suc (+–idᵣ n)
+[id] : ∀ {n} (t : Tm n) → t [ idᴿ ] ≡ t
+[id] (` x)      = refl
+[id] (t₁ · t₂)  = cong₂ _·_ ([id] t₁) ([id] t₂)
+-- ...
 
 --!! RewriteIt
-{-# REWRITE +–idᵣ #-}
+{-# REWRITE [id] #-}
 
 --! RewriteEx
-_ : ∀ {n} → n + 0 ≡ n
+_ : ∀ {n} {t : Tm n} → t [ idᴿ ] ≡ t
 _ = refl
 
 --! Default

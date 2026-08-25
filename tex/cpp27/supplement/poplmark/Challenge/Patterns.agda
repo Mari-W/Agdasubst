@@ -1,21 +1,21 @@
 {-# OPTIONS --rewriting --local-confluence-check #-}
 
--- ═══ POPLmark Challenge, Parts 1B and 2B IN FULL ════════════════════
+-- ═══ POPLmark Challenge, Parts 1B and 2B in full ════════════════════
 --
---   1B  transitivity of subtyping WITH RECORDS  (+ narrowing)
+--   1B  transitivity of subtyping with records  (+ narrowing)
 --   2B  preservation and progress for F<: with records, projection,
---       PATTERNS and `let p = t in t'`
+--       patterns and `let p = t in t'`
 --
--- The pattern machinery adds NO rewrite rule to Languages/FsubPatterns.agda.
--- The n-fold weakening that a `let` performs is threaded as an ORDINARY
--- PARAMETER (`w : S →ᴿ ext n S`) through `ext-ctx` and `sub`, rather
+-- The pattern machinery adds no rewrite rule to Languages/FsubPatterns.agda.
+-- The n-fold weakening that a `let` performs is threaded as an ordinary
+-- parameter (`w : S →ᴿ ext n S`) through `ext-ctx` and `sub`, rather
 -- than being a defined symbol `wkᴿ*` with its own equational theory --
 -- with no iterated Shift there is no iterated ShiftLift rule to
 -- complete, and the metatheory stays inside the core's rule set.
 --
 -- Record types and record terms are terms of the sorts `rtype`/`rexpr`
 -- of the core, so the typed-map machinery of Challenge/Subtyping.agda
--- carries over UNCHANGED -- there is no record traversal and no record
+-- carries over unchanged -- there is no record traversal and no record
 -- substitution lemma anywhere in this file.
 
 module Challenge.Patterns where
@@ -33,13 +33,13 @@ open import Data.Nat.Properties using (≤-refl; ≤-trans; m≤m+n; m≤n+m; n�
 
 -- ─── the language-specific layer this metatheory sits on ────────────
 -- Moved out of Languages.FsubPatterns: none of it is σ-calculus.  It is contexts,
--- generalizable variables and congruences for THIS language, so it
+-- generalizable variables and congruences for this language, so it
 -- belongs with the proofs and not in generated output.
 
 -- ─── the n-fold scope extension, under the names the metatheory uses ──
--- The generated core works with the SORT-GENERIC `ext*` / `↑ᴿ*[ b ]` /
+-- The generated core works with the sort-generic `ext*` / `↑ᴿ*[ b ]` /
 -- `↑ˢ*[ b ]`.  `Challenge/Patterns.agda` was written against the specialised
--- names, so they are re-exported here.  These are DEFINITIONAL aliases, so
+-- names, so they are re-exported here.  These are definitional aliases, so
 -- `ext n S` and `ext* expr n S` are interchangeable and every rewrite rule
 -- of the generic family fires on them.
 
@@ -103,17 +103,17 @@ variable
 -- ─── field membership ───────────────────────────────────────────────
 -- The challenge's  lᵢ ∈ {kⱼ}, together with the selection of the
 -- corresponding type.
--- NOTE this is MEMBERSHIP, not lookup-by-label.  With a lookup function,
+-- NOTE this is membership, not lookup-by-label.  With a lookup function,
 -- reflexivity of record subtyping would need the challenge's
 -- pairwise-distinctness side condition to be carried as a
 -- well-formedness judgment; with membership it does not, and the two
 -- formulations agree exactly on the distinct-label records that the
 -- challenge's syntax admits.
 
--- `Has rt l A` = "l is a field of rt, at its FIRST occurrence, with
+-- `Has rt l A` = "l is a field of rt, at its first occurrence, with
 -- type A".  On the distinct-label records the challenge's syntax admits
 -- this is the same as plain membership; making it first-occurrence is
--- what makes field selection FUNCTIONAL, which E-ProjRcd needs.
+-- what makes field selection functional, which E-ProjRcd needs.
 data Has {S} : S ⊢ rtype → Label → S ⊢ type → Set where
   here  : ∀ {l A rt} → Has (consT l A rt) l A
   there : ∀ {l A l′ A′ rt} → l ≢ l′ → Has rt l A → Has (consT l′ A′ rt) l A
@@ -153,7 +153,7 @@ notin-≢ (ni-cons ne ni) here        = λ eq → ne (sym eq)
 notin-≢ (ni-cons ne ni) (there _ h) = notin-≢ ni h
 
 
--- ═══ PATTERNS: telescopes, matching, and the scope they bind ════════
+-- ═══ patterns: telescopes, matching, and the scope they bind ════════
 
 -- A telescope of n₂−n₁ types, all written in the ambient scope S.
 data Tel (S : Scope) : ℕ → ℕ → Set where
@@ -176,7 +176,7 @@ _++ᵛ_ : ∀ {S n₁ n₂ n₃} → Vals S n₁ n₂ → Vals S n₂ n₃ → V
 (v ∷ xs) ++ᵛ ys = v ∷ (xs ++ᵛ ys)
 
 -- The context extension.  `w` is the weakening from the ambient scope
--- into the scope reached so far; it is a PARAMETER, not a defined
+-- into the scope reached so far; it is a parameter, not a defined
 -- symbol, so it never enters the rewrite system.
 ext-ctx : ∀ {S n₁ n₂} → Tel S n₁ n₂ → (S →ᴿ ext n₁ S) →
   Ctx (ext n₁ S) → Ctx (ext n₂ S)
@@ -244,7 +244,7 @@ Tel-sub-++ : ∀ {S₁ S₂ n₁ n₂ n₃} (Δ₁ : Tel S₁ n₁ n₂) (Δ₂ 
 Tel-sub-++ []       Δ₂ σ = refl
 Tel-sub-++ (A ∷ Δ₁) Δ₂ σ = cong (_ ∷_) (Tel-sub-++ Δ₁ Δ₂ σ)
 
--- the ONE commutation the `let` cases of the traversals need.  Each
+-- the one commutation the `let` cases of the traversals need.  Each
 -- step is `lift-wkᴿ-⨟ᴿ`, which is already a rewrite rule; the induction
 -- is on the telescope, so no iterated lifting law is involved.
 wk↑-ren : ∀ {S₁ S₂ n₁ n₂} (Δ : Tel S₁ n₁ n₂) (ξ : S₁ →ᴿ S₂) →
@@ -295,7 +295,7 @@ WfR-sub σ (wf-cons ni w) = wf-cons (NotIn-sub σ ni) (WfR-sub σ w)
         (P-cons (⊢ᵖ-sub σ pt₁) (⊢ʳ-sub σ pt₂))
 
 -- ─── the judgments ──────────────────────────────────────────────────
--- `_⊢_∶_` is still ONE family carrying subtyping (sort type) and typing
+-- `_⊢_∶_` is still one family carrying subtyping (sort type) and typing
 -- (sort expr).  Record subtyping and record-term typing need their own
 -- judgments: their two sides live at sort `rtype`/`rexpr`, not at
 -- `type`, so they do not fit the `Γ ⊢ t ∶ (t : S ∶⊢ s)` shape.
@@ -318,9 +318,9 @@ data _⊢_∶_ where
   <:-rcd  : Γ ⊢ rt₁ <:ᴿ rt₂ → Γ ⊢ (RcdT rt₁) ∶ (RcdT rt₂)
   -- typing
   ⊢`      : ∀ {x : S ∋ expr} {Γ : Ctx S} {A} → Γ ∋ x ∶ A → Γ ⊢ (` x) ∶ A
-  -- VACUOUS on the challenge's language: F<: has no variables at the
+  -- vacuous on the challenge's language: F<: has no variables at the
   -- record-body sorts, but the mode-merged family `_⊢[_]_` admits a
-  -- variable at EVERY sort, so the judgment has to be total there.
+  -- variable at every sort, so the judgment has to be total there.
   ⊢`ᴿ     : ∀ {x : S ∋ rtype} {Γ : Ctx S} {A} → Γ ∋ x ∶ A → Γ ⊢ (` x) ∶ A
   ⊢`ᴱ     : ∀ {x : S ∋ rexpr} {Γ : Ctx S} {A} → Γ ∋ x ∶ A → Γ ⊢ (` x) ∶ A
   ⊢`ᴾ     : ∀ {n₁ n₂} {x : S ∋ pat n₁ n₂} {Γ : Ctx S} {A} → Γ ∋ x ∶ A → Γ ⊢ (` x) ∶ A
@@ -340,14 +340,14 @@ data _⊢_∶_ where
             (ext-ctx Δ idᴿ Γ) ⊢ e₂ ∶ (B [ wk↑ Δ ]ᴿ) → Γ ⊢ (letP p e₁ e₂) ∶ B
   ⊢<:     : Γ ⊢ e ∶ A → Γ ⊢ A ∶ B → Γ ⊢ e ∶ B
 
--- SA-Rcd, read as an induction over the RIGHT-hand record:
+-- sa-Rcd, read as an induction over the right-hand record:
 -- every field of the supertype must be present in the subtype, with a
 -- subtype-related field type.  Width, depth and permutation at once.
 data _⊢_<:ᴿ_ where
   <:ᴿ-nil  : ∀ {Γ : Ctx S} {rt} → Γ ⊢ rt <:ᴿ nilT
-  -- EXPLICIT REFLEXIVITY.  In the challenge this rule is admissible
-  -- (SA-Rcd + distinct labels derives it); here it is a primitive rule,
-  -- because the multi-sorted syntax admits a record body that IS a
+  -- explicit reflexivity.  In the challenge this rule is admissible
+  -- (sa-Rcd + distinct labels derives it); here it is a primitive rule,
+  -- because the multi-sorted syntax admits a record body that is a
   -- variable, for which the structural proof of reflexivity has no
   -- case.  `<:ᴿ-var-forces-refl` below proves the rule cannot simply be
   -- dropped; Challenge/Records.agda gives the reflexivity-free
@@ -459,10 +459,10 @@ _⊢⋯ᴿ_ {ξ = ξ} {Γ₂ = Γ₂} (⊢let {n = n} {Δ = Δ} {e₂ = e₂} {B
   Γ ⊢ t ∶ A → (_∷ₜ_ {s = s′} P Γ) ⊢ weaken t ∶ weaken A
 ⊢weaken P d = d ⊢⋯ᴿ ⊢wkᴿ P
 
--- ═══ PART 1B: transitivity and narrowing, with records ══════════════
+-- ═══ part 1B: transitivity and narrowing, with records ══════════════
 
--- The induction measure.  Records force a NUMERIC measure: the cut type
--- of a record step is a FIELD of the record, reached through a `Has`
+-- The induction measure.  Records force a numeric measure: the cut type
+-- of a record step is a field of the record, reached through a `Has`
 -- proof, and Agda's termination checker cannot see a field selected by
 -- a proof as a structural subterm.  (Challenge/Subtyping.agda's `Shape`
 -- measure works precisely because F<: without records has only
@@ -498,7 +498,7 @@ Has-size (there {A′ = A′} {rt = rt} ne h) =
 -- narrowing, as in Challenge/Subtyping.agda
 Narrowing : ∀ {S} → Ctx S → S ⊢ type → Ctx S → Set
 -- the `s ≡ type` component records that the entry being narrowed is a
--- TYPE binding X<:Q -- which is what the challenge's narrowing lemma
+-- type binding X<:Q -- which is what the challenge's narrowing lemma
 -- narrows.  It also makes the vacuous record sorts fall out.
 Narrowing {S} Γ₂ Q Γ₁ = ∀ s (x : S ∋ s) →
     (wk-telescope Γ₂ x ≡ wk-telescope Γ₁ x)
@@ -624,7 +624,7 @@ transitivity {Q = Q} = <:-trans (size Q) ≤-refl
 -- 3.2 Lemma [Narrowing]: If Γ, X<:Q, ∆ ⊢ M <: N and Γ ⊢ P <: Q
 --                        then Γ, X<:P, ∆ ⊢ M <: N
 -- (∆ = ∅ here; the general ∆ follows by iterating narrow-ext, and the
---  sort-generic statement narrows a TYPING derivation as well)
+--  sort-generic statement narrows a typing derivation as well)
 narrowing : ∀ {Γ : Ctx S} {P Q : S ⊢ type} {t : (type ∷ S) ⊢ s} {A} →
   Γ ⊢ P <: Q → (Q ∷ₜ Γ) ⊢ t ∶ A → (P ∷ₜ Γ) ⊢ t ∶ A
 narrowing {Q = Q} d =
@@ -743,7 +743,7 @@ sub-wk []       w t = refl
 sub-wk (_∷_ {v = v} d ds) w t =
   cong (_[ ((v [ w ]ᴿ) ∙ˢ idˢ) ]ˢ) (sub-wk ds (w ⨟ᴿ wkᴿ expr) (t [ wkᴿ expr ]ᴿ))
 
--- ═══ PART 2B: preservation and progress ═════════════════════════════
+-- ═══ part 2B: preservation and progress ═════════════════════════════
 
 data Val    : S ⊢ expr → Set
 data ValsᴿE : S ⊢ rexpr → Set
@@ -988,7 +988,7 @@ progressᴿ (⊢ᴿ-cons d ds) with progress d
 ...   | stepᴿ st = stepᴿ (ξ-tail v st)
 ...   | doneᴿ vs = doneᴿ (vcons v vs)
 
--- ═══ NARROWING WITH A TRAILING ∆ — challenge Lemma 3.2 in full ══════
+-- ═══ narrowing with A trailing ∆, challenge Lemma 3.2 in full ══════
 
 data Tele (S : Scope) : Scope → Set where
   []  : Tele S S
@@ -1030,13 +1030,13 @@ narrowing′ : ∀ {Γ : Ctx S} {P Q : S ⊢ type} {t : (type ∷ S) ⊢ s} {A} 
   Γ ⊢ P <: Q → (Q ∷ₜ Γ) ⊢ t ∶ A → (P ∷ₜ Γ) ⊢ t ∶ A
 narrowing′ = narrowing∆ []
 
--- ═══ ELIMINATING THE PRIMITIVE REFLEXIVITY RULE ═════════════════════
--- `_⊢_<:ᴿ°_` is SA-Rcd EXACTLY: the two rules of the challenge, with no
--- reflexivity rule.  Below: (i) `<:ᴿ-refl` is NOT admissible in
--- general, and the mode-merged family is what forces that; (ii) it IS
--- eliminable at every WELL-FORMED record body — literal and
+-- ═══ eliminating the primitive reflexivity rule ═════════════════════
+-- `_⊢_<:ᴿ°_` is sa-Rcd exactly: the two rules of the challenge, with no
+-- reflexivity rule.  Below: (i) `<:ᴿ-refl` is not admissible in
+-- general, and the mode-merged family is what forces that; (ii) it is
+-- eliminable at every well-formed record body, literal and
 -- distinct-labelled, i.e. every record type the challenge's syntax
--- denotes; (iii) hence transitivity transfers to SA-Rcd proper.
+-- denotes; (iii) hence transitivity transfers to sa-Rcd proper.
 
 infix 3 _⊢_<:ᴿ°_
 data _⊢_<:ᴿ°_ {S} (Γ : Ctx S) : S ⊢ rtype → S ⊢ rtype → Set where
@@ -1044,9 +1044,9 @@ data _⊢_<:ᴿ°_ {S} (Γ : Ctx S) : S ⊢ rtype → S ⊢ rtype → Set where
   °cons : ∀ {rt₁ rt₂ l A B} →
     Has rt₁ l A → Γ ⊢ A ∶ B → Γ ⊢ rt₁ <:ᴿ° rt₂ → Γ ⊢ rt₁ <:ᴿ° (consT l B rt₂)
 
--- (i) NON-ADMISSIBILITY.  At a record body that is a VARIABLE — a form
+-- (i) non-admissibility.  At a record body that is a variable, a form
 -- F<: does not have, but the mode-merged family `_⊢[_]_` admits at
--- every sort — the ONLY derivation is `<:ᴿ-refl`.  So the rule cannot
+-- every sort, the only derivation is `<:ᴿ-refl`.  So the rule cannot
 -- be dropped outright; it can only be eliminated where the record body
 -- is literal, which is (ii).
 <:ᴿ-var-forces-refl : ∀ {Γ : Ctx S} {rt} {x : S ∋ rtype} →
@@ -1054,7 +1054,7 @@ data _⊢_<:ᴿ°_ {S} (Γ : Ctx S) : S ⊢ rtype → S ⊢ rtype → Set where
 <:ᴿ-var-forces-refl <:ᴿ-refl = refl
 
 
--- (ii) reflexivity IS derivable in SA-Rcd proper, for well-formed bodies
+-- (ii) reflexivity is derivable in sa-Rcd proper, for well-formed bodies
 refl° : ∀ {Γ : Ctx S} (rt : S ⊢ rtype) {rs : S ⊢ rtype} →
   (∀ {l A} → Has rt l A → Has rs l A) → WfR rt → Γ ⊢ rs <:ᴿ° rt
 refl° nilT           inc wf-nil          = °nil
@@ -1067,13 +1067,13 @@ refl° (consT l A rt) inc (wf-cons ni w)  =
 °→ (°cons h d r) = <:ᴿ-cons h d (°→ r)
 
 -- the elimination: every derivation of my relation at a well-formed
--- record body is matched by an SA-Rcd derivation
+-- record body is matched by an sa-Rcd derivation
 →° : ∀ {Γ : Ctx S} {rt₁ rt₂} → WfR rt₂ → Γ ⊢ rt₁ <:ᴿ rt₂ → Γ ⊢ rt₁ <:ᴿ° rt₂
 →° w              <:ᴿ-nil          = °nil
 →° (wf-cons ni w) (<:ᴿ-cons h d r) = °cons h d (→° w r)
 →° w              <:ᴿ-refl         = refl° _ (λ h → h) w
 
--- (iii) transitivity for SA-Rcd PROPER — no reflexivity rule involved
+-- (iii) transitivity for sa-Rcd proper, no reflexivity rule involved
 -- in the statement, at either end
 transitivityᴿ° : ∀ {Γ : Ctx S} {rs rq rt : S ⊢ rtype} → WfR rt →
   Γ ⊢ rs <:ᴿ° rq → Γ ⊢ rq <:ᴿ° rt → Γ ⊢ rs <:ᴿ° rt
@@ -1108,7 +1108,7 @@ rec₀ = RcdE (consE la idTop (consE lb idTop nilE))
 ⊢rec₀ : Γ₀ ⊢ rec₀ ∶ (RcdT rt₀)
 ⊢rec₀ = ⊢rcd (⊢ᴿ-cons ⊢idTop (⊢ᴿ-cons ⊢idTop ⊢ᴿ-nil))
 
--- the RECORD PATTERN {a = x:Top→Top, b = y:Top→Top}, binding two vars
+-- the record pattern {a = x:Top→Top, b = y:Top→Top}, binding two vars
 pat₀ : [] ⊢ pat 0 2
 pat₀ = prcd (consP la (pvar (Top ⇒ Top)) (consP lb (pvar (Top ⇒ Top)) nilP))
 
@@ -1137,7 +1137,7 @@ step₀ = β-let (vrcd (vcons vλ (vcons vλ vnil))) match₀
 ⊢after : Γ₀ ⊢ ((`_ (suc zero)) [ (sub (idTop ∷ (idTop ∷ [])) idᴿ) ]ˢ) ∶ (Top ⇒ Top)
 ⊢after = preservation ⊢letexp step₀
 
--- ═══ CHALLENGE-REFERENCING NAMES (Parts 1B and 2B, full language) ═══
+-- ═══ challenge-referencing names (Parts 1B and 2B, full language) ═══
 
 -- 3.1 Lemma [Transitivity], records and patterns
 lemma-3-1-transitivity : ∀ {Γ : Ctx S} {A Q B : S ⊢ type} →
@@ -1150,12 +1150,12 @@ lemma-3-2-narrowing : ∀ {Γ : Ctx S} {P Q : S ⊢ type}
   Γ ⊢ P <: Q → (Q ∷ₜ Γ) ⊢ t ∶ A → (P ∷ₜ Γ) ⊢ t ∶ A
 lemma-3-2-narrowing = narrowing
 
--- 3.3 Theorem [Preservation], for F<: with records AND patterns
+-- 3.3 Theorem [Preservation], for F<: with records and patterns
 theorem-3-3-preservation : ∀ {Γ : Ctx S} {e e′ : S ⊢ expr} {A} →
   Γ ⊢ e ∶ A → e ↪ e′ → Γ ⊢ e′ ∶ A
 theorem-3-3-preservation = preservation
 
--- 3.4 Theorem [Progress], for F<: with records AND patterns
+-- 3.4 Theorem [Progress], for F<: with records and patterns
 theorem-3-4-progress : ∀ {Γ : Ctx []} {e : [] ⊢ expr} {A} →
   Γ ⊢ e ∶ A → Progress e
 theorem-3-4-progress = progress

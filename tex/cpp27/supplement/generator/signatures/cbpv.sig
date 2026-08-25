@@ -16,7 +16,7 @@ F: valtype -> comptype
 Pi: comptype -> comptype -> comptype
 arrow: valtype -> comptype -> comptype
 
-u: value
+unit: value
 pair: value -> value -> value
 inj: bool -> value -> value
 thunk: comp -> value

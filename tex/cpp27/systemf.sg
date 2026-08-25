@@ -1,0 +1,23 @@
+-- The signature of systemf.agda, in the generator's input format.
+-- `agdasubst.py --model=vectors --no-star systemf.sg systemf-vec.agda`
+-- emits the σ-calculus half of systemf-vec.agda.
+
+%%module systemf-vec
+
+%%var `_
+
+% infixr 5 _⇒_
+% infixl 6 _·_
+% infixl 6 _•_
+
+kind : Type
+type : Type
+expr : Type
+
+`λx_`     : (expr -> expr) -> expr
+`Λα_`     : (type -> expr) -> expr
+`∀[α∶_]_` : kind -> (type -> type) -> type
+`_·_`     : expr -> expr -> expr
+`_•_`     : expr -> type -> expr
+`_⇒_`     : type -> type -> type
+*         : kind

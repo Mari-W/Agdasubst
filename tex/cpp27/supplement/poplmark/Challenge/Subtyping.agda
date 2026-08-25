@@ -5,27 +5,16 @@
 --   1A  transitivity and narrowing of algorithmic F<: subtyping
 --   2A  preservation and progress for F<:
 --
--- built on the σ-calculus rewrite system of Languages/Fsub.agda.
+-- Built on Languages/Fsub.agda.
 --
--- THE MODE-MERGED, MULTI-SORTED DESIGN, PUSHED ONE STEP FURTHER.
--- F<: has two judgments -- subtyping between types and typing of terms.
--- Here they are ONE inductive family
+-- F<:'s two judgments, subtyping and typing, are ONE inductive family
 --
 --     _⊢_∶_ : Ctx S → S ⊢ s → S ∶⊢ s → Set
 --
--- indexed by the sort s of the subject.  At s = type it is
--- `Γ ⊢ A <: B`; at s = expr it is `Γ ⊢ e ∶ A`.  The payoff is that the
--- typed-map
--- machinery is written ONCE and simultaneously delivers
---
---   * weakening of subtyping AND of typing              (_⊢⋯ᴿ_)
---   * type substitution in subtyping AND in typing,
---     and term substitution in typing                   (_⊢⋯ˢ_)
---   * narrowing of subtyping AND of typing              (narrow)
---
--- and that a "typed substitution" σ ∶ Γ₁ →ˢ Γ₂ automatically means
--- "subtyping-respecting at type variables, typing-respecting at term
--- variables" -- the single condition F<: substitution lemmas need.
+-- indexed by the sort of the subject: `Γ ⊢ A <: B` at s = type and
+-- `Γ ⊢ e ∶ A` at s = expr.  The typed-map machinery is then written
+-- once and delivers weakening (`_⊢⋯ᴿ_`), substitution (`_⊢⋯ˢ_`) and
+-- narrowing for both judgments at once.
 
 module Challenge.Subtyping where
 
@@ -41,7 +30,7 @@ open import Data.List using (List; []; _∷_; drop)
 
 -- ─── the language-specific layer this metatheory sits on ────────────
 -- Moved out of Languages.Fsub: none of it is σ-calculus.  It is contexts,
--- generalizable variables and congruences for THIS language, so it
+-- generalizable variables and congruences for this language, so it
 -- belongs with the proofs and not in generated output.
 
 -- ─── the generalizable variables the metatheory expects ─────────────
@@ -52,9 +41,9 @@ variable
   α                       : S ∋ s
 
 -- ─── contexts ───────────────────────────────────────────────────────
--- The declaration of a variable of EITHER sort is a type: for a term
+-- The declaration of a variable of either sort is a type: for a term
 -- variable it is its type, for a type variable it is its upper bound.
--- CONSTANT, unlike System F's, so `S ∶⊢ s` reduces to `S ⊢ type` even
+-- constant, unlike System F's, so `S ∶⊢ s` reduces to `S ⊢ type` even
 -- for an abstract sort `s` -- that is what makes the sort-generic
 -- statements of Challenge/Subtyping.agda typecheck without a sort split.
 
@@ -126,13 +115,13 @@ _⊢_<:_ : Ctx S → S ⊢ type → S ⊢ type → Set
 <:-reflexive (A ⇒ B)      = <:-⇒ (<:-reflexive A) (<:-reflexive B)
 <:-reflexive (∀[<: A ] B) = <:-∀ (<:-reflexive A) (<:-reflexive B)
 
--- ⊢` at both sorts: at s = expr it IS ⊢`, at s = type it is the
+-- ⊢` at both sorts: at s = expr it is ⊢`, at s = type it is the
 -- reflexive instance of <:-var
 ⊢var : ∀ {Γ : Ctx S} {x : S ∋ s} {A : S ∶⊢ s} → Γ ∋ x ∶ A → Γ ⊢ (` x) ∶ A
 ⊢var {s = expr} eq = ⊢` eq
 ⊢var {s = type} eq = <:-var eq (<:-reflexive _)
 
--- ─── typed renamings: weakening for BOTH judgments at once ──────────
+-- ─── typed renamings: weakening for both judgments at once ──────────
 
 _∶_→ᴿ_ : S₁ →ᴿ S₂ → Ctx S₁ → Ctx S₂ → Set
 _∶_→ᴿ_ {S₁} ξ Γ₁ Γ₂ = ∀ s (x : S₁ ∋ s) (A : S₁ ∶⊢ s) →
@@ -166,9 +155,9 @@ _⊢⋯ᴿ_ : ∀ {ξ : S₁ →ᴿ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
   Γ ⊢ t ∶ A → (_∷ₜ_ {s = s′} P Γ) ⊢ weaken t ∶ weaken A
 ⊢weaken P d = d ⊢⋯ᴿ ⊢wkᴿ P
 
--- ═══ PART 1A: transitivity and narrowing ════════════════════════════
+-- ═══ part 1A: transitivity and narrowing ════════════════════════════
 --
--- Narrowing replaces ONE context entry by a subtype of it.  As a
+-- Narrowing replaces one context entry by a subtype of it.  As a
 -- relation between two contexts over the same scope:
 
 Narrowing : ∀ {S} → Ctx S → S ⊢ type → Ctx S → Set
@@ -193,10 +182,10 @@ narrow-ext nr s P _ (suc y) with nr _ y
 ... | inj₁ eq        = inj₁ (cong weaken eq)
 ... | inj₂ (eq , d)  = inj₂ (cong weaken eq , ⊢weaken P d)
 
--- ─── the induction measure: the SHAPE of the cut type ───────────────
+-- ─── the induction measure: the shape of the cut type ───────────────
 -- Transitivity is an induction on the cut type Q, narrowing an
 -- induction on the derivation with transitivity at Q available.  Under
--- a binder Q gets WEAKENED, so plain structural induction on Q is out;
+-- a binder Q gets weakened, so plain structural induction on Q is out;
 -- what is invariant is its shape.
 
 data Shape : Set where
@@ -212,7 +201,7 @@ shape (A ⇒ B)      = shape A ⇒ˢ shape B
 shape (∀[<: A ] B) = ∀ˢ (shape A) (shape B)
 
 -- The one substitution fact in this file that the rewrite system does
--- NOT give for free: `shape` recurses on a type, and `A [ ξ ]ᴿ` with A
+-- not give for free: `shape` recurses on a type, and `A [ ξ ]ᴿ` with A
 -- abstract is neutral, so this needs its own induction.
 shape-ren : ∀ (A : S₁ ⊢ type) (ξ : S₁ →ᴿ S₂) → shape (A [ ξ ]ᴿ) ≡ shape A
 shape-ren Top ξ          = refl
@@ -229,12 +218,12 @@ shape-ren (∀[<: A ] B) ξ = cong₂ ∀ˢ (shape-ren A ξ) (shape-ren B (ξ �
 ∀ˢ-injᵣ : ∀ {a b c d} → ∀ˢ a b ≡ ∀ˢ c d → b ≡ d
 ∀ˢ-injᵣ refl = refl
 
--- The mutual pair.  Both recurse structurally on the SHAPE argument;
+-- The mutual pair.  Both recurse structurally on the shape argument;
 -- the cut type Q itself stays a variable, so the derivations can be
 -- matched freely (matching a derivation refines Q).  NOTE: an earlier
 -- version indexed the recursion by `Q [ ξ ]ᴿ` instead, to make the
 -- induction structural in Q.  That version typechecks in the ordinary
--- sense but is REJECTED by --local-confluence-check: pattern matching
+-- sense but is rejected by --local-confluence-check: pattern matching
 -- on Q puts `(∀[<: A ] B) [ ξ ]ᴿ` into the clause's left-hand side, which
 -- overlaps instᴿ-∀ unjoinably.  Living under a rewrite system therefore
 -- constrains what may be matched, not just what may be proved.
@@ -295,14 +284,14 @@ transitivity : ∀ {Γ : Ctx S} {A Q B : S ⊢ type} →
 transitivity {Q = Q} d₁ d₂ = <:-trans (shape Q) refl d₁ d₂
 
 -- Narrowing:  Γ,α<:Q ⊢ M <: N  →  Γ ⊢ P <: Q  →  Γ,α<:P ⊢ M <: N
--- (sort-generic: the same statement narrows a TYPING derivation)
+-- (sort-generic: the same statement narrows a typing derivation)
 narrowing : ∀ {Γ : Ctx S} {P Q : S ⊢ type} {t : (type ∷ S) ⊢ s} {A} →
   Γ ⊢ P <: Q → (Q ∷ₜ Γ) ⊢ t ∶ A → (P ∷ₜ Γ) ⊢ t ∶ A
 narrowing {Q = Q} d = narrow (shape Q) (shape-ren Q (wkᴿ type)) (narrow-here d)
 
 -- ─── typed substitutions ────────────────────────────────────────────
--- ONE definition: at a type variable it demands a SUBTYPING fact, at a
--- term variable a TYPING fact.  This is exactly F<:'s notion of a
+-- one definition: at a type variable it demands a subtyping fact, at a
+-- term variable a typing fact.  This is exactly F<:'s notion of a
 -- well-typed simultaneous type-and-term substitution.
 
 _∶_→ˢ_ : S₁ →ˢ S₂ → Ctx S₁ → Ctx S₂ → Set
@@ -338,13 +327,13 @@ _⊢⋯ˢ_ {σ = σ} (⊢<: d₁ d₂) ⊢σ =
 
 -- the single-point substitution, again sort-generic: at s = expr this
 -- is the term substitution lemma, at s = type the type substitution
--- lemma (whose premise is a SUBTYPING derivation Γ ⊢ C <: A)
+-- lemma (whose premise is a subtyping derivation Γ ⊢ C <: A)
 ⊢[] : ∀ {Γ : Ctx S} {t : S ⊢ s} {A : S ∶⊢ s} →
   Γ ⊢ t ∶ A → (t ∙ˢ idˢ) ∶ (A ∷ₜ Γ) →ˢ Γ
 ⊢[] d _ zero    _ refl = d
 ⊢[] d _ (suc x) _ refl = ⊢var refl
 
--- ═══ PART 2A: preservation and progress ═════════════════════════════
+-- ═══ part 2A: preservation and progress ═════════════════════════════
 
 data Val : S ⊢ expr → Set where
   vλ : Val (λx[ A ] e)
@@ -359,7 +348,7 @@ data _↪_ : S ⊢ expr → S ⊢ expr → Set where
   ξ-•  : e ↪ e′ → (e • C) ↪ (e′ • C)
 
 -- ─── inversion ──────────────────────────────────────────────────────
--- Stated with the subtyping step built in, as in TAPL 28.  This is
+-- Stated with the subtyping step built in, as in tapl 28.  This is
 -- where transitivity (⊢<: case) and narrowing (⊢Λ case) are cashed in.
 
 inv-λ : ∀ {Γ : Ctx S} {A e C B₁ B₂} →
@@ -471,7 +460,7 @@ trans-test = transitivity α<:Top <:-top
 narrowing-test : ((Top ⇒ Top) ∷ₜ Γ₀) ⊢ (` zero) <: Top
 narrowing-test = narrowing {P = Top ⇒ Top} {Q = Top} <:-top α<:Top
 
--- ═══ NARROWING WITH A TRAILING ∆ — challenge Lemma 3.2 in full ══════
+-- ═══ narrowing with A trailing ∆, challenge Lemma 3.2 in full ══════
 -- A telescope of binders extending S to S′, i.e. the challenge's ∆.
 
 data Tele (S : Scope) : Scope → Set where
@@ -514,7 +503,7 @@ narrowing′ : ∀ {Γ : Ctx S} {P Q : S ⊢ type} {t : (type ∷ S) ⊢ s} {A} 
   Γ ⊢ P <: Q → (Q ∷ₜ Γ) ⊢ t ∶ A → (P ∷ₜ Γ) ⊢ t ∶ A
 narrowing′ = narrowing∆ []
 
--- ═══ EVALUATION CONTEXTS, AND THE EQUIVALENCE ═══════════════════════
+-- ═══ evaluation contexts, and the equivalence ═══════════════════════
 -- The challenge presents evaluation as two immediate reduction rules
 -- (E-AppAbs, E-TappTabs) plus E-Ctx over
 --     E ::= [−] | E t | v E | E [T]
@@ -580,7 +569,7 @@ progress⟶ d with progress d
 ... | step st = step⟶ (↪→⟶ st)
 ... | done v  = done⟶ v
 
--- ═══ DECLARATIVE SUBTYPING, AND THE EQUIVALENCE ═════════════════════
+-- ═══ declarative subtyping, and the equivalence ═════════════════════
 -- The challenge (§3): "The declarative rules differ from these by
 -- explicitly stating that subtyping is reflexive and transitive."
 -- Here is that system, and its equivalence with the algorithmic one.
@@ -605,7 +594,7 @@ alg→decl (<:-⇒ d₁ d₂)  = S-Arrow (alg→decl d₁) (alg→decl d₂)
 alg→decl (<:-∀ d₁ d₂)  = S-All (alg→decl d₁) (alg→decl d₂)
 
 -- completeness: this is where transitivity (3.1) and reflexivity are
--- cashed in — exactly the two rules the declarative system adds
+-- cashed in, exactly the two rules the declarative system adds
 decl→alg : ∀ {Γ : Ctx S} {A B : S ⊢ type} → Γ ⊢ A <:ᵈ B → Γ ⊢ A <: B
 decl→alg S-Top           = <:-top
 decl→alg (S-TVar eq)     = <:-var eq (<:-reflexive _)
@@ -619,7 +608,7 @@ algorithmic≡declarative : ∀ {Γ : Ctx S} {A B : S ⊢ type} →
   (Γ ⊢ A <: B → Γ ⊢ A <:ᵈ B) × (Γ ⊢ A <:ᵈ B → Γ ⊢ A <: B)
 algorithmic≡declarative = alg→decl , decl→alg
 
--- ═══ CHALLENGE-REFERENCING NAMES ════════════════════════════════════
+-- ═══ challenge-referencing names ════════════════════════════════════
 -- The names below are the ones a reader should match against the
 -- challenge document; the short names above are kept because the
 -- internal proofs read better with them.

@@ -1,23 +1,22 @@
 {-# OPTIONS --rewriting --local-confluence-check #-}
 
--- Multi-sorted, intrinsically scoped System F with FIRST-CLASS RENAMINGS,
+-- Multi-sorted, intrinsically scoped System F with first-class renamings,
 -- and its σ-calculus as a locally confluent Agda REWRITE system
 -- (machine-checked with --local-confluence-check).
 --
 -- Renamings are a second kind of map that survives in normal forms,
--- rather than a termination device erased by `coincidence`.  Otherwise
--- identical to sized-ren.agda, so the cost of that one design decision
--- can be read off the rule counts: 72 rules against 41.
+-- rather than a termination device erased by `coincidence`.  That one
+-- decision is what takes the rule set from 41 rules to 72.
 --
 -- The equational core is σ⇑ [Curien-Hardin-Levy JACM 1996; tables in
 -- Hardin-Maranget-Pagano JFP 8(2) 1998, figs. 1-2], instantiated at the
 -- four map-sort pairs; the bridge between the two worlds is Autosubst
 -- 2's [Stark-Schaefer-Kaiser CPP 2019; Stark 2020].
 --
--- The curation: first-class lifting, no η, composition PUSHES at mode V
--- and FOLDS at mode T, and coincidence is oriented ˢ→ᴿ.
+-- The curation: first-class lifting, no η, composition pushes at mode V
+-- and folds at mode T, and coincidence is oriented ˢ→ᴿ.
 --
--- See NOTES-trs-design.md for the full design record: why each of these
+-- See trs/TRS.md for the full design record: why each of these
 -- choices is forced, the rule-by-rule correspondence with σ⇑ and
 -- Autosubst 2, and the gained/lost accounting.
 
@@ -100,8 +99,8 @@ variable
 
 -- ─── the renaming world ─────────────────────────────────────────────
 
--- Lifting is FIRST-CLASS in the renaming world too, and `_[_]ᴿ` is
--- mode-generic AND mode-preserving: its V-instance is map application, so
+-- Lifting is first-class in the renaming world too, and `_[_]ᴿ` is
+-- mode-generic and mode-preserving: its V-instance is map application, so
 -- there is no separate lookup operation and no V/T duplication.
 --! RenOps {
 opaque
@@ -138,7 +137,7 @@ opaque
 
 -- ─── the substitution world ─────────────────────────────────────────
 
--- the σ-world's constants ARE embedded renamings: with the canonical
+-- the σ-world's constants are embedded renamings: with the canonical
 -- direction pointing at ᴿ, giving them their own symbols would only
 -- create extra normal forms
 --! SubT {
@@ -208,7 +207,7 @@ opaque
   assocᴿ    : (ξ₁ ⨟ᴿ ξ₂) ⨟ᴿ ξ₃ ≡ ξ₁ ⨟ᴿ (ξ₂ ⨟ᴿ ξ₃)
   comp-idₗᴿ : idᴿ ⨟ᴿ ξ ≡ ξ
   comp-idᵣᴿ : ξ ⨟ᴿ idᴿ ≡ ξ
-  -- distᴿ is a LEMMA, not a rule: with push at variables its pair
+  -- distᴿ is a lemma, not a rule: with push at variables its pair
   -- with assocᴿ demands a variable-level fold, which is what push
   -- exists to avoid
   distᴿ     : (x ∙ᴿ ξ₁) ⨟ᴿ ξ₂ ≡ (x [ ξ₂ ]ᴿ) ∙ᴿ (ξ₁ ⨟ᴿ ξ₂)
@@ -221,30 +220,22 @@ opaque
   lift-consᴿ       : (ξ ↑ᴿ s) ⨟ᴿ (x ∙ᴿ ξ′) ≡ x ∙ᴿ (ξ ⨟ᴿ ξ′)
 
   -- ══ Vᴿ. monad laws, renaming world ═══════════════════════════════
-  -- BOTH are mode-generic: on the renaming side the traversal
+  -- both are mode-generic: on the renaming side the traversal
   -- preserves the mode, so each of these single rules is simultaneously
   -- σ⇑'s law on terms and its variable instance
   right-idᴿ : ∀ (x/t : S ⊢[ m ] s) → x/t [ idᴿ ]ᴿ ≡ x/t
-  -- (Clos) at the renaming level.  It must be SPLIT by mode, and the
-  -- two halves point in OPPOSITE directions — the one place where the
-  -- V/T merge does not pay.  Reason: renaming preserves the mode, so
-  -- x [ ξ₁ ]ᴿ is itself a variable and hence again a subject for the
-  -- applied rules; a fold at mode V therefore overlaps def-wkᴿ
-  -- unjoinably ((x [ ξ₁ ]ᴿ) [ wkᴿ s ]ᴿ reduces to suc (x [ ξ₁ ]ᴿ) on one
-  -- side and to the stuck x [ ξ₁ ⨟ᴿ wkᴿ s ]ᴿ on the other).  So
-  -- composition at a variable PUSHES and composition on a term FOLDS.
-  -- (In the σ-world the question does not arise: a substituted variable
-  -- is a term, which no applied rule can match.)
+  -- (Clos), split by mode: push at V, fold at T.  The halves point in
+  -- opposite directions because a fold at V would overlap def-wkᴿ
+  -- unjoinably.  trs/TRS.md, rules 22 and 23.
   compositionalityᴿᴿ-var : ∀ (x : S₁ ∋ s) {ξ₁ : S₁ →ᴿ S₂} {ξ₂ : S₂ →ᴿ S₃} →
     x [ (ξ₁ ⨟ᴿ ξ₂) ]ᴿ ≡ (x [ ξ₁ ]ᴿ) [ ξ₂ ]ᴿ
   compositionalityᴿᴿ : ∀ (t : S₁ ⊢ s) {ξ₁ : S₁ →ᴿ S₂} {ξ₂ : S₂ →ᴿ S₃} →
     (t [ ξ₁ ]ᴿ) [ ξ₂ ]ᴿ ≡ t [ (ξ₁ ⨟ᴿ ξ₂) ]ᴿ
 
   -- ══ VIᴿ. completion companions, renaming world ═══════════════════
-  -- with push at variables the VarShift2/FVarLift2/RVarLift2 family is
-  -- unnecessary: push exposes the factors, so the applied rules fire on
-  -- them directly.  What remains is the variable-level lift-dist-compˢˢ (the
-  -- join of push with lift-dist-compᴿᴿ) and interact under a continuation.
+  -- Push at V makes σ⇑'s VarShift2/FVarLift2/RVarLift2 unnecessary.
+  -- What remains is the join of push with lift-dist-compᴿᴿ, and
+  -- interact under a continuation.
   lift-dist-compᴿᴿ-var : (x [ (ξ₁ ↑ᴿ s) ]ᴿ) [ (ξ₂ ↑ᴿ s) ]ᴿ ≡ x [ ((ξ₁ ⨟ᴿ ξ₂) ↑ᴿ s) ]ᴿ
   interactᴿ-⨟ᴿ         : wkᴿ s ⨟ᴿ ((x ∙ᴿ ξ) ⨟ᴿ ξ′) ≡ ξ ⨟ᴿ ξ′
   lift-wkᴿ-⨟ᴿ          : wkᴿ s ⨟ᴿ ((ξ ↑ᴿ s) ⨟ᴿ ξ′) ≡ ξ ⨟ᴿ (wkᴿ s ⨟ᴿ ξ′)
@@ -302,11 +293,8 @@ opaque
   -- ══ the two mixed compositionality laws ══════════════════════════
   -- Autosubst's compRenSubst and compSubstRen.  Mode-generic on the
   -- left, since the input may be a variable
-  -- T-ONLY.  Its V-instance would be compositionalityᴿˢ-⨟-var read backwards, and
-  -- registering both LOOPS: compositionalityᴿˢ folds (x [ ξ) ]ᴿ [ σ ]ˢ into
-  -- x [ (⟨ξ⟩ ]ˢ ⨟ˢ σ) and compositionalityᴿˢ-⨟-var pushes it straight back.  The systematic
-  -- rule for the two-world system is: at mode V everything PUSHES, at
-  -- mode T everything FOLDS (cf. compositionalityᴿᴿ-var vs compositionalityᴿᴿ).
+  -- T-only.  Its V-instance is compositionalityᴿˢ-⨟-var read backwards,
+  -- and registering both loops.
   compositionalityᴿˢ : ∀ (t : S₁ ⊢ s) {ξ₁ : S₁ →ᴿ S₂} {σ₂ : S₂ →ˢ S₃} →
     (t [ ξ₁ ]ᴿ) [ σ₂ ]ˢ ≡ t [ (⟨ ξ₁ ⟩ ⨟ˢ σ₂) ]ˢ
   compositionalityˢᴿ : ∀ (x/t : S₁ ⊢[ m ] s) {σ₁ : S₁ →ˢ S₂} {ξ₂ : S₂ →ᴿ S₃} →
@@ -318,7 +306,7 @@ opaque
     ⟨ ξ ↑ᴿ s ⟩ ⨟ˢ ((σ ↑ˢ s) ⨟ˢ τ) ≡ ((⟨ ξ ⟩ ⨟ˢ σ) ↑ˢ s) ⨟ˢ τ
   lift-dist-compˢᴿ-⨟ : ∀ {S₄} {σ : S₁ →ˢ S₂} {ξ : S₂ →ᴿ S₃} {τ : (s ∷ S₃) →ˢ S₄} →
     (σ ↑ˢ s) ⨟ˢ (⟨ ξ ↑ᴿ s ⟩ ⨟ˢ τ) ≡ ((σ ⨟ˢ ⟨ ξ ⟩) ↑ˢ s) ⨟ˢ τ
-  -- the VARIABLE-level mixed fusions: the join of compositionalityᴿˢ-⨟-var with
+  -- the variable-level mixed fusions: the join of compositionalityᴿˢ-⨟-var with
   -- lift-dist-compᴿˢ resp. of the σ-applied rules with lift-dist-compˢᴿ, at an
   -- abstract variable (neither side can case-split on it)
   lift-dist-compᴿˢ-var   : (x [ (ξ ↑ᴿ s) ]ᴿ) [ (σ ↑ˢ s) ]ˢ ≡ x [ ((⟨ ξ ⟩ ⨟ˢ σ) ↑ˢ s) ]ˢ
@@ -330,27 +318,19 @@ opaque
   ⟨⟩-lift-cons     : ⟨ ξ ↑ᴿ s ⟩ ⨟ˢ (t ∙ˢ σ) ≡ t ∙ˢ (⟨ ξ ⟩ ⨟ˢ σ)
   ⟨⟩-lift-cons-var : (x [ (ξ ↑ᴿ s) ]ᴿ) [ (t ∙ˢ σ) ]ˢ ≡ x [ (t ∙ˢ (⟨ ξ ⟩ ⨟ˢ σ)) ]ˢ
 
-  -- ⟨⟩-comp needs a C2 continuation image, because assoc right-nests ⨟
-  -- and ⟨ξ₁⟩ ⨟ˢ ⟨ξ₂⟩ is then not a subterm of ⟨ξ₁⟩ ⨟ˢ (⟨ξ₂⟩ ⨟ˢ τ).  The
-  -- GENERAL image ⟨ξ₁⟩ ⨟ˢ (⟨ξ₂⟩ ⨟ˢ τ) → ⟨ξ₁ ⨟ᴿ ξ₂⟩ ⨟ˢ τ is the exact
-  -- inverse of ⟨⟩-split-⨟ and LOOPS with it -- the one completion image
-  -- in the whole system that cannot be taken.  What survives is that
-  -- image restricted to the prefixes on which the ᴿ world can make
-  -- progress, i.e. where folding immediately fires a ᴿ-rule and so does
-  -- not hand the result straight back to ⟨⟩-split-⨟.  Those prefixes are
-  -- exactly the three ᴿ-rules that themselves needed C2 images --- the
-  -- same set, twice --- and each rule is named for the one it fires.
+  -- ⟨⟩-comp's C2 image ⟨ξ₁⟩ ⨟ (⟨ξ₂⟩ ⨟ τ) → ⟨ξ₁ ⨟ᴿ ξ₂⟩ ⨟ τ is the exact
+  -- inverse of ⟨⟩-split-⨟ and loops with it, the one image in the system
+  -- that cannot be taken.  What survives is that image restricted to the
+  -- three ᴿ-rules whose firing makes progress, one rule for each.
   ⟨⟩-comp-⨟-lift-wkᴿ : ∀ {S₄} {ξ : S₁ →ᴿ S₂} {τ : (s ∷ S₂) →ˢ S₄} →
     ⟨ wkᴿ s ⟩ ⨟ˢ (⟨ ξ ↑ᴿ s ⟩ ⨟ˢ τ) ≡ ⟨ ξ ⟩ ⨟ˢ (⟨ wkᴿ s ⟩ ⨟ˢ τ)
   ⟨⟩-comp-⨟-interactᴿ : ∀ {ξ : S₁ →ᴿ S₂} {x : S₂ ∋ s} {τ : S₂ →ˢ S₃} →
     ⟨ wkᴿ s ⟩ ⨟ˢ (⟨ x ∙ᴿ ξ ⟩ ⨟ˢ τ) ≡ ⟨ ξ ⟩ ⨟ˢ τ
   ⟨⟩-comp-⨟-lift-dist-compᴿᴿ : ∀ {S₄} {ξ₁ : S₁ →ᴿ S₂} {ξ₂ : S₂ →ᴿ S₃} {τ : (s ∷ S₃) →ˢ S₄} →
     ⟨ ξ₁ ↑ᴿ s ⟩ ⨟ˢ (⟨ ξ₂ ↑ᴿ s ⟩ ⨟ˢ τ) ≡ ⟨ (ξ₁ ⨟ᴿ ξ₂) ↑ᴿ s ⟩ ⨟ˢ τ
-  -- the TAIL companion of ⟨⟩-split-⨟: same split, but where the coerced
-  -- composite is the right operand and so has no continuation for
-  -- ⟨⟩-split-⨟ to match.  With a continuation present it is derivable
-  -- (⟨⟩-split-⨟ then lift-dist-compˢᴿ-⨟), which is why there is no
-  -- ⟨⟩-split-tail-⨟ -- see closure.agda.
+  -- ⟨⟩-split-⨟ in tail position, where there is no continuation to
+  -- match.  With one present it is derivable, so there is no
+  -- ⟨⟩-split-tail-⨟.
   ⟨⟩-split-tail : ∀ {S₄} {σ : S₁ →ˢ S₂} {ξ : S₂ →ᴿ S₃} {ξ′ : (s ∷ S₃) →ᴿ S₄} →
     (σ ↑ˢ s) ⨟ˢ ⟨ (ξ ↑ᴿ s) ⨟ᴿ ξ′ ⟩ ≡ ((σ ⨟ˢ ⟨ ξ ⟩) ↑ˢ s) ⨟ˢ ⟨ ξ′ ⟩
 
@@ -362,9 +342,9 @@ opaque
   ⟨⟩-lift    : (⟨ ξ ⟩ ↑ˢ s) ≡ ⟨ ξ ↑ᴿ s ⟩
   --! }
 
-  -- ══ SUBSUMED: σ⇑'s LiftId is a lemma, not a rule ════════════════
+  -- ══ subsumed: σ⇑'s LiftId is a lemma, not a rule ════════════════
   -- ⟨⟩-lift already sends its LHS to ⟨ idᴿ ↑ᴿ s ⟩, where lift-idᴿ
-  -- finishes under the coercion.  A base rule subsumed by its own
+  -- finishes under the coercion, a base rule subsumed by its own
   -- coercion image is redundant; it still holds by refl for user code.
   lift-id : (⟨ idᴿ {S} ⟩ ↑ˢ s) ≡ ⟨ idᴿ ⟩
 
@@ -589,7 +569,7 @@ opaque
   def-↑ᴿ = ext λ { zero → refl ; (suc x) → refl }
   def-↑ˢ {σ = σ} {s = s} = ext λ { zero → refl ; (suc x) → sym (coincidence (σ _ x) (wkᴿ s)) }
 
--- ═══ THE COMPLETED TWO-WORLD SYSTEM ════════════════════════════════
+-- ═══ The completed two-world system ════════════════════════════════
 
 --! RewriteSys {
 {-# REWRITE
@@ -611,7 +591,7 @@ opaque
 #-}
 --! }
 
--- ─── the theory is definitional, in BOTH worlds ─────────────────────
+-- ─── the theory is definitional, in both worlds ─────────────────────
 
 weaken : S ⊢ s → (s′ ∷ S) ⊢ s
 weaken t = t [ wkᴿ _ ]ᴿ
@@ -659,7 +639,7 @@ emb-collapse = refl
 -- ─── subject reduction ──────────────────────────────────────────────
 -- Every substitution equation arising in preservation is discharged
 -- definitionally.  The rule that makes the ⊢•-case work is lift-cons
--- (group IV); a system that eliminates ⇑ instead reduces the same goal
+-- (group iv); a system that eliminates ⇑ instead reduces the same goal
 -- via def-↑ˢ, which is what drags the η-family into the rewrite system.
 
 ↑ˢᵗ_ : Sort → Sort
@@ -730,19 +710,11 @@ _∶_→ˢ_ {S₁} σ Γ₁ Γ₂ = ∀ s (x : S₁ ∋ s) (t : S₁ ∶⊢ s) �
   Γ₁ ∋ x ∶ t → Γ₂ ⊢ (x [ σ ]ˢ) ∶ (t [ σ ]ˢ)
 --! }
 
--- TYPED RENAMINGS: phase 1 of the preservation lemma.  With renamings
--- first class this is a plain judgment on ᴿ-maps, and the payoff is
--- immediate.  _[_]ᴿ preserves the mode, so a typed renaming sends a
--- variable to a VARIABLE by construction, and the ⊢`-case below is a
--- direct application.  The one-world file cannot say this: there phase
--- 1 must be a Σ-PREDICATE on substitutions,
---
---   σ ∶ᵥ Γ₁ →ˢ Γ₂ = ∀ x t → Γ₁ ∋ x ∶ t → Σ y ((x [ σ) ]ˢ ≡ ` y) × …
---
--- and extracting that y costs a transport (its ⊢ᵥ-var, "the one
--- unavoidable transport", with a `rewrite` to dodge UnificationStuck).
--- HERE THE TRANSPORT DISAPPEARS — that is the clearest single win of
--- first-class renamings.
+-- Phase 1 of the preservation lemma.  With renamings first class this
+-- is a plain judgment on ᴿ-maps: _[_]ᴿ preserves the mode, so a typed
+-- renaming sends a variable to a variable by construction and ⊢` is a
+-- direct application.  Without them phase 1 is a Σ-predicate on
+-- substitutions and extracting the variable costs a transport.
 _∶_→ᴿ_ : S₁ →ᴿ S₂ → Ctx S₁ → Ctx S₂ → Set
 _∶_→ᴿ_ {S₁} ξ Γ₁ Γ₂ = ∀ s (x : S₁ ∋ s) (t : S₁ ∶⊢ s) →
   Γ₁ ∋ x ∶ t → Γ₂ ∋ (x [ ξ ]ᴿ) ∶ (t [ ξ ]ᴿ)
@@ -842,7 +814,7 @@ sr : Γ ⊢ e ∶ t → e ↪ e′ → Γ ⊢ e′ ∶ t
 sr (⊢· {e₂ = e₂} (⊢λ ⊢e₁) ⊢e₂) (β-λ v₂) =
   sub-pres {σ = e₂ ∙ˢ idˢ} ⊢e₁ (⊢[] ⊢e₂)
 --! }
--- the type-application β-case uses no law: t′ [ t ]₀ IS t′ [ t ∙ˢ idˢ ]ˢ.
+-- the type-application β-case uses no law: t′ [ t ]₀ is t′ [ t ∙ˢ idˢ ]ˢ.
 sr (⊢• {t = t} (⊢Λ ⊢e) ⊢t ⊢t′) β-Λ =
   sub-pres {σ = t ∙ˢ idˢ} ⊢e (⊢[] ⊢t)
 sr (⊢· ⊢e₁ ⊢e₂) (ξ-·₁ st)       = ⊢· (sr ⊢e₁ st) ⊢e₂

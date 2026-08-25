@@ -1,21 +1,26 @@
 # The two-world σ-calculus: a principled rule-by-rule account
 
-Source of truth: [`systemf.agda`](systemf.agda) — declarations in the `opaque`
-block (lines 185–581), registration in the `{-# REWRITE #-}` block (lines 586–602).
+Source of truth: [`systemf.agda`](../systemf.agda), declarations in the third
+`opaque` block and registration in the `{-# REWRITE #-}` block that follows it.
 
 **72 rules registered.** Nine further rule-shaped facts are proved but
 deliberately *not* registered (§7). Of the 72, 16 are one-per-constructor
 (`instᴿ-*`, `inst-*`); the schema-level system is **56 rules + 2·|constructors|**.
 
 The *absences* — the places where a completion operator does not need an image
-— are checked in [`closure.agda`](closure.agda): eight `refl` assertions, each
+— are checked in [`closure.agda`](../closure.agda): eight `refl` assertions, each
 saying that the redex a missing rule would have handled already reduces without
 it. They are stated outside `systemf.agda`'s `opaque` block on purpose, since
 inside it the definitions unfold and the rules stop matching.
 
 Agda verifies **local confluence** (`--local-confluence-check`: every critical
-pair joinable). Termination is *not* machine-checked — see [`coco/`](coco/) for
-the export to external tools.
+pair joinable) and nothing else. Termination it does not check at all. The
+system is therefore exported as a first-order TRS in
+[`systemf.trs`](systemf.trs) and given to AProVE, which proves termination
+([`termination-aprove.txt`](termination-aprove.txt), 23.9 s) and confluence
+([`confluence-aprove.txt`](confluence-aprove.txt), 24.9 s).
+[`check_archives.py`](check_archives.py) re-checks that the shipped rules are a
+subset of what those two proofs cover.
 
 ---
 
@@ -333,7 +338,7 @@ along a σ-law.
 
 Signature-dependent: 16 of the 72 (`instᴿ-*`, `inst-*`), i.e. two per
 constructor. Everything else is schematic — which is why
-[`poplmark/gen/agdasubst.py`](poplmark/gen/agdasubst.py) needs only the
+[`agdasubst.py`](../supplement/generator/agdasubst.py) needs only the
 constructor list from a `.sg` file.
 
 **50 of 72 rules are σw/σ⇑ rules or their exact two-world duplicates.** The

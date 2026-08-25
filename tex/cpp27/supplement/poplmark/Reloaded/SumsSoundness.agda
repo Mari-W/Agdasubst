@@ -1,27 +1,19 @@
 {-# OPTIONS --rewriting --local-confluence-check #-}
 
--- ═══ POPLMark Reloaded STLC+, Challenges 1a and 1b (WITH SUMS) ══════
+-- ═══ POPLmark Reloaded STLC+, Challenges 1a and 1b (with sums) ═════
 --
---   1a  properties of the accessibility predicate `sn`: subterm and
---       expansion closure, closure of neutrals, CONFLUENCE ("weak
---       standardisation") and BACKWARD CLOSURE   (Lemmas 3.8-3.13)
+--   1a  subterm and expansion closure of `sn`, closure of neutrals,
+--       confluence and backward closure          (Lemmas 3.8-3.13)
 --   1b  soundness of the inductive characterisation:
---       SN ⟹ sn,  SNe ⟹ sn,  ⟶SN ⟹ ⟶sn        (Lemma 3.14, Thm 3.1)
+--       SN ⟹ sn,  SNe ⟹ sn,  ⟶SN ⟹ ⟶sn       (Lemma 3.14, Thm 3.1)
 --
--- Together with Reloaded/SumsNormalization.agda (2a/2b) this closes the
--- STLC+ half of the challenge:  every WELL-TYPED term is strongly
--- normalising in the classical, accessibility sense.
+-- With Reloaded/SumsNormalization.agda (2a/2b) this closes the STLC+
+-- half.  Built on Languages/STLCSums.agda.  Reloaded/Soundness.agda
+-- carries the same structure without sums.
 --
--- The syntax is intrinsically SCOPED (Languages/STLCSums.agda), so
--- `_↝_`, `sn`, `ne` and `_⟶sn_` are relations on raw terms.  Typing
--- enters only at `preservation` (the challenge's Lemma 3.1) and at
--- `corollary-3-4-sn`.
---
--- The σ-calculus contribution here is Lemma 3.7 (`sub-↝`, `ren-↝`):
--- reduction is closed under substitution because
+-- The σ-calculus contribution is Lemma 3.7 (`sub-↝`, `ren-↝`):
 --   (b [ n ]₀) [ σ ]ˢ ≡ (b [ (σ ↑ˢ expr) ]ˢ) [ n [ σ ]ˢ ]₀
--- holds DEFINITIONALLY, so the β case of each of those lemmas is a bare
--- constructor.  Everything else is ordinary induction on derivations.
+-- holds definitionally, so each β case is a bare constructor.
 
 module Reloaded.SumsSoundness where
 
@@ -87,7 +79,7 @@ data _⟶sn_ : ∀ {S} → S ⊢ expr → S ⊢ expr → Set where
            e ⟶sn e′ → (case e u v) ⟶sn (case e′ u v)
 
 -- ─── Lemma 3.1: reduction preserves typing ──────────────────────────
--- NOT vacuous any more -- the syntax is scoped, not typed -- but each
+-- not vacuous any more -- the syntax is scoped, not typed -- but each
 -- β case is exactly the substitution lemma `⊢[]` of
 -- Reloaded.SumsNormalization, whose own proof is definitional.
 
@@ -182,7 +174,7 @@ ren-↝* : ∀ {S₁ S₂} {e e′ : S₁ ⊢ expr} → e ↝* e′ → (ξ : S�
 ren-↝* done     ξ = done
 ren-↝* (st ◅ r) ξ = ren-↝ st ξ ◅ ren-↝* r ξ
 
--- Lemma 3.6(5): reducing INSIDE the substitution.
+-- Lemma 3.6(5): reducing inside the substitution.
 sub-↝* : ∀ {S₁ S₂} (t : S₁ ⊢ expr) (σ σ′ : S₁ →ˢ S₂) →
   (∀ (y : S₁ ∋ expr) → (y [ σ ]ˢ) ↝* (y [ σ′ ]ˢ)) → (t [ σ ]ˢ) ↝* (t [ σ′ ]ˢ)
 sub-↝* (` y)     σ σ′ h = h y
@@ -392,7 +384,7 @@ sn-⟶sn-exp (βinrsn {m = m} {v = v} snm snu) h =
 sn-⟶sn-exp (csesn st₀) h =
   sn-case-exp (sn-c₁ h) (sn-c₂ h) (sn-⟶sn-exp st₀ (sn-c₀ h)) st₀ h
 
--- ═══ CHALLENGE 1b: soundness of the inductive definition ════════════
+-- ═══ challenge 1b: soundness of the inductive definition ════════════
 
 -- Lemma 3.14
 SNe→ne : ∀ {S} {e : S ⊢ expr} → SNe e → ne e
@@ -422,8 +414,8 @@ sound-⟶SN (βinl m v)  = βinlsn (sound-SN m) (sound-SN v)
 sound-⟶SN (βinr m u)  = βinrsn (sound-SN m) (sound-SN u)
 sound-⟶SN (cseSN st)  = csesn (sound-⟶SN st)
 
--- ═══ THE CHALLENGE, ASSEMBLED ═══════════════════════════════════════
--- every WELL-TYPED term is strongly normalising, in the classical
+-- ═══ the challenge, assembled ═══════════════════════════════════════
+-- every well-typed term is strongly normalising, in the classical
 -- accessibility sense (Cor. 3.4 + Thm 3.1)
 
 strongly-normalising : ∀ {S} {Γ : Ctx S} {e : S ⊢ expr} {A} →
@@ -458,8 +450,8 @@ sn-sumredex : sn sumredex
 sn-sumredex = strongly-normalising ⊢sumredex
 
 -- ─── and the typing hypothesis is doing real work ───────────────────
--- `Ω` (defined in Reloaded/SumsNormalization.agda) is a well-SCOPED term
--- that is NOT strongly normalising.  Under the old intrinsically typed
+-- `Ω` (defined in Reloaded/SumsNormalization.agda) is a well-scoped term
+-- that is not strongly normalising.  Under the old intrinsically typed
 -- encoding it could not even be written down.
 
 Ω-loops : Ω ↝ Ω
@@ -468,7 +460,7 @@ sn-sumredex = strongly-normalising ⊢sumredex
 ¬sn-Ω : sn Ω → ⊥
 ¬sn-Ω (acc f) = ¬sn-Ω (f Ω Ω-loops)
 
--- ═══ CHALLENGE-REFERENCING NAMES ════════════════════════════════════
+-- ═══ challenge-referencing names ════════════════════════════════════
 
 -- Lemma 3.1 [Reduction preserves typing]
 lemma-3-1-preservation : ∀ {S} {Γ : Ctx S} {e e′ : S ⊢ expr} {A} →

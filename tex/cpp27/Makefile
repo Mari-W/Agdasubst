@@ -15,4 +15,6 @@ run:
 	@./pagecheck.sh
 
 clean:
-	rm -f main.aux main.log main.out main.blg main.ptb main.vtc
+	rm -f main.aux main.log main.out main.blg main.ptb main.vtc main.bbl
+	rm -rf build latex .agdatex-hashes-*.json
+	find . -name '*.agdai' -not -path './bak/*' -delete

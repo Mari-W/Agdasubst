@@ -3,32 +3,19 @@
 -- ═══ POPLmark Challenge, Part 3 ═════════════════════════════════════
 --   "Testing and Animating with Respect to the Semantics"
 --
---   1. Given F<: terms t and t′, decide whether t ⟶ t′.
---   2. Given t and t′, decide whether t ⟶* t′ ↛.
---   3. Given t, find t′ such that t ⟶ t′.
+--   1. decide whether t ⟶ t′        `_↪?_`
+--   2. decide whether t ⟶* t′ ↛     `evalDec`, up to a fuel bound
+--   3. find t′ with t ⟶ t′          `reduct`
 --
--- Task 3 is `reduct`.  Task 1 is `_↪?_`, a REAL decision procedure:
--- `Dec (e ↪ e′)` for arbitrary e, e′.  Task 2 is `evalDec`, decidable
--- up to a fuel bound.
+-- Built from `stp⁺`, a step function sound and complete by
+-- construction, decidable equality `_≟_` on the multi-sorted syntax,
+-- and `determinism`.  Decidable equality alone is not enough: without
+-- determinism, `stp⁺ e = yes (e″ , _)` with `e″ ≢ e′` would not refute
+-- `e ↪ e′`.
 --
--- The three ingredients, in order of depth:
---
---   * `stp⁺ : (e : S ⊢ expr) → Dec (Σ[ e′ ] (e ↪ e′))` — a step function
---     that is sound AND complete by construction: its `no` branch is a
---     proof that NOTHING steps.
---   * `_≟_ : (t u : S ⊢ s) → Dec (t ≡ u)` — decidable equality on the
---     intrinsically scoped, multi-sorted syntax, 89 clauses.
---   * `determinism : e ↪ e₁ → e ↪ e₂ → e₁ ≡ e₂`.
---
--- Decidable equality alone is *necessary but not sufficient*: without
--- determinism, `stp⁺ e = yes (e″ , _)` and `e″ ≢ e′` would not refute
--- `e ↪ e′`.  Determinism is what makes `stp⁺` complete for the whole
--- relation rather than for one reduction strategy.
---
--- The other question Part 3 asks is whether a term can COMPUTE at all:
--- `_[_]₀` unfolds to `_[ _ ∙ˢ idˢ ]ˢ` whose symbols are all `opaque`, so
--- no β-contraction can happen by unfolding — every one is performed by
--- the REWRITE SYSTEM.  Each `refl` below is Agda running the semantics.
+-- `_[_]₀` unfolds to `_[ _ ∙ˢ idˢ ]ˢ`, whose symbols are all `opaque`,
+-- so every β-contraction below is performed by the REWRITE system and
+-- each `refl` is Agda running the semantics.
 
 module Challenge.Animation where
 
@@ -249,7 +236,7 @@ lookupE? l (consE l′ e re) with l ≟ℕ l′
 
 -- the Maybe version, kept (`toMaybe` is defined below)
 
--- ─── the certified, COMPLETE step function ──────────────────────────
+-- ─── the certified, complete step function ──────────────────────────
 -- `Steps e` is the challenge's "t reduces"; `¬ Steps e` is "t is a
 -- normal form".  `stp⁺` decides it.
 
@@ -336,8 +323,8 @@ stpᴿ⁺ (` x) = no λ { (_ , ()) }
 stpᴿ⁺ nilE  = no λ { (_ , ()) }
 stpᴿ⁺ (consE l e re) = cons? l e re (stp⁺ e) (stpᴿ⁺ re)
 
--- SOUNDNESS is BY CONSTRUCTION (the `yes` carries a derivation) and so
--- is COMPLETENESS (the `no` carries a refutation).  There is nothing
+-- soundness is by construction (the `yes` carries a derivation) and so
+-- is completeness (the `no` carries a refutation).  There is nothing
 -- left to prove; the following is just that type, named.
 Certified-animator : Set
 Certified-animator = ∀ {S} (e : S ⊢ expr) → Dec (Σ[ e′ ∈ S ⊢ expr ] (e ↪ e′))
@@ -362,7 +349,7 @@ stp-complete {e = e} {e′} r with stp⁺ e
 
 -- ─── determinism ────────────────────────────────────────────────────
 -- This is the real content of Part 3 task 1.  `_≟_` decides equality of
--- REDUCTS; determinism is what turns "stp⁺ found a different reduct"
+-- reducts; determinism is what turns "stp⁺ found a different reduct"
 -- into "e ↪ e′ is false".
 
 val-no-step  : Val e → e ↪ e′ → ⊥
@@ -403,7 +390,7 @@ determinismᴿ (ξ-here st)   (ξ-tail v _)   = ⊥-elim (val-no-step v st)
 determinismᴿ (ξ-tail v _)  (ξ-here st′)   = ⊥-elim (val-no-step v st′)
 determinismᴿ (ξ-tail _ st) (ξ-tail _ st′) = cong (consE _ _) (determinismᴿ st st′)
 
--- ─── the CHALLENGE'S relation: evaluation contexts ──────────────────
+-- ─── the challenge'S relation: evaluation contexts ──────────────────
 -- The challenge states reduction as E-Ctx over
 --   E ::= [−] | E t | v E | E [T] | E.l | {lᵢ=vᵢ, lⱼ=E, lₖ=tₖ}
 -- `_↪_` above is the congruence-rule presentation.  The two are proved
@@ -488,8 +475,8 @@ plugᴿ-↪ (tl l v p R) st = ξ-tail p (plugᴿ-↪ R st)
 ⟶→↪ : ∀ {e e′ : S ⊢ expr} → e ⟶ e′ → e ↪ e′
 ⟶→↪ (E-Ctx E st) = plug-↪ E st
 
--- ═══ TASK 1: decide  t ⟶ t′  ════════════════════════════════════════
--- For ARBITRARY t and t′.  Not "for concrete pairs, by conversion".
+-- ═══ task 1: decide  t ⟶ t′  ════════════════════════════════════════
+-- For arbitrary t and t′.  Not "for concrete pairs, by conversion".
 
 infix 4 _↪?_
 
@@ -501,7 +488,7 @@ _↪?_ {S} e e′ with stp⁺ e
 ...   | no ¬q    = no λ st′ → ¬q (determinism st st′)
 
 -- …and the same decision for the challenge's own relation, through the
--- equivalence just proved.  THIS is what Part 3 task 1 asks for.
+-- equivalence just proved.  this is what Part 3 task 1 asks for.
 infix 4 _⟶?_
 
 _⟶?_ : ∀ {S} (e e′ : S ⊢ expr) → Dec (e ⟶ e′)
@@ -516,7 +503,7 @@ reduct e with stp⁺ e
 ... | yes (e′ , _) = just e′
 ... | no  _        = nothing
 
--- ═══ TASK 2: decide  t ⟶* t′ ↛  ═════════════════════════════════════
+-- ═══ task 2: decide  t ⟶* t′ ↛  ═════════════════════════════════════
 
 infix  3 _↪*_
 infixr 5 _◅_
@@ -534,7 +521,7 @@ nf-unique (st ◅ rs)  nf₁ (st′ ◅ rs′)  nf₂ with determinism st st′
 ... | refl = nf-unique rs nf₁ rs′ nf₂
 
 -- a certified evaluator: it returns the normal form together with the
--- reduction sequence reaching it AND the proof that it is normal
+-- reduction sequence reaching it and the proof that it is normal
 eval! : ∀ {S} → ℕ → (e : S ⊢ expr) → Maybe (Σ[ e′ ∈ S ⊢ expr ] ((e ↪* e′) × NF e′))
 eval! zero    e = nothing
 eval! (suc n) e with stp⁺ e
@@ -559,8 +546,8 @@ eval (suc n) e with stp⁺ e
 ... | yes (e′ , _) = eval n e′
 ... | no  _        = e
 
--- ═══ RUNNING IT ═════════════════════════════════════════════════════
--- The development's own examples.  The CHALLENGE's own example suite is
+-- ═══ running it ═════════════════════════════════════════════════════
+-- The development's own examples.  The challenge's own example suite is
 -- in Challenge/Suite.agda.
 
 la lb : Label
@@ -578,7 +565,7 @@ rec : [] ⊢ expr
 rec = RcdE (consE la idTop (consE lb polyId nilE))
 
 -- ─── (1) deciding  t ⟶ t′ ───────────────────────────────────────────
--- by the DECISION PROCEDURE, not by conversion: `_↪?_` is total.
+-- by the decision procedure, not by conversion: `_↪?_` is total.
 dec₁ : Dec ((polyId • Top) ↪ (λx[ Top ] (` zero)))
 dec₁ = (polyId • Top) ↪? (λx[ Top ] (` zero))
 
@@ -586,7 +573,7 @@ dec₁ = (polyId • Top) ↪? (λx[ Top ] (` zero))
 dec₁-yes : isYes ((polyId • Top) ↪? (λx[ Top ] (` zero))) ≡ true
 dec₁-yes = refl
 
--- … and it says NO to a wrong reduct, which is what distinguishes a
+-- … and it says no to a wrong reduct, which is what distinguishes a
 -- decision procedure from a step function
 dec₁-no : isYes ((polyId • Top) ↪? polyId) ≡ false
 dec₁-no = refl
@@ -638,7 +625,7 @@ run₆ = refl
 run₇ : eval 10 (rec # la) ≡ idTop
 run₇ = refl
 
--- a redex UNDER a record: {a = (Λα<:Top.λx:α.x)[Top], b = …} is not a
+-- a redex under a record: {a = (Λα<:Top.λx:α.x)[Top], b = …} is not a
 -- value until its first field has been reduced
 ex₃ : [] ⊢ expr
 ex₃ = RcdE (consE la (polyId • Top) (consE lb idTop nilE))
@@ -664,7 +651,7 @@ animate = stp⁺ ex₁
 animate-fires : reduct ex₁ ≡ just ((λx[ Top ] (` zero)) · idTop)
 animate-fires = refl
 
--- typing of the examples, so the runs are runs of WELL-TYPED terms
+-- typing of the examples, so the runs are runs of well-typed terms
 Γ₀ : Ctx []
 Γ₀ _ ()
 
@@ -678,7 +665,7 @@ animate-fires = refl
                         (consT lb (∀[<: Top ] ((` zero) ⇒ (` zero))) nilT)))
 ⊢rec = ⊢rcd (⊢ᴿ-cons ⊢idTop (⊢ᴿ-cons ⊢polyId ⊢ᴿ-nil))
 
--- record WIDTH subtyping, checked
+-- record width subtyping, checked
 ⊢rec-wide : Γ₀ ⊢ rec ∶ (RcdT (consT la (Top ⇒ Top) nilT))
 ⊢rec-wide = ⊢<: ⊢rec (<:-rcd (<:ᴿ-cons here (<:-reflexive _) <:ᴿ-nil))
 

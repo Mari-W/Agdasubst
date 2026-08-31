@@ -6,6 +6,8 @@ how you invoke `agda`.
 
     systemf.agda        the development the paper is about, maps as functions
     systemf-vec.agda    the same, maps as inductive vectors (§3.4)
+    mltt.agda           Martin-Löf type theory on the same machinery, functions
+    mltt-vec.agda       the same, vectors
     examples.agda       the small examples of §2
     poplmark/           the POPLmark Challenge and POPLmark Reloaded
     generator/          agdasubst.py, which emits poplmark/Languages/
@@ -14,6 +16,8 @@ how you invoke `agda`.
 
     agda systemf.agda
     agda systemf-vec.agda
+    agda mltt.agda
+    agda mltt-vec.agda
     cd poplmark && ./check.sh
 
 `check.sh` typechecks every module and tabulates lines, exit status, error
@@ -158,3 +162,28 @@ the rest are `2 × (constructors + 1)` traversal rules.
 The preservation lemmas are `ren-pres` and `sub-pres` in `systemf.agda`. The
 POPLmark modules keep the older infix spelling `_⊢⋯ᴿ_` / `_⊢⋯ˢ_` for the same
 two statements.
+
+## A dependently typed object language
+
+`mltt.agda` and `mltt-vec.agda` apply the same construction to Martin-Löf type
+theory, to test whether it carries over to a dependent object language. The
+signature is `generator/signatures/mltt.sig`: one syntactic sort, so types are
+terms, with `Pi`, `lam`, `app`, a universe, and `Nat` with a `natrec` whose
+successor branch binds two variables at once. The generator accepted it
+unchanged and emitted 89 rules in each model.
+
+Subject reduction and progress are proved with **zero** substitution lemmas
+applied by hand, the same count as `systemf.agda`. That includes the two cases
+System F has no analogue of, a motive commuting with a double lift and the
+two-variable simultaneous ι-substitution of the successor branch. What MLTT adds
+is judgment plumbing rather than substitution work: stability of reduction and
+conversion under substitution, context conversion, and inversion through the
+conversion rule.
+
+Church-Rosser for the untyped β/ι calculus is proved in both files by Takahashi's
+method, in 380 lines that are identical in the two models. Π-injectivity follows
+from it, and in MLTT it is needed for subject reduction itself rather than only
+for progress, because a lambda may reach its Π-type by conversion.
+
+`mltt.agda` therefore assumes only function extensionality, which the function
+model needs. **`mltt-vec.agda` assumes nothing at all.**

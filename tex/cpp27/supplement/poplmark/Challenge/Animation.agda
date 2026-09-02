@@ -1,21 +1,22 @@
 {-# OPTIONS --rewriting --local-confluence-check #-}
 
 -- ═══ POPLmark Challenge, Part 3 ═════════════════════════════════════
---   "Testing and Animating with Respect to the Semantics"
+-- "Testing and Animating with Respect to the Semantics", for F<: with
+-- records and projection (Challenge/Records.agda).  The challenge asks
+-- for the language of Part 2B; `let` and patterns are NOT animated here.
 --
---   1. decide whether t ⟶ t′        `_↪?_`
---   2. decide whether t ⟶* t′ ↛     `evalDec`, up to a fuel bound
---   3. find t′ with t ⟶ t′          `reduct`
+--   task 1  decide  t ⟶ t′           `_⟶?_`, and `_↪?_`
+--   task 2  decide  t ⟶* t′ ↛        `evalDec`, up to a fuel bound
+--   task 3  find t′ with t ⟶ t′      `reduct`
 --
--- Built from `stp⁺`, a step function sound and complete by
--- construction, decidable equality `_≟_` on the multi-sorted syntax,
--- and `determinism`.  Decidable equality alone is not enough: without
--- determinism, `stp⁺ e = yes (e″ , _)` with `e″ ≢ e′` would not refute
--- `e ↪ e′`.
+-- Supporting results proved here: decidable equality `_≟_` on the
+-- syntax, the certified step function `stp⁺`, `determinism`,
+-- `nf-unique`, and the equivalence of `_↪_` with the challenge's
+-- evaluation-context relation `_⟶_`, so the decisions above decide
+-- the challenge's relation.
 --
--- `_[_]₀` unfolds to `_[ _ ∙ˢ idˢ ]ˢ`, whose symbols are all `opaque`,
--- so every β-contraction below is performed by the REWRITE system and
--- each `refl` is Agda running the semantics.
+-- The challenge's own graded test terms (`step.poplmark`) are not run
+-- here, so no execution times for them are reported.
 
 module Challenge.Animation where
 
@@ -24,6 +25,7 @@ open import Challenge.Records
 
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong)
 open import Relation.Nullary using (Dec; yes; no; ¬_)
+open import Relation.Nullary.Decidable using (isYes)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Bool using (Bool; true; false)
 open import Data.Maybe using (Maybe; just; nothing)
@@ -32,17 +34,10 @@ open import Data.Nat.Properties using () renaming (_≟_ to _≟ℕ_)
 open import Data.List using (List; []; _∷_)
 open import Data.Product using (Σ; Σ-syntax; _×_; _,_)
 
--- Bool views of a decision, used by the test suite
-isYes : ∀ {P : Set} → Dec P → Bool
-isYes (yes _) = true
-isYes (no  _) = false
-
+-- a Bool view of a fuel-bounded decision
 isJustYes : ∀ {P : Set} → Maybe (Dec P) → Bool
 isJustYes (just d) = isYes d
 isJustYes nothing  = false
-
-f≢t : false ≡ true → ⊥
-f≢t ()
 
 -- ─── decidable equality on variables ────────────────────────────────
 
@@ -57,9 +52,6 @@ suc x ≟∋ suc y with x ≟∋ y
 ... | no ¬p    = no λ { refl → ¬p refl }
 
 -- ─── decidable equality on terms, all four sorts at once ────────────
--- 89 clauses.  The O(n²) off-diagonal is `no λ ()` throughout: two
--- constructors of different sorts never even form a clause, because the
--- sort index rules the split out.
 
 _≟_ : ∀ {S s} (t u : S ⊢ s) → Dec (t ≡ u)
 (` x) ≟ (` y) with x ≟∋ y
@@ -215,9 +207,9 @@ val? : S ⊢ expr → Bool
 val? e = isYes (Val? e)
 
 val?-sound : ∀ (e : S ⊢ expr) → val? e ≡ true → Val e
-val?-sound e eq with Val? e
-... | yes v  = v
-... | no  ¬v = ⊥-elim (f≢t eq)
+val?-sound e eq with Val? e | eq
+... | yes v  | _  = v
+... | no  ¬v | ()
 
 -- ─── field lookup, as a decision ────────────────────────────────────
 
@@ -234,11 +226,8 @@ lookupE? l (consE l′ e re) with l ≟ℕ l′
 ...   | no ¬h = no λ { (_ , hereE)       → ne refl
                      ; (_ , thereE _ h)  → ¬h (_ , h) }
 
--- the Maybe version, kept (`toMaybe` is defined below)
-
 -- ─── the certified, complete step function ──────────────────────────
--- `Steps e` is the challenge's "t reduces"; `¬ Steps e` is "t is a
--- normal form".  `stp⁺` decides it.
+-- `Steps e` is "t reduces"; `¬ Steps e` is "t is a normal form".
 
 Steps : ∀ {S} → S ⊢ expr → Set
 Steps {S} e = Σ[ e′ ∈ S ⊢ expr ] (e ↪ e′)
@@ -249,8 +238,6 @@ Stepsᴿ {S} re = Σ[ re′ ∈ S ⊢ rexpr ] (re ↪ᴿ re′)
 NF : ∀ {S} → S ⊢ expr → Set
 NF e = ¬ (Steps e)
 
--- one helper per elimination form, so that no `with` nests more than
--- two deep
 
 app? : (e₁ e₂ : S ⊢ expr) → Dec (Steps e₁) → Dec (Steps e₂) → Dec (Steps (e₁ · e₂))
 app? e₁ e₂ (yes (e₁′ , st)) _ = yes (e₁′ · e₂ , ξ-·₁ st)
@@ -323,9 +310,8 @@ stpᴿ⁺ (` x) = no λ { (_ , ()) }
 stpᴿ⁺ nilE  = no λ { (_ , ()) }
 stpᴿ⁺ (consE l e re) = cons? l e re (stp⁺ e) (stpᴿ⁺ re)
 
--- soundness is by construction (the `yes` carries a derivation) and so
--- is completeness (the `no` carries a refutation).  There is nothing
--- left to prove; the following is just that type, named.
+-- soundness and completeness are by construction: the `yes` carries a
+-- derivation and the `no` a refutation
 Certified-animator : Set
 Certified-animator = ∀ {S} (e : S ⊢ expr) → Dec (Σ[ e′ ∈ S ⊢ expr ] (e ↪ e′))
 
@@ -348,9 +334,8 @@ stp-complete {e = e} {e′} r with stp⁺ e
 ... | no ¬p         = ⊥-elim (¬p (e′ , r))
 
 -- ─── determinism ────────────────────────────────────────────────────
--- This is the real content of Part 3 task 1.  `_≟_` decides equality of
--- reducts; determinism is what turns "stp⁺ found a different reduct"
--- into "e ↪ e′ is false".
+-- `_≟_` decides equality of reducts; determinism turns "stp⁺ found a
+-- different reduct" into "e ↪ e′ is false", which is what task 1 needs.
 
 val-no-step  : Val e → e ↪ e′ → ⊥
 vals-no-step : ValsᴿE re → re ↪ᴿ re₂ → ⊥
@@ -390,12 +375,11 @@ determinismᴿ (ξ-here st)   (ξ-tail v _)   = ⊥-elim (val-no-step v st)
 determinismᴿ (ξ-tail v _)  (ξ-here st′)   = ⊥-elim (val-no-step v st′)
 determinismᴿ (ξ-tail _ st) (ξ-tail _ st′) = cong (consE _ _) (determinismᴿ st st′)
 
--- ─── the challenge'S relation: evaluation contexts ──────────────────
+-- ─── the challenge's relation: evaluation contexts ──────────────────
 -- The challenge states reduction as E-Ctx over
 --   E ::= [−] | E t | v E | E [T] | E.l | {lᵢ=vᵢ, lⱼ=E, lₖ=tₖ}
--- `_↪_` above is the congruence-rule presentation.  The two are proved
--- equivalent here, so the decision procedure below decides the
--- challenge's relation and not a variant of it.
+-- `_↪_` above is the congruence-rule presentation; the two agree, so
+-- the decisions below decide the challenge's relation.
 
 data ECtx  (S : Scope) : Set
 data ECtxᴿ (S : Scope) : Set
@@ -475,8 +459,8 @@ plugᴿ-↪ (tl l v p R) st = ξ-tail p (plugᴿ-↪ R st)
 ⟶→↪ : ∀ {e e′ : S ⊢ expr} → e ⟶ e′ → e ↪ e′
 ⟶→↪ (E-Ctx E st) = plug-↪ E st
 
--- ═══ task 1: decide  t ⟶ t′  ════════════════════════════════════════
--- For arbitrary t and t′.  Not "for concrete pairs, by conversion".
+-- ═══ task 1: decide  t ⟶ t′  ═══════════════════════════════════════
+-- for arbitrary t and t′
 
 infix 4 _↪?_
 
@@ -487,21 +471,13 @@ _↪?_ {S} e e′ with stp⁺ e
 ...   | yes refl = yes st
 ...   | no ¬q    = no λ st′ → ¬q (determinism st st′)
 
--- …and the same decision for the challenge's own relation, through the
--- equivalence just proved.  this is what Part 3 task 1 asks for.
+-- and the same decision for the challenge's own relation
 infix 4 _⟶?_
 
 _⟶?_ : ∀ {S} (e e′ : S ⊢ expr) → Dec (e ⟶ e′)
 e ⟶? e′ with e ↪? e′
 ... | yes st = yes (↪→⟶ st)
 ... | no ¬st = no λ r → ¬st (⟶→↪ r)
-
--- ─── Task 3: find a t′ with t ⟶ t′ ──────────────────────────────────
-
-reduct : S ⊢ expr → Maybe (S ⊢ expr)
-reduct e with stp⁺ e
-... | yes (e′ , _) = just e′
-... | no  _        = nothing
 
 -- ═══ task 2: decide  t ⟶* t′ ↛  ═════════════════════════════════════
 
@@ -539,6 +515,13 @@ evalDec n e e′ with eval! n e
 ...   | yes refl = just (yes (rs , nf))
 ...   | no ¬q    = just (no λ { (rs′ , nf′) → ¬q (nf-unique rs nf rs′ nf′) })
 
+-- ═══ task 3: find a t′ with t ⟶ t′  ════════════════════════════════
+
+reduct : S ⊢ expr → Maybe (S ⊢ expr)
+reduct e with stp⁺ e
+... | yes (e′ , _) = just e′
+... | no  _        = nothing
+
 -- the plain evaluator: iterate `stp⁺` up to a fuel bound
 eval : ℕ → S ⊢ expr → S ⊢ expr
 eval zero    e = e
@@ -546,9 +529,9 @@ eval (suc n) e with stp⁺ e
 ... | yes (e′ , _) = eval n e′
 ... | no  _        = e
 
--- ═══ running it ═════════════════════════════════════════════════════
--- The development's own examples.  The challenge's own example suite is
--- in Challenge/Suite.agda.
+-- ═══ running it ════════════════════════════════════════════════════
+-- The development's own examples.  Each `refl` is Agda running the
+-- semantics.
 
 la lb : Label
 la = 0
@@ -564,17 +547,14 @@ polyId = Λα[<: Top ] (λx[ ` zero ] (` zero))
 rec : [] ⊢ expr
 rec = RcdE (consE la idTop (consE lb polyId nilE))
 
--- ─── (1) deciding  t ⟶ t′ ───────────────────────────────────────────
--- by the decision procedure, not by conversion: `_↪?_` is total.
+-- ─── task 1: deciding  t ⟶ t′ ──────────────────────────────────────
 dec₁ : Dec ((polyId • Top) ↪ (λx[ Top ] (` zero)))
 dec₁ = (polyId • Top) ↪? (λx[ Top ] (` zero))
 
--- it says yes …
 dec₁-yes : isYes ((polyId • Top) ↪? (λx[ Top ] (` zero))) ≡ true
 dec₁-yes = refl
 
--- … and it says no to a wrong reduct, which is what distinguishes a
--- decision procedure from a step function
+-- and no to a wrong reduct
 dec₁-no : isYes ((polyId • Top) ↪? polyId) ≡ false
 dec₁-no = refl
 
@@ -582,8 +562,7 @@ dec₁-no = refl
 dec₂-no : isYes (idTop ↪? idTop) ≡ false
 dec₂-no = refl
 
--- type application fires, and the type substitution [α ↦ Top] is
--- performed by the rewrite system inside the annotation:
+-- type application fires, and [α ↦ Top] is performed inside the annotation
 run₁ : reduct (polyId • Top) ≡ just (λx[ Top ] (` zero))
 run₁ = refl
 
@@ -595,7 +574,7 @@ run₂ = refl
 run₃ : reduct (rec # 7) ≡ nothing
 run₃ = refl
 
--- ─── (2) evaluation to normal form ──────────────────────────────────
+-- ─── task 2: evaluation to normal form ─────────────────────────────
 -- ((Λα<:Top. λx:α. x) [Top]) (λx:Top. x)  ⟶*  λx:Top. x
 ex₁ : [] ⊢ expr
 ex₁ = (polyId • Top) · idTop
@@ -625,8 +604,7 @@ run₆ = refl
 run₇ : eval 10 (rec # la) ≡ idTop
 run₇ = refl
 
--- a redex under a record: {a = (Λα<:Top.λx:α.x)[Top], b = …} is not a
--- value until its first field has been reduced
+-- a redex under a record: not a value until its first field is reduced
 ex₃ : [] ⊢ expr
 ex₃ = RcdE (consE la (polyId • Top) (consE lb idTop nilE))
 
@@ -644,7 +622,7 @@ ex₄ = ((polyId • (Top ⇒ Top)) · idTop) · (RcdE nilE)
 run₁₀ : eval 20 ex₄ ≡ RcdE nilE
 run₁₀ = refl
 
--- ─── (3) the animator, and its certificate ──────────────────────────
+-- ─── task 3: the animator, and its certificate ─────────────────────
 animate : Dec (Σ[ e′ ∈ [] ⊢ expr ] (ex₁ ↪ e′))
 animate = stp⁺ ex₁
 
@@ -676,3 +654,21 @@ animate-fires = refl
 -- preservation, run on the concrete reduction of run₁
 ⊢after : Γ₀ ⊢ (λx[ Top ] (` zero)) ∶ (Top ⇒ Top)
 ⊢after = preservation (⊢• ⊢polyId <:-top) β-Λ
+
+-- ═══ Part 3, as stated in the challenge ═════════════════════════════
+-- For F<: with records and projection.  The challenge asks for the
+-- language of Part 2B; `let` and patterns are not animated.
+
+-- 1. Given F<: terms t and t′, decide whether t ⟶ t′.
+task-1-decide-step : ∀ {S} (e e′ : S ⊢ expr) → Dec (e ⟶ e′)
+task-1-decide-step = _⟶?_
+
+-- 2. Given F<: terms t and t′, decide whether t ⟶* t′ ↛.
+--    Decided up to a fuel bound: `nothing` is "not decided in n steps".
+task-2-decide-normalises-to : ∀ {S} → ℕ → (e e′ : S ⊢ expr) →
+  Maybe (Dec ((e ↪* e′) × NF e′))
+task-2-decide-normalises-to = evalDec
+
+-- 3. Given an F<: term t, find a term t′ such that t ⟶ t′.
+task-3-find-reduct : ∀ {S} (e : S ⊢ expr) → Dec (Σ[ e′ ∈ S ⊢ expr ] (e ↪ e′))
+task-3-find-reduct = stp⁺

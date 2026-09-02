@@ -1,31 +1,34 @@
 {-# OPTIONS --rewriting --local-confluence-check #-}
 
--- ═══ POPLmark Reloaded STLC+, Challenges 2a and 2b (with sums) ═════
+-- ═══ POPLmark Reloaded, Challenges 2a and 2b, for STLC + sums ═══════
+-- The §3.7 extension of the challenge to disjoint sums.
 --
---   2a  renaming, anti-renaming and extensionality of the inductive SN
---                                                    (Lemmas 3.17-3.19)
---   2b  the Kripke logical predicate R, CR1-CR3, semantic substitutions,
---       the Fundamental Lemma, and ⊢ M : A ⟹ M ∈ SN
---                                    (Thm 3.3, Def 3.3, Lem 3.20, Cor 3.4)
+--   2a  Lemma 3.17  renaming of SN / SNe / ⟶SN
+--       Lemma 3.18  anti-renaming of SN / SNe / ⟶SN
+--       Lemma 3.19  extensionality of SN
+--   2b  Theorem 3.3   CR1, CR2, CR3, for R with the §3.7 closure
+--       Definition 3.3  semantic substitutions
+--       Lemma 3.20   the Fundamental Lemma
+--       Corollary 3.4  ⊢ M : A ⟹ M ∈ SN
 --
--- Challenges 1a and 1b are in Reloaded/SumsSoundness.agda.
--- Reloaded/Normalization.agda carries the same structure without sums,
--- and its header explains why the syntax is intrinsically scoped rather
--- than intrinsically typed.  The permutative conversions are out of
--- scope; Reloaded/SumsCommuting.agda measures what they would cost.
+-- Also proved here, as prerequisites: Lemma 3.2 (weakening and
+-- exchange for typing), Lemma 3.3 (anti-renaming of typing), and the
+-- substitution lemma for typing, which the challenge uses silently.
+--
+-- Challenges 1a and 1b are in Reloaded/SumsSoundness.agda.  The
+-- permutative (commuting) conversions are NOT part of the challenge and
+-- are NOT proved anywhere in this development.
+--
+-- The statements are collected at the end of this file.
 
 module Reloaded.SumsNormalization where
 
 open import Languages.STLCSums
 
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; cong; cong₂; subst)
+open import Relation.Binary.PropositionalEquality
+  using (_≡_; refl; sym; cong; cong₂; subst) renaming (trans to ≡-trans)
 open import Data.Product using (Σ; Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.List using (List; []; _∷_)
-
--- ─── the language-specific layer this metatheory sits on ────────────
--- Moved out of Languages.STLCSums: none of it is σ-calculus.  It is contexts,
--- generalizable variables and congruences for this language, so it
--- belongs with the proofs and not in generated output.
 
 -- the three-argument congruence the metatheory of `case` uses
 cong-case : ∀ {S} {e e′ : S ⊢ expr} {u u′ v v′ : (expr ∷ S) ⊢ expr} →
@@ -33,7 +36,7 @@ cong-case : ∀ {S} {e e′ : S ⊢ expr} {u u′ v v′ : (expr ∷ S) ⊢ expr
 cong-case refl refl refl = refl
 
 
--- ═══ the object language'S types and typing judgment ════════════════
+-- ═══ the object language's types and typing judgment ════════════════
 
 infixr 6 _⇒ᵗ_
 infixr 6 _+ᵗ_
@@ -70,7 +73,7 @@ data _⊢_∶_ : ∀ {S} → Ctx S → S ⊢ expr → Ty → Set where
           Γ ⊢ e ∶ (A +ᵗ B) → (A ∷ₜ Γ) ⊢ u ∶ C → (B ∷ₜ Γ) ⊢ v ∶ C →
           Γ ⊢ (case e u v) ∶ C
 
--- ─── Lemmas 3.2/3.3: typed renamings ────────────────────────────────
+-- ─── Lemmas 3.2 and 3.3: typed renamings ────────────────────────────
 
 _∶_→ᴿ_ : ∀ {S₁ S₂} → S₁ →ᴿ S₂ → Ctx S₁ → Ctx S₂ → Set
 _∶_→ᴿ_ {S₁} ξ Γ₁ Γ₂ = ∀ (x : S₁ ∋ expr) → Γ₂ (x [ ξ ]ᴿ) ≡ Γ₁ x
@@ -86,9 +89,6 @@ _∶_→ᴿ_ {S₁} ξ Γ₁ Γ₂ = ∀ (x : S₁ ∋ expr) → Γ₂ (x [ ξ ]
 infixl 5 _⊢⋯ᴿ_
 _⊢⋯ᴿ_ : ∀ {S₁ S₂} {ξ : S₁ →ᴿ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
   {e : S₁ ⊢ expr} {A} → Γ₁ ⊢ e ∶ A → ξ ∶ Γ₁ →ᴿ Γ₂ → Γ₂ ⊢ (e [ ξ ]ᴿ) ∶ A
--- (the implicit maps are passed explicitly at every recursive call:
--- `ξ` occurs in the type of `⊢ξ` only under `_[_]ᴿ`, which is not a
--- pattern, so Agda cannot invert it)
 _⊢⋯ᴿ_ (⊢` {x = x} refl) ⊢ξ = ⊢` (⊢ξ x)
 _⊢⋯ᴿ_ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} (⊢λ {A = A} d) ⊢ξ =
   ⊢λ (_⊢⋯ᴿ_ {ξ = ξ ↑ᴿ expr} {Γ₁ = A ∷ₜ Γ₁} {Γ₂ = A ∷ₜ Γ₂} d
@@ -111,7 +111,30 @@ _⊢⋯ᴿ_ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} (⊢case {A = A} {B = B} d
   Γ ⊢ e ∶ B → (A ∷ₜ Γ) ⊢ (e [ wkᴿ expr ]ᴿ) ∶ B
 ⊢weaken {Γ = Γ} A d = _⊢⋯ᴿ_ {ξ = wkᴿ expr} {Γ₁ = Γ} {Γ₂ = A ∷ₜ Γ} d (⊢wkᴿ A)
 
--- ─── Lemmas 3.4/3.5: typed substitutions ────────────────────────────
+-- Lemma 3.3: anti-renaming of typing.  The term is scrutinised first, so
+-- that `e [ ξ ]ᴿ` reduces to a constructor form.
+anti-ren-⊢ : ∀ {S₁ S₂} {ξ : S₁ →ᴿ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
+  (e : S₁ ⊢ expr) {A} → ξ ∶ Γ₁ →ᴿ Γ₂ → Γ₂ ⊢ (e [ ξ ]ᴿ) ∶ A → Γ₁ ⊢ e ∶ A
+anti-ren-⊢ (` x) ⊢ξ (⊢` eq) = ⊢` (≡-trans (sym (⊢ξ x)) eq)
+anti-ren-⊢ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} (λx e) ⊢ξ (⊢λ {A = A} d) =
+  ⊢λ (anti-ren-⊢ {ξ = ξ ↑ᴿ expr} {Γ₁ = A ∷ₜ Γ₁} {Γ₂ = A ∷ₜ Γ₂} e
+                 (⊢↑ᴿ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} ⊢ξ A) d)
+anti-ren-⊢ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} (e₁ · e₂) ⊢ξ (⊢· d₁ d₂) =
+  ⊢· (anti-ren-⊢ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} e₁ ⊢ξ d₁)
+     (anti-ren-⊢ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} e₂ ⊢ξ d₂)
+anti-ren-⊢ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} (inl e) ⊢ξ (⊢inl d) =
+  ⊢inl (anti-ren-⊢ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} e ⊢ξ d)
+anti-ren-⊢ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} (inr e) ⊢ξ (⊢inr d) =
+  ⊢inr (anti-ren-⊢ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} e ⊢ξ d)
+anti-ren-⊢ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} (case e u v) ⊢ξ
+  (⊢case {A = A} {B = B} d du dv) =
+  ⊢case (anti-ren-⊢ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} e ⊢ξ d)
+        (anti-ren-⊢ {ξ = ξ ↑ᴿ expr} {Γ₁ = A ∷ₜ Γ₁} {Γ₂ = A ∷ₜ Γ₂} u
+                    (⊢↑ᴿ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} ⊢ξ A) du)
+        (anti-ren-⊢ {ξ = ξ ↑ᴿ expr} {Γ₁ = B ∷ₜ Γ₁} {Γ₂ = B ∷ₜ Γ₂} v
+                    (⊢↑ᴿ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} ⊢ξ B) dv)
+
+-- ─── typed substitutions ────────────────────────────────────────────
 
 _∶_→ˢ_ : ∀ {S₁ S₂} → S₁ →ˢ S₂ → Ctx S₁ → Ctx S₂ → Set
 _∶_→ˢ_ {S₁} σ Γ₁ Γ₂ = ∀ (x : S₁ ∋ expr) → Γ₂ ⊢ (x [ σ ]ˢ) ∶ Γ₁ x
@@ -192,9 +215,6 @@ data _⟶SN_ where
 -- ═══ challenge 2a ═══════════════════════════════════════════════════
 
 -- ─── Lemma 3.17: renaming ───────────────────────────────────────────
--- The βSN case needs  (e [ n ]₀) [ ξ ]ᴿ ≡ (e [ (ξ ↑ᴿ expr) ]ᴿ) [ n [ ξ ]ᴿ ]₀.
--- Under the rewrite system both sides have the same normal form, so the
--- case is a bare constructor application.
 
 ren-SNe : ∀ {S₁ S₂} {e : S₁ ⊢ expr} → SNe e → (ξ : S₁ →ᴿ S₂) → SNe (e [ ξ ]ᴿ)
 ren-SN  : ∀ {S₁ S₂} {e : S₁ ⊢ expr} → SN e → (ξ : S₁ →ᴿ S₂) → SN (e [ ξ ]ᴿ)
@@ -218,17 +238,9 @@ ren-⟶SN (βinr m u) ξ = βinr (ren-SN m ξ) (ren-SN u (ξ ↑ᴿ _))
 ren-⟶SN (cseSN st) ξ = cseSN (ren-⟶SN st ξ)
 
 -- ─── Lemma 3.18: anti-renaming ──────────────────────────────────────
--- The paper's flagged pain point: it must invert through `e [ ξ ]ᴿ`, so
--- it holds for renamings only.  Here the term is scrutinised first --
--- for a constructor term the rewrite rules make `e [ ξ ]ᴿ` reduce to a
--- constructor form, and the SN/SNe/⟶SN derivation can then be matched
--- directly.  That is "pattern matching modulo the equational theory of
--- renamings" obtained for free from conversion.
---
--- NOTE: every absurd pattern below is absurd for a syntactic reason (no
--- constructor of the inductive family matches the head of the term),
--- never because two object-language types differ.  That is why dropping
--- intrinsic typing costs this proof nothing.
+-- It must invert through `e [ ξ ]ᴿ`, so it holds for renamings only.
+-- The term is scrutinised first, so that `e [ ξ ]ᴿ` reduces to a
+-- constructor form and the derivation can be matched directly.
 
 anti-SNe : ∀ {S₁ S₂} (e : S₁ ⊢ expr) {ξ : S₁ →ᴿ S₂} → SNe (e [ ξ ]ᴿ) → SNe e
 anti-SN  : ∀ {S₁ S₂} (e : S₁ ⊢ expr) {ξ : S₁ →ᴿ S₂} → SN (e [ ξ ]ᴿ) → SN e
@@ -264,7 +276,6 @@ anti-SN (e₁ · e₂) {ξ = ξ} (red st d) with anti-⟶SN (e₁ · e₂) {ξ =
 
 anti-⟶SN (` x)  ()
 anti-⟶SN (λx e) ()
--- the β case: `(e [ n ]₀) [ ξ ]ᴿ ≡ (e [ (ξ ↑ᴿ expr) ]ᴿ) [ n [ ξ ]ᴿ ]₀` is refl
 anti-⟶SN ((λx b) · e₂) {ξ = ξ} (βSN n) =
   (b [ e₂ ]₀) , βSN (anti-SN e₂ {ξ = ξ} n) , refl
 anti-⟶SN ((λx b) · e₂)   (applSN ())
@@ -291,11 +302,8 @@ anti-⟶SN (case (case c w z) u v) {ξ = ξ} (cseSN st) with anti-⟶SN (case c 
 ... | (e′ , st′ , refl) = case e′ u v , cseSN st′ , refl
 
 -- ─── substituting a variable is a renaming ──────────────────────────
--- The one substitution fact this development proves by hand.
--- `t [ ` x ]₀` unfolds to `t [ (` x) ∙ˢ idˢ ]ˢ`, which is cons-shaped,
--- so `coincidence`, whose left-hand side needs a syntactic `⟨ ξ ⟩`,
--- cannot reach the renaming world.  The rule that would bridge them
--- cannot be registered; supplement/README.md and §5 say why.
+-- The one substitution fact this module proves by hand; ext-SN below is
+-- its only call site.
 
 ren-as-sub : ∀ {S₁ S₂ s} (t : S₁ ⊢ s) (σ : S₁ →ˢ S₂) (ξ : S₁ →ᴿ S₂) →
   (∀ {s′} (y : S₁ ∋ s′) → y [ σ ]ˢ ≡ ` (y [ ξ ]ᴿ)) → t [ σ ]ˢ ≡ t [ ξ ]ᴿ
@@ -316,8 +324,8 @@ ren-as-sub (case e u v) σ ξ h = cong-case (ren-as-sub e σ ξ h)
   λ { zero → refl ; (suc y) → refl }
 
 -- ─── Lemma 3.19: extensionality of SN ───────────────────────────────
--- In the β case the redex contracts to `b [ ` x ]₀`, which by the lemma
--- above is a renaming, so anti-renaming (3.18) applies.
+-- In the β case the redex contracts to `b [ ` x ]₀`, a renaming by the
+-- lemma above, so anti-renaming (3.18) applies.
 
 ext-SN : ∀ {S} {e : S ⊢ expr} {x : S ∋ expr} → SN (e · (` x)) → SN e
 ext-SN (neu (app r n))     = neu r
@@ -382,7 +390,6 @@ cr3 (A ⇒ᵗ B) ne    = λ ξ n rn → cr3 B (app (ren-SNe ne ξ) (cr1 A rn))
 cr3 (A +ᵗ B) ne    = r-ne ne
 
 -- ─── Definition 3.3: semantic substitutions ─────────────────────────
--- this is where the typing context enters.
 Rˢ : ∀ {S₁ S₂} → Ctx S₁ → S₁ →ˢ S₂ → Set
 Rˢ {S₁} Γ σ = ∀ (x : S₁ ∋ expr) → R (Γ x) (x [ σ ]ˢ)
 
@@ -445,9 +452,8 @@ strong-normalisation : ∀ {S} {Γ : Ctx S} {e : S ⊢ expr} {A} →
 strong-normalisation {Γ = Γ} {A = A} d = cr1 A (fund {σ = idˢ} d (Rˢ-id Γ))
 
 -- ─── the syntax really does contain untypable terms ─────────────────
--- (so Corollary 3.4 is not the vacuous "every term is SN" that the
--- intrinsically typed encoding gives; Reloaded/SumsSoundness.agda
--- proves `¬ sn Ω`)
+-- so Corollary 3.4 is not vacuous; Reloaded/SumsSoundness.agda proves
+-- `¬ sn Ω`
 
 self-app : (expr ∷ []) ⊢ expr
 self-app = (` zero) · (` zero)
@@ -457,16 +463,23 @@ self-app = (` zero) · (` zero)
 
 -- ═══ challenge-referencing names ════════════════════════════════════
 
--- Lemma 3.2/3.3 [Weakening and anti-renaming for typing]
+-- Lemma 3.2 [Weakening and exchange for typing]
 lemma-3-2-typed-renaming : ∀ {S₁ S₂} {ξ : S₁ →ᴿ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
   {e : S₁ ⊢ expr} {A} → Γ₁ ⊢ e ∶ A → ξ ∶ Γ₁ →ᴿ Γ₂ → Γ₂ ⊢ (e [ ξ ]ᴿ) ∶ A
 lemma-3-2-typed-renaming {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} d ⊢ξ =
   _⊢⋯ᴿ_ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} d ⊢ξ
 
--- Lemma 3.4/3.5 [Substitution for typing]
-lemma-3-4-typed-substitution : ∀ {S₁ S₂} {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
+-- Lemma 3.3 [Anti-renaming of typing]
+lemma-3-3-anti-renaming : ∀ {S₁ S₂} {ξ : S₁ →ᴿ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
+  (e : S₁ ⊢ expr) {A} → ξ ∶ Γ₁ →ᴿ Γ₂ → Γ₂ ⊢ (e [ ξ ]ᴿ) ∶ A → Γ₁ ⊢ e ∶ A
+lemma-3-3-anti-renaming = anti-ren-⊢
+
+-- Substitution for typing.  The challenge uses this silently; its
+-- Lemmas 3.4 and 3.5 are the corresponding statements for typed
+-- REDUCTION, which are `ren-↝` and `sub-↝` in the Soundness modules.
+typed-substitution : ∀ {S₁ S₂} {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
   {e : S₁ ⊢ expr} {A} → Γ₁ ⊢ e ∶ A → σ ∶ Γ₁ →ˢ Γ₂ → Γ₂ ⊢ (e [ σ ]ˢ) ∶ A
-lemma-3-4-typed-substitution {σ = σ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} d ⊢σ =
+typed-substitution {σ = σ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} d ⊢σ =
   _⊢⋯ˢ_ {σ = σ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} d ⊢σ
 
 -- Lemma 3.17 [Renaming for SN]

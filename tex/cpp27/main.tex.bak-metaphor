@@ -119,7 +119,7 @@ syntax~\cite{10.1007/11532231_4, Nominal2-AFP}, higher-order abstract
 syntax~\cite{PfenningElliott1988}, and de~Bruijn indices~\cite{deBruijn1972}.
 De~Bruijn syntax makes $α$-equivalent terms syntactically identical, and the
 syntax itself is easy to define. A development built on de~Bruijn indices still
-requires a long list of lemmas about substitution composition and about the
+pays for a long list of lemmas about substitution composition and about the
 interaction of substitution with binders.
 
 %\emph{The $σ$-calculus and \textsc{Autosubst}.} 
@@ -340,8 +340,8 @@ Modeling maps as functions is a choice. A vector of images, one per variable in
 the domain scope, would do as well, and would need the same opacity. Extension
 then is a constructor and stuck by itself, but every other operation is still a
 definition that unfolds. We take functions because we find them easier to think
-about, and postulate function extensionality for them. We return to the vector
-model in \cref{sec:vec}.
+about, at the price of postulating function extensionality. We return to the
+vector model in \cref{sec:vec}.
 
 The identity (\AgdaFunction{idᴿ}) takes every variable to itself, and takes its
 sort argument explicitly because Agda frequently fails to infer it. Weakening
@@ -962,8 +962,8 @@ need induction over it.
 Several of \textsc{Autosubst 2}'s features come for free. Vector substitutions
 are unnecessary and mutually recursive definitions work unchanged, both because
 the syntax is multi-sorted. Inline Agda code that depends on the syntax, such
-as lists or products of terms, can be encoded with additional sorts, which
-forfeits standard library support.
+as lists or products of terms, can be encoded with additional sorts at the cost
+of standard library support.
 
 Variadic syntax is supported, i.e.\ a binder that binds a variable number of
 variables at once, such as \texttt{match} does. It needs a new lifting
@@ -1020,69 +1020,73 @@ construction rather than a particular encoding of maps.
 \subsection*{\emph{The proofs from this section were produced using GenAI.}}
 
 To test the construction at a scale where substitution reasoning hurts, we
-solve the POPLmark Challenge and POPLmark Reloaded including its sums
-extension. The development is roughly 9,200 lines of Agda, 6,600 of them
-excluding blanks and comments, of which 2,800 are generated infrastructure and
-3,800 metatheory. \Cref{tab:coverage} lists the five languages it spans and
-what is proved for each.
-
-\begin{table}[t]
-  \caption{Coverage per language}\label{tab:coverage}
-  \footnotesize
-  \begin{tabular}{@{}llrr@{}}
-    \toprule
-    Language          & POPLmark          & Generated LOC & Proof LOC \\
-    \midrule
-    STLC              & Reloaded 1a--2b   & 462           & 435       \\
-    STLC, sums        & Reloaded 1a--2b   & 504           & 753       \\
-    F$_{<:}$          & 1A, 2A            & 532           & 406       \\
-    F$_{<:}$ records  & 1B, part of 2B, 3 & 634           & 1114      \\
-    F$_{<:}$ patterns & 1B, 2B            & 715           & 821       \\
-    \bottomrule
-  \end{tabular}
-\end{table}
+solve the POPLmark Challenge, Parts 1A, 1B, 2A, 2B and~3, and POPLmark Reloaded
+including its sums extension. The development is roughly 9,100 lines of Agda,
+6,400 of them excluding blanks and comments, of which 2,800 are generated
+infrastructure and 3,500 metatheory. It spans five languages, STLC, STLC with
+sums, F$_{<:}$, F$_{<:}$ with records and F$_{<:}$ with pattern matching.
 
 The point of comparison is the substitution reasoning a de~Bruijn development
 normally needs to do. For a fair comparison we use the Rocq solutions by the
-\textsc{Autosubst} authors, where the $σ$-calculus laws are applied by the
-\texttt{asimpl} tactic. Here there is no such step, because normalization
-happens during conversion.
+\textsc{Autosubst} authors, where the $σ$-calculus laws are applied by an
+tactic. Here there is no such step, because normalization happens during
+conversion.
 
-The $η$-laws, the ones we cannot register, are never used. This is largely
-because lifting is a primitive operation rather than one defined in terms of
-the others.
+The $η$-laws, the ones we cannot register, are never used. This is largely due to the fact,
+that lifting is a primitive operation and not defined in terms of the others.
 
 There is exactly one case in which we cannot eliminate a proof obligation for
-maps definitionally. It appears in the extensionality lemma for strong
-normalization of POPLmark Reloaded, where the $β$-contractum
-$b\,\ag{[}\,\agc{`}\,x\,\ag{]₀}$ has to meet an anti-renaming lemma that is
-stated for renamings. The non-definitional fact, which we call
-$\ag{[]-as-ren}$, says
+maps definitionally. That lemma, which we call $\ag{[]-as-ren}$, says
 \[
   t\,\ag{[}\,\agc{`}\,x\,\ag{]₀} \;=\; t\,\ag{[}\,x \agop{∙ᴿ} \ag{idᴿ}\,\ag{]ᴿ}
 \]
 and in our case the two sides are two distinct normal forms. The left one
 unfolds to $t\,\ag{[}\,(\agc{`}\,x) \agop{∙ˢ} \ag{idˢ}\,\ag{]ˢ}$, which is
 extension-shaped, while $\mathsf{coincidence}$ needs a syntactic
-$\ag{⟨}\,ξ\,\ag{⟩}$ to coerce into a renaming. The rule that would bridge them
-is $(\agc{`}\,x) \agop{∙ˢ} \ag{⟨}\,ξ\,\ag{⟩} \to \ag{⟨}\,x \agop{∙ᴿ}
-  ξ\,\ag{⟩}$, in the same $\mathsf{S}\to\mathsf{R}$ direction as the rest of the
-coercion group. Unfortunately, registering it leaves non-joinable pairs, which
-would need composition at a variable to fold for completion.
+$\ag{⟨}\,ξ\,\ag{⟩}$ to coerce into a renaming. The rule that would bridge them is
+$(\agc{`}\,x) \agop{∙ˢ} \ag{⟨}\,ξ\,\ag{⟩} \to \ag{⟨}\,x \agop{∙ᴿ} ξ\,\ag{⟩}$,
+in the same $\mathsf{S}\to\mathsf{R}$ direction as the rest of the coercion
+group. Registering it leaves non-joinable pairs, and the one that survives
+every attempt to complete the system is
+\[
+  (x\,\ag{[}\,ξ \agop{↑ᴿ} s\,\ag{]ᴿ})\,\ag{[}\,(\agc{`}\,y) \agop{∙ˢ} \ag{⟨}\,ξ_1\,\ag{⟩}\,\ag{]ˢ}
+\]
+whose reducts meet only if $\mathsf{lift\text{-}cons}^{\mathsf{R}}$ can fire,
+which needs composition at a variable to fold. It pushes, because folding there
+overlaps $x\,\ag{[}\,\ag{wkᴿ}\,s\,\ag{]ᴿ} = \agc{suc}\,x$ unjoinably. The one
+hand-proved substitution fact is therefore the push-at-V decision seen from the
+substitution side, not an independent gap, and we supply the missing join as an
+induction on the term.
 
-The same fact lies outside what \texttt{asimpl} normalizes in
-\textsc{Autosubst}. There it is supplied by two separate tactics,
-\texttt{substify} and \texttt{renamify}, which move a map from one mode to the
-other. 
+The system leaves two costs in place. First, a rewrite system constrains what
+may be matched as well as what may be proved. An earlier version of our
+transitivity proof for subtyping recursed on $Q\,\ag{[}\,ξ\,\ag{]ᴿ}$ to make
+the induction structural in $Q$. Splitting $Q$ into $\agc{∀[<:}\,A\,\agc{]}\,B$
+then puts
+\[
+  (\agc{∀[<:}\,A\,\agc{]}\,B)\,\ag{[}\,ξ\,\ag{]ᴿ}
+\]
+into that clause's left-hand side, and this is the left-hand side of the
+reduction law that pushes a renaming through the quantifier. A defining clause
+and a registered rule now match the same term, and
+\texttt{--local-confluence-check} rejects the overlap as unjoinable. Ordinary
+type checking accepts the proof, so nothing is visible until the rules are
+registered. One may not pattern match underneath a substitution, and an
+induction that wants to has to be restructured to recurse on the term itself
+and carry the map as a parameter.
 
-One limitation of the technique is that rewriting interferes with the
-resolution of implicit arguments. Where a lemma is applied at a type index the
-rules have already normalized, the map that produced that index can no longer
-be read off by unification and has to be given explicitly. A handful of
-implicit arguments therefore have to be supplied by hand that would otherwise
-be inferred.
+Second, the rewriting can hide an implicit argument. Wherever a lemma is
+applied at a type index the rules have already normalized, the map that
+produced that index can no longer be recovered by unifying against
+\AgdaBound{e} \AgdaFunction{[} \AgdaBound{σ} \AgdaFunction{]ˢ}, and it has to
+be supplied by hand. Definitional equality and inferability pull against each
+other here. The more of an index is normalized before unification, the less of
+it is left to read a metavariable off. In our development this costs a handful
+of implicit arguments, the $β$-cases of subject reduction among them, and no
+substitution law is applied by hand.
 
 \section{Related Work}\label{sec:rwk}
+
 Three lines of work meet here. Solutions to the POPLmark Challenge fix the
 benchmark our evaluation is measured against, generic and generated syntax
 libraries are what we would replace, and a small recent literature attacks the
@@ -1096,8 +1100,8 @@ development is the only one covering Parts~1, 2 and~3 together, and it animates
 the congruence-rule presentation because its code generator cannot execute the
 challenge's evaluation contexts. We cover 1A, 1B, 2A and~2B, and answer Part~3
 as a decision procedure for the evaluation-context relation, machine-checking
-all seven tests of the challenge's own \texttt{step.poplmark}, with our 2B
-running without the pattern \texttt{let}. On POPLmark Reloaded we join
+all seven tests of the challenge's own \texttt{step.poplmark}, at the cost of
+running on 2B without the pattern \texttt{let}. On POPLmark Reloaded we join
 Allais's generic-syntax Agda solution, Beluga and the two Rocq
 \textsc{Autosubst} solutions as a complete STLC and STLC$+$ solution. Allais
 additionally proves completeness of the inductive characterization of strong
@@ -1149,8 +1153,8 @@ Chen, Nordvall Forsberg and Tsai~\cite{10.1145/3779031.3779090} give an
 intrinsic representation of type theory in Cubical Agda as quotient
 inductive-inductive-recursive types, and obtain a syntax that needs no
 transports, no postulates and no custom rewrite rules. Where they replace the
-rewrite rules by a quotient, we keep the plain inductive type and take on a
-confluence obligation instead.
+rewrite rules by a quotient, we keep the plain inductive type and pay for it
+with a confluence obligation.
 
 Generators for binder boilerplate predate and accompany \textsc{Autosubst}.
 Needle \& Knot~\cite{10.1007/978-3-662-49498-1_17} generates the boilerplate
@@ -1182,7 +1186,7 @@ check.
 Wadler experiments with explicit substitutions and implements weakening as a
 constructor, thereby avoiding renamings~\cite{Wadler_2024}. He rewrites some of
 the $σ$-calculus laws but does not pass the confluence checker.
-\Cref{sec:introduction} discussed what that representation entails.
+\Cref{sec:introduction} discussed what that representation costs.
 
 Wadler and colleagues also investigate a uniform treatment of renamings and
 substitutions in a simply typed setting~\cite{altenkirch2025substitution},
@@ -1235,10 +1239,10 @@ phenomenon known as transport hell is worst. The transfer lemma
 (\AgdaFunction{subst} in Agda) then has to carry every step of every proof.
 Intrinsically typed System~F has been formalized in Agda before, executably and
 in full~\cite{10.1007/978-3-030-33636-3_10}, and a binary logical relation over
-it~\cite{10.1145/3678000.3678201} is a direct illustration. Type-in-type and
-expression-in-expression reasoning stays easy, but type-in-expression
+it~\cite{10.1145/3678000.3678201} is a close example of the cost. Type-in-type
+and expression-in-expression reasoning stays easy, but type-in-expression
 substitution also affects the index of the expression substituted into, and the
-authors need thousands of lines for the resulting transports. Rewriting the
+authors spend thousands of lines on the resulting transports. Rewriting the
 $σ$-calculus rules on the syntax of the typing index should remove them, and
 should generalize to other intrinsically typed formalizations.
 

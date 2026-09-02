@@ -1,7 +1,7 @@
 -- ═══ The signature of ../STLCSums.agda ══════════════════════
 --
--- Generates that module: STLC with disjoint sums, 72 curated rules plus
--- the 15 iterated-lifting rules, 87 in total.
+-- Generates that module: STLC with disjoint sums, 68 curated rules plus
+-- the 15 iterated-lifting rules, 83 in total.
 --
 -- The one thing the emitter cannot supply is `cong-case`, the
 -- three-argument congruence the metatheory of `case` uses: the generator

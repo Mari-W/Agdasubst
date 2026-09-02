@@ -1,6 +1,6 @@
 -- ═══ The signature of ../FsubPatterns.agda ══════════════════
 --
--- Generates that module: F<: with records AND patterns, 115 rules.
+-- Generates that module: F<: with records AND patterns, 111 rules.
 -- This is the signature that exercises every extension at once.
 
 %%module Languages.FsubPatterns

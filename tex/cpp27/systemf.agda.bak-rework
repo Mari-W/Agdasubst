@@ -178,10 +178,8 @@ wkˢ : ∀ s′ → S →ˢ (s′ ∷ S)
 wkˢ s′ = ⟨ wkᴿ s′ ⟩
 --! }
 
---! Single {
 _[_]₀ : (s′ ∷ S) ⊢ s → S ⊢ s′ → S ⊢ s
 t [ t′ ]₀ = t [ (t′ ∙ˢ idˢ) ]ˢ
---! }
 
 -- ─── the two-world rewrite system ───────────────────────────────────
 
@@ -602,12 +600,12 @@ var-zero : ∀ {t′ : S ⊢ s′} → (` zero) [ t′ ]₀ ≡ t′
 var-zero = refl
 var-suc : ∀ {x : S ∋ s} {t′ : S ⊢ s′} → (` suc x) [ t′ ]₀ ≡ ` x
 var-suc = refl
-wk-comm : ∀ {t : S₁ ⊢ s} {σ : S₁ →ˢ S₂} →
-  (weaken {s′ = s′} t) [ (σ ↑ˢ s′) ]ˢ ≡ weaken (t [ σ ]ˢ)
-wk-comm = refl
 --! LawsUsed {
 wk-cancel : ∀ {t : S ⊢ s} {t′ : S ⊢ s′} → (weaken t) [ t′ ]₀ ≡ t
 wk-cancel = refl
+wk-comm : ∀ {t : S₁ ⊢ s} {σ : S₁ →ˢ S₂} →
+  (weaken {s′ = s′} t) [ (σ ↑ˢ s′) ]ˢ ≡ weaken (t [ σ ]ˢ)
+wk-comm = refl
 subst-commute : ∀ {t : (s′ ∷ S₁) ⊢ s} {t′ : S₁ ⊢ s′}
   {σ : S₁ →ˢ S₂} →
   (t [ (σ ↑ˢ s′) ]ˢ) [ t′ [ σ ]ˢ ]₀ ≡ (t [ t′ ]₀) [ σ ]ˢ
@@ -685,8 +683,8 @@ data _⊢_∶_ : Ctx S → S ⊢ s → S ∶⊢ s → Set where
     Γ ⊢ (` x) ∶ t
   --! TyLam {
   ⊢λ :
-    (t₁ ∷ₜ Γ) ⊢ e ∶ (weaken t₂) →
-    Γ ⊢ (λx e) ∶ (t₁ ⇒ t₂)
+    (t ∷ₜ Γ) ⊢ e ∶ (weaken t′) →
+    Γ ⊢ (λx e) ∶ (t ⇒ t′)
   --! }
   ⊢Λ :
     (k ∷ₜ Γ) ⊢ e ∶ t →
@@ -729,14 +727,10 @@ _∶_→ᴿ_ {S₁} ξ Γ₁ Γ₂ = ∀ s (x : S₁ ∋ s) (t : S₁ ∶⊢ s) 
 ⊢↑ᴿ ⊢ξ t _ zero    _ refl = refl
 ⊢↑ᴿ ⊢ξ t _ (suc x) _ refl = cong weaken (⊢ξ _ x _ refl)
 
---! RenPres {
 ren-pres : ∀ {ξ : S₁ →ᴿ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
   {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} →
-  Γ₁ ⊢ e ∶ t → ξ ∶ Γ₁ →ᴿ Γ₂ →
-  Γ₂ ⊢ (e [ ξ ]ᴿ) ∶ (t [ ξ ]ᴿ)
--- no transport, no Σ
-ren-pres (⊢` ⊢x) ⊢ξ = ⊢` (⊢ξ _ _ _ ⊢x)
---! }
+  Γ₁ ⊢ e ∶ t → ξ ∶ Γ₁ →ᴿ Γ₂ → Γ₂ ⊢ (e [ ξ ]ᴿ) ∶ (t [ ξ ]ᴿ)
+ren-pres (⊢` ⊢x) ⊢ξ = ⊢` (⊢ξ _ _ _ ⊢x)   -- no transport, no Σ
 ren-pres (⊢λ ⊢e) ⊢ξ = ⊢λ (ren-pres ⊢e (⊢↑ᴿ ⊢ξ _))
 ren-pres (⊢Λ ⊢e) ⊢ξ = ⊢Λ (ren-pres ⊢e (⊢↑ᴿ ⊢ξ _))
 ren-pres (⊢· ⊢e₁ ⊢e₂) ⊢ξ = ⊢· (ren-pres ⊢e₁ ⊢ξ) (ren-pres ⊢e₂ ⊢ξ)
@@ -760,24 +754,21 @@ sub-pres : ∀ {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
 ⊢↑ˢ ⊢σ t _ zero    _ refl = ⊢` refl
 ⊢↑ˢ {σ = σ} ⊢σ t _ (suc x) _ refl = ren-pres (⊢σ _ x _ refl) (⊢wkᴿ (t [ σ ]ˢ))
 sub-pres (⊢` ⊢x)                     ⊢σ = ⊢σ _ _ _ ⊢x
+--! CaseLam {
 -- the induction hypothesis types the body at (weaken t′) [ σ ↑ˢ _ ]ˢ,
 -- while ⊢λ demands weaken (t′ [ σ ]ˢ).  Discharged by wk-comm.
---! CaseLam {
-sub-pres {σ = σ} (⊢λ ⊢e) ⊢σ =
-  ⊢λ (sub-pres {σ = σ ↑ˢ _} ⊢e (⊢↑ˢ {σ = σ} ⊢σ _))
+sub-pres {σ = σ} (⊢λ ⊢e)             ⊢σ = ⊢λ (sub-pres {σ = σ ↑ˢ _} ⊢e (⊢↑ˢ {σ = σ} ⊢σ _))
 --! }
 -- ⊢Λ and ⊢· use no substitution law: neither typing rule moves a
 -- substitution past a binder in its conclusion.
 sub-pres {σ = σ} (⊢Λ ⊢e)             ⊢σ = ⊢Λ (sub-pres {σ = σ ↑ˢ _} ⊢e (⊢↑ˢ {σ = σ} ⊢σ _))
 sub-pres {σ = σ} (⊢· ⊢e₁ ⊢e₂)        ⊢σ = ⊢· (sub-pres {σ = σ} ⊢e₁ ⊢σ) (sub-pres {σ = σ} ⊢e₂ ⊢σ)
+--! CaseTApp {
 -- ⊢• concludes at t′ [ t ]₀, so the two sides are
 -- (t′ [ σ ↑ˢ _ ]ˢ) [ t [ σ ]ˢ ]₀  and  (t′ [ t ]₀) [ σ ]ˢ.
 -- Discharged by subst-commute.
---! CaseTApp {
-sub-pres {σ = σ} (⊢• ⊢e ⊢t ⊢t′) ⊢σ =
-  ⊢• (sub-pres {σ = σ} ⊢e ⊢σ)
-     (sub-pres {σ = σ} ⊢t ⊢σ)
-     (sub-pres {σ = σ ↑ˢ _} ⊢t′ (⊢↑ˢ {σ = σ} ⊢σ _))
+sub-pres {σ = σ} (⊢• ⊢e ⊢t ⊢t′)      ⊢σ = ⊢• (sub-pres {σ = σ} ⊢e ⊢σ) (sub-pres {σ = σ} ⊢t ⊢σ)
+                                         (sub-pres {σ = σ ↑ˢ _} ⊢t′ (⊢↑ˢ {σ = σ} ⊢σ _))
 --! }
 sub-pres ⊢*                          ⊢σ = ⊢*
 
@@ -817,9 +808,9 @@ data _↪_ : S ⊢ expr → S ⊢ expr → Set where
 --! SRSig {
 sr : Γ ⊢ e ∶ t → e ↪ e′ → Γ ⊢ e′ ∶ t
 --! }
+--! CaseBeta {
 -- ⊢λ stores the result type weakened, so the redex is typed at
 -- (weaken t₂) [ e₂ ]₀ where the goal is t₂.  Discharged by wk-cancel.
---! CaseBeta {
 sr (⊢· {e₂ = e₂} (⊢λ ⊢e₁) ⊢e₂) (β-λ v₂) =
   sub-pres {σ = e₂ ∙ˢ idˢ} ⊢e₁ (⊢[] ⊢e₂)
 --! }

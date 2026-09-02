@@ -19,59 +19,148 @@ how you invoke `agda`.
     agda mltt.agda
     agda mltt-vec.agda
     cd poplmark && ./check.sh
+    cd poplmark && ./check.sh --part3
 
 `check.sh` typechecks every module and tabulates lines, exit status, error
 classes, non-joinable critical pairs and wall time. Every module reports 0
-errors and 0 non-joinable pairs.
+errors and 0 non-joinable pairs. Each module takes about 70 seconds, so the
+default run is about 17 minutes.
 
-Not included: the Part-3 test harness (`Challenge/Test1..7.agda`, `Suite`,
-`Timing`), which runs `Animation`'s evaluator against the challenge's own
-`step.poplmark`. It carries no substitution reasoning and needs ~76 minutes to
-check. `Animation.agda`, which is what Part 3 actually asks for, is here.
+`--part3` adds `Challenge/Test1.agda` to `Challenge/Test7.agda`, the challenge's
+own graded test terms. They are the only modules whose cost is computation
+rather than the confluence check, and together they take about 65 minutes. They
+are excluded from the default run for that reason only; nothing else depends on
+which mode you use.
 
-## The two models
+The seven execution times the challenge asks for, measured on one core under
+Agda 2.8.0, each including the fixed import and confluence cost of about 70
+seconds:
 
-`systemf.agda` models a map as a function from variables to terms and needs
-function extensionality. `systemf-vec.agda` models it as an inductive vector,
-so equality of maps is equality of data and the module assumes nothing.
+| test | term | wall |
+|---|---|---:|
+| 1 | two times one, step 1 | 103 s |
+| 2 | two times one, step 2 | 312 s |
+| 3 | two times three, step 3 | 541 s |
+| 4 | two times three, step 4 | 1039 s |
+| 5 | two times three, step 5 | 1035 s |
+| 6 | one + one, step 1 | 316 s |
+| 7 | one + one, step 2 | 547 s |
 
-Both register the same 72 rules and prove the same subject reduction. 61 of the
-rule names coincide; the 11 traversal rules differ, because the generator names
-them after their constructor (`inst-λx_`) where the hand-written file
-abbreviates (`inst-λ`).
+## What is assumed
 
-## What is checked where
+`systemf.agda`, `mltt.agda` and every `poplmark/Languages/*.agda` model a map as
+a function from variables and postulate function extensionality.
+`systemf-vec.agda` and `mltt-vec.agda` model it as an inductive vector and
+assume nothing.
 
-The paper's claim has two halves, and two different machines check them.
+## What is not checked in Agda
 
-**Inside Agda**, here. The σ-calculus is installed as a `{-# REWRITE #-}`
-system that passes `--local-confluence-check` with 0 non-joinable critical
-pairs. That makes the substitution laws hold *definitionally*: a proof that
-would otherwise have to `rewrite` by them is a bare constructor application.
+Agda's `--local-confluence-check` checks local confluence, not confluence, and
+does not check termination of rewrite rules at all. The system was exported as a
+first-order term rewriting system and given to AProVE, which proves termination
+in 23.9 s and confluence in 24.9 s. That export and the two proof texts are not
+part of this supplement; §4.3 of the paper reports them.
 
-**Outside Agda**, not here. Local confluence is not confluence, and Agda does
-not check termination of rewrite rules at all. The system was therefore
-exported as a first-order term rewriting system and given to AProVE, which
-proves termination in 23.9 s and confluence in 24.9 s. That export and the two
-proof texts are not part of this supplement; §4.3 of the paper reports them.
+## POPLmark Challenge
+
+Every module names its results at the end of the file, under the challenge's own
+numbering.
+
+| part | proved | where | gap |
+|---|---|---|---|
+| 1A | Lemma 3.1 transitivity, Lemma 3.2 narrowing with the trailing ∆ | `Challenge/Subtyping.agda` | none |
+| 2A | Theorem 3.3 preservation, Theorem 3.4 progress | `Challenge/Subtyping.agda` | none |
+| 1B | Lemma 3.1 with record types, Lemma 3.2 | `Challenge/Records.agda`, `Challenge/Patterns.agda` | the relation carries a primitive reflexivity rule, eliminated below |
+| 2B | Theorem 3.3, Theorem 3.4, Lemma A.17, for records, projection, patterns and `let` | `Challenge/Patterns.agda` | reduction is given by congruence rules, not related to the challenge's evaluation contexts for this language |
+| 3 | tasks 1, 2 and 3, and the challenge's own seven test terms | `Challenge/Animation.agda`, `Challenge/Test1.agda`–`Test7.agda` | only for F<: with records and projection; `let` and patterns are not animated |
+
+Gaps, in full:
+
+* **Part 3 is over the wrong language.** The challenge asks for the three tasks
+  *on the language of Part 2B*. `Challenge/Animation.agda` decides them for F<:
+  with records and projection, not for `let` and patterns. Task 2 (`t ⟶* t′ ↛`)
+  is decided only up to a fuel bound: `evalDec` returns `nothing` for "not
+  decided in n steps". The challenge's own graded test terms are run, in
+  `Challenge/Test1.agda` to `Challenge/Test7.agda`, and none of the seven needs
+  `let` or a pattern; the wall times are in the table below.
+* **Part 2B and evaluation contexts.** Footnote 5 of the challenge sanctions the
+  congruence-rule presentation of reduction, which `Challenge/Patterns.agda`
+  uses. The equivalence with the challenge's `E-Ctx` presentation is proved for
+  pure F<: (`Challenge/Subtyping.agda`) and for records and projection
+  (`Challenge/Animation.agda`), but not for the language with `let`.
+* **Record subtyping carries a primitive reflexivity rule.** The multi-sorted
+  syntax admits a record body that is a variable, a form F<: does not have, and
+  at such a body the structural proof of reflexivity has no case, so `_⊢_<:ᴿ_`
+  takes reflexivity as a rule. `Challenge/Records.agda` gives the challenge's
+  system verbatim, with no reflexivity rule anywhere (`_⊢_<:ᶜ_` / `_⊢_<:ᴿᶜ_`),
+  proves the two agree on well-formed types, and transfers transitivity to it
+  (`lemma-3-1-transitivity-challenge`). `Challenge/Patterns.agda` does the same
+  at the record level only (`transitivityᴿ°`).
+* **Representation.** Terms are intrinsically scoped de Bruijn terms, so
+  well-scopedness holds by construction rather than by a well-formedness
+  judgment, and α-equivalence is syntactic equality. Progress is stated for the
+  empty context. The syntax has a variable at every sort, so it admits a record
+  body, a record term and a pattern that are variables, which F<: does not have,
+  and `Challenge/Patterns.agda` gives each of those a typing rule so that the
+  judgment is total. The `Wf` premises of `lemma-3-1-transitivity-challenge`
+  rule such bodies out and require the labels of a record type to be pairwise
+  distinct, which is the challenge's own side condition.
+
+## POPLmark Reloaded
+
+| part | proved | where | gap |
+|---|---|---|---|
+| 1a | Lemmas 3.9–3.13 | `Reloaded/Soundness.agda` | none |
+| 1b | Lemma 3.14, Theorem 3.1 | `Reloaded/Soundness.agda` | the optional evaluation-context variant is not proved |
+| 2a | Lemmas 3.17–3.19 | `Reloaded/Normalization.agda` | none |
+| 2b | Theorem 3.3, Definition 3.3, Lemma 3.20, Corollary 3.4 | `Reloaded/Normalization.agda` | none |
+| 1a, 1b with sums (§3.7) | the same, plus Lemmas 3.21–3.25 | `Reloaded/SumsSoundness.agda` | none |
+| 2a, 2b with sums (§3.7) | the same, with the §3.7 closure of the logical predicate | `Reloaded/SumsNormalization.agda` | none |
+
+The §3.2 lemmas the two challenges rest on are proved as well: 3.1 in the two
+`Soundness` modules, 3.2 and 3.3 in the two `Normalization` modules, and 3.6,
+3.7 and 3.8 in the two `Soundness` modules, with 3.4 and 3.5 as the
+single-binder special cases of 3.7. The substitution lemma for typing, which the
+challenge uses silently, is `typed-substitution`.
+
+Gaps, in full:
+
+* **The judgments are not type-directed.** The challenge writes reduction, `sn`
+  and `SN` as typed judgments `Γ ⊢ M −→ N : A`. Here they are relations on raw
+  intrinsically scoped terms, typing is a separate judgment, and Lemma 3.1
+  (reduction preserves typing) is proved rather than being true by construction.
+  Nothing in 1a, 1b, 2a or 2b uses the dropped typing premises.
+* **Section 3.4's "additional twist" is not proved.** That is soundness of `SN`
+  via evaluation contexts, Lemmas 3.15 and 3.16 and Theorem 3.2. The challenge
+  presents it as an alternative to Theorem 3.1, which is proved.
+* **`Reloaded/SumsCommuting.agda` is not a challenge part.** The permutative
+  (commuting) conversions are outside what Reloaded asks for and strong
+  normalisation for the extended reduction relation is not proved anywhere in
+  this development. That module states the two permutative rules, shows renaming
+  commutes with them definitionally, exhibits two well-typed terms the current
+  `SNe` wrongly calls neutral, and states the stratification that would repair
+  it, of which only that it excludes those two terms is proved. Nothing imports
+  it.
 
 ## What the development costs
 
-Across 5,293 lines of metatheory, **one substitution fact is proved by hand**.
+Across 5,327 lines of metatheory, **one substitution fact is proved by hand**.
 `traversals` counts applications of `_[_]ᴿ` or `_[_]ˢ` outside comments;
 `appeals` counts lines invoking `ren-as-sub` or its corollary `[]-as-ren`.
+`Challenge/Test1.agda` to `Challenge/Test7.agda` are omitted: they are the
+challenge's test terms, not metatheory, and each is one `refl`.
 
 | module | lines | traversals | appeals |
 |---|---:|---:|---:|
-| `Challenge/Subtyping.agda` | 635 | 12 | **0** |
-| `Challenge/Records.agda` | 884 | 28 | **0** |
-| `Challenge/Patterns.agda` | 1161 | 66 | **0** |
-| `Challenge/Animation.agda` | 678 | 0 | **0** |
-| `Reloaded/Soundness.agda` | 322 | 12 | **0** |
-| `Reloaded/SumsSoundness.agda` | 481 | 12 | **0** |
-| `Reloaded/SumsCommuting.agda` | 254 | 20 | **0** |
-| `Reloaded/Normalization.agda` | 377 | 29 | 8 |
-| `Reloaded/SumsNormalization.agda` | 501 | 36 | 13 |
+| `Challenge/Subtyping.agda` | 605 | 12 | **0** |
+| `Challenge/Records.agda` | 872 | 28 | **0** |
+| `Challenge/Patterns.agda` | 1137 | 63 | **0** |
+| `Challenge/Animation.agda` | 674 | 0 | **0** |
+| `Reloaded/Soundness.agda` | 351 | 13 | **0** |
+| `Reloaded/SumsSoundness.agda` | 550 | 13 | **0** |
+| `Reloaded/SumsCommuting.agda` | 257 | 20 | **0** |
+| `Reloaded/Normalization.agda` | 367 | 31 | 8 |
+| `Reloaded/SumsNormalization.agda` | 514 | 38 | 13 |
 
 The two non-zero rows are `ren-as-sub` — substituting a variable is a
 renaming — its corollary `[]-as-ren`, and their clauses. `ren-as-sub` is an
@@ -79,35 +168,23 @@ induction on the term, and it has exactly one call site in each module:
 `ext-SN`'s β case, where the redex contracts to ``b [ ` x ]₀`` and
 anti-renaming needs to see that as a renaming.
 
-Why it cannot be a rule is worth stating precisely, because it is not an
-independent limitation. `idˢ` is `⟨ idᴿ ⟩`, so ``t [ ` x ]₀`` is
-``t [ (` x) ∙ˢ ⟨ idᴿ ⟩ ]ˢ`` — cons-shaped, and `coincidence` needs a
-syntactic `⟨ ξ ⟩`. The repair is ``(` x) ∙ˢ ⟨ ξ ⟩ → ⟨ x ∙ᴿ ξ ⟩``, which is the
-S → R direction `⟨⟩-comp`, `⟨⟩-lift` and `coincidence` already have.
-Registering it costs 4 non-joinable pairs; completing it (the two ⨟-continued
-companions, then `distᴿ` and `lift-consᴿ`) gives 5, then 4 again. The pair
-that survives every round joins only if composition at a **variable** folds so
-that `lift-consᴿ` can fire — and at mode V composition pushes, because folding
-there overlaps `def-wkᴿ` unjoinably. It is the *same* obstruction as
-**push at V, fold at T**, met from the substitution side.
+It cannot be a rule. `idˢ` is `⟨ idᴿ ⟩`, so ``t [ ` x ]₀`` is
+``t [ (` x) ∙ˢ ⟨ idᴿ ⟩ ]ˢ``, which is cons-shaped, and `coincidence` needs a
+syntactic `⟨ ξ ⟩`. The repair is ``(` x) ∙ˢ ⟨ ξ ⟩ → ⟨ x ∙ᴿ ξ ⟩``. Registering it
+costs 4 non-joinable pairs; completing it gives 5, then 4 again. The pair that survives
+every round joins only if composition at a **variable** folds so that
+`lift-consᴿ` can fire, and at mode V composition pushes, because folding there
+overlaps `def-wkᴿ` unjoinably. It is the same obstruction as **push at V, fold
+at T**, met from the substitution side.
 
-## Which parts of the challenges are solved
+## The two models
 
-| | |
-|---|---|
-| POPLmark 1A, 2A | `Challenge/Subtyping.agda` |
-| POPLmark 1B | `Challenge/Records.agda` |
-| POPLmark 2B | `Challenge/Patterns.agda` |
-| POPLmark 3 | `Challenge/Animation.agda` |
-| Reloaded 1a, 1b | `Reloaded/Soundness.agda`, `Reloaded/SumsSoundness.agda` |
-| Reloaded 2a, 2b | `Reloaded/Normalization.agda`, `Reloaded/SumsNormalization.agda` |
-
-`Reloaded/SumsCommuting.agda` is not a challenge part. The permutative
-(commuting) conversions are outside what Reloaded asks for, and that module
-measures what adding them would cost rather than estimating it.
-
-Each `Challenge/` and `Reloaded/` module sits on exactly one `Languages/`
-module, named in its `open import`.
+`systemf.agda` models a map as a function from variables to terms and needs
+function extensionality. `systemf-vec.agda` models it as an inductive vector, so
+equality of maps is equality of data and the module assumes nothing. Both
+register the same 72 rules and prove the same subject reduction; 58 of the rule
+names coincide, and the 14 traversal names differ because each file names them
+after its own constructors.
 
 ## The generator
 
@@ -116,18 +193,24 @@ by `generator/agdasubst.py` from the matching signature in
 `poplmark/Languages/signatures/`. The σ-calculus infrastructure is generated;
 the metatheory on top of it is hand-written.
 
-    python3 generator/agdasubst.py poplmark/Languages/signatures/STLC.sg \
-        poplmark/Languages/STLC.agda
+    python3 generator/agdasubst.py --model=fun \
+        poplmark/Languages/signatures/STLC.sg poplmark/Languages/STLC.agda
 
-`--model=vectors` (the default) emits maps as inductive vectors, `--model=fun`
-as functions; `--no-star` drops the 15-rule iterated-lifting family, which only
-a signature with a variable-arity binder needs.
+All five were emitted with `--model=fun`, which models a map as a function;
+`--model=vectors` (the default) models it as an inductive vector. `--no-star`
+drops the 15-rule iterated-lifting family, which only a signature with a
+variable-arity binder needs; it is honoured by `--model=vectors` only.
+
+Of the rules emitted, 56 are signature-independent and 15 more are the iterated
+lifting; the rest are `2 × (constructors + 1)` traversal rules. That gives 77
+rules for `STLC`, 83 for `STLCSums`, 87 for `Fsub`, 101 for `FsubRecords` and
+111 for `FsubPatterns`.
 
 `generator/signatures/` holds fifteen stand-alone example signatures (untyped
 λ, CBPV, CPS, π-calculus, …) that exercise the generator on syntaxes this
-development does not otherwise use. Most are the HOAS descriptions shipped
-with Autosubst 2 and keep that project's `.sig` extension; signatures written
-for this development use `.sg`.
+development does not otherwise use. Most are the HOAS descriptions shipped with
+Autosubst 2 and keep that project's `.sig` extension; signatures written for
+this development use `.sg`.
 
 A signature declares sorts and constructors; a parenthesised argument is a
 binder, a quoted one an external parameter:
@@ -138,13 +221,10 @@ binder, a quoted one an external parameter:
     all : (ty -> ty) -> ty          -- (s -> t) binds s in t
     lam : ty -> (tm -> tm) -> tm
 
-A binder may bind several variables at once, `(tm -> tm -> tm)`, or a
-variable number, `(tm ^ n -> tm)`.
-
-`%%module`, `%%var`, `%%epilogue` and `%`-prefixed preamble lines control the
-emitted module's name, its variable constructor, trailing verbatim text and
-imports. 72 of the rules are signature-independent, plus 15 more with `↑*`;
-the rest are `2 × (constructors + 1)` traversal rules.
+A binder may bind several variables at once, `(tm -> tm -> tm)`, or a variable
+number, `(tm ^ n -> tm)`. `%%module`, `%%var`, `%%funext`, `%%epilogue` and
+`%`-prefixed preamble lines control the emitted module's name, its variable
+constructor, its extensionality lemma, trailing verbatim text and imports.
 
 ## Notation
 
@@ -166,24 +246,17 @@ two statements.
 ## A dependently typed object language
 
 `mltt.agda` and `mltt-vec.agda` apply the same construction to Martin-Löf type
-theory, to test whether it carries over to a dependent object language. The
-signature is `generator/signatures/mltt.sig`: one syntactic sort, so types are
-terms, with `Pi`, `lam`, `app`, a universe, and `Nat` with a `natrec` whose
-successor branch binds two variables at once. The generator accepted it
+theory. The signature is `generator/signatures/mltt.sig`: one syntactic sort, so
+types are terms, with `Pi`, `lam`, `app`, a universe, and `Nat` with a `natrec`
+whose successor branch binds two variables at once. The generator accepted it
 unchanged and emitted 89 rules in each model.
 
 Subject reduction and progress are proved with **zero** substitution lemmas
-applied by hand, the same count as `systemf.agda`. That includes the two cases
-System F has no analogue of, a motive commuting with a double lift and the
-two-variable simultaneous ι-substitution of the successor branch. What MLTT adds
-is judgment plumbing rather than substitution work: stability of reduction and
-conversion under substitution, context conversion, and inversion through the
-conversion rule.
+applied by hand, the same count as `systemf.agda`. Church-Rosser for the untyped
+β/ι calculus is proved in both files by Takahashi's method, in 380 lines that are
+identical in the two models; Π-injectivity follows from it, and in MLTT it is
+needed for subject reduction itself rather than only for progress, because a
+lambda may reach its Π-type by conversion.
 
-Church-Rosser for the untyped β/ι calculus is proved in both files by Takahashi's
-method, in 380 lines that are identical in the two models. Π-injectivity follows
-from it, and in MLTT it is needed for subject reduction itself rather than only
-for progress, because a lambda may reach its Π-type by conversion.
-
-`mltt.agda` therefore assumes only function extensionality, which the function
-model needs. **`mltt-vec.agda` assumes nothing at all.**
+`mltt.agda` assumes only function extensionality. **`mltt-vec.agda` assumes
+nothing at all.**

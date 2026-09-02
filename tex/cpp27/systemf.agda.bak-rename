@@ -685,8 +685,8 @@ data _⊢_∶_ : Ctx S → S ⊢ s → S ∶⊢ s → Set where
     Γ ⊢ (` x) ∶ t
   --! TyLam {
   ⊢λ :
-    (t₁ ∷ₜ Γ) ⊢ e ∶ (weaken t₂) →
-    Γ ⊢ (λx e) ∶ (t₁ ⇒ t₂)
+    (t ∷ₜ Γ) ⊢ e ∶ (weaken t′) →
+    Γ ⊢ (λx e) ∶ (t ⇒ t′)
   --! }
   ⊢Λ :
     (k ∷ₜ Γ) ⊢ e ∶ t →
@@ -818,7 +818,7 @@ data _↪_ : S ⊢ expr → S ⊢ expr → Set where
 sr : Γ ⊢ e ∶ t → e ↪ e′ → Γ ⊢ e′ ∶ t
 --! }
 -- ⊢λ stores the result type weakened, so the redex is typed at
--- (weaken t₂) [ e₂ ]₀ where the goal is t₂.  Discharged by wk-cancel.
+-- (weaken t′) [ e₂ ]₀ where the goal is t′.  Discharged by wk-cancel.
 --! CaseBeta {
 sr (⊢· {e₂ = e₂} (⊢λ ⊢e₁) ⊢e₂) (β-λ v₂) =
   sub-pres {σ = e₂ ∙ˢ idˢ} ⊢e₁ (⊢[] ⊢e₂)

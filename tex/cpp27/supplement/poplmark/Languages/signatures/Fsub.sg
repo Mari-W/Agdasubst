@@ -1,8 +1,8 @@
 -- ═══ The signature of ../Fsub.agda ══════════════════════════
 --
--- Generates that module: pure System F<:, 76 curated rules plus the 15
+-- Generates that module: pure System F<:, 72 curated rules plus the 15
 -- signature-independent iterated-lifting rules the generator always
--- emits, 91 in total.  It uses three format extensions:
+-- emits, 87 in total.  It uses three format extensions:
 --
 --   %%module    the emitted module is QUALIFIED, `Languages.Fsub`, so it does
 --               not match the output file's basename

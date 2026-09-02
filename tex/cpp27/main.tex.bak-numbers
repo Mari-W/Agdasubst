@@ -1021,9 +1021,9 @@ construction rather than a particular encoding of maps.
 
 To test the construction at a scale where substitution reasoning hurts, we
 solve the POPLmark Challenge and POPLmark Reloaded including its sums
-extension. The development is roughly 9,200 lines of Agda, 6,600 of them
+extension. The development is roughly 9,100 lines of Agda, 6,400 of them
 excluding blanks and comments, of which 2,800 are generated infrastructure and
-3,800 metatheory. \Cref{tab:coverage} lists the five languages it spans and
+3,500 metatheory. \Cref{tab:coverage} lists the five languages it spans and
 what is proved for each.
 
 \begin{table}[t]
@@ -1033,11 +1033,11 @@ what is proved for each.
     \toprule
     Language          & POPLmark          & Generated LOC & Proof LOC \\
     \midrule
-    STLC              & Reloaded 1a--2b   & 462           & 435       \\
-    STLC, sums        & Reloaded 1a--2b   & 504           & 753       \\
+    STLC              & Reloaded 1a--2b   & 462           & 408       \\
+    STLC, sums        & Reloaded 1a--2b   & 504           & 707       \\
     F$_{<:}$          & 1A, 2A            & 532           & 406       \\
-    F$_{<:}$ records  & 1B, part of 2B, 3 & 634           & 1114      \\
-    F$_{<:}$ patterns & 1B, 2B            & 715           & 821       \\
+    F$_{<:}$ records  & 1B, part of 2B, 3 & 634           & 1102      \\
+    F$_{<:}$ patterns & 1B, 2B            & 715           & 818       \\
     \bottomrule
   \end{tabular}
 \end{table}

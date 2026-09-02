@@ -1,20 +1,26 @@
 {-# OPTIONS --rewriting --local-confluence-check #-}
 
--- ═══ POPLmark Reloaded, Challenges 1a and 1b ════════════════════════
+-- ═══ POPLmark Reloaded, Challenges 1a and 1b, for STLC ══════════════
 --
---   1a  subterm and expansion closure of `sn`, closure of neutrals,
---       confluence and backward closure          (Lemmas 3.8-3.13)
---   1b  soundness of the inductive characterisation:
---       SN ⟹ sn,  SNe ⟹ sn,  ⟶SN ⟹ ⟶sn       (Lemma 3.14, Thm 3.1)
+--   1a  Lemma 3.9   subterm and anti-substitution properties of sn
+--       Lemma 3.10  weak head expansion
+--       Lemma 3.11  closure properties of neutral terms
+--       Lemma 3.12  confluence of sn
+--       Lemma 3.13  backward closure of sn
+--   1b  Lemma 3.14  SNe ⟹ ne
+--       Theorem 3.1  SN ⟹ sn, SNe ⟹ sn, ⟶SN ⟹ ⟶sn
 --
--- With Reloaded/Normalization.agda (2a/2b) this closes the STLC half.
--- Built on Languages/STLC.agda, so `_↝_`, `sn`, `ne` and `_⟶sn_` are
--- relations on raw terms; typing enters only at `preservation` and
--- `corollary-3-4-sn`.
+-- The §3.2 lemmas these rest on are proved too: Lemma 3.1 (reduction
+-- preserves typing), Lemma 3.6 (properties of multistep reduction),
+-- Lemma 3.7 (reduction under renaming and substitution, of which 3.4
+-- and 3.5 are the single-binder special cases) and Lemma 3.8 (sn is
+-- closed under multistep reduction).  With Corollary 3.4 of
+-- Reloaded/Normalization.agda they give that every well-typed term is
+-- strongly normalising in the accessibility sense.
 --
--- The σ-calculus contribution is Lemma 3.7 (`sub-↝`, `ren-↝`):
---   (b [ n ]₀) [ σ ]ˢ ≡ (b [ (σ ↑ˢ expr) ]ˢ) [ n [ σ ]ˢ ]₀
--- holds definitionally, so each β case is a bare constructor.
+-- Challenges 2a and 2b are in Reloaded/Normalization.agda.
+--
+-- The statements are collected at the end of this file.
 
 module Reloaded.Soundness where
 
@@ -60,9 +66,6 @@ data _⟶sn_ : ∀ {S} → S ⊢ expr → S ⊢ expr → Set where
            e ⟶sn e′ → (e · n) ⟶sn (e′ · n)
 
 -- ─── Lemma 3.1: reduction preserves typing ──────────────────────────
--- not vacuous any more -- the syntax is scoped, not typed -- but the β
--- case is exactly the substitution lemma `⊢[]` of Reloaded.Normalization,
--- whose own proof is definitional in the σ-calculus.
 
 preservation : ∀ {S} {Γ : Ctx S} {e e′ : S ⊢ expr} {A} →
   Γ ⊢ e ∶ A → e ↝ e′ → Γ ⊢ e′ ∶ A
@@ -95,10 +98,6 @@ preservation* d (st ◅ r) = preservation* (preservation d st) r
 ↝*-·₂ (st ◅ r) = ξ·₂ st ◅ ↝*-·₂ r
 
 -- ─── Lemma 3.7: reduction under renaming and substitution ───────────
--- Both β cases are `β↝` on the nose: the σ-calculus discharges
---   (b [ n ]₀) [ ξ ]ᴿ ≡ (b [ (ξ ↑ᴿ expr) ]ᴿ) [ n [ ξ ]ᴿ ]₀     and
---   (b [ n ]₀) [ σ ]ˢ ≡ (b [ (σ ↑ˢ expr) ]ˢ) [ n [ σ ]ˢ ]₀
--- definitionally.
 
 ren-↝ : ∀ {S₁ S₂} {e e′ : S₁ ⊢ expr} → e ↝ e′ → (ξ : S₁ →ᴿ S₂) →
   (e [ ξ ]ᴿ) ↝ (e′ [ ξ ]ᴿ)
@@ -119,8 +118,7 @@ ren-↝* : ∀ {S₁ S₂} {e e′ : S₁ ⊢ expr} → e ↝* e′ → (ξ : S�
 ren-↝* done     ξ = done
 ren-↝* (st ◅ r) ξ = ren-↝ st ξ ◅ ren-↝* r ξ
 
--- Lemma 3.6(5): reducing inside the substitution.  Stated pointwise, as
--- the map-level statement the two-world system wants.
+-- Lemma 3.6(5): reducing inside the substitution
 sub-↝* : ∀ {S₁ S₂} (t : S₁ ⊢ expr) (σ σ′ : S₁ →ˢ S₂) →
   (∀ (y : S₁ ∋ expr) → (y [ σ ]ˢ) ↝* (y [ σ′ ]ˢ)) → (t [ σ ]ˢ) ↝* (t [ σ′ ]ˢ)
 sub-↝* (` y)     σ σ′ h = h y
@@ -159,7 +157,7 @@ sn-app₂ (acc f) = acc λ n′ st → sn-app₂ (f (_ · n′) (ξ·₂ st))
 anti-sub-sn : ∀ {S₁ S₂} (t : S₁ ⊢ expr) (σ : S₁ →ˢ S₂) → sn (t [ σ ]ˢ) → sn t
 anti-sub-sn t σ (acc f) = acc λ t′ st → anti-sub-sn t′ σ (f (t′ [ σ ]ˢ) (sub-↝ st σ))
 
--- ─── two impossibility lemmas ───────────────────────────────────────
+-- ─── impossibility lemmas ───────────────────────────────────────────
 
 ne-λ-⊥ : ∀ {S} {b : (expr ∷ S) ⊢ expr} → ne (λx b) → ⊥
 ne-λ-⊥ ()
@@ -168,8 +166,8 @@ ne-λ-⊥ ()
 ⟶sn-λ-⊥ ()
 
 -- ─── Lemma 3.10: weak head expansion ────────────────────────────────
--- lexicographic in (sn n, sn b); the `sn b` argument is what the paper
--- obtains from 3.9(3), and we take it as a parameter.
+-- lexicographic in (sn n, sn b); the paper obtains `sn b` from 3.9(3),
+-- here it is a parameter
 
 sn-β-exp : ∀ {S} {b : (expr ∷ S) ⊢ expr} {n : S ⊢ expr} →
   sn n → sn b → sn (b [ n ]₀) → sn ((λx b) · n)
@@ -207,8 +205,7 @@ confl (applsn st₀) (ξ·₁ st) with confl st₀ st
 ... | inj₂ (q , st′ , r) = inj₂ (q · _ , applsn st′ , ↝*-·₁ r)
 
 -- ─── Lemma 3.13: backward closure of sn ─────────────────────────────
--- lexicographic in (sn e, sn n); the ξ·₁ case is where confluence is
--- cashed in.
+-- lexicographic in (sn e, sn n); the ξ·₁ case uses confluence
 
 sn-app-exp : ∀ {S} {e e′ n : S ⊢ expr} →
   sn n → sn e → e ⟶sn e′ → sn (e′ · n) → sn (e · n)
@@ -252,9 +249,8 @@ sound-SN (red st d) = sn-⟶sn-exp (sound-⟶SN st) (sound-SN d)
 sound-⟶SN (βSN n)     = βsn (sound-SN n)
 sound-⟶SN (applSN st) = applsn (sound-⟶SN st)
 
--- ═══ the challenge, assembled ═══════════════════════════════════════
--- every well-typed term is strongly normalising, in the classical
--- accessibility sense (Cor. 3.4 + Thm 3.1)
+-- ═══ Corollary 3.4 with Theorem 3.1 ═════════════════════════════════
+-- every well-typed term is strongly normalising in the accessibility sense
 
 strongly-normalising : ∀ {S} {Γ : Ctx S} {e : S ⊢ expr} {A} →
   Γ ⊢ e ∶ A → sn e
@@ -287,13 +283,9 @@ SN-redex = strong-normalisation ⊢redex
 sn-redex : sn redex
 sn-redex = strongly-normalising ⊢redex
 
--- ─── and the typing hypothesis is doing real work ───────────────────
--- `Ω` (defined in Reloaded/Normalization.agda) is a well-scoped term that
--- is not strongly normalising.  Under the old intrinsically typed
--- encoding it could not even be written down, which is exactly why
--- `corollary-3-4-sn` was vacuous there and is not vacuous here.
--- `Ω ↝ Ω` is `β↝` on the nose: the σ-calculus computes the contractum
--- `((` zero) · (` zero)) [ λx ((` zero) · (` zero)) ]₀` to `Ω` itself.
+-- ─── the typing hypothesis is doing real work ───────────────────────
+-- `Ω` (defined in Reloaded/Normalization.agda) is a well-scoped term
+-- that is not strongly normalising, so `corollary-3-4-sn` is not vacuous.
 
 Ω-loops : Ω ↝ Ω
 Ω-loops = β↝
@@ -308,6 +300,39 @@ lemma-3-1-preservation : ∀ {S} {Γ : Ctx S} {e e′ : S ⊢ expr} {A} →
   Γ ⊢ e ∶ A → e ↝ e′ → Γ ⊢ e′ ∶ A
 lemma-3-1-preservation = preservation
 
+-- Lemma 3.9 [Properties of Strongly Normalizing Terms]
+lemma-3-9-1 : ∀ {S} (x : S ∋ expr) → sn (` x)
+lemma-3-9-1 = sn-var
+lemma-3-9-2 : ∀ {S} {b : (expr ∷ S) ⊢ expr} → sn b → sn (λx b)
+lemma-3-9-2 = sn-abs
+lemma-3-9-3 : ∀ {S₁ S₂} (t : S₁ ⊢ expr) (σ : S₁ →ˢ S₂) → sn (t [ σ ]ˢ) → sn t
+lemma-3-9-3 = anti-sub-sn
+lemma-3-9-4 : ∀ {S} {e n : S ⊢ expr} → sn (e · n) → sn e × sn n
+lemma-3-9-4 d = sn-app₁ d , sn-app₂ d
+
+-- Lemma 3.10 [Weak Head Expansion]
+lemma-3-10-weak-head-expansion : ∀ {S} {b : (expr ∷ S) ⊢ expr} {n : S ⊢ expr} →
+  sn n → sn b → sn (b [ n ]₀) → sn ((λx b) · n)
+lemma-3-10-weak-head-expansion = sn-β-exp
+
+-- Lemma 3.11 [Closure Properties of Neutral Terms]
+lemma-3-11-1 : ∀ {S} {r r′ : S ⊢ expr} → ne r → r ↝ r′ → ne r′
+lemma-3-11-1 = ne-↝
+lemma-3-11-2 : ∀ {S} {r n : S ⊢ expr} → ne r → sn r → sn n → sn (r · n)
+lemma-3-11-2 = ne-app-sn
+
+-- Lemma 3.12 [Confluence of sn]
+lemma-3-12-confluence : ∀ {S} {e m m′ : S ⊢ expr} → e ⟶sn m → e ↝ m′ →
+  (m ≡ m′) ⊎ (Σ[ q ∈ S ⊢ expr ] ((m′ ⟶sn q) × (m ↝* q)))
+lemma-3-12-confluence = confl
+
+-- Lemma 3.13 [Backward Closure of sn]
+lemma-3-13-1 : ∀ {S} {e e′ n : S ⊢ expr} →
+  sn n → sn e → e ⟶sn e′ → sn (e′ · n) → sn (e · n)
+lemma-3-13-1 = sn-app-exp
+lemma-3-13-2 : ∀ {S} {e e′ : S ⊢ expr} → e ⟶sn e′ → sn e′ → sn e
+lemma-3-13-2 = sn-⟶sn-exp
+
 -- Lemma 3.14 [SNe implies ne]
 lemma-3-14-SNe-ne : ∀ {S} {e : S ⊢ expr} → SNe e → ne e
 lemma-3-14-SNe-ne = SNe→ne
@@ -315,6 +340,10 @@ lemma-3-14-SNe-ne = SNe→ne
 -- Theorem 3.1 [Soundness of SN with respect to sn]
 theorem-3-1-soundness : ∀ {S} {e : S ⊢ expr} → SN e → sn e
 theorem-3-1-soundness = sound-SN
+theorem-3-1-soundness-SNe : ∀ {S} {e : S ⊢ expr} → SNe e → sn e
+theorem-3-1-soundness-SNe = sound-SNe
+theorem-3-1-soundness-⟶SN : ∀ {S} {e e′ : S ⊢ expr} → e ⟶SN e′ → e ⟶sn e′
+theorem-3-1-soundness-⟶SN = sound-⟶SN
 
 -- Corollary 3.4 + Theorem 3.1: every well-typed term is strongly
 -- normalising in the classical accessibility sense

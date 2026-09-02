@@ -1,20 +1,18 @@
 {-# OPTIONS --rewriting --local-confluence-check #-}
 
--- ═══ POPLmark Challenge, parts 1A and 2A ════════════════════════════
+-- ═══ POPLmark Challenge, Parts 1A and 2A: pure F<: ══════════════════
 --
---   1A  transitivity and narrowing of algorithmic F<: subtyping
---   2A  preservation and progress for F<:
+--   1A  Lemma 3.1    transitivity of algorithmic subtyping
+--       Lemma 3.2    narrowing, with the trailing ∆
+--   2A  Theorem 3.3  preservation
+--       Theorem 3.4  progress
 --
--- Built on Languages/Fsub.agda.
+-- Also proved: reflexivity of algorithmic subtyping; the equivalence of
+-- the congruence-rule and the evaluation-context presentation of the
+-- reduction relation; the equivalence of the algorithmic and the
+-- declarative subtyping systems.
 --
--- F<:'s two judgments, subtyping and typing, are ONE inductive family
---
---     _⊢_∶_ : Ctx S → S ⊢ s → S ∶⊢ s → Set
---
--- indexed by the sort of the subject: `Γ ⊢ A <: B` at s = type and
--- `Γ ⊢ e ∶ A` at s = expr.  The typed-map machinery is then written
--- once and delivers weakening (`_⊢⋯ᴿ_`), substitution (`_⊢⋯ˢ_`) and
--- narrowing for both judgments at once.
+-- The statements are collected at the end of this file.
 
 module Challenge.Subtyping where
 
@@ -28,12 +26,7 @@ open import Data.Product using (Σ; Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.List using (List; []; _∷_; drop)
 
--- ─── the language-specific layer this metatheory sits on ────────────
--- Moved out of Languages.Fsub: none of it is σ-calculus.  It is contexts,
--- generalizable variables and congruences for this language, so it
--- belongs with the proofs and not in generated output.
-
--- ─── the generalizable variables the metatheory expects ─────────────
+-- ─── variables ──────────────────────────────────────────────────────
 
 variable
   e e₁ e₂ e′              : S ⊢ expr
@@ -41,11 +34,10 @@ variable
   α                       : S ∋ s
 
 -- ─── contexts ───────────────────────────────────────────────────────
--- The declaration of a variable of either sort is a type: for a term
--- variable it is its type, for a type variable it is its upper bound.
--- constant, unlike System F's, so `S ∶⊢ s` reduces to `S ⊢ type` even
--- for an abstract sort `s` -- that is what makes the sort-generic
--- statements of Challenge/Subtyping.agda typecheck without a sort split.
+-- What a context declares for a variable is a type: for a term variable
+-- its type, for a type variable its upper bound.  So `S ∶⊢ s` is
+-- constantly `S ⊢ type`, and the judgment below can be stated for an
+-- abstract sort `s`.
 
 ↑ˢᵗ_ : Sort → Sort
 ↑ˢᵗ _ = type
@@ -121,7 +113,7 @@ _⊢_<:_ : Ctx S → S ⊢ type → S ⊢ type → Set
 ⊢var {s = expr} eq = ⊢` eq
 ⊢var {s = type} eq = <:-var eq (<:-reflexive _)
 
--- ─── typed renamings: weakening for both judgments at once ──────────
+-- ─── Lemma A.5: typed renamings, i.e. weakening ─────────────────────
 
 _∶_→ᴿ_ : S₁ →ᴿ S₂ → Ctx S₁ → Ctx S₂ → Set
 _∶_→ᴿ_ {S₁} ξ Γ₁ Γ₂ = ∀ s (x : S₁ ∋ s) (A : S₁ ∶⊢ s) →
@@ -155,21 +147,18 @@ _⊢⋯ᴿ_ : ∀ {ξ : S₁ →ᴿ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
   Γ ⊢ t ∶ A → (_∷ₜ_ {s = s′} P Γ) ⊢ weaken t ∶ weaken A
 ⊢weaken P d = d ⊢⋯ᴿ ⊢wkᴿ P
 
--- ═══ part 1A: transitivity and narrowing ════════════════════════════
---
--- Narrowing replaces one context entry by a subtype of it.  As a
--- relation between two contexts over the same scope:
+-- ═══ Part 1A: transitivity and narrowing ════════════════════════════
+-- Narrowing replaces one context entry by a subtype of it, as a
+-- relation between two contexts over the same scope.
 
 Narrowing : ∀ {S} → Ctx S → S ⊢ type → Ctx S → Set
 Narrowing {S} Γ₂ Q Γ₁ = ∀ s (x : S ∋ s) →
     (wk-telescope Γ₂ x ≡ wk-telescope Γ₁ x)
   ⊎ (wk-telescope Γ₁ x ≡ Q  ×  Γ₂ ⊢ wk-telescope Γ₂ x <: Q)
 
--- the narrowing at the top of the context, and its propagation under a
--- binder.  Both need only weakening, not transitivity.
--- NOTE the explicit sort annotations: since `S ∶⊢ s` is constantly
--- `S ⊢ type`, a context entry no longer determines the sort it was
--- pushed at, so `_∷ₜ_`'s index has to be pinned by hand.
+-- narrowing at the top of the context, and its propagation under a
+-- binder.  `_∷ₜ_`'s sort index is pinned by hand: a context entry is a
+-- type at every sort, so it does not determine the sort it was pushed at.
 narrow-here : ∀ {S} {Γ : Ctx S} {P Q : S ⊢ type} →
   Γ ⊢ P <: Q → Narrowing {type ∷ S} (P ∷ₜ Γ) (weaken Q) (Q ∷ₜ Γ)
 narrow-here d _ zero    = inj₂ (refl , ⊢weaken _ d)
@@ -183,10 +172,8 @@ narrow-ext nr s P _ (suc y) with nr _ y
 ... | inj₂ (eq , d)  = inj₂ (cong weaken eq , ⊢weaken P d)
 
 -- ─── the induction measure: the shape of the cut type ───────────────
--- Transitivity is an induction on the cut type Q, narrowing an
--- induction on the derivation with transitivity at Q available.  Under
--- a binder Q gets weakened, so plain structural induction on Q is out;
--- what is invariant is its shape.
+-- Under a binder the cut type Q is weakened, so structural induction on
+-- Q is out; its shape is invariant.
 
 data Shape : Set where
   ⊤ˢ   : Shape
@@ -200,9 +187,6 @@ shape (` α)        = varˢ
 shape (A ⇒ B)      = shape A ⇒ˢ shape B
 shape (∀[<: A ] B) = ∀ˢ (shape A) (shape B)
 
--- The one substitution fact in this file that the rewrite system does
--- not give for free: `shape` recurses on a type, and `A [ ξ ]ᴿ` with A
--- abstract is neutral, so this needs its own induction.
 shape-ren : ∀ (A : S₁ ⊢ type) (ξ : S₁ →ᴿ S₂) → shape (A [ ξ ]ᴿ) ≡ shape A
 shape-ren Top ξ          = refl
 shape-ren (` α) ξ        = refl
@@ -218,15 +202,8 @@ shape-ren (∀[<: A ] B) ξ = cong₂ ∀ˢ (shape-ren A ξ) (shape-ren B (ξ �
 ∀ˢ-injᵣ : ∀ {a b c d} → ∀ˢ a b ≡ ∀ˢ c d → b ≡ d
 ∀ˢ-injᵣ refl = refl
 
--- The mutual pair.  Both recurse structurally on the shape argument;
--- the cut type Q itself stays a variable, so the derivations can be
--- matched freely (matching a derivation refines Q).  NOTE: an earlier
--- version indexed the recursion by `Q [ ξ ]ᴿ` instead, to make the
--- induction structural in Q.  That version typechecks in the ordinary
--- sense but is rejected by --local-confluence-check: pattern matching
--- on Q puts `(∀[<: A ] B) [ ξ ]ᴿ` into the clause's left-hand side, which
--- overlaps instᴿ-∀ unjoinably.  Living under a rewrite system therefore
--- constrains what may be matched, not just what may be proved.
+-- Transitivity and narrowing, proved together.  Both recurse
+-- structurally on the shape argument.
 
 <:-trans : ∀ (sh : Shape) {S} {Γ : Ctx S} {A Q B : S ⊢ type} →
   shape Q ≡ sh → Γ ⊢ A <: Q → Γ ⊢ Q <: B → Γ ⊢ A <: B
@@ -290,9 +267,8 @@ narrowing : ∀ {Γ : Ctx S} {P Q : S ⊢ type} {t : (type ∷ S) ⊢ s} {A} →
 narrowing {Q = Q} d = narrow (shape Q) (shape-ren Q (wkᴿ type)) (narrow-here d)
 
 -- ─── typed substitutions ────────────────────────────────────────────
--- one definition: at a type variable it demands a subtyping fact, at a
--- term variable a typing fact.  This is exactly F<:'s notion of a
--- well-typed simultaneous type-and-term substitution.
+-- At a type variable this demands a subtyping fact, at a term variable a
+-- typing fact.
 
 _∶_→ˢ_ : S₁ →ˢ S₂ → Ctx S₁ → Ctx S₂ → Set
 _∶_→ˢ_ {S₁} σ Γ₁ Γ₂ = ∀ s (x : S₁ ∋ s) (A : S₁ ∶⊢ s) →
@@ -325,9 +301,7 @@ _⊢⋯ˢ_ {σ = σ} (⊢• d₁ d₂) ⊢σ =
 _⊢⋯ˢ_ {σ = σ} (⊢<: d₁ d₂) ⊢σ =
   ⊢<: (_⊢⋯ˢ_ {σ = σ} d₁ ⊢σ) (_⊢⋯ˢ_ {σ = σ} d₂ ⊢σ)
 
--- the single-point substitution, again sort-generic: at s = expr this
--- is the term substitution lemma, at s = type the type substitution
--- lemma (whose premise is a subtyping derivation Γ ⊢ C <: A)
+-- Lemma A.8 at s = expr, Lemma A.11 at s = type
 ⊢[] : ∀ {Γ : Ctx S} {t : S ⊢ s} {A : S ∶⊢ s} →
   Γ ⊢ t ∶ A → (t ∙ˢ idˢ) ∶ (A ∷ₜ Γ) →ˢ Γ
 ⊢[] d _ zero    _ refl = d
@@ -347,9 +321,7 @@ data _↪_ : S ⊢ expr → S ⊢ expr → Set where
   ξ-·₂ : Val e₁ → e₂ ↪ e → (e₁ · e₂) ↪ (e₁ · e)
   ξ-•  : e ↪ e′ → (e • C) ↪ (e′ • C)
 
--- ─── inversion ──────────────────────────────────────────────────────
--- Stated with the subtyping step built in, as in tapl 28.  This is
--- where transitivity (⊢<: case) and narrowing (⊢Λ case) are cashed in.
+-- ─── Lemma A.13: inversion, with the subtyping step built in ────────
 
 inv-λ : ∀ {Γ : Ctx S} {A e C B₁ B₂} →
   Γ ⊢ (λx[ A ] e) ∶ C → Γ ⊢ C <: (B₁ ⇒ B₂) →
@@ -504,11 +476,9 @@ narrowing′ : ∀ {Γ : Ctx S} {P Q : S ⊢ type} {t : (type ∷ S) ⊢ s} {A} 
 narrowing′ = narrowing∆ []
 
 -- ═══ evaluation contexts, and the equivalence ═══════════════════════
--- The challenge presents evaluation as two immediate reduction rules
--- (E-AppAbs, E-TappTabs) plus E-Ctx over
---     E ::= [−] | E t | v E | E [T]
--- Footnote 5 sanctions the congruence-rule presentation used above, but
--- does not excuse leaving the two unrelated.  Here they are related.
+-- The challenge presents evaluation as the immediate rules E-AppAbs and
+-- E-TappTabs plus E-Ctx over  E ::= [−] | E t | v E | E [T].  `_↪_`
+-- above is the congruence-rule presentation; the two agree.
 
 data ECtx (S : Scope) : Set where
   □    : ECtx S

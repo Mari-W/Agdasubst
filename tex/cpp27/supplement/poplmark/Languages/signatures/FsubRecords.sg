@@ -1,7 +1,7 @@
 -- ═══ The signature of ../FsubRecords.agda ═══════════════════
 --
 -- Generates that module: F<: plus the two record sorts `rtype` /
--- `rexpr`, 105 rules in total.
+-- `rexpr`, 101 rules in total.
 --
 -- `Label` is a NON-SORT constructor parameter, declared by the `%`
 

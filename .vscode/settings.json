@@ -11,5 +11,22 @@
     "**/.DS_Store": true,
     "**/Thumbs.db": true,
     "**/*.agdai": true
-  }
+  },
+  "latex-workshop.latex.recipes": [],
+  "latex-workshop.latex.tools": [],
+  "latex-workshop.latex.autoBuild.run": "never",
+  "latex-workshop.latex.autoClean.run": "never",
+  "latex-workshop.latex.build.forceRecipeUsage": false,
+  "latex-workshop.synctex.afterBuild.enabled": true,
+  "latex-workshop.message.badbox.show": false,
+  "latex-workshop.message.latexlog.exclude": [
+    "*"
+  ],
+  "latex-workshop.latex.search.rootFiles.exclude": [
+    "cpp27/**",
+    "**/bak/**"
+  ],
+  "latex-workshop.latex.outDir": "%DIR%",
+  "latex-workshop.latex.rootFile.indicator": "both",
+  "breadcrumbs.enabled": false
 }

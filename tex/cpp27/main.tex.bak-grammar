@@ -1020,44 +1020,43 @@ construction rather than a particular encoding of maps.
 \subsection*{\emph{The proofs from this section were produced using GenAI.}}
 
 To test the construction at a scale where substitution reasoning hurts, we
-solve the POPLmark Challenge and POPLmark Reloaded including its sums
-extension. The development is roughly 9,200 lines of Agda, 6,600 of them
-excluding blanks and comments, of which 2,800 are generated infrastructure and
-3,800 metatheory. \Cref{tab:coverage} lists the five languages it spans and
-what is proved for each.
+solve the POPLmark Challenge, Parts 1A, 1B, 2A, 2B and~3, and POPLmark Reloaded
+including its sums extension. The development is roughly 9,100 lines of Agda,
+6,400 of them excluding blanks and comments, of which 2,800 are generated
+infrastructure and 3,500 metatheory. \Cref{tab:coverage} lists the five
+languages it spans and what is proved for each.
 
 \begin{table}[t]
   \caption{Coverage per language}\label{tab:coverage}
   \footnotesize
   \begin{tabular}{@{}llrr@{}}
     \toprule
-    Language          & POPLmark          & Generated LOC & Proof LOC \\
+    language          & proved            & core & proof \\
     \midrule
-    STLC              & Reloaded 1a--2b   & 462           & 435       \\
-    STLC, sums        & Reloaded 1a--2b   & 504           & 753       \\
-    F$_{<:}$          & 1A, 2A            & 532           & 406       \\
-    F$_{<:}$ records  & 1B, part of 2B, 3 & 634           & 1114      \\
-    F$_{<:}$ patterns & 1B, 2B            & 715           & 821       \\
+    STLC              & Reloaded 1a--2b   &  462 &  408 \\
+    STLC, sums        & Reloaded 1a--2b   &  504 &  707 \\
+    F$_{<:}$          & 1A, 2A            &  532 &  406 \\
+    F$_{<:}$ records     & 1B, part of 2B, 3 &  634 & 1102 \\
+    F$_{<:}$ patterns    & 1B, 2B            &  715 &  818 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 The point of comparison is the substitution reasoning a de~Bruijn development
 normally needs to do. For a fair comparison we use the Rocq solutions by the
-\textsc{Autosubst} authors, where the $σ$-calculus laws are applied by the
-\texttt{asimpl} tactic. Here there is no such step, because normalization
-happens during conversion.
+\textsc{Autosubst} authors, where the $σ$-calculus laws are applied by an
+tactic. Here there is no such step, because normalization happens during
+conversion.
 
-The $η$-laws, the ones we cannot register, are never used. This is largely
-because lifting is a primitive operation rather than one defined in terms of
+The $η$-laws, the ones we cannot register, are never used. This is largely due
+to the fact, that lifting is a primitive operation and not defined in terms of
 the others.
 
 There is exactly one case in which we cannot eliminate a proof obligation for
 maps definitionally. It appears in the extensionality lemma for strong
 normalization of POPLmark Reloaded, where the $β$-contractum
 $b\,\ag{[}\,\agc{`}\,x\,\ag{]₀}$ has to meet an anti-renaming lemma that is
-stated for renamings. The non-definitional fact, which we call
-$\ag{[]-as-ren}$, says
+stated for renamings. That lemma, which we call $\ag{[]-as-ren}$, says
 \[
   t\,\ag{[}\,\agc{`}\,x\,\ag{]₀} \;=\; t\,\ag{[}\,x \agop{∙ᴿ} \ag{idᴿ}\,\ag{]ᴿ}
 \]
@@ -1067,22 +1066,32 @@ extension-shaped, while $\mathsf{coincidence}$ needs a syntactic
 $\ag{⟨}\,ξ\,\ag{⟩}$ to coerce into a renaming. The rule that would bridge them
 is $(\agc{`}\,x) \agop{∙ˢ} \ag{⟨}\,ξ\,\ag{⟩} \to \ag{⟨}\,x \agop{∙ᴿ}
   ξ\,\ag{⟩}$, in the same $\mathsf{S}\to\mathsf{R}$ direction as the rest of the
-coercion group. Unfortunately, registering it leaves non-joinable pairs, which
-would need composition at a variable to fold for completion.
+coercion group. Registering it leaves non-joinable pairs, that would require
+composition at a variable to fold. 
 
-The same fact lies outside what \texttt{asimpl} normalizes in
-\textsc{Autosubst}. There it is supplied by two separate tactics,
-\texttt{substify} and \texttt{renamify}, which move a map from one mode to the
-other. 
+The one hand-proved substitution fact is
+also not provided by the \texttt{asimpl} tactic in \textsc{Autosubst}. They
+need to use an incomplete tactic \texttt{substify} to coerce as renaming into a substitution to complete the proof. The \textsc{Autosubst} proofs use the  \texttt{substify} and \texttt{renamify} tactic more often, whereas we only need to use such a fact once.
 
-One limitation of the technique is that rewriting interferes with the
-resolution of implicit arguments. Where a lemma is applied at a type index the
-rules have already normalized, the map that produced that index can no longer
-be read off by unification and has to be given explicitly. A handful of
-implicit arguments therefore have to be supplied by hand that would otherwise
-be inferred.
+Two restrictions remain. First, a rewrite system constrains what may be matched
+as well as what may be proved. An earlier version of our transitivity proof for
+algorithmic subtyping, Part~1A, recursed on $Q\,\ag{[}\,ξ\,\ag{]ᴿ}$ to make the
+induction structural in $Q$. Splitting $Q$ puts
+$(\agc{∀[<:}\,A\,\agc{]}\,B)\,\ag{[}\,ξ\,\ag{]ᴿ}$ into the clause's left-hand
+side, where it overlaps the reduction law for the quantifier unjoinably.
+Ordinary type checking accepts the proof and
+\texttt{--local-confluence-check} rejects it. One may not pattern match
+underneath a substitution.
+
+Second, the rewriting can hide an implicit argument. Where a lemma is applied
+at an index the rules have already normalized, the map that produced it can no
+longer be read off by unification and has to be given. The more of an index is
+normalized before unification, the less of it is left to read a metavariable
+off. A handful of implicit arguments remain to be supplied, and no substitution
+law is applied by hand.
 
 \section{Related Work}\label{sec:rwk}
+
 Three lines of work meet here. Solutions to the POPLmark Challenge fix the
 benchmark our evaluation is measured against, generic and generated syntax
 libraries are what we would replace, and a small recent literature attacks the

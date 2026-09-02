@@ -685,8 +685,8 @@ data _⊢_∶_ : Ctx S → S ⊢ s → S ∶⊢ s → Set where
     Γ ⊢ (` x) ∶ t
   --! TyLam {
   ⊢λ :
-    (t₁ ∷ₜ Γ) ⊢ e ∶ (weaken t₂) →
-    Γ ⊢ (λx e) ∶ (t₁ ⇒ t₂)
+    (t ∷ₜ Γ) ⊢ e ∶ (weaken t′) →
+    Γ ⊢ (λx e) ∶ (t ⇒ t′)
   --! }
   ⊢Λ :
     (k ∷ₜ Γ) ⊢ e ∶ t →
@@ -729,14 +729,10 @@ _∶_→ᴿ_ {S₁} ξ Γ₁ Γ₂ = ∀ s (x : S₁ ∋ s) (t : S₁ ∶⊢ s) 
 ⊢↑ᴿ ⊢ξ t _ zero    _ refl = refl
 ⊢↑ᴿ ⊢ξ t _ (suc x) _ refl = cong weaken (⊢ξ _ x _ refl)
 
---! RenPres {
 ren-pres : ∀ {ξ : S₁ →ᴿ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
   {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} →
-  Γ₁ ⊢ e ∶ t → ξ ∶ Γ₁ →ᴿ Γ₂ →
-  Γ₂ ⊢ (e [ ξ ]ᴿ) ∶ (t [ ξ ]ᴿ)
--- no transport, no Σ
-ren-pres (⊢` ⊢x) ⊢ξ = ⊢` (⊢ξ _ _ _ ⊢x)
---! }
+  Γ₁ ⊢ e ∶ t → ξ ∶ Γ₁ →ᴿ Γ₂ → Γ₂ ⊢ (e [ ξ ]ᴿ) ∶ (t [ ξ ]ᴿ)
+ren-pres (⊢` ⊢x) ⊢ξ = ⊢` (⊢ξ _ _ _ ⊢x)   -- no transport, no Σ
 ren-pres (⊢λ ⊢e) ⊢ξ = ⊢λ (ren-pres ⊢e (⊢↑ᴿ ⊢ξ _))
 ren-pres (⊢Λ ⊢e) ⊢ξ = ⊢Λ (ren-pres ⊢e (⊢↑ᴿ ⊢ξ _))
 ren-pres (⊢· ⊢e₁ ⊢e₂) ⊢ξ = ⊢· (ren-pres ⊢e₁ ⊢ξ) (ren-pres ⊢e₂ ⊢ξ)

@@ -1,25 +1,31 @@
 {-# OPTIONS --rewriting --local-confluence-check #-}
 
--- ═══ POPLmark Reloaded STLC+: the commuting conversions, measured ═══
+-- ═══ NOT A CHALLENGE RESULT ═════════════════════════════════════════
 --
--- The permutative (commuting) conversions are outside what Reloaded
--- asks for and are NOT proved here.  Nothing in this module is imported
--- by the metatheory.  It measures what adding them would cost.
+-- This module proves NO part of POPLmark Reloaded.  The permutative
+-- (commuting) conversions are not part of the challenge, and strong
+-- normalisation for the reduction relation with them, `_↝π_`, is NOT
+-- proved here or anywhere else in this development.  Nothing in this
+-- module is imported by any other module.
 --
---   (M1) Can the two permutative rules be stated, and does renaming
---        commute with them definitionally?  Yes to both: `ren-↝π` is a
---        bare constructor application, and the core stays at 72 rules
---        with 0 non-joinable pairs.
+-- What it does contain is a measurement of what adding them would cost.
 --
---   (M2) Does the inductive characterisation of SN survive?  No.
+--   (M1) The two permutative rules can be stated and renaming commutes
+--        with them definitionally: `ren-↝π` is a bare constructor
+--        application in both π cases.
+--
+--   (M2) The inductive characterisation of SN does not survive.
 --        `SNe`'s `cse` and `app` admit well-typed π-redexes
 --        (`SNe-admits-π-redex-c` and `-a`, with derivations `⊢bad-c`
 --        and `⊢bad-a`), so `neu : SNe e → SN e` calls a reducible term
 --        normal.  The definition of "neutral" is wrong once π is there.
 --
---   (M3) What must change: neutrals stratified so that an elimination
---        spine holds at most one outermost `case`.  `SNe⁻` and `SNe′`
---        below are that stratification.
+--   (M3) A stratification that would repair it: neutrals so that an
+--        elimination spine holds at most one outermost `case`.  `SNe⁻`,
+--        `SNe′` and `SNsum′` below are that stratification.  Of it only
+--        that it excludes the two π-redexes of (M2) is proved
+--        (`bad-c-not-SNe′`, `bad-a-not-SNe′`); no normalisation result
+--        is proved for it, and it is used nowhere.
 
 module Reloaded.SumsCommuting where
 
@@ -75,13 +81,10 @@ data _↝π_ : ∀ {S} → S ⊢ expr → S ⊢ expr → Set where
        (case r (case u (w₁ [ (wkᴿ expr ↑ᴿ expr) ]ᴿ) (w₂ [ (wkᴿ expr ↑ᴿ expr) ]ᴿ))
                (case v (w₁ [ (wkᴿ expr ↑ᴿ expr) ]ᴿ) (w₂ [ (wkᴿ expr ↑ᴿ expr) ]ᴿ)))
 
--- ─── the measurement: renaming commutes with π definitionally ───────
--- The interesting obligations are the two π cases.  For π· the goal is
---   ((case r u v) · n) [ ξ ]ᴿ  ↝π  (case r (u · n↑) (v · n↑)) [ ξ ]ᴿ
--- and the right-hand side must be convertible with the π· instance at
--- the renamed arguments, i.e. Agda must see
+-- ─── (M1) renaming commutes with π definitionally ───────────────────
+-- The two π cases need
 --   (n [ wkᴿ expr ]ᴿ) [ (ξ ↑ᴿ expr) ]ᴿ  ≡  (n [ ξ ]ᴿ) [ wkᴿ expr ]ᴿ
--- and its two-level analogue for πc.  Both hold by the rewrite system.
+-- and its two-level analogue, both stated separately below.
 
 ren-↝π : ∀ {S₁ S₂} {e e′ : S₁ ⊢ expr} → e ↝π e′ → (ξ : S₁ →ᴿ S₂) →
   (e [ ξ ]ᴿ) ↝π (e′ [ ξ ]ᴿ)
@@ -251,4 +254,4 @@ data SNsum′ (P : Fam) (Q : Fam) : ∀ {S} → S ⊢ expr → Set where
 --
 -- None of this is done here.  What is measured is that the σ-calculus
 -- side is free and that the obstruction is entirely in the definition
--- of "neutral".
+-- of "neutral".  This module claims no challenge result.

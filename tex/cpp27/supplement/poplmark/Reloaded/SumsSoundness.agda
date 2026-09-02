@@ -1,19 +1,29 @@
 {-# OPTIONS --rewriting --local-confluence-check #-}
 
--- ═══ POPLmark Reloaded STLC+, Challenges 1a and 1b (with sums) ═════
+-- ═══ POPLmark Reloaded, Challenges 1a and 1b, for STLC + sums ═══════
+-- The §3.7 extension of the challenge to disjoint sums.
 --
---   1a  subterm and expansion closure of `sn`, closure of neutrals,
---       confluence and backward closure          (Lemmas 3.8-3.13)
---   1b  soundness of the inductive characterisation:
---       SN ⟹ sn,  SNe ⟹ sn,  ⟶SN ⟹ ⟶sn       (Lemma 3.14, Thm 3.1)
+--   1a  Lemma 3.9, 3.22   subterm and anti-substitution properties of sn
+--       Lemma 3.10, 3.23  weak head expansion
+--       Lemma 3.11, 3.25  closure properties of neutral terms
+--       Lemma 3.12        confluence of sn
+--       Lemma 3.13, 3.24  backward closure of sn
+--   1b  Lemma 3.14        SNe ⟹ ne
+--       Theorem 3.1       SN ⟹ sn, SNe ⟹ sn, ⟶SN ⟹ ⟶sn
 --
--- With Reloaded/SumsNormalization.agda (2a/2b) this closes the STLC+
--- half.  Built on Languages/STLCSums.agda.  Reloaded/Soundness.agda
--- carries the same structure without sums.
+-- The §3.2 lemmas these rest on are proved too: Lemma 3.1 (reduction
+-- preserves typing), Lemmas 3.6 and 3.21 (properties of multistep
+-- reduction), Lemma 3.7 (reduction under renaming and substitution, of
+-- which 3.4 and 3.5 are the single-binder special cases) and Lemma 3.8
+-- (sn is closed under multistep reduction).  With Corollary 3.4 of
+-- Reloaded/SumsNormalization.agda they give that every well-typed term
+-- is strongly normalising in the accessibility sense.
 --
--- The σ-calculus contribution is Lemma 3.7 (`sub-↝`, `ren-↝`):
---   (b [ n ]₀) [ σ ]ˢ ≡ (b [ (σ ↑ˢ expr) ]ˢ) [ n [ σ ]ˢ ]₀
--- holds definitionally, so each β case is a bare constructor.
+-- Challenges 2a and 2b are in Reloaded/SumsNormalization.agda.  The
+-- permutative (commuting) conversions are NOT part of the challenge and
+-- are NOT proved anywhere in this development.
+--
+-- The statements are collected at the end of this file.
 
 module Reloaded.SumsSoundness where
 
@@ -79,9 +89,6 @@ data _⟶sn_ : ∀ {S} → S ⊢ expr → S ⊢ expr → Set where
            e ⟶sn e′ → (case e u v) ⟶sn (case e′ u v)
 
 -- ─── Lemma 3.1: reduction preserves typing ──────────────────────────
--- not vacuous any more -- the syntax is scoped, not typed -- but each
--- β case is exactly the substitution lemma `⊢[]` of
--- Reloaded.SumsNormalization, whose own proof is definitional.
 
 preservation : ∀ {S} {Γ : Ctx S} {e e′ : S ⊢ expr} {A} →
   Γ ⊢ e ∶ A → e ↝ e′ → Γ ⊢ e′ ∶ A
@@ -414,9 +421,8 @@ sound-⟶SN (βinl m v)  = βinlsn (sound-SN m) (sound-SN v)
 sound-⟶SN (βinr m u)  = βinrsn (sound-SN m) (sound-SN u)
 sound-⟶SN (cseSN st)  = csesn (sound-⟶SN st)
 
--- ═══ the challenge, assembled ═══════════════════════════════════════
--- every well-typed term is strongly normalising, in the classical
--- accessibility sense (Cor. 3.4 + Thm 3.1)
+-- ═══ Corollary 3.4 with Theorem 3.1 ═════════════════════════════════
+-- every well-typed term is strongly normalising in the accessibility sense
 
 strongly-normalising : ∀ {S} {Γ : Ctx S} {e : S ⊢ expr} {A} →
   Γ ⊢ e ∶ A → sn e
@@ -449,10 +455,9 @@ SN-sumredex = strong-normalisation ⊢sumredex
 sn-sumredex : sn sumredex
 sn-sumredex = strongly-normalising ⊢sumredex
 
--- ─── and the typing hypothesis is doing real work ───────────────────
--- `Ω` (defined in Reloaded/SumsNormalization.agda) is a well-scoped term
--- that is not strongly normalising.  Under the old intrinsically typed
--- encoding it could not even be written down.
+-- ─── the typing hypothesis is doing real work ───────────────────────
+-- `Ω` (defined in Reloaded/SumsNormalization.agda) is a well-scoped
+-- term that is not strongly normalising.
 
 Ω-loops : Ω ↝ Ω
 Ω-loops = β↝
@@ -467,6 +472,66 @@ lemma-3-1-preservation : ∀ {S} {Γ : Ctx S} {e e′ : S ⊢ expr} {A} →
   Γ ⊢ e ∶ A → e ↝ e′ → Γ ⊢ e′ ∶ A
 lemma-3-1-preservation = preservation
 
+-- Lemma 3.9 [Properties of Strongly Normalizing Terms]
+lemma-3-9-1 : ∀ {S} (x : S ∋ expr) → sn (` x)
+lemma-3-9-1 = sn-var
+lemma-3-9-2 : ∀ {S} {b : (expr ∷ S) ⊢ expr} → sn b → sn (λx b)
+lemma-3-9-2 = sn-abs
+lemma-3-9-3 : ∀ {S₁ S₂} (t : S₁ ⊢ expr) (σ : S₁ →ˢ S₂) → sn (t [ σ ]ˢ) → sn t
+lemma-3-9-3 = anti-sub-sn
+lemma-3-9-4 : ∀ {S} {e n : S ⊢ expr} → sn (e · n) → sn e × sn n
+lemma-3-9-4 d = sn-app₁ d , sn-app₂ d
+
+-- Lemma 3.22 [Properties of Strongly Normalizing Terms], for sums
+lemma-3-22-1 : ∀ {S} {e : S ⊢ expr} → sn e → sn (inl e)
+lemma-3-22-1 = sn-inl
+lemma-3-22-2 : ∀ {S} {e : S ⊢ expr} → sn e → sn (inr e)
+lemma-3-22-2 = sn-inr
+lemma-3-22-3 : ∀ {S} {e : S ⊢ expr} {u v : (expr ∷ S) ⊢ expr} →
+  sn (case e u v) → sn e × (sn u × sn v)
+lemma-3-22-3 d = sn-c₀ d , sn-c₁ d , sn-c₂ d
+
+-- Lemma 3.10 [Weak Head Expansion]
+lemma-3-10-weak-head-expansion : ∀ {S} {b : (expr ∷ S) ⊢ expr} {n : S ⊢ expr} →
+  sn n → sn b → sn (b [ n ]₀) → sn ((λx b) · n)
+lemma-3-10-weak-head-expansion = sn-β-exp
+
+-- Lemma 3.23 [Weak Head Expansion], for sums
+lemma-3-23-1 : ∀ {S} {m : S ⊢ expr} {u v : (expr ∷ S) ⊢ expr} →
+  sn m → sn u → sn v → sn (u [ m ]₀) → sn (case (inl m) u v)
+lemma-3-23-1 = sn-βinl-exp
+lemma-3-23-2 : ∀ {S} {m : S ⊢ expr} {u v : (expr ∷ S) ⊢ expr} →
+  sn m → sn u → sn v → sn (v [ m ]₀) → sn (case (inr m) u v)
+lemma-3-23-2 = sn-βinr-exp
+
+-- Lemma 3.11 [Closure Properties of Neutral Terms]
+lemma-3-11-1 : ∀ {S} {r r′ : S ⊢ expr} → ne r → r ↝ r′ → ne r′
+lemma-3-11-1 = ne-↝
+lemma-3-11-2 : ∀ {S} {r n : S ⊢ expr} → ne r → sn r → sn n → sn (r · n)
+lemma-3-11-2 = ne-app-sn
+
+-- Lemma 3.25 [Closure Properties of Neutral Terms], for sums
+lemma-3-25-neutral-case : ∀ {S} {r : S ⊢ expr} {u v : (expr ∷ S) ⊢ expr} →
+  ne r → sn r → sn u → sn v → sn (case r u v)
+lemma-3-25-neutral-case = ne-case-sn
+
+-- Lemma 3.12 [Confluence of sn]
+lemma-3-12-confluence : ∀ {S} {e m m′ : S ⊢ expr} → e ⟶sn m → e ↝ m′ →
+  (m ≡ m′) ⊎ (Σ[ q ∈ S ⊢ expr ] ((m′ ⟶sn q) × (m ↝* q)))
+lemma-3-12-confluence = confl
+
+-- Lemma 3.13 [Backward Closure of sn]
+lemma-3-13-1 : ∀ {S} {e e′ n : S ⊢ expr} →
+  sn n → sn e → e ⟶sn e′ → sn (e′ · n) → sn (e · n)
+lemma-3-13-1 = sn-app-exp
+lemma-3-13-2 : ∀ {S} {e e′ : S ⊢ expr} → e ⟶sn e′ → sn e′ → sn e
+lemma-3-13-2 = sn-⟶sn-exp
+
+-- Lemma 3.24 [Backward Closure of sn], for sums
+lemma-3-24-backward-case : ∀ {S} {e e′ : S ⊢ expr} {u v : (expr ∷ S) ⊢ expr} →
+  sn u → sn v → sn e → e ⟶sn e′ → sn (case e′ u v) → sn (case e u v)
+lemma-3-24-backward-case = sn-case-exp
+
 -- Lemma 3.14 [SNe implies ne]
 lemma-3-14-SNe-ne : ∀ {S} {e : S ⊢ expr} → SNe e → ne e
 lemma-3-14-SNe-ne = SNe→ne
@@ -474,6 +539,10 @@ lemma-3-14-SNe-ne = SNe→ne
 -- Theorem 3.1 [Soundness of SN with respect to sn]
 theorem-3-1-soundness : ∀ {S} {e : S ⊢ expr} → SN e → sn e
 theorem-3-1-soundness = sound-SN
+theorem-3-1-soundness-SNe : ∀ {S} {e : S ⊢ expr} → SNe e → sn e
+theorem-3-1-soundness-SNe = sound-SNe
+theorem-3-1-soundness-⟶SN : ∀ {S} {e e′ : S ⊢ expr} → e ⟶SN e′ → e ⟶sn e′
+theorem-3-1-soundness-⟶SN = sound-⟶SN
 
 -- Corollary 3.4 + Theorem 3.1: every well-typed term is strongly
 -- normalising in the classical accessibility sense

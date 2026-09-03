@@ -1,0 +1,183 @@
+(VAR r r1 r2 r3 e e1 e2 k t t1 t2 sg sg1 sg2 sg3 ta x y)
+
+(RULES
+  renV(x,wkR)                                    -> vs(x)
+  renV(vz,consR(x,r))                            -> x
+  renV(vs(y),consR(x,r))                         -> renV(y,r)
+  renV(vz,liftR(r))                              -> vz
+  renV(vs(x),liftR(r))                           -> vs(renV(x,r))
+  renT(var(x),r)                                 -> var(renV(x,r))
+  renT(lam(e),r)                                 -> lam(renT(e,liftR(r)))
+  renT(tlam(e),r)                                -> tlam(renT(e,liftR(r)))
+  renT(all(k,t),r)                               -> all(renT(k,r),renT(t,liftR(r)))
+  renT(app(e1,e2),r)                             -> app(renT(e1,r),renT(e2,r))
+  renT(tapp(e,t),r)                              -> tapp(renT(e,r),renT(t,r))
+  renT(arr(t1,t2),r)                             -> arr(renT(t1,r),renT(t2,r))
+  renT(star,r)                                   -> star
+  compR(compR(r1,r2),r3)                         -> compR(r1,compR(r2,r3))
+  compR(idR,r)                                   -> r
+  compR(r,idR)                                   -> r
+  compR(wkR,consR(x,r))                          -> r
+  liftR(idR)                                     -> idR
+  compR(liftR(r1),liftR(r2))                     -> liftR(compR(r1,r2))
+  compR(wkR,liftR(r))                            -> compR(r,wkR)
+  renV(x,idR)                                    -> x
+  renT(t,idR)                                    -> t
+  renV(x,compR(r1,r2))                           -> renV(renV(x,r1),r2)
+  renT(renT(t,r1),r2)                            -> renT(t,compR(r1,r2))
+  renV(renV(x,liftR(r1)),liftR(r2))              -> renV(x,liftR(compR(r1,r2)))
+  compR(wkR,compR(consR(x,r),r3))                -> compR(r,r3)
+  compR(wkR,compR(liftR(r),r3))                  -> compR(r,compR(wkR,r3))
+  compR(liftR(r1),compR(liftR(r2),r3))           -> compR(liftR(compR(r1,r2)),r3)
+  subV(x,emb(r))                                 -> var(renV(x,r))
+  subV(vz,consS(t,sg))                           -> t
+  subV(vs(x),consS(t,sg))                        -> subV(x,sg)
+  subV(vz,liftS(sg))                             -> var(vz)
+  subV(vs(x),liftS(sg))                          -> subV(x,compS(sg,emb(wkR)))
+  subT(var(x),sg)                                -> subV(x,sg)
+  subT(lam(e),sg)                                -> lam(subT(e,liftS(sg)))
+  subT(tlam(e),sg)                               -> tlam(subT(e,liftS(sg)))
+  subT(all(k,t),sg)                              -> all(subT(k,sg),subT(t,liftS(sg)))
+  subT(app(e1,e2),sg)                            -> app(subT(e1,sg),subT(e2,sg))
+  subT(tapp(e,t),sg)                             -> tapp(subT(e,sg),subT(t,sg))
+  subT(arr(t1,t2),sg)                            -> arr(subT(t1,sg),subT(t2,sg))
+  subT(star,sg)                                  -> star
+  compS(compS(sg1,sg2),sg3)                      -> compS(sg1,compS(sg2,sg3))
+  compS(consS(t,sg1),sg2)                        -> consS(subT(t,sg2),compS(sg1,sg2))
+  compS(emb(wkR),consS(t,sg))                    -> sg
+  compS(emb(idR),sg)                             -> sg
+  compS(sg,emb(idR))                             -> sg
+  compS(emb(wkR),liftS(sg))                      -> compS(sg,emb(wkR))
+  compS(liftS(sg),consS(t,ta))                   -> consS(t,compS(sg,ta))
+  compS(liftS(sg1),liftS(sg2))                   -> liftS(compS(sg1,sg2))
+  subT(subV(x,sg1),sg2)                          -> subV(x,compS(sg1,sg2))
+  subT(subT(t,sg1),sg2)                          -> subT(t,compS(sg1,sg2))
+  subV(x,compS(emb(r),sg))                       -> subV(renV(x,r),sg)
+  subV(vz,compS(liftS(sg),ta))                   -> subV(vz,ta)
+  subV(vs(x),compS(liftS(sg),ta))                -> subV(x,compS(sg,compS(emb(wkR),ta)))
+  compS(emb(wkR),compS(liftS(sg),ta))            -> compS(sg,compS(emb(wkR),ta))
+  compS(liftS(sg1),compS(liftS(sg2),ta))         -> compS(liftS(compS(sg1,sg2)),ta)
+  subT(renT(t,r),sg)                             -> subT(t,compS(emb(r),sg))
+  renT(subV(x,sg),r)                             -> subV(x,compS(sg,emb(r)))
+  renT(subT(t,sg),r)                             -> subT(t,compS(sg,emb(r)))
+  compS(emb(liftR(r)),liftS(sg))                 -> liftS(compS(emb(r),sg))
+  compS(liftS(sg),emb(liftR(r)))                 -> liftS(compS(sg,emb(r)))
+  compS(emb(liftR(r)),compS(liftS(sg),ta))       -> compS(liftS(compS(emb(r),sg)),ta)
+  compS(liftS(sg),compS(emb(liftR(r)),ta))       -> compS(liftS(compS(sg,emb(r))),ta)
+  subV(renV(x,liftR(r)),liftS(sg))               -> subV(x,liftS(compS(emb(r),sg)))
+  subV(renV(x,liftR(r)),compS(liftS(sg),ta))     -> subV(x,compS(liftS(compS(emb(r),sg)),ta))
+  subV(renV(x,liftR(r)),consS(t,sg))             -> subV(x,consS(t,compS(emb(r),sg)))
+  compS(emb(liftR(r)),consS(t,sg))               -> consS(t,compS(emb(r),sg))
+  subT(t,emb(r))                                 -> renT(t,r)
+  compS(emb(r1),emb(r2))                         -> emb(compR(r1,r2))
+  compS(emb(compR(r1,r2)),sg)                    -> compS(emb(r1),compS(emb(r2),sg))
+  liftS(emb(r))                                  -> emb(liftR(r))
+  compS(emb(wkR),compS(emb(liftR(r)),ta))        -> compS(emb(r),compS(emb(wkR),ta))
+  compS(emb(wkR),compS(emb(consR(x,r)),ta))      -> compS(emb(r),ta)
+  compS(emb(liftR(r1)),compS(emb(liftR(r2)),ta)) -> compS(emb(liftR(compR(r1,r2))),ta)
+  compS(liftS(sg),emb(compR(liftR(r),r3)))       -> compS(liftS(compS(sg,emb(r))),emb(r3))
+)
+
+(COMMENT
+  systemf: the full two-world sigma-calculus of systemf.agda, all 72 registered rules.
+
+  CONSERVATIVE SUBSYSTEM.  No rule of the full system that this
+  fragment omits has a left-hand side expressible in this
+  fragment's signature, so a tool's verdict here is a genuine
+  statement about the corresponding part of the full system.
+
+  Many-sorted over Var / Tm / Ren / Sub; the sort discipline is encoded in
+  the symbol names -- see coco/README.md, section "Symbol mapping".  The
+  ten rule-shaped facts that systemf.agda proves but does NOT register
+  -- distR, lift-consR, emb-cons, eta-idR, eta-lawR, eta-id, eta-law,
+  def-liftR, def-liftS, lift-id -- are absent here by design.  The first
+  nine are excluded; lift-id is SUBSUMED, by emb-lift plus lift-idR.
+
+  source        : cpp27/systemf.agda
+  Agda rules    : 72
+  rewrite rules : 75
+  generated by  : cpp27/coco/gen.py
+
+  Rules appear in exactly this order.  Column 1 is the position in the
+  rules block; column 2 is the rule number of cpp27/TRS.md.  Two lines
+  sharing a TRS.md number are the V- and T-instances of one mode-generic
+  Agda rule.  Agda names are transliterated to ASCII: R = superscript R,
+  S = superscript S, lift = up-arrow, cons = dot, comp = composition or
+  semicolon, emb = angle brackets.  README.md has the full table.
+
+      1.   1.  def-wkR
+      2.   2.  def-consR-zero
+      3.   3.  def-consR-suc
+      4.   4.  def-liftR-zero
+      5.   5.  def-liftR-suc
+      6.   6.  instR-x
+      7.   7.  instR-lam
+      8.   8.  instR-Lam
+      9.   9.  instR-all
+     10.  10.  instR-app
+     11.  11.  instR-tapp
+     12.  12.  instR-arr
+     13.  13.  instR-star
+     14.  14.  assocR
+     15.  15.  comp-idLR
+     16.  16.  comp-idRR
+     17.  17.  interactR
+     18.  18.  lift-idR
+     19.  19.  lift-dist-compRR
+     20.  20.  lift-wkR
+     21.  21.  right-idR                [mode-generic in Agda: V-instance]
+     22.  21.  right-idR                [mode-generic in Agda: T-instance]
+     23.  22.  compositionalityRR-var   [PUSH -- mode V]
+     24.  23.  compositionalityRR       [FOLD -- mode T]
+     25.  24.  lift-dist-compRR-var
+     26.  25.  interactR-compR
+     27.  26.  lift-wkR-compR
+     28.  27.  lift-dist-compRR-compR
+     29.  28.  coincidence-var
+     30.  29.  def-consS-zero
+     31.  30.  def-consS-suc
+     32.  31.  def-liftS-zero
+     33.  32.  def-liftS-suc
+     34.  33.  inst-x
+     35.  34.  inst-lam
+     36.  35.  inst-Lam
+     37.  36.  inst-all
+     38.  37.  inst-app
+     39.  38.  inst-tapp
+     40.  39.  inst-arr
+     41.  40.  inst-star
+     42.  41.  assoc
+     43.  42.  dist
+     44.  43.  interact
+     45.  44.  comp-idL
+     46.  45.  comp-idR
+     47.  47.  lift-wk
+     48.  48.  lift-cons
+     49.  49.  lift-dist-compSS
+     50.  50.  compositionalitySS       [mode-generic in Agda: V-instance]
+     51.  50.  compositionalitySS       [mode-generic in Agda: T-instance]
+     52.  51.  compositionalityRS-comp-var
+     53.  52.  def-liftS-zero-comp
+     54.  53.  def-liftS-suc-comp
+     55.  54.  lift-wk-comp
+     56.  55.  lift-dist-compSS-comp
+     57.  56.  compositionalityRS       [T-only: the V-instance would loop against rule 51]
+     58.  57.  compositionalitySR       [mode-generic in Agda: V-instance]
+     59.  57.  compositionalitySR       [mode-generic in Agda: T-instance]
+     60.  58.  lift-dist-compRS
+     61.  59.  lift-dist-compSR
+     62.  60.  lift-dist-compRS-comp
+     63.  61.  lift-dist-compSR-comp
+     64.  62.  lift-dist-compRS-var
+     65.  63.  lift-dist-compRS-comp-var
+     66.  64.  emb-lift-cons-var
+     67.  65.  emb-lift-cons
+     68.  66.  coincidence              [T-only in Agda; its V-analogue is rule 28]
+     69.  67.  emb-comp
+     70.  68.  emb-split-comp
+     71.  69.  emb-lift
+     72.  71.  emb-comp-comp-lift-wkR
+     73.  73.  emb-comp-comp-interactR
+     74.  75.  emb-comp-comp-lift-dist-compRR
+     75.  76.  emb-split-tail
+)

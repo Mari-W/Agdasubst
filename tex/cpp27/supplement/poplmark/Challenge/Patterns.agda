@@ -105,11 +105,13 @@ HasE-unique hereE          (thereE ne _)  = ⊥-elim (ne refl)
 HasE-unique (thereE ne _)  hereE          = ⊥-elim (ne refl)
 HasE-unique (thereE _ a)   (thereE _ b)   = HasE-unique a b
 
--- membership is stable under both kinds of map, definitionally
+-- membership is stable under both kinds of map, definitionally.  The
+-- substitution direction names σ at each call: it occurs only under
+-- `_[_]ˢ` in the conclusion, so no use site can infer it.
 Has-ren : ∀ {S₁ S₂} {rt : S₁ ⊢ rtype} {l A} {ξ : S₁ →ᴿ S₂} →
   Has rt l A → Has (rt [ ξ ]ᴿ) l (A [ ξ ]ᴿ)
 Has-ren here            = here
-Has-ren {ξ = ξ} (there ne h) = there ne (Has-ren {ξ = ξ} h)
+Has-ren (there ne h)    = there ne (Has-ren h)
 
 Has-sub : ∀ {S₁ S₂} {rt : S₁ ⊢ rtype} {l A} {σ : S₁ →ˢ S₂} →
   Has rt l A → Has (rt [ σ ]ˢ) l (A [ σ ]ˢ)
@@ -606,15 +608,21 @@ narrowing {Q = Q} d =
          (narrow-here d)
 
 -- ─── typed substitutions ────────────────────────────────────────────
-
-_∶_→ˢ_ : S₁ →ˢ S₂ → Ctx S₁ → Ctx S₂ → Set
-_∶_→ˢ_ {S₁} σ Γ₁ Γ₂ = ∀ s (x : S₁ ∋ s) (A : S₁ ∶⊢ s) →
-  Γ₁ ∋ x ∶ A → Γ₂ ⊢ (x [ σ ]ˢ) ∶ (A [ σ ]ˢ)
+-- A record rather than a function type: the map occurs only under
+-- `_[_]ˢ` inside the indices of `_⊢_∶_`, where it cannot be recovered
+-- by unification.  As a record parameter it is rigid, so every use site
+-- infers it.
+record _∶_→ˢ_ {S₁ S₂} (σ : S₁ →ˢ S₂) (Γ₁ : Ctx S₁) (Γ₂ : Ctx S₂) : Set where
+  constructor mkˢ
+  field at : ∀ s (x : S₁ ∋ s) (A : S₁ ∶⊢ s) →
+               Γ₁ ∋ x ∶ A → Γ₂ ⊢ (x [ σ ]ˢ) ∶ (A [ σ ]ˢ)
+open _∶_→ˢ_ public
 
 ⊢↑ˢ : ∀ {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} → σ ∶ Γ₁ →ˢ Γ₂ →
   (A : S₁ ∶⊢ s) → (σ ↑ˢ s) ∶ (A ∷ₜ Γ₁) →ˢ ((A [ σ ]ˢ) ∷ₜ Γ₂)
-⊢↑ˢ ⊢σ A _ zero    _ refl = ⊢var refl
-⊢↑ˢ {σ = σ} ⊢σ A _ (suc x) _ refl = ⊢weaken (A [ σ ]ˢ) (⊢σ _ x _ refl)
+⊢↑ˢ {σ = σ} ⊢σ A = mkˢ λ where
+  _ zero    _ refl → ⊢var refl
+  _ (suc x) _ refl → ⊢weaken (A [ σ ]ˢ) (at ⊢σ _ x _ refl)
 
 ⊢ext-ctxˢ : ∀ {S₁ S₂ n₁ n₂} {σ : S₁ →ˢ S₂}
   {Γ₁ : Ctx (ext n₁ S₁)} {Γ₂ : Ctx (ext n₁ S₂)}
@@ -625,7 +633,7 @@ _∶_→ˢ_ {S₁} σ Γ₁ Γ₂ = ∀ s (x : S₁ ∋ s) (A : S₁ ∶⊢ s) �
 ⊢ext-ctxˢ {n₁ = n₁} {σ = σ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} (A ∷ Δ) w₁ w₂ eq ⊢σ =
   ⊢ext-ctxˢ Δ (w₁ ⨟ᴿ wkᴿ expr) (w₂ ⨟ᴿ wkᴿ expr) (cong (_⨟ ⟨ wkᴿ expr ⟩) eq)
     (subst (λ z → ((σ ↑ˢ* n₁) ↑ˢ expr) ∶ ((A [ w₁ ]ᴿ) ∷ₜ Γ₁) →ˢ (z ∷ₜ Γ₂))
-           (cong (A [_]ˢ) eq) (⊢↑ˢ {σ = σ ↑ˢ* n₁} ⊢σ (A [ w₁ ]ᴿ)))
+           (cong (A [_]ˢ) eq) (⊢↑ˢ ⊢σ (A [ w₁ ]ᴿ)))
 
 infixl 5 _⊢⋯ˢ_
 _⊢⋯ˢ_  : ∀ {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} {t : S₁ ⊢ s} {A : S₁ ∶⊢ s} →
@@ -635,57 +643,51 @@ _⊢⋯ˢᴿ_ : ∀ {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
 _⊢⋯ˢᴱ_ : ∀ {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} {re : S₁ ⊢ rexpr} {rt : S₁ ⊢ rtype} →
   Γ₁ ⊢ re ∶ᴿ rt → σ ∶ Γ₁ →ˢ Γ₂ → Γ₂ ⊢ (re [ σ ]ˢ) ∶ᴿ (rt [ σ ]ˢ)
 
-_⊢⋯ˢ_ {σ = σ} <:-top  ⊢σ = <:-top
-_⊢⋯ˢ_ {σ = σ} <:-refl ⊢σ = <:-reflexive _
-_⊢⋯ˢ_ {σ = σ} (<:-var {α = α} e u) ⊢σ =
-  transitivity (⊢σ _ α _ e) (_⊢⋯ˢ_ {σ = σ} u ⊢σ)
-_⊢⋯ˢ_ {σ = σ} (<:-⇒ d₁ d₂) ⊢σ =
-  <:-⇒ (_⊢⋯ˢ_ {σ = σ} d₁ ⊢σ) (_⊢⋯ˢ_ {σ = σ} d₂ ⊢σ)
-_⊢⋯ˢ_ {σ = σ} (<:-∀ d₁ d₂) ⊢σ =
-  <:-∀ (_⊢⋯ˢ_ {σ = σ} d₁ ⊢σ) (_⊢⋯ˢ_ {σ = σ ↑ˢ _} d₂ (⊢↑ˢ {σ = σ} ⊢σ _))
-_⊢⋯ˢ_ {σ = σ} (<:-rcd r) ⊢σ = <:-rcd (_⊢⋯ˢᴿ_ {σ = σ} r ⊢σ)
-_⊢⋯ˢ_ (⊢` e) ⊢σ = ⊢σ _ _ _ e
-_⊢⋯ˢ_ (⊢`ᴿ e) ⊢σ = ⊢σ _ _ _ e
-_⊢⋯ˢ_ (⊢`ᴱ e) ⊢σ = ⊢σ _ _ _ e
-_⊢⋯ˢ_ (⊢`ᴾ e) ⊢σ = ⊢σ _ _ _ e
-_⊢⋯ˢ_ (⊢`ᴾᴿ e) ⊢σ = ⊢σ _ _ _ e
-_⊢⋯ˢ_ {σ = σ} (⊢λ d) ⊢σ = ⊢λ (_⊢⋯ˢ_ {σ = σ ↑ˢ _} d (⊢↑ˢ {σ = σ} ⊢σ _))
-_⊢⋯ˢ_ {σ = σ} (⊢Λ d) ⊢σ = ⊢Λ (_⊢⋯ˢ_ {σ = σ ↑ˢ _} d (⊢↑ˢ {σ = σ} ⊢σ _))
-_⊢⋯ˢ_ {σ = σ} (⊢· d₁ d₂) ⊢σ =
-  ⊢· (_⊢⋯ˢ_ {σ = σ} d₁ ⊢σ) (_⊢⋯ˢ_ {σ = σ} d₂ ⊢σ)
-_⊢⋯ˢ_ {σ = σ} (⊢• d₁ d₂) ⊢σ =
-  ⊢• (_⊢⋯ˢ_ {σ = σ} d₁ ⊢σ) (_⊢⋯ˢ_ {σ = σ} d₂ ⊢σ)
-_⊢⋯ˢ_ {σ = σ} (⊢rcd d) ⊢σ = ⊢rcd (_⊢⋯ˢᴱ_ {σ = σ} d ⊢σ)
-_⊢⋯ˢ_ {σ = σ} (⊢# d h) ⊢σ = ⊢# (_⊢⋯ˢ_ {σ = σ} d ⊢σ) (Has-sub {σ = σ} h)
+<:-top                 ⊢⋯ˢ ⊢σ = <:-top
+<:-refl                ⊢⋯ˢ ⊢σ = <:-reflexive _
+(<:-var {α = α} e u)   ⊢⋯ˢ ⊢σ = transitivity (at ⊢σ _ α _ e) (u ⊢⋯ˢ ⊢σ)
+(<:-⇒ d₁ d₂)           ⊢⋯ˢ ⊢σ = <:-⇒ (d₁ ⊢⋯ˢ ⊢σ) (d₂ ⊢⋯ˢ ⊢σ)
+(<:-∀ d₁ d₂)           ⊢⋯ˢ ⊢σ = <:-∀ (d₁ ⊢⋯ˢ ⊢σ) (d₂ ⊢⋯ˢ ⊢↑ˢ ⊢σ _)
+(<:-rcd r)             ⊢⋯ˢ ⊢σ = <:-rcd (r ⊢⋯ˢᴿ ⊢σ)
+(⊢` e)                 ⊢⋯ˢ ⊢σ = at ⊢σ _ _ _ e
+(⊢`ᴿ e)                ⊢⋯ˢ ⊢σ = at ⊢σ _ _ _ e
+(⊢`ᴱ e)                ⊢⋯ˢ ⊢σ = at ⊢σ _ _ _ e
+(⊢`ᴾ e)                ⊢⋯ˢ ⊢σ = at ⊢σ _ _ _ e
+(⊢`ᴾᴿ e)               ⊢⋯ˢ ⊢σ = at ⊢σ _ _ _ e
+(⊢λ d)                 ⊢⋯ˢ ⊢σ = ⊢λ (d ⊢⋯ˢ ⊢↑ˢ ⊢σ _)
+(⊢Λ d)                 ⊢⋯ˢ ⊢σ = ⊢Λ (d ⊢⋯ˢ ⊢↑ˢ ⊢σ _)
+(⊢· d₁ d₂)             ⊢⋯ˢ ⊢σ = ⊢· (d₁ ⊢⋯ˢ ⊢σ) (d₂ ⊢⋯ˢ ⊢σ)
+(⊢• d₁ d₂)             ⊢⋯ˢ ⊢σ = ⊢• (d₁ ⊢⋯ˢ ⊢σ) (d₂ ⊢⋯ˢ ⊢σ)
+(⊢rcd d)               ⊢⋯ˢ ⊢σ = ⊢rcd (d ⊢⋯ˢᴱ ⊢σ)
+_⊢⋯ˢ_ {σ = σ} (⊢# d h) ⊢σ = ⊢# (d ⊢⋯ˢ ⊢σ) (Has-sub {σ = σ} h)
 _⊢⋯ˢ_ {σ = σ} {Γ₂ = Γ₂} (⊢let {n = n} {Δ = Δ} {e₂ = e₂} {B = B} d pt body) ⊢σ =
-  ⊢let (_⊢⋯ˢ_ {σ = σ} d ⊢σ) (⊢ᵖ-sub σ pt)
+  ⊢let (d ⊢⋯ˢ ⊢σ) (⊢ᵖ-sub σ pt)
     (subst (λ z → (ext-ctx (Tel-sub Δ σ) idᴿ Γ₂) ⊢ (e₂ [ (σ ↑ˢ* n) ]ˢ) ∶ z)
            (cong (B [_]ˢ) (wk↑-sub Δ σ))
-           (_⊢⋯ˢ_ {σ = σ ↑ˢ* n} body (⊢ext-ctxˢ Δ idᴿ idᴿ refl ⊢σ)))
-_⊢⋯ˢ_ {σ = σ} (⊢<: d₁ d₂) ⊢σ =
-  ⊢<: (_⊢⋯ˢ_ {σ = σ} d₁ ⊢σ) (_⊢⋯ˢ_ {σ = σ} d₂ ⊢σ)
+           (body ⊢⋯ˢ ⊢ext-ctxˢ Δ idᴿ idᴿ refl ⊢σ))
+(⊢<: d₁ d₂)            ⊢⋯ˢ ⊢σ = ⊢<: (d₁ ⊢⋯ˢ ⊢σ) (d₂ ⊢⋯ˢ ⊢σ)
 
-_⊢⋯ˢᴿ_ {σ = σ} <:ᴿ-nil  ⊢σ = <:ᴿ-nil
-_⊢⋯ˢᴿ_ {σ = σ} <:ᴿ-refl ⊢σ = <:ᴿ-refl
+<:ᴿ-nil                ⊢⋯ˢᴿ ⊢σ = <:ᴿ-nil
+<:ᴿ-refl               ⊢⋯ˢᴿ ⊢σ = <:ᴿ-refl
 _⊢⋯ˢᴿ_ {σ = σ} (<:ᴿ-cons h d r) ⊢σ =
-  <:ᴿ-cons (Has-sub {σ = σ} h) (_⊢⋯ˢ_ {σ = σ} d ⊢σ) (_⊢⋯ˢᴿ_ {σ = σ} r ⊢σ)
+  <:ᴿ-cons (Has-sub {σ = σ} h) (d ⊢⋯ˢ ⊢σ) (r ⊢⋯ˢᴿ ⊢σ)
 
-_⊢⋯ˢᴱ_ {σ = σ} ⊢ᴿ-nil ⊢σ = ⊢ᴿ-nil
-_⊢⋯ˢᴱ_ {σ = σ} (⊢ᴿ-cons d ds) ⊢σ =
-  ⊢ᴿ-cons (_⊢⋯ˢ_ {σ = σ} d ⊢σ) (_⊢⋯ˢᴱ_ {σ = σ} ds ⊢σ)
+⊢ᴿ-nil                 ⊢⋯ˢᴱ ⊢σ = ⊢ᴿ-nil
+(⊢ᴿ-cons d ds)         ⊢⋯ˢᴱ ⊢σ = ⊢ᴿ-cons (d ⊢⋯ˢ ⊢σ) (ds ⊢⋯ˢᴱ ⊢σ)
 
 ⊢[] : ∀ {Γ : Ctx S} {t : S ⊢ s} {A : S ∶⊢ s} →
   Γ ⊢ t ∶ A → (t ∙ˢ idˢ) ∶ (A ∷ₜ Γ) →ˢ Γ
-⊢[] d _ zero    _ refl = d
-⊢[] d _ (suc x) _ refl = ⊢var refl
+⊢[] d = mkˢ λ where
+  _ zero    _ refl → d
+  _ (suc x) _ refl → ⊢var refl
 
 ⊢idˢ : ∀ {S} {Γ : Ctx S} → idˢ ∶ Γ →ˢ Γ
-⊢idˢ s x A eq = ⊢var eq
+⊢idˢ = mkˢ λ s x A eq → ⊢var eq
 
 ⊢⨟ : ∀ {S₁ S₂ S₃} {σ₁ : S₁ →ˢ S₂} {σ₂ : S₂ →ˢ S₃}
   {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} {Γ₃ : Ctx S₃} →
   σ₁ ∶ Γ₁ →ˢ Γ₂ → σ₂ ∶ Γ₂ →ˢ Γ₃ → (σ₁ ⨟ σ₂) ∶ Γ₁ →ˢ Γ₃
-⊢⨟ {σ₂ = σ₂} ⊢σ₁ ⊢σ₂ s x A eq = _⊢⋯ˢ_ {σ = σ₂} (⊢σ₁ _ _ _ eq) ⊢σ₂
+⊢⨟ ⊢σ₁ ⊢σ₂ = mkˢ λ s x A eq → at ⊢σ₁ _ _ _ eq ⊢⋯ˢ ⊢σ₂
 
 -- the matched values are well typed, pointwise
 data AllTyped {S} (Γ : Ctx S) : ∀ {n₁ n₂} → Tel S n₁ n₂ → Vals S n₁ n₂ → Set where
@@ -704,9 +706,9 @@ AllTyped-++ (d ∷ ds) bs = d ∷ AllTyped-++ ds bs
   {Δ : Tel S n₁ n₂} {vs : Vals S n₁ n₂} (w : S →ᴿ ext n₁ S) →
   w ∶ Γ →ᴿ Γ′ → AllTyped Γ Δ vs → (sub vs w) ∶ (ext-ctx Δ w Γ′) →ˢ Γ′
 ⊢sub w ⊢w []                          = ⊢idˢ
-⊢sub {Γ′ = Γ′} w ⊢w (_∷_ {A = A} {v = v} {vs = vs} d ds) =
-  ⊢⨟ {σ₁ = sub vs (w ⨟ᴿ wkᴿ expr)} {σ₂ = (v [ w ]ᴿ) ∙ˢ idˢ}
-     (⊢sub (w ⨟ᴿ wkᴿ expr) (⊢⨟ᴿ {Γ₂ = Γ′} {Γ₃ = (A [ w ]ᴿ) ∷ₜ Γ′} ⊢w (⊢wkᴿ (A [ w ]ᴿ))) ds)
+⊢sub {Γ′ = Γ′} w ⊢w (_∷_ {A = A} d ds) =
+  ⊢⨟ (⊢sub (w ⨟ᴿ wkᴿ expr)
+           (⊢⨟ᴿ {Γ₂ = Γ′} {Γ₃ = (A [ w ]ᴿ) ∷ₜ Γ′} ⊢w (⊢wkᴿ (A [ w ]ᴿ))) ds)
      (⊢[] (d ⊢⋯ᴿ ⊢w))
 
 -- and it undoes the weakening the let-body's type carries
@@ -717,7 +719,7 @@ sub-wk []       w t = refl
 sub-wk (_∷_ {v = v} d ds) w t =
   cong (_[ ((v [ w ]ᴿ) ∙ˢ idˢ) ]ˢ) (sub-wk ds (w ⨟ᴿ wkᴿ expr) (t [ wkᴿ expr ]ᴿ))
 
--- ═══ Part 2B: preservation and progress ════════════════════════════
+-- ═══ Part 2B: preservation and progress ═════════════════════════════
 
 data Val    : S ⊢ expr → Set
 data ValsᴿE : S ⊢ rexpr → Set
@@ -877,12 +879,12 @@ preservationᴿ : ∀ {Γ : Ctx S} {re re′ : S ⊢ rexpr} {rt} →
 preservation (⊢` _)  ()
 preservation (⊢λ _)  ()
 preservation (⊢Λ _)  ()
-preservation (⊢· {e₂ = e₂} d₁ d₂) (β-λ v) with inv-λ d₁ (<:-reflexive _)
-... | (sub , body) = _⊢⋯ˢ_ {σ = e₂ ∙ˢ idˢ} body (⊢[] (⊢<: d₂ sub))
+preservation (⊢· d₁ d₂) (β-λ v) with inv-λ d₁ (<:-reflexive _)
+... | (sub , body) = body ⊢⋯ˢ ⊢[] (⊢<: d₂ sub)
 preservation (⊢· d₁ d₂) (ξ-·₁ st)   = ⊢· (preservation d₁ st) d₂
 preservation (⊢· d₁ d₂) (ξ-·₂ v st) = ⊢· d₁ (preservation d₂ st)
-preservation (⊢• {C = C} d₁ d₂) β-Λ with inv-Λ d₁ (<:-reflexive _)
-... | (sub , body) = _⊢⋯ˢ_ {σ = C ∙ˢ idˢ} body (⊢[] d₂)
+preservation (⊢• d₁ d₂) β-Λ with inv-Λ d₁ (<:-reflexive _)
+... | (sub , body) = body ⊢⋯ˢ ⊢[] d₂
 preservation (⊢• d₁ d₂) (ξ-• st) = ⊢• (preservation d₁ st) d₂
 preservation (⊢rcd d) (ξ-rcd st) = ⊢rcd (preservationᴿ d st)
 preservation (⊢# d h) (β-# vs m) with inv-rcd d (<:-reflexive _) h
@@ -890,8 +892,8 @@ preservation (⊢# d h) (β-# vs m) with inv-rcd d (<:-reflexive _) h
 preservation (⊢# d h) (ξ-# st) = ⊢# (preservation d st) h
 preservation {Γ = Γ} (⊢let {Δ = Δ} {e₂ = e₂} {B = B} d pt body) (β-let {vs = vs} v m)
   with ⊢match pt d m
-... | at = subst (λ z → Γ ⊢ (e₂ [ (sub vs idᴿ) ]ˢ) ∶ z) (sub-wk at idᴿ B)
-                 (_⊢⋯ˢ_ {σ = sub vs idᴿ} body (⊢sub idᴿ ⊢idᴿ at))
+... | ⊢vs = subst (λ z → Γ ⊢ (e₂ [ (sub vs idᴿ) ]ˢ) ∶ z) (sub-wk ⊢vs idᴿ B)
+                  (body ⊢⋯ˢ ⊢sub idᴿ ⊢idᴿ ⊢vs)
 preservation (⊢let d pt body) (ξ-let st) = ⊢let (preservation d st) pt body
 preservation (⊢<: d s) st      = ⊢<: (preservation d st) s
 
@@ -962,7 +964,7 @@ progressᴿ (⊢ᴿ-cons d ds) with progress d
 ...   | stepᴿ st = stepᴿ (ξ-tail v st)
 ...   | doneᴿ vs = doneᴿ (vcons v vs)
 
--- ═══ narrowing with A trailing ∆, challenge Lemma 3.2 in full ══════
+-- ═══ narrowing with a trailing ∆, challenge Lemma 3.2 in full ═══════
 
 data Tele (S : Scope) : Scope → Set where
   []  : Tele S S
@@ -1037,7 +1039,7 @@ refl° (consT l A rt) inc (wf-cons ni w)  =
 °→ °nil          = <:ᴿ-nil
 °→ (°cons h d r) = <:ᴿ-cons h d (°→ r)
 
--- the elimination: every derivation of my relation at a well-formed
+-- the elimination: every derivation of `_⊢_<:ᴿ_` at a well-formed
 -- record body is matched by an sa-Rcd derivation
 →° : ∀ {Γ : Ctx S} {rt₁ rt₂} → WfR rt₂ → Γ ⊢ rt₁ <:ᴿ rt₂ → Γ ⊢ rt₁ <:ᴿ° rt₂
 →° w              <:ᴿ-nil          = °nil

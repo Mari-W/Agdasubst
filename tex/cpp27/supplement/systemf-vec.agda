@@ -3,7 +3,7 @@
 -- systemf.agda with maps as inductive vectors instead of functions.
 -- Equality of maps is then equality of data, so this module assumes
 -- nothing: no function extensionality and no postulates.  The same
--- syntax, the same 72 rules and the same subject reduction.  §3.4 of
+-- syntax, the same 73 rules and the same subject reduction.  §3.4 of
 -- the paper compares the two models.
 --
 -- Two halves, and only the first is generated:
@@ -17,8 +17,8 @@
 --
 -- Regenerating therefore replaces the first half only.
 --
--- The 72 rules are the same rules.  61 carry the same names as in
--- systemf.agda; the 11 traversal rules differ, because the generator
+-- The 73 rules are the same rules.  59 carry the same names as in
+-- systemf.agda; the 14 traversal rules differ, because the generator
 -- names them after their constructor (`inst-λx_`) where the
 -- hand-written file abbreviates (`inst-λ`).
 
@@ -313,6 +313,13 @@ opaque
   lift-dist-compᴿᴿ-var {x = x} {ξ₁ = ξ₁} {ξ₂ = ξ₂} =
     trans (sym (compositionalityᴿᴿ-var x {ξ₁ = ξ₁ ↑ᴿ _} {ξ₂ = ξ₂ ↑ᴿ _}))
           (cong (λ z → x [ z ]ᴿ) (lift-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂}))
+
+  lift-consᴿ-var : ∀ {x : (s ∷ S₁) ∋ s′} {x′ : S₃ ∋ s} {ξ : S₁ →ᴿ S₂}
+    {ξ′ : S₂ →ᴿ S₃} →
+    (x [ (ξ ↑ᴿ s) ]ᴿ) [ (x′ ∙ᴿ ξ′) ]ᴿ ≡ x [ (x′ ∙ᴿ (ξ ⨟ᴿ ξ′)) ]ᴿ
+  lift-consᴿ-var {x = x} {x′ = x′} {ξ = ξ} {ξ′ = ξ′} =
+    trans (sym (compositionalityᴿᴿ-var x {ξ₁ = ξ ↑ᴿ _} {ξ₂ = x′ ∙ᴿ ξ′}))
+          (cong (λ z → x [ z ]ᴿ) (lift-consᴿ {ξ = ξ} {x = x′} {ξ′ = ξ′}))
 
   -- ══ Vᴿ. monad laws, renaming world ═══════════════════════════════
   right-idᴿ : ∀ (x/t : S ⊢[ m ] s) → x/t [ idᴿ ]ᴿ ≡ x/t
@@ -658,7 +665,7 @@ opaque
 -- The vector model needs no completion families: a vector composition
 -- reduces structurally where a function composition is stuck.
 
--- 72 rules: 56 signature-independent, and 16 traversal rules, one
+-- 73 rules: 57 signature-independent, and 16 traversal rules, one
 -- instᴿ-* and one inst-* per constructor plus the variable case.
 
 {-# REWRITE
@@ -668,7 +675,7 @@ opaque
   assocᴿ comp-idₗᴿ comp-idᵣᴿ interactᴿ
   lift-idᴿ lift-dist-compᴿᴿ lift-wkᴿ
   right-idᴿ compositionalityᴿᴿ-var compositionalityᴿᴿ
-  lift-dist-compᴿᴿ-var interactᴿ-⨟ᴿ lift-wkᴿ-⨟ᴿ lift-dist-compᴿᴿ-⨟ᴿ
+  lift-dist-compᴿᴿ-var lift-consᴿ-var interactᴿ-⨟ᴿ lift-wkᴿ-⨟ᴿ lift-dist-compᴿᴿ-⨟ᴿ
   coincidence-var def-∙ˢ-zero def-∙ˢ-suc def-↑ˢ-zero def-↑ˢ-suc
   inst-var inst-λx_ inst-Λα_ inst-∀[α∶_]_ inst-_·_ inst-_•_ inst-_⇒_ inst-*
   assoc dist interact comp-idₗ comp-idᵣ

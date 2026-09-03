@@ -12,6 +12,11 @@
 --       for F<: with records and projection.  `let` and patterns are
 --       in Challenge/Patterns.agda.
 --
+-- Also proved: determinism of reduction; the equivalence of the
+-- congruence-rule and the evaluation-context presentation of the
+-- reduction relation, so Theorems 3.3 and 3.4 are stated for the
+-- challenge's own E-Ctx relation.
+--
 -- The statements are collected at the end of this file.
 
 module Challenge.Records where
@@ -94,11 +99,13 @@ HasE-unique hereE          (thereE ne _)  = ⊥-elim (ne refl)
 HasE-unique (thereE ne _)  hereE          = ⊥-elim (ne refl)
 HasE-unique (thereE _ a)   (thereE _ b)   = HasE-unique a b
 
--- membership is stable under both kinds of map, definitionally
+-- membership is stable under both kinds of map, definitionally.  The
+-- substitution direction names σ at each call: it occurs only under
+-- `_[_]ˢ` in the conclusion, so no use site can infer it.
 Has-ren : ∀ {S₁ S₂} {rt : S₁ ⊢ rtype} {l A} {ξ : S₁ →ᴿ S₂} →
   Has rt l A → Has (rt [ ξ ]ᴿ) l (A [ ξ ]ᴿ)
 Has-ren here            = here
-Has-ren {ξ = ξ} (there ne h) = there ne (Has-ren {ξ = ξ} h)
+Has-ren (there ne h)    = there ne (Has-ren h)
 
 Has-sub : ∀ {S₁ S₂} {rt : S₁ ⊢ rtype} {l A} {σ : S₁ →ˢ S₂} →
   Has rt l A → Has (rt [ σ ]ˢ) l (A [ σ ]ˢ)
@@ -383,15 +390,21 @@ narrowing {Q = Q} d =
          (narrow-here d)
 
 -- ─── typed substitutions ────────────────────────────────────────────
-
-_∶_→ˢ_ : S₁ →ˢ S₂ → Ctx S₁ → Ctx S₂ → Set
-_∶_→ˢ_ {S₁} σ Γ₁ Γ₂ = ∀ s (x : S₁ ∋ s) (A : S₁ ∶⊢ s) →
-  Γ₁ ∋ x ∶ A → Γ₂ ⊢ (x [ σ ]ˢ) ∶ (A [ σ ]ˢ)
+-- A record rather than a function type: the map occurs only under
+-- `_[_]ˢ` inside the indices of `_⊢_∶_`, where it cannot be recovered
+-- by unification.  As a record parameter it is rigid, so every use site
+-- infers it.
+record _∶_→ˢ_ {S₁ S₂} (σ : S₁ →ˢ S₂) (Γ₁ : Ctx S₁) (Γ₂ : Ctx S₂) : Set where
+  constructor mkˢ
+  field at : ∀ s (x : S₁ ∋ s) (A : S₁ ∶⊢ s) →
+               Γ₁ ∋ x ∶ A → Γ₂ ⊢ (x [ σ ]ˢ) ∶ (A [ σ ]ˢ)
+open _∶_→ˢ_ public
 
 ⊢↑ˢ : ∀ {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} → σ ∶ Γ₁ →ˢ Γ₂ →
   (A : S₁ ∶⊢ s) → (σ ↑ˢ s) ∶ (A ∷ₜ Γ₁) →ˢ ((A [ σ ]ˢ) ∷ₜ Γ₂)
-⊢↑ˢ ⊢σ A _ zero    _ refl = ⊢var refl
-⊢↑ˢ {σ = σ} ⊢σ A _ (suc x) _ refl = ⊢weaken (A [ σ ]ˢ) (⊢σ _ x _ refl)
+⊢↑ˢ {σ = σ} ⊢σ A = mkˢ λ where
+  _ zero    _ refl → ⊢var refl
+  _ (suc x) _ refl → ⊢weaken (A [ σ ]ˢ) (at ⊢σ _ x _ refl)
 
 infixl 5 _⊢⋯ˢ_
 _⊢⋯ˢ_  : ∀ {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} {t : S₁ ⊢ s} {A : S₁ ∶⊢ s} →
@@ -401,42 +414,36 @@ _⊢⋯ˢᴿ_ : ∀ {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
 _⊢⋯ˢᴱ_ : ∀ {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} {re : S₁ ⊢ rexpr} {rt : S₁ ⊢ rtype} →
   Γ₁ ⊢ re ∶ᴿ rt → σ ∶ Γ₁ →ˢ Γ₂ → Γ₂ ⊢ (re [ σ ]ˢ) ∶ᴿ (rt [ σ ]ˢ)
 
-_⊢⋯ˢ_ {σ = σ} <:-top  ⊢σ = <:-top
-_⊢⋯ˢ_ {σ = σ} <:-refl ⊢σ = <:-reflexive _
-_⊢⋯ˢ_ {σ = σ} (<:-var {α = α} e u) ⊢σ =
-  transitivity (⊢σ _ α _ e) (_⊢⋯ˢ_ {σ = σ} u ⊢σ)
-_⊢⋯ˢ_ {σ = σ} (<:-⇒ d₁ d₂) ⊢σ =
-  <:-⇒ (_⊢⋯ˢ_ {σ = σ} d₁ ⊢σ) (_⊢⋯ˢ_ {σ = σ} d₂ ⊢σ)
-_⊢⋯ˢ_ {σ = σ} (<:-∀ d₁ d₂) ⊢σ =
-  <:-∀ (_⊢⋯ˢ_ {σ = σ} d₁ ⊢σ) (_⊢⋯ˢ_ {σ = σ ↑ˢ _} d₂ (⊢↑ˢ {σ = σ} ⊢σ _))
-_⊢⋯ˢ_ {σ = σ} (<:-rcd r) ⊢σ = <:-rcd (_⊢⋯ˢᴿ_ {σ = σ} r ⊢σ)
-_⊢⋯ˢ_ (⊢` e) ⊢σ = ⊢σ _ _ _ e
-_⊢⋯ˢ_ (⊢`ᴿ e) ⊢σ = ⊢σ _ _ _ e
-_⊢⋯ˢ_ (⊢`ᴱ e) ⊢σ = ⊢σ _ _ _ e
-_⊢⋯ˢ_ {σ = σ} (⊢λ d) ⊢σ = ⊢λ (_⊢⋯ˢ_ {σ = σ ↑ˢ _} d (⊢↑ˢ {σ = σ} ⊢σ _))
-_⊢⋯ˢ_ {σ = σ} (⊢Λ d) ⊢σ = ⊢Λ (_⊢⋯ˢ_ {σ = σ ↑ˢ _} d (⊢↑ˢ {σ = σ} ⊢σ _))
-_⊢⋯ˢ_ {σ = σ} (⊢· d₁ d₂) ⊢σ =
-  ⊢· (_⊢⋯ˢ_ {σ = σ} d₁ ⊢σ) (_⊢⋯ˢ_ {σ = σ} d₂ ⊢σ)
-_⊢⋯ˢ_ {σ = σ} (⊢• d₁ d₂) ⊢σ =
-  ⊢• (_⊢⋯ˢ_ {σ = σ} d₁ ⊢σ) (_⊢⋯ˢ_ {σ = σ} d₂ ⊢σ)
-_⊢⋯ˢ_ {σ = σ} (⊢rcd d) ⊢σ = ⊢rcd (_⊢⋯ˢᴱ_ {σ = σ} d ⊢σ)
-_⊢⋯ˢ_ {σ = σ} (⊢# d h) ⊢σ = ⊢# (_⊢⋯ˢ_ {σ = σ} d ⊢σ) (Has-sub {σ = σ} h)
-_⊢⋯ˢ_ {σ = σ} (⊢<: d₁ d₂) ⊢σ =
-  ⊢<: (_⊢⋯ˢ_ {σ = σ} d₁ ⊢σ) (_⊢⋯ˢ_ {σ = σ} d₂ ⊢σ)
+<:-top                 ⊢⋯ˢ ⊢σ = <:-top
+<:-refl                ⊢⋯ˢ ⊢σ = <:-reflexive _
+(<:-var {α = α} e u)   ⊢⋯ˢ ⊢σ = transitivity (at ⊢σ _ α _ e) (u ⊢⋯ˢ ⊢σ)
+(<:-⇒ d₁ d₂)           ⊢⋯ˢ ⊢σ = <:-⇒ (d₁ ⊢⋯ˢ ⊢σ) (d₂ ⊢⋯ˢ ⊢σ)
+(<:-∀ d₁ d₂)           ⊢⋯ˢ ⊢σ = <:-∀ (d₁ ⊢⋯ˢ ⊢σ) (d₂ ⊢⋯ˢ ⊢↑ˢ ⊢σ _)
+(<:-rcd r)             ⊢⋯ˢ ⊢σ = <:-rcd (r ⊢⋯ˢᴿ ⊢σ)
+(⊢` e)                 ⊢⋯ˢ ⊢σ = at ⊢σ _ _ _ e
+(⊢`ᴿ e)                ⊢⋯ˢ ⊢σ = at ⊢σ _ _ _ e
+(⊢`ᴱ e)                ⊢⋯ˢ ⊢σ = at ⊢σ _ _ _ e
+(⊢λ d)                 ⊢⋯ˢ ⊢σ = ⊢λ (d ⊢⋯ˢ ⊢↑ˢ ⊢σ _)
+(⊢Λ d)                 ⊢⋯ˢ ⊢σ = ⊢Λ (d ⊢⋯ˢ ⊢↑ˢ ⊢σ _)
+(⊢· d₁ d₂)             ⊢⋯ˢ ⊢σ = ⊢· (d₁ ⊢⋯ˢ ⊢σ) (d₂ ⊢⋯ˢ ⊢σ)
+(⊢• d₁ d₂)             ⊢⋯ˢ ⊢σ = ⊢• (d₁ ⊢⋯ˢ ⊢σ) (d₂ ⊢⋯ˢ ⊢σ)
+(⊢rcd d)               ⊢⋯ˢ ⊢σ = ⊢rcd (d ⊢⋯ˢᴱ ⊢σ)
+_⊢⋯ˢ_ {σ = σ} (⊢# d h) ⊢σ = ⊢# (d ⊢⋯ˢ ⊢σ) (Has-sub {σ = σ} h)
+(⊢<: d₁ d₂)            ⊢⋯ˢ ⊢σ = ⊢<: (d₁ ⊢⋯ˢ ⊢σ) (d₂ ⊢⋯ˢ ⊢σ)
 
-_⊢⋯ˢᴿ_ {σ = σ} <:ᴿ-nil  ⊢σ = <:ᴿ-nil
-_⊢⋯ˢᴿ_ {σ = σ} <:ᴿ-refl ⊢σ = <:ᴿ-refl
+<:ᴿ-nil                ⊢⋯ˢᴿ ⊢σ = <:ᴿ-nil
+<:ᴿ-refl               ⊢⋯ˢᴿ ⊢σ = <:ᴿ-refl
 _⊢⋯ˢᴿ_ {σ = σ} (<:ᴿ-cons h d r) ⊢σ =
-  <:ᴿ-cons (Has-sub {σ = σ} h) (_⊢⋯ˢ_ {σ = σ} d ⊢σ) (_⊢⋯ˢᴿ_ {σ = σ} r ⊢σ)
+  <:ᴿ-cons (Has-sub {σ = σ} h) (d ⊢⋯ˢ ⊢σ) (r ⊢⋯ˢᴿ ⊢σ)
 
-_⊢⋯ˢᴱ_ {σ = σ} ⊢ᴿ-nil ⊢σ = ⊢ᴿ-nil
-_⊢⋯ˢᴱ_ {σ = σ} (⊢ᴿ-cons d ds) ⊢σ =
-  ⊢ᴿ-cons (_⊢⋯ˢ_ {σ = σ} d ⊢σ) (_⊢⋯ˢᴱ_ {σ = σ} ds ⊢σ)
+⊢ᴿ-nil                 ⊢⋯ˢᴱ ⊢σ = ⊢ᴿ-nil
+(⊢ᴿ-cons d ds)         ⊢⋯ˢᴱ ⊢σ = ⊢ᴿ-cons (d ⊢⋯ˢ ⊢σ) (ds ⊢⋯ˢᴱ ⊢σ)
 
 ⊢[] : ∀ {Γ : Ctx S} {t : S ⊢ s} {A : S ∶⊢ s} →
   Γ ⊢ t ∶ A → (t ∙ˢ idˢ) ∶ (A ∷ₜ Γ) →ˢ Γ
-⊢[] d _ zero    _ refl = d
-⊢[] d _ (suc x) _ refl = ⊢var refl
+⊢[] d = mkˢ λ where
+  _ zero    _ refl → d
+  _ (suc x) _ refl → ⊢var refl
 
 -- ═══ Part 2B, record fragment: preservation and progress ════════════
 
@@ -511,12 +518,12 @@ preservationᴿ : ∀ {Γ : Ctx S} {re re′ : S ⊢ rexpr} {rt} →
 preservation (⊢` _)  ()
 preservation (⊢λ _)  ()
 preservation (⊢Λ _)  ()
-preservation (⊢· {e₂ = e₂} d₁ d₂) (β-λ v) with inv-λ d₁ (<:-reflexive _)
-... | (sub , body) = _⊢⋯ˢ_ {σ = e₂ ∙ˢ idˢ} body (⊢[] (⊢<: d₂ sub))
+preservation (⊢· d₁ d₂) (β-λ v) with inv-λ d₁ (<:-reflexive _)
+... | (sub , body) = body ⊢⋯ˢ ⊢[] (⊢<: d₂ sub)
 preservation (⊢· d₁ d₂) (ξ-·₁ st)   = ⊢· (preservation d₁ st) d₂
 preservation (⊢· d₁ d₂) (ξ-·₂ v st) = ⊢· d₁ (preservation d₂ st)
-preservation (⊢• {C = C} d₁ d₂) β-Λ with inv-Λ d₁ (<:-reflexive _)
-... | (sub , body) = _⊢⋯ˢ_ {σ = C ∙ˢ idˢ} body (⊢[] d₂)
+preservation (⊢• d₁ d₂) β-Λ with inv-Λ d₁ (<:-reflexive _)
+... | (sub , body) = body ⊢⋯ˢ ⊢[] d₂
 preservation (⊢• d₁ d₂) (ξ-• st) = ⊢• (preservation d₁ st) d₂
 preservation (⊢rcd d) (ξ-rcd st) = ⊢rcd (preservationᴿ d st)
 preservation (⊢# d h) (β-# vs m) with inv-rcd d (<:-reflexive _) h
@@ -616,7 +623,152 @@ progressᴿ (⊢ᴿ-cons d ds) with progress d
 ...   | stepᴿ st = stepᴿ (ξ-tail v st)
 ...   | doneᴿ vs = doneᴿ (vcons v vs)
 
--- ═══ narrowing with A trailing ∆, challenge Lemma 3.2 in full ══════
+-- ─── determinism ────────────────────────────────────────────────────
+-- A value has no reduct, so the two β-rules and the congruence rules
+-- never overlap and reduction is a partial function.
+
+val-no-step  : Val e → e ↪ e′ → ⊥
+vals-no-step : ValsᴿE re → re ↪ᴿ re₂ → ⊥
+
+val-no-step vλ ()
+val-no-step vΛ ()
+val-no-step (vrcd vs) (ξ-rcd st) = vals-no-step vs st
+
+vals-no-step vnil ()
+vals-no-step (vcons v vs) (ξ-here st)   = val-no-step v st
+vals-no-step (vcons v vs) (ξ-tail _ st) = vals-no-step vs st
+
+determinism  : ∀ {S} {e e₁ e₂ : S ⊢ expr}   → e  ↪  e₁ → e  ↪  e₂ → e₁ ≡ e₂
+determinismᴿ : ∀ {S} {re r₁ r₂ : S ⊢ rexpr} → re ↪ᴿ r₁ → re ↪ᴿ r₂ → r₁ ≡ r₂
+
+determinism (β-λ _)     (β-λ _)      = refl
+determinism (β-λ _)     (ξ-·₁ ())
+determinism (β-λ v)     (ξ-·₂ _ st)  = ⊥-elim (val-no-step v st)
+determinism (ξ-·₁ ())   (β-λ _)
+determinism (ξ-·₁ st)   (ξ-·₁ st′)   = cong (_· _) (determinism st st′)
+determinism (ξ-·₁ st)   (ξ-·₂ v _)   = ⊥-elim (val-no-step v st)
+determinism (ξ-·₂ v st) (β-λ v′)     = ⊥-elim (val-no-step v′ st)
+determinism (ξ-·₂ v st) (ξ-·₁ st′)   = ⊥-elim (val-no-step v st′)
+determinism (ξ-·₂ _ st) (ξ-·₂ _ st′) = cong (_ ·_) (determinism st st′)
+determinism β-Λ         β-Λ          = refl
+determinism β-Λ         (ξ-• ())
+determinism (ξ-• ())    β-Λ
+determinism (ξ-• st)    (ξ-• st′)    = cong (_• _) (determinism st st′)
+determinism (β-# _ h)   (β-# _ h′)   = HasE-unique h h′
+determinism (β-# vs _)  (ξ-# (ξ-rcd st)) = ⊥-elim (vals-no-step vs st)
+determinism (ξ-# (ξ-rcd st)) (β-# vs _)  = ⊥-elim (vals-no-step vs st)
+determinism (ξ-# st)    (ξ-# st′)    = cong (_# _) (determinism st st′)
+determinism (ξ-rcd st)  (ξ-rcd st′)  = cong RcdE (determinismᴿ st st′)
+
+determinismᴿ (ξ-here st)   (ξ-here st′) =
+  cong (λ z → consE _ z _) (determinism st st′)
+determinismᴿ (ξ-here st)   (ξ-tail v _)  = ⊥-elim (val-no-step v st)
+determinismᴿ (ξ-tail v _)  (ξ-here st′)  = ⊥-elim (val-no-step v st′)
+determinismᴿ (ξ-tail _ st) (ξ-tail _ st′) =
+  cong (consE _ _) (determinismᴿ st st′)
+
+-- ═══ evaluation contexts, and the equivalence ═══════════════════════
+-- The challenge presents evaluation as the immediate rules E-AppAbs,
+-- E-TappTabs and E-ProjRcd plus E-Ctx over
+--   E ::= [−] | E t | v E | E [T] | E.l | {lᵢ=vᵢ, lⱼ=E, lₖ=tₖ}
+-- `_↪_` above is the congruence-rule presentation; the two agree.
+
+data ECtx  (S : Scope) : Set
+data ECtxᴿ (S : Scope) : Set
+
+data ECtx S where
+  □    : ECtx S
+  appl : ECtx S → S ⊢ expr → ECtx S                 -- E t
+  appr : (v : S ⊢ expr) → Val v → ECtx S → ECtx S   -- v E
+  tapp : ECtx S → S ⊢ type → ECtx S                 -- E [T]
+  prj  : ECtx S → Label → ECtx S                    -- E.l
+  rcd  : ECtxᴿ S → ECtx S                           -- {…, lⱼ=E, …}
+
+data ECtxᴿ S where
+  hd : Label → ECtx S → S ⊢ rexpr → ECtxᴿ S               -- {l=E, tₖ…}
+  tl : Label → (v : S ⊢ expr) → Val v → ECtxᴿ S → ECtxᴿ S -- {l=v, …}
+
+plug  : ECtx S  → S ⊢ expr → S ⊢ expr
+plugᴿ : ECtxᴿ S → S ⊢ expr → S ⊢ rexpr
+plug □            e = e
+plug (appl E t)   e = (plug E e) · t
+plug (appr v _ E) e = v · (plug E e)
+plug (tapp E C)   e = (plug E e) • C
+plug (prj E l)    e = (plug E e) # l
+plug (rcd R)      e = RcdE (plugᴿ R e)
+plugᴿ (hd l E re)  e = consE l (plug E e) re
+plugᴿ (tl l v _ R) e = consE l v (plugᴿ R e)
+
+-- the immediate reduction rules, exactly as displayed in the challenge
+infix 3 _↦_
+data _↦_ : S ⊢ expr → S ⊢ expr → Set where
+  E-AppAbs   : Val e₂ → ((λx[ A ] e₁) · e₂) ↦ (e₁ [ e₂ ]₀)
+  E-TappTabs : ((Λα[<: A ] e) • C) ↦ (e [ C ]₀)
+  E-ProjRcd  : ∀ {re : S ⊢ rexpr} {l e} → ValsᴿE re → HasE re l e →
+               ((RcdE re) # l) ↦ e
+
+-- E-Ctx
+infix 3 _⟶_ _⟶ᴿ_
+data _⟶_  : S ⊢ expr  → S ⊢ expr  → Set where
+  E-Ctx  : ∀ (E : ECtx S)  {e e′} → e ↦ e′ → (plug E e)  ⟶  (plug E e′)
+data _⟶ᴿ_ : S ⊢ rexpr → S ⊢ rexpr → Set where
+  E-Ctxᴿ : ∀ (R : ECtxᴿ S) {e e′} → e ↦ e′ → (plugᴿ R e) ⟶ᴿ (plugᴿ R e′)
+
+-- the two presentations coincide
+↪→⟶   : ∀ {e e′ : S ⊢ expr}    → e  ↪  e′ → e  ⟶  e′
+↪ᴿ→⟶ᴿ : ∀ {re re′ : S ⊢ rexpr} → re ↪ᴿ re′ → re ⟶ᴿ re′
+
+↪→⟶ (β-λ v)    = E-Ctx □ (E-AppAbs v)
+↪→⟶ β-Λ        = E-Ctx □ E-TappTabs
+↪→⟶ (β-# vs h) = E-Ctx □ (E-ProjRcd vs h)
+↪→⟶ (ξ-·₁ {e₂ = e₂} st) with ↪→⟶ st
+... | E-Ctx E st₀ = E-Ctx (appl E e₂) st₀
+↪→⟶ (ξ-·₂ {e₁ = e₁} v st) with ↪→⟶ st
+... | E-Ctx E st₀ = E-Ctx (appr e₁ v E) st₀
+↪→⟶ (ξ-• {C = C} st) with ↪→⟶ st
+... | E-Ctx E st₀ = E-Ctx (tapp E C) st₀
+↪→⟶ (ξ-# {l = l} st) with ↪→⟶ st
+... | E-Ctx E st₀ = E-Ctx (prj E l) st₀
+↪→⟶ (ξ-rcd st) with ↪ᴿ→⟶ᴿ st
+... | E-Ctxᴿ R st₀ = E-Ctx (rcd R) st₀
+
+↪ᴿ→⟶ᴿ (ξ-here {l = l} {re = re} st) with ↪→⟶ st
+... | E-Ctx E st₀ = E-Ctxᴿ (hd l E re) st₀
+↪ᴿ→⟶ᴿ (ξ-tail {e = e} {l = l} v st) with ↪ᴿ→⟶ᴿ st
+... | E-Ctxᴿ R st₀ = E-Ctxᴿ (tl l e v R) st₀
+
+plug-↪  : ∀ (E : ECtx S)  {e e′ : S ⊢ expr} → e ↦ e′ → (plug E e)  ↪  (plug E e′)
+plugᴿ-↪ : ∀ (R : ECtxᴿ S) {e e′ : S ⊢ expr} → e ↦ e′ → (plugᴿ R e) ↪ᴿ (plugᴿ R e′)
+plug-↪ □            (E-AppAbs v)     = β-λ v
+plug-↪ □            E-TappTabs       = β-Λ
+plug-↪ □            (E-ProjRcd vs h) = β-# vs h
+plug-↪ (appl E t)   st = ξ-·₁ (plug-↪ E st)
+plug-↪ (appr v p E) st = ξ-·₂ p (plug-↪ E st)
+plug-↪ (tapp E C)   st = ξ-• (plug-↪ E st)
+plug-↪ (prj E l)    st = ξ-# (plug-↪ E st)
+plug-↪ (rcd R)      st = ξ-rcd (plugᴿ-↪ R st)
+plugᴿ-↪ (hd l E re)  st = ξ-here (plug-↪ E st)
+plugᴿ-↪ (tl l v p R) st = ξ-tail p (plugᴿ-↪ R st)
+
+⟶→↪ : ∀ {e e′ : S ⊢ expr} → e ⟶ e′ → e ↪ e′
+⟶→↪ (E-Ctx E st) = plug-↪ E st
+
+-- therefore preservation and progress hold verbatim for the challenge's
+-- evaluation-context relation as well
+preservation⟶ : ∀ {Γ : Ctx S} {e e′ : S ⊢ expr} {A} →
+  Γ ⊢ e ∶ A → e ⟶ e′ → Γ ⊢ e′ ∶ A
+preservation⟶ d st = preservation d (⟶→↪ st)
+
+data Progress⟶ {S} (e : S ⊢ expr) : Set where
+  step⟶ : ∀ {e′ : S ⊢ expr} → e ⟶ e′ → Progress⟶ e
+  done⟶ : Val e → Progress⟶ e
+
+progress⟶ : ∀ {Γ : Ctx []} {e : [] ⊢ expr} {A} → Γ ⊢ e ∶ A → Progress⟶ e
+progress⟶ d with progress d
+... | step st = step⟶ (↪→⟶ st)
+... | done v  = done⟶ v
+
+-- ═══ narrowing with a trailing ∆, challenge Lemma 3.2 in full ═══════
 
 data Tele (S : Scope) : Scope → Set where
   []  : Tele S S
@@ -703,7 +855,7 @@ refl° (consT l A rt) inc (wf-cons ni w)  =
 °→ °nil          = <:ᴿ-nil
 °→ (°cons h d r) = <:ᴿ-cons h d (°→ r)
 
--- the elimination: every derivation of my relation at a well-formed
+-- the elimination: every derivation of `_⊢_<:ᴿ_` at a well-formed
 -- record body is matched by an sa-Rcd derivation
 →° : ∀ {Γ : Ctx S} {rt₁ rt₂} → WfR rt₂ → Γ ⊢ rt₁ <:ᴿ rt₂ → Γ ⊢ rt₁ <:ᴿ° rt₂
 →° w              <:ᴿ-nil          = °nil
@@ -862,11 +1014,19 @@ lemma-3-2-narrowing = narrowing∆
 
 -- ═══ challenge-referencing names (the record half of Part 2B) ═══════
 
--- 3.3 Theorem [Preservation], for F<: with records and projection
+-- 3.3 Theorem [Preservation], for F<: with records and projection,
+-- stated for the challenge's E-Ctx relation
 theorem-3-3-preservation : ∀ {Γ : Ctx S} {e e′ : S ⊢ expr} {A} →
-  Γ ⊢ e ∶ A → e ↪ e′ → Γ ⊢ e′ ∶ A
-theorem-3-3-preservation = preservation
+  Γ ⊢ e ∶ A → e ⟶ e′ → Γ ⊢ e′ ∶ A
+theorem-3-3-preservation = preservation⟶
 
--- 3.4 Theorem [Progress], for F<: with records and projection
-theorem-3-4-progress : ∀ {Γ : Ctx []} {e : [] ⊢ expr} {A} → Γ ⊢ e ∶ A → Progress e
-theorem-3-4-progress = progress
+-- 3.4 Theorem [Progress], for F<: with records and projection,
+-- stated for the challenge's E-Ctx relation
+theorem-3-4-progress : ∀ {Γ : Ctx []} {e : [] ⊢ expr} {A} →
+  Γ ⊢ e ∶ A → Progress⟶ e
+theorem-3-4-progress = progress⟶
+
+-- the two presentations of reduction derive the same steps
+congruence≡evaluation-contexts : ∀ {e e′ : S ⊢ expr} →
+  (e ↪ e′ → e ⟶ e′) × (e ⟶ e′ → e ↪ e′)
+congruence≡evaluation-contexts = ↪→⟶ , ⟶→↪

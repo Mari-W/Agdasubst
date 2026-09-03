@@ -19,32 +19,11 @@ how you invoke `agda`.
     agda mltt.agda
     agda mltt-vec.agda
     cd poplmark && ./check.sh
-    cd poplmark && ./check.sh --part3
 
 `check.sh` typechecks every module and tabulates lines, exit status, error
 classes, non-joinable critical pairs and wall time. Every module reports 0
-errors and 0 non-joinable pairs. Each module takes about 70 seconds, so the
-default run is about 17 minutes.
-
-`--part3` adds `Challenge/Test1.agda` to `Challenge/Test7.agda`, the challenge's
-own graded test terms. They are the only modules whose cost is computation
-rather than the confluence check, and together they take about 65 minutes. They
-are excluded from the default run for that reason only; nothing else depends on
-which mode you use.
-
-The seven execution times the challenge asks for, measured on one core under
-Agda 2.8.0, each including the fixed import and confluence cost of about 70
-seconds:
-
-| test | term | wall |
-|---|---|---:|
-| 1 | two times one, step 1 | 103 s |
-| 2 | two times one, step 2 | 312 s |
-| 3 | two times three, step 3 | 541 s |
-| 4 | two times three, step 4 | 1039 s |
-| 5 | two times three, step 5 | 1035 s |
-| 6 | one + one, step 1 | 316 s |
-| 7 | one + one, step 2 | 547 s |
+errors and 0 non-joinable pairs. Each module takes about 70 seconds, so the run
+is about 15 minutes.
 
 ## What is assumed
 
@@ -72,22 +51,20 @@ numbering.
 | 2A | Theorem 3.3 preservation, Theorem 3.4 progress | `Challenge/Subtyping.agda` | none |
 | 1B | Lemma 3.1 with record types, Lemma 3.2 | `Challenge/Records.agda`, `Challenge/Patterns.agda` | the relation carries a primitive reflexivity rule, eliminated below |
 | 2B | Theorem 3.3, Theorem 3.4, Lemma A.17, for records, projection, patterns and `let` | `Challenge/Patterns.agda` | reduction is given by congruence rules, not related to the challenge's evaluation contexts for this language |
-| 3 | tasks 1, 2 and 3, and the challenge's own seven test terms | `Challenge/Animation.agda`, `Challenge/Test1.agda`–`Test7.agda` | only for F<: with records and projection; `let` and patterns are not animated |
+| 3 | not attempted | none | the three tasks are not proved anywhere in this development |
 
 Gaps, in full:
 
-* **Part 3 is over the wrong language.** The challenge asks for the three tasks
-  *on the language of Part 2B*. `Challenge/Animation.agda` decides them for F<:
-  with records and projection, not for `let` and patterns. Task 2 (`t ⟶* t′ ↛`)
-  is decided only up to a fuel bound: `evalDec` returns `nothing` for "not
-  decided in n steps". The challenge's own graded test terms are run, in
-  `Challenge/Test1.agda` to `Challenge/Test7.agda`, and none of the seven needs
-  `let` or a pattern; the wall times are in the table below.
+* **Part 3 is not attempted.** None of the three tasks is proved in this
+  development: deciding `t ⟶ t′`, deciding `t ⟶* t′ ↛`, and finding a reduct.
+  Neither are the challenge's own graded test terms.
 * **Part 2B and evaluation contexts.** Footnote 5 of the challenge sanctions the
   congruence-rule presentation of reduction, which `Challenge/Patterns.agda`
   uses. The equivalence with the challenge's `E-Ctx` presentation is proved for
   pure F<: (`Challenge/Subtyping.agda`) and for records and projection
-  (`Challenge/Animation.agda`), but not for the language with `let`.
+  (`Challenge/Records.agda`, `congruence≡evaluation-contexts`, where Theorems
+  3.3 and 3.4 are then stated for `_⟶_` itself), but not for the language with
+  `let`.
 * **Record subtyping carries a primitive reflexivity rule.** The multi-sorted
   syntax admits a record body that is a variable, a form F<: does not have, and
   at such a body the structural proof of reflexivity has no case, so `_⊢_<:ᴿ_`
@@ -144,23 +121,20 @@ Gaps, in full:
 
 ## What the development costs
 
-Across 5,327 lines of metatheory, **one substitution fact is proved by hand**.
+Across 4,788 lines of metatheory, **one substitution fact is proved by hand**.
 `traversals` counts applications of `_[_]ᴿ` or `_[_]ˢ` outside comments;
 `appeals` counts lines invoking `ren-as-sub` or its corollary `[]-as-ren`.
-`Challenge/Test1.agda` to `Challenge/Test7.agda` are omitted: they are the
-challenge's test terms, not metatheory, and each is one `refl`.
 
 | module | lines | traversals | appeals |
 |---|---:|---:|---:|
 | `Challenge/Subtyping.agda` | 605 | 12 | **0** |
-| `Challenge/Records.agda` | 872 | 28 | **0** |
-| `Challenge/Patterns.agda` | 1137 | 63 | **0** |
-| `Challenge/Animation.agda` | 674 | 0 | **0** |
+| `Challenge/Records.agda` | 1032 | 28 | **0** |
+| `Challenge/Patterns.agda` | 1139 | 65 | **0** |
 | `Reloaded/Soundness.agda` | 351 | 13 | **0** |
 | `Reloaded/SumsSoundness.agda` | 550 | 13 | **0** |
 | `Reloaded/SumsCommuting.agda` | 257 | 20 | **0** |
-| `Reloaded/Normalization.agda` | 367 | 31 | 8 |
-| `Reloaded/SumsNormalization.agda` | 514 | 38 | 13 |
+| `Reloaded/Normalization.agda` | 362 | 31 | 8 |
+| `Reloaded/SumsNormalization.agda` | 492 | 38 | 13 |
 
 The two non-zero rows are `ren-as-sub` — substituting a variable is a
 renaming — its corollary `[]-as-ren`, and their clauses. `ren-as-sub` is an
@@ -182,7 +156,7 @@ at T**, met from the substitution side.
 `systemf.agda` models a map as a function from variables to terms and needs
 function extensionality. `systemf-vec.agda` models it as an inductive vector, so
 equality of maps is equality of data and the module assumes nothing. Both
-register the same 72 rules and prove the same subject reduction; 58 of the rule
+register the same 73 rules and prove the same subject reduction; 59 of the rule
 names coincide, and the 14 traversal names differ because each file names them
 after its own constructors.
 
@@ -201,10 +175,10 @@ All five were emitted with `--model=fun`, which models a map as a function;
 drops the 15-rule iterated-lifting family, which only a signature with a
 variable-arity binder needs; it is honoured by `--model=vectors` only.
 
-Of the rules emitted, 56 are signature-independent and 15 more are the iterated
-lifting; the rest are `2 × (constructors + 1)` traversal rules. That gives 77
-rules for `STLC`, 83 for `STLCSums`, 87 for `Fsub`, 101 for `FsubRecords` and
-111 for `FsubPatterns`.
+Of the rules emitted, 57 are signature-independent and 15 more are the iterated
+lifting; the rest are `2 × (constructors + 1)` traversal rules. That gives 78
+rules for `STLC`, 84 for `STLCSums`, 88 for `Fsub`, 102 for `FsubRecords` and
+112 for `FsubPatterns`.
 
 `generator/signatures/` holds fifteen stand-alone example signatures (untyped
 λ, CBPV, CPS, π-calculus, …) that exercise the generator on syntaxes this
@@ -249,7 +223,7 @@ two statements.
 theory. The signature is `generator/signatures/mltt.sig`: one syntactic sort, so
 types are terms, with `Pi`, `lam`, `app`, a universe, and `Nat` with a `natrec`
 whose successor branch binds two variables at once. The generator accepted it
-unchanged and emitted 89 rules in each model.
+unchanged and emitted 90 rules in each model.
 
 Subject reduction and progress are proved with **zero** substitution lemmas
 applied by hand, the same count as `systemf.agda`. Church-Rosser for the untyped

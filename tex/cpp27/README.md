@@ -26,8 +26,8 @@ describing a superseded result, `ADD HERE` for a result that wants a home,
 
 | file | rules | |
 |---|---:|---|
-| `systemf.agda` | 72 | intrinsically scoped System F and its σ-calculus, maps as functions |
-| `systemf-vec.agda` | 72 | the same, maps as inductive vectors; no postulates |
+| `systemf.agda` | 73 | intrinsically scoped System F and its σ-calculus, maps as functions |
+| `systemf-vec.agda` | 73 | the same, maps as inductive vectors; no postulates |
 | `closure.agda` | | the rule set's *absences*, eight `refl`s; internal, not shipped |
 | `closure-vec.agda` | | the same eight over the vector model; internal |
 | `examples.agda` | | the small examples of §2 |

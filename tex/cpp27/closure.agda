@@ -2,7 +2,7 @@
 
 -- Why the rule set has exactly the rules it has: the absences, checked.
 --
--- TRS.md derives the 72 rules as a small base closed under four completion
+-- TRS.md derives the 73 rules as a small base closed under four completion
 -- operators (C1 two worlds, C2 continuations, C3 mode V, C4 coercion).  Each
 -- operator comes with a side condition saying when an image is not needed.
 -- Those side conditions are the interesting part of the account -- they are

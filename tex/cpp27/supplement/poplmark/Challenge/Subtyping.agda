@@ -78,7 +78,7 @@ variable
 infix 3 _⊢_∶_
 
 data _⊢_∶_ : Ctx S → S ⊢ s → S ∶⊢ s → Set where
-  -- ── algorithmic subtyping, i.e. the s = type fragment ──
+  -- algorithmic subtyping, i.e. the s = type fragment
   <:-top  : Γ ⊢ A ∶ Top
   <:-refl : ∀ {α : S ∋ type} {Γ : Ctx S} → Γ ⊢ (` α) ∶ (` α)
   <:-var  : ∀ {α : S ∋ type} {Γ : Ctx S} {U B} →
@@ -86,7 +86,7 @@ data _⊢_∶_ : Ctx S → S ⊢ s → S ∶⊢ s → Set where
   <:-⇒    : Γ ⊢ B₁ ∶ A₁ → Γ ⊢ A₂ ∶ B₂ → Γ ⊢ (A₁ ⇒ A₂) ∶ (B₁ ⇒ B₂)
   <:-∀    : Γ ⊢ B₁ ∶ A₁ → (B₁ ∷ₜ Γ) ⊢ A₂ ∶ B₂ →
             Γ ⊢ (∀[<: A₁ ] A₂) ∶ (∀[<: B₁ ] B₂)
-  -- ── typing, i.e. the s = expr fragment ──
+  -- typing, i.e. the s = expr fragment
   ⊢`      : ∀ {x : S ∋ expr} {Γ : Ctx S} {A} → Γ ∋ x ∶ A → Γ ⊢ (` x) ∶ A
   ⊢λ      : (A ∷ₜ Γ) ⊢ e ∶ weaken B → Γ ⊢ (λx[ A ] e) ∶ (A ⇒ B)
   ⊢Λ      : (A ∷ₜ Γ) ⊢ e ∶ B → Γ ⊢ (Λα[<: A ] e) ∶ (∀[<: A ] B)
@@ -268,44 +268,44 @@ narrowing {Q = Q} d = narrow (shape Q) (shape-ren Q (wkᴿ type)) (narrow-here d
 
 -- ─── typed substitutions ────────────────────────────────────────────
 -- At a type variable this demands a subtyping fact, at a term variable a
--- typing fact.
-
-_∶_→ˢ_ : S₁ →ˢ S₂ → Ctx S₁ → Ctx S₂ → Set
-_∶_→ˢ_ {S₁} σ Γ₁ Γ₂ = ∀ s (x : S₁ ∋ s) (A : S₁ ∶⊢ s) →
-  Γ₁ ∋ x ∶ A → Γ₂ ⊢ (x [ σ ]ˢ) ∶ (A [ σ ]ˢ)
+-- typing fact.  It is a record rather than a function type: the map
+-- occurs only under `_[_]ˢ` inside the indices of `_⊢_∶_`, where it
+-- cannot be recovered by unification.  As a record parameter it is
+-- rigid, so every use site infers it.
+record _∶_→ˢ_ {S₁ S₂} (σ : S₁ →ˢ S₂) (Γ₁ : Ctx S₁) (Γ₂ : Ctx S₂) : Set where
+  constructor mkˢ
+  field at : ∀ s (x : S₁ ∋ s) (A : S₁ ∶⊢ s) →
+               Γ₁ ∋ x ∶ A → Γ₂ ⊢ (x [ σ ]ˢ) ∶ (A [ σ ]ˢ)
+open _∶_→ˢ_ public
 
 ⊢↑ˢ : ∀ {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} → σ ∶ Γ₁ →ˢ Γ₂ →
   (A : S₁ ∶⊢ s) → (σ ↑ˢ s) ∶ (A ∷ₜ Γ₁) →ˢ ((A [ σ ]ˢ) ∷ₜ Γ₂)
-⊢↑ˢ ⊢σ A _ zero    _ refl = ⊢var refl
-⊢↑ˢ {σ = σ} ⊢σ A _ (suc x) _ refl = ⊢weaken (A [ σ ]ˢ) (⊢σ _ x _ refl)
+⊢↑ˢ {σ = σ} ⊢σ A = mkˢ λ where
+  _ zero    _ refl → ⊢var refl
+  _ (suc x) _ refl → ⊢weaken (A [ σ ]ˢ) (at ⊢σ _ x _ refl)
 
 infixl 5 _⊢⋯ˢ_
 _⊢⋯ˢ_ : ∀ {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
   {t : S₁ ⊢ s} {A : S₁ ∶⊢ s} →
   Γ₁ ⊢ t ∶ A → σ ∶ Γ₁ →ˢ Γ₂ → Γ₂ ⊢ (t [ σ ]ˢ) ∶ (A [ σ ]ˢ)
-_⊢⋯ˢ_ <:-top  ⊢σ = <:-top
-_⊢⋯ˢ_ <:-refl ⊢σ = <:-reflexive _
-_⊢⋯ˢ_ {σ = σ} (<:-var {α = α} e u) ⊢σ =
-  transitivity (⊢σ _ α _ e) (_⊢⋯ˢ_ {σ = σ} u ⊢σ)
-_⊢⋯ˢ_ {σ = σ} (<:-⇒ d₁ d₂) ⊢σ =
-  <:-⇒ (_⊢⋯ˢ_ {σ = σ} d₁ ⊢σ) (_⊢⋯ˢ_ {σ = σ} d₂ ⊢σ)
-_⊢⋯ˢ_ {σ = σ} (<:-∀ d₁ d₂) ⊢σ =
-  <:-∀ (_⊢⋯ˢ_ {σ = σ} d₁ ⊢σ) (_⊢⋯ˢ_ {σ = σ ↑ˢ _} d₂ (⊢↑ˢ {σ = σ} ⊢σ _))
-_⊢⋯ˢ_ (⊢` e) ⊢σ = ⊢σ _ _ _ e
-_⊢⋯ˢ_ {σ = σ} (⊢λ d) ⊢σ = ⊢λ (_⊢⋯ˢ_ {σ = σ ↑ˢ _} d (⊢↑ˢ {σ = σ} ⊢σ _))
-_⊢⋯ˢ_ {σ = σ} (⊢Λ d) ⊢σ = ⊢Λ (_⊢⋯ˢ_ {σ = σ ↑ˢ _} d (⊢↑ˢ {σ = σ} ⊢σ _))
-_⊢⋯ˢ_ {σ = σ} (⊢· d₁ d₂) ⊢σ =
-  ⊢· (_⊢⋯ˢ_ {σ = σ} d₁ ⊢σ) (_⊢⋯ˢ_ {σ = σ} d₂ ⊢σ)
-_⊢⋯ˢ_ {σ = σ} (⊢• d₁ d₂) ⊢σ =
-  ⊢• (_⊢⋯ˢ_ {σ = σ} d₁ ⊢σ) (_⊢⋯ˢ_ {σ = σ} d₂ ⊢σ)
-_⊢⋯ˢ_ {σ = σ} (⊢<: d₁ d₂) ⊢σ =
-  ⊢<: (_⊢⋯ˢ_ {σ = σ} d₁ ⊢σ) (_⊢⋯ˢ_ {σ = σ} d₂ ⊢σ)
+<:-top                 ⊢⋯ˢ ⊢σ = <:-top
+<:-refl                ⊢⋯ˢ ⊢σ = <:-reflexive _
+(<:-var {α = α} e u)   ⊢⋯ˢ ⊢σ = transitivity (at ⊢σ _ α _ e) (u ⊢⋯ˢ ⊢σ)
+(<:-⇒ d₁ d₂)           ⊢⋯ˢ ⊢σ = <:-⇒ (d₁ ⊢⋯ˢ ⊢σ) (d₂ ⊢⋯ˢ ⊢σ)
+(<:-∀ d₁ d₂)           ⊢⋯ˢ ⊢σ = <:-∀ (d₁ ⊢⋯ˢ ⊢σ) (d₂ ⊢⋯ˢ ⊢↑ˢ ⊢σ _)
+(⊢` e)                 ⊢⋯ˢ ⊢σ = at ⊢σ _ _ _ e
+(⊢λ d)                 ⊢⋯ˢ ⊢σ = ⊢λ (d ⊢⋯ˢ ⊢↑ˢ ⊢σ _)
+(⊢Λ d)                 ⊢⋯ˢ ⊢σ = ⊢Λ (d ⊢⋯ˢ ⊢↑ˢ ⊢σ _)
+(⊢· d₁ d₂)             ⊢⋯ˢ ⊢σ = ⊢· (d₁ ⊢⋯ˢ ⊢σ) (d₂ ⊢⋯ˢ ⊢σ)
+(⊢• d₁ d₂)             ⊢⋯ˢ ⊢σ = ⊢• (d₁ ⊢⋯ˢ ⊢σ) (d₂ ⊢⋯ˢ ⊢σ)
+(⊢<: d₁ d₂)            ⊢⋯ˢ ⊢σ = ⊢<: (d₁ ⊢⋯ˢ ⊢σ) (d₂ ⊢⋯ˢ ⊢σ)
 
 -- Lemma A.8 at s = expr, Lemma A.11 at s = type
 ⊢[] : ∀ {Γ : Ctx S} {t : S ⊢ s} {A : S ∶⊢ s} →
   Γ ⊢ t ∶ A → (t ∙ˢ idˢ) ∶ (A ∷ₜ Γ) →ˢ Γ
-⊢[] d _ zero    _ refl = d
-⊢[] d _ (suc x) _ refl = ⊢var refl
+⊢[] d = mkˢ λ where
+  _ zero    _ refl → d
+  _ (suc x) _ refl → ⊢var refl
 
 -- ═══ part 2A: preservation and progress ═════════════════════════════
 
@@ -353,12 +353,12 @@ preservation : ∀ {Γ : Ctx S} {e e′ : S ⊢ expr} {A} →
 preservation (⊢` _)  ()
 preservation (⊢λ _)  ()
 preservation (⊢Λ _)  ()
-preservation (⊢· {e₂ = e₂} d₁ d₂) (β-λ v) with inv-λ d₁ (<:-reflexive _)
-... | (sub , body) = _⊢⋯ˢ_ {σ = e₂ ∙ˢ idˢ} body (⊢[] (⊢<: d₂ sub))
+preservation (⊢· d₁ d₂) (β-λ v) with inv-λ d₁ (<:-reflexive _)
+... | (sub , body) = body ⊢⋯ˢ ⊢[] (⊢<: d₂ sub)
 preservation (⊢· d₁ d₂) (ξ-·₁ st)   = ⊢· (preservation d₁ st) d₂
 preservation (⊢· d₁ d₂) (ξ-·₂ v st) = ⊢· d₁ (preservation d₂ st)
-preservation (⊢• {C = C} d₁ d₂) β-Λ with inv-Λ d₁ (<:-reflexive _)
-... | (sub , body) = _⊢⋯ˢ_ {σ = C ∙ˢ idˢ} body (⊢[] d₂)
+preservation (⊢• d₁ d₂) β-Λ with inv-Λ d₁ (<:-reflexive _)
+... | (sub , body) = body ⊢⋯ˢ ⊢[] d₂
 preservation (⊢• d₁ d₂) (ξ-• st) = ⊢• (preservation d₁ st) d₂
 preservation (⊢<: d s)  st       = ⊢<: (preservation d st) s
 
@@ -432,7 +432,7 @@ trans-test = transitivity α<:Top <:-top
 narrowing-test : ((Top ⇒ Top) ∷ₜ Γ₀) ⊢ (` zero) <: Top
 narrowing-test = narrowing {P = Top ⇒ Top} {Q = Top} <:-top α<:Top
 
--- ═══ narrowing with A trailing ∆, challenge Lemma 3.2 in full ══════
+-- ═══ narrowing with a trailing ∆, challenge Lemma 3.2 in full ═══════
 -- A telescope of binders extending S to S′, i.e. the challenge's ∆.
 
 data Tele (S : Scope) : Scope → Set where
@@ -470,7 +470,7 @@ narrowing∆ {Q = Q} Δ d =
     (≡-trans (shape-wk-tele Δ (weaken Q)) (shape-ren Q (wkᴿ type)))
     (narrow-tele Δ (narrow-here d))
 
--- the ∆ = ∅ instance is the old statement
+-- the ∆ = ∅ instance is `narrowing` above
 narrowing′ : ∀ {Γ : Ctx S} {P Q : S ⊢ type} {t : (type ∷ S) ⊢ s} {A} →
   Γ ⊢ P <: Q → (Q ∷ₜ Γ) ⊢ t ∶ A → (P ∷ₜ Γ) ⊢ t ∶ A
 narrowing′ = narrowing∆ []

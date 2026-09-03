@@ -311,6 +311,7 @@ opaque
 
   -- ══ VIᴿ. completion companions, renaming world ═══════════════════
   lift-dist-compᴿᴿ-var  : (x [ (ξ₁ ↑ᴿ s) ]ᴿ) [ (ξ₂ ↑ᴿ s) ]ᴿ ≡ x [ ((ξ₁ ⨟ᴿ ξ₂) ↑ᴿ s) ]ᴿ
+  lift-consᴿ-var  : (x [ (ξ ↑ᴿ s) ]ᴿ) [ (x′ ∙ᴿ ξ′) ]ᴿ ≡ x [ (x′ ∙ᴿ (ξ ⨟ᴿ ξ′)) ]ᴿ
   interactᴿ-⨟ᴿ    : wkᴿ s ⨟ᴿ ((x ∙ᴿ ξ) ⨟ᴿ ξ′) ≡ ξ ⨟ᴿ ξ′
   lift-wkᴿ-⨟ᴿ     : wkᴿ s ⨟ᴿ ((ξ ↑ᴿ s) ⨟ᴿ ξ′) ≡ ξ ⨟ᴿ (wkᴿ s ⨟ᴿ ξ′)
   lift-dist-compᴿᴿ-⨟ᴿ : (ξ₁ ↑ᴿ s) ⨟ᴿ ((ξ₂ ↑ᴿ s) ⨟ᴿ ξ′) ≡ ((ξ₁ ⨟ᴿ ξ₂) ↑ᴿ s) ⨟ᴿ ξ′
@@ -539,6 +540,8 @@ opaque
 
   lift-dist-compᴿᴿ-var {x = zero}  = refl
   lift-dist-compᴿᴿ-var {x = suc x} = refl
+  lift-consᴿ-var {x = zero}  = refl
+  lift-consᴿ-var {x = suc x} = refl
   interactᴿ-⨟ᴿ    = refl
   lift-wkᴿ-⨟ᴿ {s = s} {ξ = ξ} {ξ′ = ξ′} =
     trans (sym (assocᴿ {ξ₁ = wkᴿ s} {ξ₂ = ξ ↑ᴿ s} {ξ₃ = ξ′}))
@@ -823,7 +826,7 @@ opaque
 -- ═══ The completed two-world system ════════════════════════════════
 --
 -- The curated, locally confluent rule set:
--- 111 rules -- 56 signature-independent, 15 for the
+-- 112 rules -- 57 signature-independent, 15 for the
 -- iterated (variable-arity) lifting, 40 traversal rules (one instᴿ-*
 -- and one inst-* per constructor, plus the variable case).
 
@@ -836,7 +839,7 @@ opaque
   assocᴿ comp-idₗᴿ comp-idᵣᴿ interactᴿ
   lift-idᴿ lift-dist-compᴿᴿ lift-wkᴿ
   right-idᴿ compositionalityᴿᴿ-var compositionalityᴿᴿ
-  lift-dist-compᴿᴿ-var interactᴿ-⨟ᴿ lift-wkᴿ-⨟ᴿ lift-dist-compᴿᴿ-⨟ᴿ
+  lift-dist-compᴿᴿ-var lift-consᴿ-var interactᴿ-⨟ᴿ lift-wkᴿ-⨟ᴿ lift-dist-compᴿᴿ-⨟ᴿ
   coincidence-var def-∙ˢ-zero def-∙ˢ-suc def-↑ˢ-zero def-↑ˢ-suc
   compositionalityᴿˢ-⨟-var def-↑ˢ-zero-⨟ def-↑ˢ-suc-⨟
   inst-var inst-Top inst-_⇒_ inst-∀[<:_]_ inst-RcdT inst-nilT inst-consT

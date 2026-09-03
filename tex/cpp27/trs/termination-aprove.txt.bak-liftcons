@@ -1,0 +1,4112 @@
+Termination w.r.t. Q of the given QTRS could be proven:
+
+(0) QTRS
+(1) DependencyPairsProof [EQUIVALENT, 0 ms]
+(2) QDP
+(3) DependencyGraphProof [EQUIVALENT, 0 ms]
+(4) AND
+    (5) QDP
+        (6) UsableRulesProof [EQUIVALENT, 0 ms]
+        (7) QDP
+        (8) UsableRulesReductionPairsProof [EQUIVALENT, 1 ms]
+        (9) QDP
+        (10) QDPSizeChangeProof [EQUIVALENT, 0 ms]
+        (11) YES
+    (12) QDP
+        (13) UsableRulesProof [EQUIVALENT, 0 ms]
+        (14) QDP
+        (15) UsableRulesReductionPairsProof [EQUIVALENT, 1 ms]
+        (16) QDP
+        (17) UsableRulesProof [EQUIVALENT, 0 ms]
+        (18) QDP
+        (19) MNOCProof [EQUIVALENT, 0 ms]
+        (20) QDP
+        (21) QDPSizeChangeProof [EQUIVALENT, 0 ms]
+        (22) YES
+    (23) QDP
+        (24) QDPOrderProof [EQUIVALENT, 3429 ms]
+        (25) QDP
+        (26) DependencyGraphProof [EQUIVALENT, 0 ms]
+        (27) AND
+            (28) QDP
+                (29) QDPSizeChangeProof [EQUIVALENT, 0 ms]
+                (30) YES
+            (31) QDP
+                (32) QDPOrderProof [EQUIVALENT, 344 ms]
+                (33) QDP
+                (34) QDPOrderProof [EQUIVALENT, 3501 ms]
+                (35) QDP
+                (36) QDPOrderProof [EQUIVALENT, 4191 ms]
+                (37) QDP
+                (38) UsableRulesProof [EQUIVALENT, 0 ms]
+                (39) QDP
+                (40) QDPSizeChangeProof [EQUIVALENT, 0 ms]
+                (41) YES
+            (42) QDP
+                (43) QDPSizeChangeProof [EQUIVALENT, 0 ms]
+                (44) YES
+            (45) QDP
+                (46) QDPOrderProof [EQUIVALENT, 468 ms]
+                (47) QDP
+                (48) QDPOrderProof [EQUIVALENT, 300 ms]
+                (49) QDP
+                (50) QDPOrderProof [EQUIVALENT, 442 ms]
+                (51) QDP
+                (52) QDPOrderProof [EQUIVALENT, 3867 ms]
+                (53) QDP
+                (54) QDPOrderProof [EQUIVALENT, 214 ms]
+                (55) QDP
+                (56) QDPOrderProof [EQUIVALENT, 2961 ms]
+                (57) QDP
+                (58) QDPOrderProof [EQUIVALENT, 89 ms]
+                (59) QDP
+                (60) PisEmptyProof [EQUIVALENT, 0 ms]
+                (61) YES
+
+
+----------------------------------------
+
+(0)
+Obligation:
+Q restricted rewrite system:
+The TRS R consists of the following rules:
+
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(star, r) -> star
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   liftR(idR) -> idR
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   renV(x, idR) -> x
+   renT(t, idR) -> t
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(vz, liftS(sg)) -> var(vz)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subT(var(x), sg) -> subV(x, sg)
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(star, sg) -> star
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   liftS(emb(idR)) -> emb(idR)
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   liftS(emb(r)) -> emb(liftR(r))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+
+Q is empty.
+
+----------------------------------------
+
+(1) DependencyPairsProof (EQUIVALENT)
+Using Dependency Pairs [AG00,LPAR04] we result in the following initial DP problem.
+----------------------------------------
+
+(2)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   RENV(vs(y), consR(x, r)) -> RENV(y, r)
+   RENV(vs(x), liftR(r)) -> RENV(x, r)
+   RENT(var(x), r) -> RENV(x, r)
+   RENT(lam(e), r) -> RENT(e, liftR(r))
+   RENT(lam(e), r) -> LIFTR(r)
+   RENT(tlam(e), r) -> RENT(e, liftR(r))
+   RENT(tlam(e), r) -> LIFTR(r)
+   RENT(all(k, t), r) -> RENT(k, r)
+   RENT(all(k, t), r) -> RENT(t, liftR(r))
+   RENT(all(k, t), r) -> LIFTR(r)
+   RENT(app(e1, e2), r) -> RENT(e1, r)
+   RENT(app(e1, e2), r) -> RENT(e2, r)
+   RENT(tapp(e, t), r) -> RENT(e, r)
+   RENT(tapp(e, t), r) -> RENT(t, r)
+   RENT(arr(t1, t2), r) -> RENT(t1, r)
+   RENT(arr(t1, t2), r) -> RENT(t2, r)
+   COMPR(compR(r1, r2), r3) -> COMPR(r1, compR(r2, r3))
+   COMPR(compR(r1, r2), r3) -> COMPR(r2, r3)
+   COMPR(liftR(r1), liftR(r2)) -> LIFTR(compR(r1, r2))
+   COMPR(liftR(r1), liftR(r2)) -> COMPR(r1, r2)
+   COMPR(wkR, liftR(r)) -> COMPR(r, wkR)
+   RENV(x, compR(r1, r2)) -> RENV(renV(x, r1), r2)
+   RENV(x, compR(r1, r2)) -> RENV(x, r1)
+   RENT(renT(t, r1), r2) -> RENT(t, compR(r1, r2))
+   RENT(renT(t, r1), r2) -> COMPR(r1, r2)
+   RENV(renV(x, liftR(r1)), liftR(r2)) -> RENV(x, liftR(compR(r1, r2)))
+   RENV(renV(x, liftR(r1)), liftR(r2)) -> LIFTR(compR(r1, r2))
+   RENV(renV(x, liftR(r1)), liftR(r2)) -> COMPR(r1, r2)
+   COMPR(wkR, compR(consR(x, r), r3)) -> COMPR(r, r3)
+   COMPR(wkR, compR(liftR(r), r3)) -> COMPR(r, compR(wkR, r3))
+   COMPR(wkR, compR(liftR(r), r3)) -> COMPR(wkR, r3)
+   COMPR(liftR(r1), compR(liftR(r2), r3)) -> COMPR(liftR(compR(r1, r2)), r3)
+   COMPR(liftR(r1), compR(liftR(r2), r3)) -> LIFTR(compR(r1, r2))
+   COMPR(liftR(r1), compR(liftR(r2), r3)) -> COMPR(r1, r2)
+   SUBV(x, emb(r)) -> RENV(x, r)
+   SUBV(vs(x), consS(t, sg)) -> SUBV(x, sg)
+   SUBV(vs(x), liftS(sg)) -> SUBV(x, compS(sg, emb(wkR)))
+   SUBV(vs(x), liftS(sg)) -> COMPS(sg, emb(wkR))
+   SUBT(var(x), sg) -> SUBV(x, sg)
+   SUBT(lam(e), sg) -> SUBT(e, liftS(sg))
+   SUBT(lam(e), sg) -> LIFTS(sg)
+   SUBT(tlam(e), sg) -> SUBT(e, liftS(sg))
+   SUBT(tlam(e), sg) -> LIFTS(sg)
+   SUBT(all(k, t), sg) -> SUBT(k, sg)
+   SUBT(all(k, t), sg) -> SUBT(t, liftS(sg))
+   SUBT(all(k, t), sg) -> LIFTS(sg)
+   SUBT(app(e1, e2), sg) -> SUBT(e1, sg)
+   SUBT(app(e1, e2), sg) -> SUBT(e2, sg)
+   SUBT(tapp(e, t), sg) -> SUBT(e, sg)
+   SUBT(tapp(e, t), sg) -> SUBT(t, sg)
+   SUBT(arr(t1, t2), sg) -> SUBT(t1, sg)
+   SUBT(arr(t1, t2), sg) -> SUBT(t2, sg)
+   COMPS(compS(sg1, sg2), sg3) -> COMPS(sg1, compS(sg2, sg3))
+   COMPS(compS(sg1, sg2), sg3) -> COMPS(sg2, sg3)
+   COMPS(consS(t, sg1), sg2) -> SUBT(t, sg2)
+   COMPS(consS(t, sg1), sg2) -> COMPS(sg1, sg2)
+   COMPS(emb(wkR), liftS(sg)) -> COMPS(sg, emb(wkR))
+   COMPS(liftS(sg), consS(t, ta)) -> COMPS(sg, ta)
+   COMPS(liftS(sg1), liftS(sg2)) -> LIFTS(compS(sg1, sg2))
+   COMPS(liftS(sg1), liftS(sg2)) -> COMPS(sg1, sg2)
+   SUBT(subV(x, sg1), sg2) -> SUBV(x, compS(sg1, sg2))
+   SUBT(subV(x, sg1), sg2) -> COMPS(sg1, sg2)
+   SUBT(subT(t, sg1), sg2) -> SUBT(t, compS(sg1, sg2))
+   SUBT(subT(t, sg1), sg2) -> COMPS(sg1, sg2)
+   SUBV(x, compS(emb(r), sg)) -> SUBV(renV(x, r), sg)
+   SUBV(x, compS(emb(r), sg)) -> RENV(x, r)
+   SUBV(vz, compS(liftS(sg), ta)) -> SUBV(vz, ta)
+   SUBV(vs(x), compS(liftS(sg), ta)) -> SUBV(x, compS(sg, compS(emb(wkR), ta)))
+   SUBV(vs(x), compS(liftS(sg), ta)) -> COMPS(sg, compS(emb(wkR), ta))
+   SUBV(vs(x), compS(liftS(sg), ta)) -> COMPS(emb(wkR), ta)
+   COMPS(emb(wkR), compS(liftS(sg), ta)) -> COMPS(sg, compS(emb(wkR), ta))
+   COMPS(emb(wkR), compS(liftS(sg), ta)) -> COMPS(emb(wkR), ta)
+   COMPS(liftS(sg1), compS(liftS(sg2), ta)) -> COMPS(liftS(compS(sg1, sg2)), ta)
+   COMPS(liftS(sg1), compS(liftS(sg2), ta)) -> LIFTS(compS(sg1, sg2))
+   COMPS(liftS(sg1), compS(liftS(sg2), ta)) -> COMPS(sg1, sg2)
+   SUBT(renT(t, r), sg) -> SUBT(t, compS(emb(r), sg))
+   SUBT(renT(t, r), sg) -> COMPS(emb(r), sg)
+   RENT(subV(x, sg), r) -> SUBV(x, compS(sg, emb(r)))
+   RENT(subV(x, sg), r) -> COMPS(sg, emb(r))
+   RENT(subT(t, sg), r) -> SUBT(t, compS(sg, emb(r)))
+   RENT(subT(t, sg), r) -> COMPS(sg, emb(r))
+   COMPS(emb(liftR(r)), liftS(sg)) -> LIFTS(compS(emb(r), sg))
+   COMPS(emb(liftR(r)), liftS(sg)) -> COMPS(emb(r), sg)
+   COMPS(liftS(sg), emb(liftR(r))) -> LIFTS(compS(sg, emb(r)))
+   COMPS(liftS(sg), emb(liftR(r))) -> COMPS(sg, emb(r))
+   COMPS(emb(liftR(r)), compS(liftS(sg), ta)) -> COMPS(liftS(compS(emb(r), sg)), ta)
+   COMPS(emb(liftR(r)), compS(liftS(sg), ta)) -> LIFTS(compS(emb(r), sg))
+   COMPS(emb(liftR(r)), compS(liftS(sg), ta)) -> COMPS(emb(r), sg)
+   COMPS(liftS(sg), compS(emb(liftR(r)), ta)) -> COMPS(liftS(compS(sg, emb(r))), ta)
+   COMPS(liftS(sg), compS(emb(liftR(r)), ta)) -> LIFTS(compS(sg, emb(r)))
+   COMPS(liftS(sg), compS(emb(liftR(r)), ta)) -> COMPS(sg, emb(r))
+   SUBV(renV(x, liftR(r)), liftS(sg)) -> SUBV(x, liftS(compS(emb(r), sg)))
+   SUBV(renV(x, liftR(r)), liftS(sg)) -> LIFTS(compS(emb(r), sg))
+   SUBV(renV(x, liftR(r)), liftS(sg)) -> COMPS(emb(r), sg)
+   SUBV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> SUBV(x, compS(liftS(compS(emb(r), sg)), ta))
+   SUBV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> COMPS(liftS(compS(emb(r), sg)), ta)
+   SUBV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> LIFTS(compS(emb(r), sg))
+   SUBV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> COMPS(emb(r), sg)
+   SUBV(renV(x, liftR(r)), consS(t, sg)) -> SUBV(x, consS(t, compS(emb(r), sg)))
+   SUBV(renV(x, liftR(r)), consS(t, sg)) -> COMPS(emb(r), sg)
+   COMPS(emb(liftR(r)), consS(t, sg)) -> COMPS(emb(r), sg)
+   SUBT(t, emb(r)) -> RENT(t, r)
+   COMPS(emb(r1), emb(r2)) -> COMPR(r1, r2)
+   COMPS(emb(compR(r1, r2)), sg) -> COMPS(emb(r1), compS(emb(r2), sg))
+   COMPS(emb(compR(r1, r2)), sg) -> COMPS(emb(r2), sg)
+   LIFTS(emb(r)) -> LIFTR(r)
+   COMPS(emb(wkR), emb(liftR(r))) -> COMPS(emb(r), emb(wkR))
+   COMPS(emb(wkR), compS(emb(liftR(r)), ta)) -> COMPS(emb(r), compS(emb(wkR), ta))
+   COMPS(emb(wkR), compS(emb(liftR(r)), ta)) -> COMPS(emb(wkR), ta)
+   COMPS(emb(wkR), compS(emb(consR(x, r)), ta)) -> COMPS(emb(r), ta)
+   COMPS(emb(liftR(r1)), emb(liftR(r2))) -> LIFTR(compR(r1, r2))
+   COMPS(emb(liftR(r1)), emb(liftR(r2))) -> COMPR(r1, r2)
+   COMPS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> COMPS(emb(liftR(compR(r1, r2))), ta)
+   COMPS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> LIFTR(compR(r1, r2))
+   COMPS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> COMPR(r1, r2)
+   COMPS(liftS(sg), emb(compR(liftR(r), r3))) -> COMPS(liftS(compS(sg, emb(r))), emb(r3))
+   COMPS(liftS(sg), emb(compR(liftR(r), r3))) -> LIFTS(compS(sg, emb(r)))
+   COMPS(liftS(sg), emb(compR(liftR(r), r3))) -> COMPS(sg, emb(r))
+
+The TRS R consists of the following rules:
+
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(star, r) -> star
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   liftR(idR) -> idR
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   renV(x, idR) -> x
+   renT(t, idR) -> t
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(vz, liftS(sg)) -> var(vz)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subT(var(x), sg) -> subV(x, sg)
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(star, sg) -> star
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   liftS(emb(idR)) -> emb(idR)
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   liftS(emb(r)) -> emb(liftR(r))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(3) DependencyGraphProof (EQUIVALENT)
+The approximation of the Dependency Graph [LPAR04,FROCOS05,EDGSTAR] contains 3 SCCs with 29 less nodes.
+----------------------------------------
+
+(4)
+Complex Obligation (AND)
+
+----------------------------------------
+
+(5)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   COMPR(compR(r1, r2), r3) -> COMPR(r2, r3)
+   COMPR(compR(r1, r2), r3) -> COMPR(r1, compR(r2, r3))
+   COMPR(liftR(r1), liftR(r2)) -> COMPR(r1, r2)
+   COMPR(wkR, liftR(r)) -> COMPR(r, wkR)
+   COMPR(wkR, compR(consR(x, r), r3)) -> COMPR(r, r3)
+   COMPR(wkR, compR(liftR(r), r3)) -> COMPR(r, compR(wkR, r3))
+   COMPR(wkR, compR(liftR(r), r3)) -> COMPR(wkR, r3)
+   COMPR(liftR(r1), compR(liftR(r2), r3)) -> COMPR(liftR(compR(r1, r2)), r3)
+   COMPR(liftR(r1), compR(liftR(r2), r3)) -> COMPR(r1, r2)
+
+The TRS R consists of the following rules:
+
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(star, r) -> star
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   liftR(idR) -> idR
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   renV(x, idR) -> x
+   renT(t, idR) -> t
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(vz, liftS(sg)) -> var(vz)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subT(var(x), sg) -> subV(x, sg)
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(star, sg) -> star
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   liftS(emb(idR)) -> emb(idR)
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   liftS(emb(r)) -> emb(liftR(r))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(6) UsableRulesProof (EQUIVALENT)
+We can use the usable rules and reduction pair processor [LPAR04] with the Ce-compatible extension of the polynomial order that maps every function symbol to the sum of its arguments. Then, we can delete all non-usable rules [FROCOS05] from R.
+----------------------------------------
+
+(7)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   COMPR(compR(r1, r2), r3) -> COMPR(r2, r3)
+   COMPR(compR(r1, r2), r3) -> COMPR(r1, compR(r2, r3))
+   COMPR(liftR(r1), liftR(r2)) -> COMPR(r1, r2)
+   COMPR(wkR, liftR(r)) -> COMPR(r, wkR)
+   COMPR(wkR, compR(consR(x, r), r3)) -> COMPR(r, r3)
+   COMPR(wkR, compR(liftR(r), r3)) -> COMPR(r, compR(wkR, r3))
+   COMPR(wkR, compR(liftR(r), r3)) -> COMPR(wkR, r3)
+   COMPR(liftR(r1), compR(liftR(r2), r3)) -> COMPR(liftR(compR(r1, r2)), r3)
+   COMPR(liftR(r1), compR(liftR(r2), r3)) -> COMPR(r1, r2)
+
+The TRS R consists of the following rules:
+
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   liftR(idR) -> idR
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(8) UsableRulesReductionPairsProof (EQUIVALENT)
+By using the usable rules with reduction pair processor [LPAR04] with a polynomial ordering [POLO], all dependency pairs and the corresponding usable rules [FROCOS05] can be oriented non-strictly. All non-usable rules are removed, and those dependency pairs and usable rules that have been oriented strictly or contain non-usable symbols in their left-hand side are removed as well.
+
+The following dependency pairs can be deleted:
+
+   COMPR(liftR(r1), liftR(r2)) -> COMPR(r1, r2)
+   COMPR(wkR, liftR(r)) -> COMPR(r, wkR)
+   COMPR(wkR, compR(consR(x, r), r3)) -> COMPR(r, r3)
+   COMPR(wkR, compR(liftR(r), r3)) -> COMPR(r, compR(wkR, r3))
+   COMPR(wkR, compR(liftR(r), r3)) -> COMPR(wkR, r3)
+   COMPR(liftR(r1), compR(liftR(r2), r3)) -> COMPR(liftR(compR(r1, r2)), r3)
+   COMPR(liftR(r1), compR(liftR(r2), r3)) -> COMPR(r1, r2)
+The following rules are removed from R:
+
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   compR(wkR, consR(x, r)) -> r
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   liftR(idR) -> idR
+Used ordering: POLO with Polynomial interpretation [POLO]:
+
+   POL(COMPR(x_1, x_2)) = x_1 + x_2
+   POL(compR(x_1, x_2)) = x_1 + x_2
+   POL(consR(x_1, x_2)) = x_1 + 2*x_2
+   POL(idR) = 0
+   POL(liftR(x_1)) = 2 + 2*x_1
+   POL(wkR) = 2
+
+
+----------------------------------------
+
+(9)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   COMPR(compR(r1, r2), r3) -> COMPR(r2, r3)
+   COMPR(compR(r1, r2), r3) -> COMPR(r1, compR(r2, r3))
+
+The TRS R consists of the following rules:
+
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(10) QDPSizeChangeProof (EQUIVALENT)
+By using the subterm criterion [SUBTERM_CRITERION] together with the size-change analysis [AAECC05] we have proven that there are no infinite chains for this DP problem. 
+
+From the DPs we obtained the following set of size-change graphs:
+*COMPR(compR(r1, r2), r3) -> COMPR(r2, r3)
+The graph contains the following edges 1 > 1, 2 >= 2
+
+
+*COMPR(compR(r1, r2), r3) -> COMPR(r1, compR(r2, r3))
+The graph contains the following edges 1 > 1
+
+
+----------------------------------------
+
+(11)
+YES
+
+----------------------------------------
+
+(12)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   RENV(vs(x), liftR(r)) -> RENV(x, r)
+   RENV(vs(y), consR(x, r)) -> RENV(y, r)
+   RENV(x, compR(r1, r2)) -> RENV(renV(x, r1), r2)
+   RENV(x, compR(r1, r2)) -> RENV(x, r1)
+   RENV(renV(x, liftR(r1)), liftR(r2)) -> RENV(x, liftR(compR(r1, r2)))
+
+The TRS R consists of the following rules:
+
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(star, r) -> star
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   liftR(idR) -> idR
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   renV(x, idR) -> x
+   renT(t, idR) -> t
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(vz, liftS(sg)) -> var(vz)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subT(var(x), sg) -> subV(x, sg)
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(star, sg) -> star
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   liftS(emb(idR)) -> emb(idR)
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   liftS(emb(r)) -> emb(liftR(r))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(13) UsableRulesProof (EQUIVALENT)
+We can use the usable rules and reduction pair processor [LPAR04] with the Ce-compatible extension of the polynomial order that maps every function symbol to the sum of its arguments. Then, we can delete all non-usable rules [FROCOS05] from R.
+----------------------------------------
+
+(14)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   RENV(vs(x), liftR(r)) -> RENV(x, r)
+   RENV(vs(y), consR(x, r)) -> RENV(y, r)
+   RENV(x, compR(r1, r2)) -> RENV(renV(x, r1), r2)
+   RENV(x, compR(r1, r2)) -> RENV(x, r1)
+   RENV(renV(x, liftR(r1)), liftR(r2)) -> RENV(x, liftR(compR(r1, r2)))
+
+The TRS R consists of the following rules:
+
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   liftR(idR) -> idR
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renV(x, idR) -> x
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(15) UsableRulesReductionPairsProof (EQUIVALENT)
+By using the usable rules with reduction pair processor [LPAR04] with a polynomial ordering [POLO], all dependency pairs and the corresponding usable rules [FROCOS05] can be oriented non-strictly. All non-usable rules are removed, and those dependency pairs and usable rules that have been oriented strictly or contain non-usable symbols in their left-hand side are removed as well.
+
+The following dependency pairs can be deleted:
+
+   RENV(vs(x), liftR(r)) -> RENV(x, r)
+   RENV(vs(y), consR(x, r)) -> RENV(y, r)
+   RENV(renV(x, liftR(r1)), liftR(r2)) -> RENV(x, liftR(compR(r1, r2)))
+The following rules are removed from R:
+
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   compR(wkR, consR(x, r)) -> r
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   liftR(idR) -> idR
+   renV(vz, consR(x, r)) -> x
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+Used ordering: POLO with Polynomial interpretation [POLO]:
+
+   POL(RENV(x_1, x_2)) = x_1 + 2*x_2
+   POL(compR(x_1, x_2)) = x_1 + x_2
+   POL(consR(x_1, x_2)) = x_1 + x_2
+   POL(idR) = 0
+   POL(liftR(x_1)) = 2 + 2*x_1
+   POL(renV(x_1, x_2)) = x_1 + 2*x_2
+   POL(vs(x_1)) = 2 + x_1
+   POL(vz) = 0
+   POL(wkR) = 1
+
+
+----------------------------------------
+
+(16)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   RENV(x, compR(r1, r2)) -> RENV(renV(x, r1), r2)
+   RENV(x, compR(r1, r2)) -> RENV(x, r1)
+
+The TRS R consists of the following rules:
+
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   renV(x, wkR) -> vs(x)
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renV(x, idR) -> x
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(17) UsableRulesProof (EQUIVALENT)
+We can use the usable rules and reduction pair processor [LPAR04] with the Ce-compatible extension of the polynomial order that maps every function symbol to the sum of its arguments. Then, we can delete all non-usable rules [FROCOS05] from R.
+----------------------------------------
+
+(18)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   RENV(x, compR(r1, r2)) -> RENV(renV(x, r1), r2)
+   RENV(x, compR(r1, r2)) -> RENV(x, r1)
+
+The TRS R consists of the following rules:
+
+   renV(x, wkR) -> vs(x)
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renV(x, idR) -> x
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(19) MNOCProof (EQUIVALENT)
+We use the modular non-overlap check [LPAR04] to enlarge Q to all left-hand sides of R.
+----------------------------------------
+
+(20)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   RENV(x, compR(r1, r2)) -> RENV(renV(x, r1), r2)
+   RENV(x, compR(r1, r2)) -> RENV(x, r1)
+
+The TRS R consists of the following rules:
+
+   renV(x, wkR) -> vs(x)
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renV(x, idR) -> x
+
+The set Q consists of the following terms:
+
+   renV(x0, wkR)
+   renV(x0, compR(x1, x2))
+   renV(x0, idR)
+
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(21) QDPSizeChangeProof (EQUIVALENT)
+By using the subterm criterion [SUBTERM_CRITERION] together with the size-change analysis [AAECC05] we have proven that there are no infinite chains for this DP problem. 
+
+From the DPs we obtained the following set of size-change graphs:
+*RENV(x, compR(r1, r2)) -> RENV(renV(x, r1), r2)
+The graph contains the following edges 2 > 2
+
+
+*RENV(x, compR(r1, r2)) -> RENV(x, r1)
+The graph contains the following edges 1 >= 1, 2 > 2
+
+
+----------------------------------------
+
+(22)
+YES
+
+----------------------------------------
+
+(23)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   RENT(tlam(e), r) -> RENT(e, liftR(r))
+   RENT(lam(e), r) -> RENT(e, liftR(r))
+   RENT(all(k, t), r) -> RENT(k, r)
+   RENT(all(k, t), r) -> RENT(t, liftR(r))
+   RENT(app(e1, e2), r) -> RENT(e1, r)
+   RENT(app(e1, e2), r) -> RENT(e2, r)
+   RENT(tapp(e, t), r) -> RENT(e, r)
+   RENT(tapp(e, t), r) -> RENT(t, r)
+   RENT(arr(t1, t2), r) -> RENT(t1, r)
+   RENT(arr(t1, t2), r) -> RENT(t2, r)
+   RENT(renT(t, r1), r2) -> RENT(t, compR(r1, r2))
+   RENT(subV(x, sg), r) -> SUBV(x, compS(sg, emb(r)))
+   SUBV(vs(x), consS(t, sg)) -> SUBV(x, sg)
+   SUBV(vs(x), liftS(sg)) -> SUBV(x, compS(sg, emb(wkR)))
+   SUBV(vs(x), liftS(sg)) -> COMPS(sg, emb(wkR))
+   COMPS(compS(sg1, sg2), sg3) -> COMPS(sg1, compS(sg2, sg3))
+   COMPS(compS(sg1, sg2), sg3) -> COMPS(sg2, sg3)
+   COMPS(consS(t, sg1), sg2) -> SUBT(t, sg2)
+   SUBT(var(x), sg) -> SUBV(x, sg)
+   SUBV(x, compS(emb(r), sg)) -> SUBV(renV(x, r), sg)
+   SUBV(vz, compS(liftS(sg), ta)) -> SUBV(vz, ta)
+   SUBV(vs(x), compS(liftS(sg), ta)) -> SUBV(x, compS(sg, compS(emb(wkR), ta)))
+   SUBV(vs(x), compS(liftS(sg), ta)) -> COMPS(sg, compS(emb(wkR), ta))
+   COMPS(consS(t, sg1), sg2) -> COMPS(sg1, sg2)
+   COMPS(emb(wkR), liftS(sg)) -> COMPS(sg, emb(wkR))
+   COMPS(emb(compR(r1, r2)), sg) -> COMPS(emb(r1), compS(emb(r2), sg))
+   COMPS(emb(wkR), compS(liftS(sg), ta)) -> COMPS(sg, compS(emb(wkR), ta))
+   COMPS(liftS(sg), consS(t, ta)) -> COMPS(sg, ta)
+   COMPS(liftS(sg1), liftS(sg2)) -> COMPS(sg1, sg2)
+   COMPS(emb(wkR), compS(liftS(sg), ta)) -> COMPS(emb(wkR), ta)
+   COMPS(emb(wkR), emb(liftR(r))) -> COMPS(emb(r), emb(wkR))
+   COMPS(emb(compR(r1, r2)), sg) -> COMPS(emb(r2), sg)
+   COMPS(emb(liftR(r)), liftS(sg)) -> COMPS(emb(r), sg)
+   COMPS(emb(liftR(r)), compS(liftS(sg), ta)) -> COMPS(liftS(compS(emb(r), sg)), ta)
+   COMPS(liftS(sg1), compS(liftS(sg2), ta)) -> COMPS(liftS(compS(sg1, sg2)), ta)
+   COMPS(liftS(sg1), compS(liftS(sg2), ta)) -> COMPS(sg1, sg2)
+   COMPS(liftS(sg), emb(liftR(r))) -> COMPS(sg, emb(r))
+   COMPS(liftS(sg), emb(compR(liftR(r), r3))) -> COMPS(liftS(compS(sg, emb(r))), emb(r3))
+   COMPS(liftS(sg), emb(compR(liftR(r), r3))) -> COMPS(sg, emb(r))
+   COMPS(emb(liftR(r)), compS(liftS(sg), ta)) -> COMPS(emb(r), sg)
+   COMPS(emb(liftR(r)), consS(t, sg)) -> COMPS(emb(r), sg)
+   COMPS(emb(wkR), compS(emb(liftR(r)), ta)) -> COMPS(emb(r), compS(emb(wkR), ta))
+   COMPS(emb(wkR), compS(emb(liftR(r)), ta)) -> COMPS(emb(wkR), ta)
+   COMPS(emb(wkR), compS(emb(consR(x, r)), ta)) -> COMPS(emb(r), ta)
+   COMPS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> COMPS(emb(liftR(compR(r1, r2))), ta)
+   COMPS(liftS(sg), compS(emb(liftR(r)), ta)) -> COMPS(liftS(compS(sg, emb(r))), ta)
+   COMPS(liftS(sg), compS(emb(liftR(r)), ta)) -> COMPS(sg, emb(r))
+   SUBV(vs(x), compS(liftS(sg), ta)) -> COMPS(emb(wkR), ta)
+   SUBV(renV(x, liftR(r)), liftS(sg)) -> SUBV(x, liftS(compS(emb(r), sg)))
+   SUBV(renV(x, liftR(r)), liftS(sg)) -> COMPS(emb(r), sg)
+   SUBV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> SUBV(x, compS(liftS(compS(emb(r), sg)), ta))
+   SUBV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> COMPS(liftS(compS(emb(r), sg)), ta)
+   SUBV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> COMPS(emb(r), sg)
+   SUBV(renV(x, liftR(r)), consS(t, sg)) -> SUBV(x, consS(t, compS(emb(r), sg)))
+   SUBV(renV(x, liftR(r)), consS(t, sg)) -> COMPS(emb(r), sg)
+   SUBT(lam(e), sg) -> SUBT(e, liftS(sg))
+   SUBT(tlam(e), sg) -> SUBT(e, liftS(sg))
+   SUBT(all(k, t), sg) -> SUBT(k, sg)
+   SUBT(all(k, t), sg) -> SUBT(t, liftS(sg))
+   SUBT(app(e1, e2), sg) -> SUBT(e1, sg)
+   SUBT(app(e1, e2), sg) -> SUBT(e2, sg)
+   SUBT(tapp(e, t), sg) -> SUBT(e, sg)
+   SUBT(tapp(e, t), sg) -> SUBT(t, sg)
+   SUBT(arr(t1, t2), sg) -> SUBT(t1, sg)
+   SUBT(arr(t1, t2), sg) -> SUBT(t2, sg)
+   SUBT(subV(x, sg1), sg2) -> SUBV(x, compS(sg1, sg2))
+   SUBT(subV(x, sg1), sg2) -> COMPS(sg1, sg2)
+   SUBT(subT(t, sg1), sg2) -> SUBT(t, compS(sg1, sg2))
+   SUBT(subT(t, sg1), sg2) -> COMPS(sg1, sg2)
+   SUBT(renT(t, r), sg) -> SUBT(t, compS(emb(r), sg))
+   SUBT(renT(t, r), sg) -> COMPS(emb(r), sg)
+   SUBT(t, emb(r)) -> RENT(t, r)
+   RENT(subV(x, sg), r) -> COMPS(sg, emb(r))
+   RENT(subT(t, sg), r) -> SUBT(t, compS(sg, emb(r)))
+   RENT(subT(t, sg), r) -> COMPS(sg, emb(r))
+
+The TRS R consists of the following rules:
+
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(star, r) -> star
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   liftR(idR) -> idR
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   renV(x, idR) -> x
+   renT(t, idR) -> t
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(vz, liftS(sg)) -> var(vz)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subT(var(x), sg) -> subV(x, sg)
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(star, sg) -> star
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   liftS(emb(idR)) -> emb(idR)
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   liftS(emb(r)) -> emb(liftR(r))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(24) QDPOrderProof (EQUIVALENT)
+We use the reduction pair processor [LPAR04,JAR06].
+
+
+The following pairs can be oriented strictly and are deleted.
+
+   RENT(tlam(e), r) -> RENT(e, liftR(r))
+   RENT(lam(e), r) -> RENT(e, liftR(r))
+   RENT(app(e1, e2), r) -> RENT(e1, r)
+   RENT(app(e1, e2), r) -> RENT(e2, r)
+   RENT(tapp(e, t), r) -> RENT(e, r)
+   RENT(tapp(e, t), r) -> RENT(t, r)
+   RENT(arr(t1, t2), r) -> RENT(t1, r)
+   RENT(arr(t1, t2), r) -> RENT(t2, r)
+   SUBV(vs(x), consS(t, sg)) -> SUBV(x, sg)
+   SUBV(vs(x), liftS(sg)) -> COMPS(sg, emb(wkR))
+   SUBV(vs(x), compS(liftS(sg), ta)) -> COMPS(sg, compS(emb(wkR), ta))
+   COMPS(consS(t, sg1), sg2) -> COMPS(sg1, sg2)
+   COMPS(liftS(sg), consS(t, ta)) -> COMPS(sg, ta)
+   COMPS(emb(liftR(r)), consS(t, sg)) -> COMPS(emb(r), sg)
+   SUBV(vs(x), compS(liftS(sg), ta)) -> COMPS(emb(wkR), ta)
+   SUBV(renV(x, liftR(r)), liftS(sg)) -> COMPS(emb(r), sg)
+   SUBV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> COMPS(liftS(compS(emb(r), sg)), ta)
+   SUBV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> COMPS(emb(r), sg)
+   SUBV(renV(x, liftR(r)), consS(t, sg)) -> COMPS(emb(r), sg)
+   SUBT(lam(e), sg) -> SUBT(e, liftS(sg))
+   SUBT(tlam(e), sg) -> SUBT(e, liftS(sg))
+   SUBT(app(e1, e2), sg) -> SUBT(e1, sg)
+   SUBT(app(e1, e2), sg) -> SUBT(e2, sg)
+   SUBT(tapp(e, t), sg) -> SUBT(e, sg)
+   SUBT(tapp(e, t), sg) -> SUBT(t, sg)
+   SUBT(arr(t1, t2), sg) -> SUBT(t1, sg)
+   SUBT(arr(t1, t2), sg) -> SUBT(t2, sg)
+   SUBT(subV(x, sg1), sg2) -> COMPS(sg1, sg2)
+   SUBT(subT(t, sg1), sg2) -> COMPS(sg1, sg2)
+   SUBT(renT(t, r), sg) -> COMPS(emb(r), sg)
+   RENT(subV(x, sg), r) -> COMPS(sg, emb(r))
+   RENT(subT(t, sg), r) -> COMPS(sg, emb(r))
+The remaining pairs can at least be oriented weakly.
+Used ordering:  Polynomial interpretation with max and min functions [POLO,MAXPOLO]:
+
+   POL(COMPS(x_1, x_2)) = x_1 + x_2
+   POL(RENT(x_1, x_2)) = 1 + x_1
+   POL(SUBT(x_1, x_2)) = 1 + x_1 + x_2
+   POL(SUBV(x_1, x_2)) = 1 + x_2
+   POL(all(x_1, x_2)) = max(x_1, x_2)
+   POL(app(x_1, x_2)) = 1 + max(x_1, x_2)
+   POL(arr(x_1, x_2)) = 1 + max(x_1, x_2)
+   POL(compR(x_1, x_2)) = 0
+   POL(compS(x_1, x_2)) = x_1 + x_2
+   POL(consR(x_1, x_2)) = 0
+   POL(consS(x_1, x_2)) = 1 + max(x_1, x_2)
+   POL(emb(x_1)) = 0
+   POL(idR) = 0
+   POL(lam(x_1)) = 1 + x_1
+   POL(liftR(x_1)) = x_1
+   POL(liftS(x_1)) = x_1
+   POL(renT(x_1, x_2)) = x_1
+   POL(renV(x_1, x_2)) = x_1 + x_2
+   POL(star) = 0
+   POL(subT(x_1, x_2)) = x_1 + x_2
+   POL(subV(x_1, x_2)) = x_2
+   POL(tapp(x_1, x_2)) = 1 + max(x_1, x_2)
+   POL(tlam(x_1)) = 1 + x_1
+   POL(var(x_1)) = 0
+   POL(vs(x_1)) = x_1
+   POL(vz) = 0
+   POL(wkR) = 0
+
+The following usable rules [FROCOS05] with respect to the argument filtering of the ordering [JAR06] were oriented:
+
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   liftS(emb(idR)) -> emb(idR)
+   liftS(emb(r)) -> emb(liftR(r))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(star, r) -> star
+   renT(t, idR) -> t
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vz, liftS(sg)) -> var(vz)
+   subT(star, sg) -> star
+   subT(var(x), sg) -> subV(x, sg)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+
+
+----------------------------------------
+
+(25)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   RENT(all(k, t), r) -> RENT(k, r)
+   RENT(all(k, t), r) -> RENT(t, liftR(r))
+   RENT(renT(t, r1), r2) -> RENT(t, compR(r1, r2))
+   RENT(subV(x, sg), r) -> SUBV(x, compS(sg, emb(r)))
+   SUBV(vs(x), liftS(sg)) -> SUBV(x, compS(sg, emb(wkR)))
+   COMPS(compS(sg1, sg2), sg3) -> COMPS(sg1, compS(sg2, sg3))
+   COMPS(compS(sg1, sg2), sg3) -> COMPS(sg2, sg3)
+   COMPS(consS(t, sg1), sg2) -> SUBT(t, sg2)
+   SUBT(var(x), sg) -> SUBV(x, sg)
+   SUBV(x, compS(emb(r), sg)) -> SUBV(renV(x, r), sg)
+   SUBV(vz, compS(liftS(sg), ta)) -> SUBV(vz, ta)
+   SUBV(vs(x), compS(liftS(sg), ta)) -> SUBV(x, compS(sg, compS(emb(wkR), ta)))
+   COMPS(emb(wkR), liftS(sg)) -> COMPS(sg, emb(wkR))
+   COMPS(emb(compR(r1, r2)), sg) -> COMPS(emb(r1), compS(emb(r2), sg))
+   COMPS(emb(wkR), compS(liftS(sg), ta)) -> COMPS(sg, compS(emb(wkR), ta))
+   COMPS(liftS(sg1), liftS(sg2)) -> COMPS(sg1, sg2)
+   COMPS(emb(wkR), compS(liftS(sg), ta)) -> COMPS(emb(wkR), ta)
+   COMPS(emb(wkR), emb(liftR(r))) -> COMPS(emb(r), emb(wkR))
+   COMPS(emb(compR(r1, r2)), sg) -> COMPS(emb(r2), sg)
+   COMPS(emb(liftR(r)), liftS(sg)) -> COMPS(emb(r), sg)
+   COMPS(emb(liftR(r)), compS(liftS(sg), ta)) -> COMPS(liftS(compS(emb(r), sg)), ta)
+   COMPS(liftS(sg1), compS(liftS(sg2), ta)) -> COMPS(liftS(compS(sg1, sg2)), ta)
+   COMPS(liftS(sg1), compS(liftS(sg2), ta)) -> COMPS(sg1, sg2)
+   COMPS(liftS(sg), emb(liftR(r))) -> COMPS(sg, emb(r))
+   COMPS(liftS(sg), emb(compR(liftR(r), r3))) -> COMPS(liftS(compS(sg, emb(r))), emb(r3))
+   COMPS(liftS(sg), emb(compR(liftR(r), r3))) -> COMPS(sg, emb(r))
+   COMPS(emb(liftR(r)), compS(liftS(sg), ta)) -> COMPS(emb(r), sg)
+   COMPS(emb(wkR), compS(emb(liftR(r)), ta)) -> COMPS(emb(r), compS(emb(wkR), ta))
+   COMPS(emb(wkR), compS(emb(liftR(r)), ta)) -> COMPS(emb(wkR), ta)
+   COMPS(emb(wkR), compS(emb(consR(x, r)), ta)) -> COMPS(emb(r), ta)
+   COMPS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> COMPS(emb(liftR(compR(r1, r2))), ta)
+   COMPS(liftS(sg), compS(emb(liftR(r)), ta)) -> COMPS(liftS(compS(sg, emb(r))), ta)
+   COMPS(liftS(sg), compS(emb(liftR(r)), ta)) -> COMPS(sg, emb(r))
+   SUBV(renV(x, liftR(r)), liftS(sg)) -> SUBV(x, liftS(compS(emb(r), sg)))
+   SUBV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> SUBV(x, compS(liftS(compS(emb(r), sg)), ta))
+   SUBV(renV(x, liftR(r)), consS(t, sg)) -> SUBV(x, consS(t, compS(emb(r), sg)))
+   SUBT(all(k, t), sg) -> SUBT(k, sg)
+   SUBT(all(k, t), sg) -> SUBT(t, liftS(sg))
+   SUBT(subV(x, sg1), sg2) -> SUBV(x, compS(sg1, sg2))
+   SUBT(subT(t, sg1), sg2) -> SUBT(t, compS(sg1, sg2))
+   SUBT(renT(t, r), sg) -> SUBT(t, compS(emb(r), sg))
+   SUBT(t, emb(r)) -> RENT(t, r)
+   RENT(subT(t, sg), r) -> SUBT(t, compS(sg, emb(r)))
+
+The TRS R consists of the following rules:
+
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(star, r) -> star
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   liftR(idR) -> idR
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   renV(x, idR) -> x
+   renT(t, idR) -> t
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(vz, liftS(sg)) -> var(vz)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subT(var(x), sg) -> subV(x, sg)
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(star, sg) -> star
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   liftS(emb(idR)) -> emb(idR)
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   liftS(emb(r)) -> emb(liftR(r))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(26) DependencyGraphProof (EQUIVALENT)
+The approximation of the Dependency Graph [LPAR04,FROCOS05,EDGSTAR] contains 4 SCCs with 4 less nodes.
+----------------------------------------
+
+(27)
+Complex Obligation (AND)
+
+----------------------------------------
+
+(28)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   SUBV(renV(x, liftR(r)), consS(t, sg)) -> SUBV(x, consS(t, compS(emb(r), sg)))
+
+The TRS R consists of the following rules:
+
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(star, r) -> star
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   liftR(idR) -> idR
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   renV(x, idR) -> x
+   renT(t, idR) -> t
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(vz, liftS(sg)) -> var(vz)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subT(var(x), sg) -> subV(x, sg)
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(star, sg) -> star
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   liftS(emb(idR)) -> emb(idR)
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   liftS(emb(r)) -> emb(liftR(r))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(29) QDPSizeChangeProof (EQUIVALENT)
+By using the subterm criterion [SUBTERM_CRITERION] together with the size-change analysis [AAECC05] we have proven that there are no infinite chains for this DP problem. 
+
+From the DPs we obtained the following set of size-change graphs:
+*SUBV(renV(x, liftR(r)), consS(t, sg)) -> SUBV(x, consS(t, compS(emb(r), sg)))
+The graph contains the following edges 1 > 1
+
+
+----------------------------------------
+
+(30)
+YES
+
+----------------------------------------
+
+(31)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   SUBV(x, compS(emb(r), sg)) -> SUBV(renV(x, r), sg)
+   SUBV(vs(x), liftS(sg)) -> SUBV(x, compS(sg, emb(wkR)))
+   SUBV(vz, compS(liftS(sg), ta)) -> SUBV(vz, ta)
+   SUBV(vs(x), compS(liftS(sg), ta)) -> SUBV(x, compS(sg, compS(emb(wkR), ta)))
+   SUBV(renV(x, liftR(r)), liftS(sg)) -> SUBV(x, liftS(compS(emb(r), sg)))
+   SUBV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> SUBV(x, compS(liftS(compS(emb(r), sg)), ta))
+
+The TRS R consists of the following rules:
+
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(star, r) -> star
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   liftR(idR) -> idR
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   renV(x, idR) -> x
+   renT(t, idR) -> t
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(vz, liftS(sg)) -> var(vz)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subT(var(x), sg) -> subV(x, sg)
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(star, sg) -> star
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   liftS(emb(idR)) -> emb(idR)
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   liftS(emb(r)) -> emb(liftR(r))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(32) QDPOrderProof (EQUIVALENT)
+We use the reduction pair processor [LPAR04,JAR06].
+
+
+The following pairs can be oriented strictly and are deleted.
+
+   SUBV(vs(x), liftS(sg)) -> SUBV(x, compS(sg, emb(wkR)))
+The remaining pairs can at least be oriented weakly.
+Used ordering:  Matrix interpretation [MATRO] with arctic natural numbers [ARCTIC]:
+
+   <<<
+ POL(SUBV(x_1, x_2)) =  	[[1A]] 	 +  	[[-I]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(compS(x_1, x_2)) =  	[[0A]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(emb(x_1)) =  	[[1A]] 	 +  	[[-I]] 	* 	x_1
+>>>
+
+   <<<
+ POL(renV(x_1, x_2)) =  	[[-I]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[1A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(vs(x_1)) =  	[[4A]] 	 +  	[[0A]] 	* 	x_1
+>>>
+
+   <<<
+ POL(liftS(x_1)) =  	[[3A]] 	 +  	[[2A]] 	* 	x_1
+>>>
+
+   <<<
+ POL(wkR) =  	[[0A]]
+>>>
+
+   <<<
+ POL(vz) =  	[[3A]]
+>>>
+
+   <<<
+ POL(liftR(x_1)) =  	[[-I]] 	 +  	[[0A]] 	* 	x_1
+>>>
+
+   <<<
+ POL(consR(x_1, x_2)) =  	[[0A]] 	 +  	[[1A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(compR(x_1, x_2)) =  	[[-I]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(idR) =  	[[3A]]
+>>>
+
+   <<<
+ POL(consS(x_1, x_2)) =  	[[5A]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(subT(x_1, x_2)) =  	[[0A]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(renT(x_1, x_2)) =  	[[1A]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[-I]] 	* 	x_2
+>>>
+
+   <<<
+ POL(tlam(x_1)) =  	[[0A]] 	 +  	[[-I]] 	* 	x_1
+>>>
+
+   <<<
+ POL(var(x_1)) =  	[[1A]] 	 +  	[[-I]] 	* 	x_1
+>>>
+
+   <<<
+ POL(star) =  	[[0A]]
+>>>
+
+   <<<
+ POL(lam(x_1)) =  	[[1A]] 	 +  	[[-I]] 	* 	x_1
+>>>
+
+   <<<
+ POL(all(x_1, x_2)) =  	[[-I]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[-I]] 	* 	x_2
+>>>
+
+   <<<
+ POL(app(x_1, x_2)) =  	[[0A]] 	 +  	[[-I]] 	* 	x_1 	 +  	[[-I]] 	* 	x_2
+>>>
+
+   <<<
+ POL(tapp(x_1, x_2)) =  	[[0A]] 	 +  	[[-I]] 	* 	x_1 	 +  	[[-I]] 	* 	x_2
+>>>
+
+   <<<
+ POL(arr(x_1, x_2)) =  	[[0A]] 	 +  	[[-I]] 	* 	x_1 	 +  	[[-I]] 	* 	x_2
+>>>
+
+   <<<
+ POL(subV(x_1, x_2)) =  	[[-I]] 	 +  	[[-I]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+
+The following usable rules [FROCOS05] with respect to the argument filtering of the ordering [JAR06] were oriented:
+
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(idR), sg) -> sg
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(sg, emb(idR)) -> sg
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   liftS(emb(idR)) -> emb(idR)
+   liftS(emb(r)) -> emb(liftR(r))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(star, r) -> star
+   renT(t, idR) -> t
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vz, liftS(sg)) -> var(vz)
+   subT(star, sg) -> star
+   subT(var(x), sg) -> subV(x, sg)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+
+
+----------------------------------------
+
+(33)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   SUBV(x, compS(emb(r), sg)) -> SUBV(renV(x, r), sg)
+   SUBV(vz, compS(liftS(sg), ta)) -> SUBV(vz, ta)
+   SUBV(vs(x), compS(liftS(sg), ta)) -> SUBV(x, compS(sg, compS(emb(wkR), ta)))
+   SUBV(renV(x, liftR(r)), liftS(sg)) -> SUBV(x, liftS(compS(emb(r), sg)))
+   SUBV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> SUBV(x, compS(liftS(compS(emb(r), sg)), ta))
+
+The TRS R consists of the following rules:
+
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(star, r) -> star
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   liftR(idR) -> idR
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   renV(x, idR) -> x
+   renT(t, idR) -> t
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(vz, liftS(sg)) -> var(vz)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subT(var(x), sg) -> subV(x, sg)
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(star, sg) -> star
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   liftS(emb(idR)) -> emb(idR)
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   liftS(emb(r)) -> emb(liftR(r))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(34) QDPOrderProof (EQUIVALENT)
+We use the reduction pair processor [LPAR04,JAR06].
+
+
+The following pairs can be oriented strictly and are deleted.
+
+   SUBV(vz, compS(liftS(sg), ta)) -> SUBV(vz, ta)
+   SUBV(vs(x), compS(liftS(sg), ta)) -> SUBV(x, compS(sg, compS(emb(wkR), ta)))
+The remaining pairs can at least be oriented weakly.
+Used ordering:  Polynomial interpretation with max and min functions [POLO,MAXPOLO]:
+
+   POL(SUBV(x_1, x_2)) = x_2
+   POL(all(x_1, x_2)) = 1
+   POL(app(x_1, x_2)) = 0
+   POL(arr(x_1, x_2)) = 0
+   POL(compR(x_1, x_2)) = 1 + x_1 + x_2
+   POL(compS(x_1, x_2)) = x_1 + x_2
+   POL(consR(x_1, x_2)) = x_1 + x_2
+   POL(consS(x_1, x_2)) = max(x_1, x_2)
+   POL(emb(x_1)) = 0
+   POL(idR) = 0
+   POL(lam(x_1)) = 0
+   POL(liftR(x_1)) = x_1
+   POL(liftS(x_1)) = 1 + x_1
+   POL(renT(x_1, x_2)) = x_1
+   POL(renV(x_1, x_2)) = 1 + x_1
+   POL(star) = 0
+   POL(subT(x_1, x_2)) = x_1 + x_2
+   POL(subV(x_1, x_2)) = x_2
+   POL(tapp(x_1, x_2)) = 0
+   POL(tlam(x_1)) = 0
+   POL(var(x_1)) = 0
+   POL(vs(x_1)) = 1 + x_1
+   POL(vz) = 0
+   POL(wkR) = 0
+
+The following usable rules [FROCOS05] with respect to the argument filtering of the ordering [JAR06] were oriented:
+
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(sg, emb(idR)) -> sg
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(idR), sg) -> sg
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   liftS(emb(idR)) -> emb(idR)
+   liftS(emb(r)) -> emb(liftR(r))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(star, r) -> star
+   renT(t, idR) -> t
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vz, liftS(sg)) -> var(vz)
+   subT(star, sg) -> star
+   subT(var(x), sg) -> subV(x, sg)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+
+
+----------------------------------------
+
+(35)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   SUBV(x, compS(emb(r), sg)) -> SUBV(renV(x, r), sg)
+   SUBV(renV(x, liftR(r)), liftS(sg)) -> SUBV(x, liftS(compS(emb(r), sg)))
+   SUBV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> SUBV(x, compS(liftS(compS(emb(r), sg)), ta))
+
+The TRS R consists of the following rules:
+
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(star, r) -> star
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   liftR(idR) -> idR
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   renV(x, idR) -> x
+   renT(t, idR) -> t
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(vz, liftS(sg)) -> var(vz)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subT(var(x), sg) -> subV(x, sg)
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(star, sg) -> star
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   liftS(emb(idR)) -> emb(idR)
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   liftS(emb(r)) -> emb(liftR(r))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(36) QDPOrderProof (EQUIVALENT)
+We use the reduction pair processor [LPAR04,JAR06].
+
+
+The following pairs can be oriented strictly and are deleted.
+
+   SUBV(renV(x, liftR(r)), liftS(sg)) -> SUBV(x, liftS(compS(emb(r), sg)))
+   SUBV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> SUBV(x, compS(liftS(compS(emb(r), sg)), ta))
+The remaining pairs can at least be oriented weakly.
+Used ordering:  Polynomial interpretation with max and min functions [POLO,MAXPOLO]:
+
+   POL(SUBV(x_1, x_2)) = x_1 + x_2
+   POL(all(x_1, x_2)) = 1
+   POL(app(x_1, x_2)) = 1
+   POL(arr(x_1, x_2)) = 0
+   POL(compR(x_1, x_2)) = 1 + x_1 + x_2
+   POL(compS(x_1, x_2)) = x_1 + x_2
+   POL(consR(x_1, x_2)) = 1 + x_2 + max(x_1, x_2)
+   POL(consS(x_1, x_2)) = 1 + max(x_1, x_2)
+   POL(emb(x_1)) = 1 + x_1
+   POL(idR) = 0
+   POL(lam(x_1)) = 0
+   POL(liftR(x_1)) = 1 + x_1
+   POL(liftS(x_1)) = 1 + x_1
+   POL(renT(x_1, x_2)) = 1 + x_1 + x_2
+   POL(renV(x_1, x_2)) = 1 + x_1 + x_2
+   POL(star) = 0
+   POL(subT(x_1, x_2)) = x_1 + x_2
+   POL(subV(x_1, x_2)) = x_1 + x_2
+   POL(tapp(x_1, x_2)) = 0
+   POL(tlam(x_1)) = 0
+   POL(var(x_1)) = x_1
+   POL(vs(x_1)) = 1 + x_1
+   POL(vz) = 0
+   POL(wkR) = 1
+
+The following usable rules [FROCOS05] with respect to the argument filtering of the ordering [JAR06] were oriented:
+
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renV(x, idR) -> x
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   liftS(emb(idR)) -> emb(idR)
+   liftS(emb(r)) -> emb(liftR(r))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   liftR(idR) -> idR
+   renT(var(x), r) -> var(renV(x, r))
+   renT(star, r) -> star
+   renT(t, idR) -> t
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vz, liftS(sg)) -> var(vz)
+   subT(star, sg) -> star
+   subT(var(x), sg) -> subV(x, sg)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+
+
+----------------------------------------
+
+(37)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   SUBV(x, compS(emb(r), sg)) -> SUBV(renV(x, r), sg)
+
+The TRS R consists of the following rules:
+
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(star, r) -> star
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   liftR(idR) -> idR
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   renV(x, idR) -> x
+   renT(t, idR) -> t
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(vz, liftS(sg)) -> var(vz)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subT(var(x), sg) -> subV(x, sg)
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(star, sg) -> star
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   liftS(emb(idR)) -> emb(idR)
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   liftS(emb(r)) -> emb(liftR(r))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(38) UsableRulesProof (EQUIVALENT)
+We can use the usable rules and reduction pair processor [LPAR04] with the Ce-compatible extension of the polynomial order that maps every function symbol to the sum of its arguments. Then, we can delete all non-usable rules [FROCOS05] from R.
+----------------------------------------
+
+(39)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   SUBV(x, compS(emb(r), sg)) -> SUBV(renV(x, r), sg)
+
+The TRS R consists of the following rules:
+
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renV(x, idR) -> x
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   liftR(idR) -> idR
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(40) QDPSizeChangeProof (EQUIVALENT)
+By using the subterm criterion [SUBTERM_CRITERION] together with the size-change analysis [AAECC05] we have proven that there are no infinite chains for this DP problem. 
+
+From the DPs we obtained the following set of size-change graphs:
+*SUBV(x, compS(emb(r), sg)) -> SUBV(renV(x, r), sg)
+The graph contains the following edges 2 > 2
+
+
+----------------------------------------
+
+(41)
+YES
+
+----------------------------------------
+
+(42)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   RENT(all(k, t), r) -> RENT(t, liftR(r))
+   RENT(all(k, t), r) -> RENT(k, r)
+   RENT(renT(t, r1), r2) -> RENT(t, compR(r1, r2))
+   RENT(subT(t, sg), r) -> SUBT(t, compS(sg, emb(r)))
+   SUBT(all(k, t), sg) -> SUBT(k, sg)
+   SUBT(all(k, t), sg) -> SUBT(t, liftS(sg))
+   SUBT(subT(t, sg1), sg2) -> SUBT(t, compS(sg1, sg2))
+   SUBT(renT(t, r), sg) -> SUBT(t, compS(emb(r), sg))
+   SUBT(t, emb(r)) -> RENT(t, r)
+
+The TRS R consists of the following rules:
+
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(star, r) -> star
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   liftR(idR) -> idR
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   renV(x, idR) -> x
+   renT(t, idR) -> t
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(vz, liftS(sg)) -> var(vz)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subT(var(x), sg) -> subV(x, sg)
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(star, sg) -> star
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   liftS(emb(idR)) -> emb(idR)
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   liftS(emb(r)) -> emb(liftR(r))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(43) QDPSizeChangeProof (EQUIVALENT)
+By using the subterm criterion [SUBTERM_CRITERION] together with the size-change analysis [AAECC05] we have proven that there are no infinite chains for this DP problem. 
+
+From the DPs we obtained the following set of size-change graphs:
+*RENT(subT(t, sg), r) -> SUBT(t, compS(sg, emb(r)))
+The graph contains the following edges 1 > 1
+
+
+*SUBT(t, emb(r)) -> RENT(t, r)
+The graph contains the following edges 1 >= 1, 2 > 2
+
+
+*RENT(all(k, t), r) -> RENT(t, liftR(r))
+The graph contains the following edges 1 > 1
+
+
+*RENT(all(k, t), r) -> RENT(k, r)
+The graph contains the following edges 1 > 1, 2 >= 2
+
+
+*RENT(renT(t, r1), r2) -> RENT(t, compR(r1, r2))
+The graph contains the following edges 1 > 1
+
+
+*SUBT(all(k, t), sg) -> SUBT(k, sg)
+The graph contains the following edges 1 > 1, 2 >= 2
+
+
+*SUBT(all(k, t), sg) -> SUBT(t, liftS(sg))
+The graph contains the following edges 1 > 1
+
+
+*SUBT(subT(t, sg1), sg2) -> SUBT(t, compS(sg1, sg2))
+The graph contains the following edges 1 > 1
+
+
+*SUBT(renT(t, r), sg) -> SUBT(t, compS(emb(r), sg))
+The graph contains the following edges 1 > 1
+
+
+----------------------------------------
+
+(44)
+YES
+
+----------------------------------------
+
+(45)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   COMPS(compS(sg1, sg2), sg3) -> COMPS(sg2, sg3)
+   COMPS(compS(sg1, sg2), sg3) -> COMPS(sg1, compS(sg2, sg3))
+   COMPS(emb(wkR), liftS(sg)) -> COMPS(sg, emb(wkR))
+   COMPS(emb(compR(r1, r2)), sg) -> COMPS(emb(r1), compS(emb(r2), sg))
+   COMPS(emb(wkR), compS(liftS(sg), ta)) -> COMPS(sg, compS(emb(wkR), ta))
+   COMPS(liftS(sg1), liftS(sg2)) -> COMPS(sg1, sg2)
+   COMPS(emb(wkR), compS(liftS(sg), ta)) -> COMPS(emb(wkR), ta)
+   COMPS(emb(wkR), emb(liftR(r))) -> COMPS(emb(r), emb(wkR))
+   COMPS(emb(compR(r1, r2)), sg) -> COMPS(emb(r2), sg)
+   COMPS(emb(liftR(r)), liftS(sg)) -> COMPS(emb(r), sg)
+   COMPS(emb(liftR(r)), compS(liftS(sg), ta)) -> COMPS(liftS(compS(emb(r), sg)), ta)
+   COMPS(liftS(sg1), compS(liftS(sg2), ta)) -> COMPS(liftS(compS(sg1, sg2)), ta)
+   COMPS(liftS(sg1), compS(liftS(sg2), ta)) -> COMPS(sg1, sg2)
+   COMPS(liftS(sg), emb(liftR(r))) -> COMPS(sg, emb(r))
+   COMPS(liftS(sg), emb(compR(liftR(r), r3))) -> COMPS(liftS(compS(sg, emb(r))), emb(r3))
+   COMPS(liftS(sg), emb(compR(liftR(r), r3))) -> COMPS(sg, emb(r))
+   COMPS(emb(liftR(r)), compS(liftS(sg), ta)) -> COMPS(emb(r), sg)
+   COMPS(emb(wkR), compS(emb(liftR(r)), ta)) -> COMPS(emb(r), compS(emb(wkR), ta))
+   COMPS(emb(wkR), compS(emb(liftR(r)), ta)) -> COMPS(emb(wkR), ta)
+   COMPS(emb(wkR), compS(emb(consR(x, r)), ta)) -> COMPS(emb(r), ta)
+   COMPS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> COMPS(emb(liftR(compR(r1, r2))), ta)
+   COMPS(liftS(sg), compS(emb(liftR(r)), ta)) -> COMPS(liftS(compS(sg, emb(r))), ta)
+   COMPS(liftS(sg), compS(emb(liftR(r)), ta)) -> COMPS(sg, emb(r))
+
+The TRS R consists of the following rules:
+
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(star, r) -> star
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   liftR(idR) -> idR
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   renV(x, idR) -> x
+   renT(t, idR) -> t
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(vz, liftS(sg)) -> var(vz)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subT(var(x), sg) -> subV(x, sg)
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(star, sg) -> star
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   liftS(emb(idR)) -> emb(idR)
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   liftS(emb(r)) -> emb(liftR(r))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(46) QDPOrderProof (EQUIVALENT)
+We use the reduction pair processor [LPAR04,JAR06].
+
+
+The following pairs can be oriented strictly and are deleted.
+
+   COMPS(liftS(sg1), liftS(sg2)) -> COMPS(sg1, sg2)
+   COMPS(emb(liftR(r)), liftS(sg)) -> COMPS(emb(r), sg)
+   COMPS(liftS(sg1), compS(liftS(sg2), ta)) -> COMPS(sg1, sg2)
+   COMPS(liftS(sg), emb(liftR(r))) -> COMPS(sg, emb(r))
+   COMPS(liftS(sg), emb(compR(liftR(r), r3))) -> COMPS(sg, emb(r))
+   COMPS(emb(liftR(r)), compS(liftS(sg), ta)) -> COMPS(emb(r), sg)
+   COMPS(liftS(sg), compS(emb(liftR(r)), ta)) -> COMPS(sg, emb(r))
+The remaining pairs can at least be oriented weakly.
+Used ordering:  Matrix interpretation [MATRO] with arctic natural numbers [ARCTIC]:
+
+   <<<
+ POL(COMPS(x_1, x_2)) =  	[[4A]] 	 +  	[[5A]] 	* 	x_1 	 +  	[[5A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(compS(x_1, x_2)) =  	[[0A]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(emb(x_1)) =  	[[0A]] 	 +  	[[4A]] 	* 	x_1
+>>>
+
+   <<<
+ POL(wkR) =  	[[1A]]
+>>>
+
+   <<<
+ POL(liftS(x_1)) =  	[[2A]] 	 +  	[[1A]] 	* 	x_1
+>>>
+
+   <<<
+ POL(compR(x_1, x_2)) =  	[[-I]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(liftR(x_1)) =  	[[-I]] 	 +  	[[1A]] 	* 	x_1
+>>>
+
+   <<<
+ POL(consR(x_1, x_2)) =  	[[-I]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(consS(x_1, x_2)) =  	[[5A]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(subT(x_1, x_2)) =  	[[5A]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(idR) =  	[[0A]]
+>>>
+
+   <<<
+ POL(renT(x_1, x_2)) =  	[[-I]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[4A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(tlam(x_1)) =  	[[0A]] 	 +  	[[-I]] 	* 	x_1
+>>>
+
+   <<<
+ POL(var(x_1)) =  	[[5A]] 	 +  	[[0A]] 	* 	x_1
+>>>
+
+   <<<
+ POL(renV(x_1, x_2)) =  	[[1A]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[4A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(star) =  	[[1A]]
+>>>
+
+   <<<
+ POL(lam(x_1)) =  	[[0A]] 	 +  	[[-I]] 	* 	x_1
+>>>
+
+   <<<
+ POL(all(x_1, x_2)) =  	[[0A]] 	 +  	[[-I]] 	* 	x_1 	 +  	[[-I]] 	* 	x_2
+>>>
+
+   <<<
+ POL(app(x_1, x_2)) =  	[[0A]] 	 +  	[[-I]] 	* 	x_1 	 +  	[[-I]] 	* 	x_2
+>>>
+
+   <<<
+ POL(tapp(x_1, x_2)) =  	[[0A]] 	 +  	[[-I]] 	* 	x_1 	 +  	[[-I]] 	* 	x_2
+>>>
+
+   <<<
+ POL(arr(x_1, x_2)) =  	[[0A]] 	 +  	[[-I]] 	* 	x_1 	 +  	[[-I]] 	* 	x_2
+>>>
+
+   <<<
+ POL(subV(x_1, x_2)) =  	[[5A]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(vz) =  	[[1A]]
+>>>
+
+   <<<
+ POL(vs(x_1)) =  	[[0A]] 	 +  	[[0A]] 	* 	x_1
+>>>
+
+
+The following usable rules [FROCOS05] with respect to the argument filtering of the ordering [JAR06] were oriented:
+
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   liftS(emb(idR)) -> emb(idR)
+   liftS(emb(r)) -> emb(liftR(r))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   liftR(idR) -> idR
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(star, r) -> star
+   renT(t, idR) -> t
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vz, liftS(sg)) -> var(vz)
+   subT(star, sg) -> star
+   subT(var(x), sg) -> subV(x, sg)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renV(x, idR) -> x
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+
+
+----------------------------------------
+
+(47)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   COMPS(compS(sg1, sg2), sg3) -> COMPS(sg2, sg3)
+   COMPS(compS(sg1, sg2), sg3) -> COMPS(sg1, compS(sg2, sg3))
+   COMPS(emb(wkR), liftS(sg)) -> COMPS(sg, emb(wkR))
+   COMPS(emb(compR(r1, r2)), sg) -> COMPS(emb(r1), compS(emb(r2), sg))
+   COMPS(emb(wkR), compS(liftS(sg), ta)) -> COMPS(sg, compS(emb(wkR), ta))
+   COMPS(emb(wkR), compS(liftS(sg), ta)) -> COMPS(emb(wkR), ta)
+   COMPS(emb(wkR), emb(liftR(r))) -> COMPS(emb(r), emb(wkR))
+   COMPS(emb(compR(r1, r2)), sg) -> COMPS(emb(r2), sg)
+   COMPS(emb(liftR(r)), compS(liftS(sg), ta)) -> COMPS(liftS(compS(emb(r), sg)), ta)
+   COMPS(liftS(sg1), compS(liftS(sg2), ta)) -> COMPS(liftS(compS(sg1, sg2)), ta)
+   COMPS(liftS(sg), emb(compR(liftR(r), r3))) -> COMPS(liftS(compS(sg, emb(r))), emb(r3))
+   COMPS(emb(wkR), compS(emb(liftR(r)), ta)) -> COMPS(emb(r), compS(emb(wkR), ta))
+   COMPS(emb(wkR), compS(emb(liftR(r)), ta)) -> COMPS(emb(wkR), ta)
+   COMPS(emb(wkR), compS(emb(consR(x, r)), ta)) -> COMPS(emb(r), ta)
+   COMPS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> COMPS(emb(liftR(compR(r1, r2))), ta)
+   COMPS(liftS(sg), compS(emb(liftR(r)), ta)) -> COMPS(liftS(compS(sg, emb(r))), ta)
+
+The TRS R consists of the following rules:
+
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(star, r) -> star
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   liftR(idR) -> idR
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   renV(x, idR) -> x
+   renT(t, idR) -> t
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(vz, liftS(sg)) -> var(vz)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subT(var(x), sg) -> subV(x, sg)
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(star, sg) -> star
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   liftS(emb(idR)) -> emb(idR)
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   liftS(emb(r)) -> emb(liftR(r))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(48) QDPOrderProof (EQUIVALENT)
+We use the reduction pair processor [LPAR04,JAR06].
+
+
+The following pairs can be oriented strictly and are deleted.
+
+   COMPS(emb(wkR), liftS(sg)) -> COMPS(sg, emb(wkR))
+The remaining pairs can at least be oriented weakly.
+Used ordering:  Matrix interpretation [MATRO] with arctic natural numbers [ARCTIC]:
+
+   <<<
+ POL(COMPS(x_1, x_2)) =  	[[2A]] 	 +  	[[2A]] 	* 	x_1 	 +  	[[2A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(compS(x_1, x_2)) =  	[[-I]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(emb(x_1)) =  	[[-I]] 	 +  	[[0A]] 	* 	x_1
+>>>
+
+   <<<
+ POL(wkR) =  	[[0A]]
+>>>
+
+   <<<
+ POL(liftS(x_1)) =  	[[1A]] 	 +  	[[1A]] 	* 	x_1
+>>>
+
+   <<<
+ POL(compR(x_1, x_2)) =  	[[-I]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(liftR(x_1)) =  	[[-I]] 	 +  	[[1A]] 	* 	x_1
+>>>
+
+   <<<
+ POL(consR(x_1, x_2)) =  	[[0A]] 	 +  	[[1A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(consS(x_1, x_2)) =  	[[-I]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(subT(x_1, x_2)) =  	[[-I]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(idR) =  	[[1A]]
+>>>
+
+   <<<
+ POL(renT(x_1, x_2)) =  	[[-I]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(tlam(x_1)) =  	[[1A]] 	 +  	[[-I]] 	* 	x_1
+>>>
+
+   <<<
+ POL(var(x_1)) =  	[[-I]] 	 +  	[[0A]] 	* 	x_1
+>>>
+
+   <<<
+ POL(renV(x_1, x_2)) =  	[[-I]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(star) =  	[[2A]]
+>>>
+
+   <<<
+ POL(lam(x_1)) =  	[[1A]] 	 +  	[[-I]] 	* 	x_1
+>>>
+
+   <<<
+ POL(all(x_1, x_2)) =  	[[5A]] 	 +  	[[-I]] 	* 	x_1 	 +  	[[-I]] 	* 	x_2
+>>>
+
+   <<<
+ POL(app(x_1, x_2)) =  	[[5A]] 	 +  	[[-I]] 	* 	x_1 	 +  	[[-I]] 	* 	x_2
+>>>
+
+   <<<
+ POL(tapp(x_1, x_2)) =  	[[5A]] 	 +  	[[-I]] 	* 	x_1 	 +  	[[-I]] 	* 	x_2
+>>>
+
+   <<<
+ POL(arr(x_1, x_2)) =  	[[5A]] 	 +  	[[-I]] 	* 	x_1 	 +  	[[-I]] 	* 	x_2
+>>>
+
+   <<<
+ POL(subV(x_1, x_2)) =  	[[-I]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(vz) =  	[[1A]]
+>>>
+
+   <<<
+ POL(vs(x_1)) =  	[[0A]] 	 +  	[[0A]] 	* 	x_1
+>>>
+
+
+The following usable rules [FROCOS05] with respect to the argument filtering of the ordering [JAR06] were oriented:
+
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   liftS(emb(idR)) -> emb(idR)
+   liftS(emb(r)) -> emb(liftR(r))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   liftR(idR) -> idR
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(star, r) -> star
+   renT(t, idR) -> t
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vz, liftS(sg)) -> var(vz)
+   subT(star, sg) -> star
+   subT(var(x), sg) -> subV(x, sg)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renV(x, idR) -> x
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+
+
+----------------------------------------
+
+(49)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   COMPS(compS(sg1, sg2), sg3) -> COMPS(sg2, sg3)
+   COMPS(compS(sg1, sg2), sg3) -> COMPS(sg1, compS(sg2, sg3))
+   COMPS(emb(compR(r1, r2)), sg) -> COMPS(emb(r1), compS(emb(r2), sg))
+   COMPS(emb(wkR), compS(liftS(sg), ta)) -> COMPS(sg, compS(emb(wkR), ta))
+   COMPS(emb(wkR), compS(liftS(sg), ta)) -> COMPS(emb(wkR), ta)
+   COMPS(emb(wkR), emb(liftR(r))) -> COMPS(emb(r), emb(wkR))
+   COMPS(emb(compR(r1, r2)), sg) -> COMPS(emb(r2), sg)
+   COMPS(emb(liftR(r)), compS(liftS(sg), ta)) -> COMPS(liftS(compS(emb(r), sg)), ta)
+   COMPS(liftS(sg1), compS(liftS(sg2), ta)) -> COMPS(liftS(compS(sg1, sg2)), ta)
+   COMPS(liftS(sg), emb(compR(liftR(r), r3))) -> COMPS(liftS(compS(sg, emb(r))), emb(r3))
+   COMPS(emb(wkR), compS(emb(liftR(r)), ta)) -> COMPS(emb(r), compS(emb(wkR), ta))
+   COMPS(emb(wkR), compS(emb(liftR(r)), ta)) -> COMPS(emb(wkR), ta)
+   COMPS(emb(wkR), compS(emb(consR(x, r)), ta)) -> COMPS(emb(r), ta)
+   COMPS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> COMPS(emb(liftR(compR(r1, r2))), ta)
+   COMPS(liftS(sg), compS(emb(liftR(r)), ta)) -> COMPS(liftS(compS(sg, emb(r))), ta)
+
+The TRS R consists of the following rules:
+
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(star, r) -> star
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   liftR(idR) -> idR
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   renV(x, idR) -> x
+   renT(t, idR) -> t
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(vz, liftS(sg)) -> var(vz)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subT(var(x), sg) -> subV(x, sg)
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(star, sg) -> star
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   liftS(emb(idR)) -> emb(idR)
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   liftS(emb(r)) -> emb(liftR(r))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(50) QDPOrderProof (EQUIVALENT)
+We use the reduction pair processor [LPAR04,JAR06].
+
+
+The following pairs can be oriented strictly and are deleted.
+
+   COMPS(emb(wkR), emb(liftR(r))) -> COMPS(emb(r), emb(wkR))
+The remaining pairs can at least be oriented weakly.
+Used ordering:  Matrix interpretation [MATRO] with arctic natural numbers [ARCTIC]:
+
+   <<<
+ POL(COMPS(x_1, x_2)) =  	[[3A]] 	 +  	[[1A]] 	* 	x_1 	 +  	[[1A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(compS(x_1, x_2)) =  	[[1A]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(emb(x_1)) =  	[[0A]] 	 +  	[[0A]] 	* 	x_1
+>>>
+
+   <<<
+ POL(compR(x_1, x_2)) =  	[[0A]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(wkR) =  	[[2A]]
+>>>
+
+   <<<
+ POL(liftS(x_1)) =  	[[3A]] 	 +  	[[1A]] 	* 	x_1
+>>>
+
+   <<<
+ POL(liftR(x_1)) =  	[[3A]] 	 +  	[[1A]] 	* 	x_1
+>>>
+
+   <<<
+ POL(consR(x_1, x_2)) =  	[[-I]] 	 +  	[[1A]] 	* 	x_1 	 +  	[[2A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(consS(x_1, x_2)) =  	[[5A]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(subT(x_1, x_2)) =  	[[5A]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(idR) =  	[[2A]]
+>>>
+
+   <<<
+ POL(renT(x_1, x_2)) =  	[[5A]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(tlam(x_1)) =  	[[5A]] 	 +  	[[-I]] 	* 	x_1
+>>>
+
+   <<<
+ POL(var(x_1)) =  	[[-I]] 	 +  	[[0A]] 	* 	x_1
+>>>
+
+   <<<
+ POL(renV(x_1, x_2)) =  	[[0A]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(star) =  	[[4A]]
+>>>
+
+   <<<
+ POL(lam(x_1)) =  	[[5A]] 	 +  	[[-I]] 	* 	x_1
+>>>
+
+   <<<
+ POL(all(x_1, x_2)) =  	[[-I]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[-I]] 	* 	x_2
+>>>
+
+   <<<
+ POL(app(x_1, x_2)) =  	[[5A]] 	 +  	[[-I]] 	* 	x_1 	 +  	[[-I]] 	* 	x_2
+>>>
+
+   <<<
+ POL(tapp(x_1, x_2)) =  	[[5A]] 	 +  	[[-I]] 	* 	x_1 	 +  	[[-I]] 	* 	x_2
+>>>
+
+   <<<
+ POL(arr(x_1, x_2)) =  	[[5A]] 	 +  	[[-I]] 	* 	x_1 	 +  	[[-I]] 	* 	x_2
+>>>
+
+   <<<
+ POL(subV(x_1, x_2)) =  	[[-I]] 	 +  	[[0A]] 	* 	x_1 	 +  	[[0A]] 	* 	x_2
+>>>
+
+   <<<
+ POL(vz) =  	[[2A]]
+>>>
+
+   <<<
+ POL(vs(x_1)) =  	[[1A]] 	 +  	[[0A]] 	* 	x_1
+>>>
+
+
+The following usable rules [FROCOS05] with respect to the argument filtering of the ordering [JAR06] were oriented:
+
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   liftS(emb(idR)) -> emb(idR)
+   liftS(emb(r)) -> emb(liftR(r))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   liftR(idR) -> idR
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(star, r) -> star
+   renT(t, idR) -> t
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vz, liftS(sg)) -> var(vz)
+   subT(star, sg) -> star
+   subT(var(x), sg) -> subV(x, sg)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renV(x, idR) -> x
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+
+
+----------------------------------------
+
+(51)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   COMPS(compS(sg1, sg2), sg3) -> COMPS(sg2, sg3)
+   COMPS(compS(sg1, sg2), sg3) -> COMPS(sg1, compS(sg2, sg3))
+   COMPS(emb(compR(r1, r2)), sg) -> COMPS(emb(r1), compS(emb(r2), sg))
+   COMPS(emb(wkR), compS(liftS(sg), ta)) -> COMPS(sg, compS(emb(wkR), ta))
+   COMPS(emb(wkR), compS(liftS(sg), ta)) -> COMPS(emb(wkR), ta)
+   COMPS(emb(compR(r1, r2)), sg) -> COMPS(emb(r2), sg)
+   COMPS(emb(liftR(r)), compS(liftS(sg), ta)) -> COMPS(liftS(compS(emb(r), sg)), ta)
+   COMPS(liftS(sg1), compS(liftS(sg2), ta)) -> COMPS(liftS(compS(sg1, sg2)), ta)
+   COMPS(liftS(sg), emb(compR(liftR(r), r3))) -> COMPS(liftS(compS(sg, emb(r))), emb(r3))
+   COMPS(emb(wkR), compS(emb(liftR(r)), ta)) -> COMPS(emb(r), compS(emb(wkR), ta))
+   COMPS(emb(wkR), compS(emb(liftR(r)), ta)) -> COMPS(emb(wkR), ta)
+   COMPS(emb(wkR), compS(emb(consR(x, r)), ta)) -> COMPS(emb(r), ta)
+   COMPS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> COMPS(emb(liftR(compR(r1, r2))), ta)
+   COMPS(liftS(sg), compS(emb(liftR(r)), ta)) -> COMPS(liftS(compS(sg, emb(r))), ta)
+
+The TRS R consists of the following rules:
+
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(star, r) -> star
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   liftR(idR) -> idR
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   renV(x, idR) -> x
+   renT(t, idR) -> t
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(vz, liftS(sg)) -> var(vz)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subT(var(x), sg) -> subV(x, sg)
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(star, sg) -> star
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   liftS(emb(idR)) -> emb(idR)
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   liftS(emb(r)) -> emb(liftR(r))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(52) QDPOrderProof (EQUIVALENT)
+We use the reduction pair processor [LPAR04,JAR06].
+
+
+The following pairs can be oriented strictly and are deleted.
+
+   COMPS(emb(wkR), compS(liftS(sg), ta)) -> COMPS(sg, compS(emb(wkR), ta))
+   COMPS(emb(wkR), compS(liftS(sg), ta)) -> COMPS(emb(wkR), ta)
+   COMPS(liftS(sg1), compS(liftS(sg2), ta)) -> COMPS(liftS(compS(sg1, sg2)), ta)
+The remaining pairs can at least be oriented weakly.
+Used ordering:  Polynomial interpretation with max and min functions [POLO,MAXPOLO]:
+
+   POL(COMPS(x_1, x_2)) = x_1 + x_2
+   POL(all(x_1, x_2)) = 1
+   POL(app(x_1, x_2)) = 1
+   POL(arr(x_1, x_2)) = 0
+   POL(compR(x_1, x_2)) = x_1 + x_2
+   POL(compS(x_1, x_2)) = x_1 + x_2
+   POL(consR(x_1, x_2)) = x_2 + max(x_1, x_2)
+   POL(consS(x_1, x_2)) = 1 + max(x_1, x_2)
+   POL(emb(x_1)) = 0
+   POL(idR) = 0
+   POL(lam(x_1)) = 0
+   POL(liftR(x_1)) = 1 + x_1
+   POL(liftS(x_1)) = 1 + x_1
+   POL(renT(x_1, x_2)) = x_1
+   POL(renV(x_1, x_2)) = x_1 + x_2
+   POL(star) = 0
+   POL(subT(x_1, x_2)) = x_1 + x_2
+   POL(subV(x_1, x_2)) = x_2
+   POL(tapp(x_1, x_2)) = 1
+   POL(tlam(x_1)) = 0
+   POL(var(x_1)) = 0
+   POL(vs(x_1)) = x_1
+   POL(vz) = 0
+   POL(wkR) = 0
+
+The following usable rules [FROCOS05] with respect to the argument filtering of the ordering [JAR06] were oriented:
+
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   liftS(emb(idR)) -> emb(idR)
+   liftS(emb(r)) -> emb(liftR(r))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(star, r) -> star
+   renT(t, idR) -> t
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vz, liftS(sg)) -> var(vz)
+   subT(star, sg) -> star
+   subT(var(x), sg) -> subV(x, sg)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+
+
+----------------------------------------
+
+(53)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   COMPS(compS(sg1, sg2), sg3) -> COMPS(sg2, sg3)
+   COMPS(compS(sg1, sg2), sg3) -> COMPS(sg1, compS(sg2, sg3))
+   COMPS(emb(compR(r1, r2)), sg) -> COMPS(emb(r1), compS(emb(r2), sg))
+   COMPS(emb(compR(r1, r2)), sg) -> COMPS(emb(r2), sg)
+   COMPS(emb(liftR(r)), compS(liftS(sg), ta)) -> COMPS(liftS(compS(emb(r), sg)), ta)
+   COMPS(liftS(sg), emb(compR(liftR(r), r3))) -> COMPS(liftS(compS(sg, emb(r))), emb(r3))
+   COMPS(emb(wkR), compS(emb(liftR(r)), ta)) -> COMPS(emb(r), compS(emb(wkR), ta))
+   COMPS(emb(wkR), compS(emb(liftR(r)), ta)) -> COMPS(emb(wkR), ta)
+   COMPS(emb(wkR), compS(emb(consR(x, r)), ta)) -> COMPS(emb(r), ta)
+   COMPS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> COMPS(emb(liftR(compR(r1, r2))), ta)
+   COMPS(liftS(sg), compS(emb(liftR(r)), ta)) -> COMPS(liftS(compS(sg, emb(r))), ta)
+
+The TRS R consists of the following rules:
+
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(star, r) -> star
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   liftR(idR) -> idR
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   renV(x, idR) -> x
+   renT(t, idR) -> t
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(vz, liftS(sg)) -> var(vz)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subT(var(x), sg) -> subV(x, sg)
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(star, sg) -> star
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   liftS(emb(idR)) -> emb(idR)
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   liftS(emb(r)) -> emb(liftR(r))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(54) QDPOrderProof (EQUIVALENT)
+We use the reduction pair processor [LPAR04,JAR06].
+
+
+The following pairs can be oriented strictly and are deleted.
+
+   COMPS(compS(sg1, sg2), sg3) -> COMPS(sg2, sg3)
+   COMPS(compS(sg1, sg2), sg3) -> COMPS(sg1, compS(sg2, sg3))
+The remaining pairs can at least be oriented weakly.
+Used ordering:  Polynomial Order [NEGPOLO,POLO] with Interpretation:
+
+POL( COMPS_2(x_1, x_2) ) = max{0, 2x_1 - 2}
+POL( liftS_1(x_1) ) = max{0, -1}
+POL( compS_2(x_1, x_2) ) = x_1 + x_2 + 2
+POL( emb_1(x_1) ) = max{0, -1}
+POL( wkR ) = 2
+POL( liftR_1(x_1) ) = max{0, x_1 - 1}
+POL( compR_2(x_1, x_2) ) = 2x_1 + x_2 + 2
+POL( consR_2(x_1, x_2) ) = x_2 + 2
+POL( consS_2(x_1, x_2) ) = 2x_1 + 2x_2 + 2
+POL( subT_2(x_1, x_2) ) = max{0, x_2 - 2}
+POL( idR ) = 2
+POL( renT_2(x_1, x_2) ) = max{0, x_1 + 2x_2 - 1}
+POL( renV_2(x_1, x_2) ) = 2x_1 + x_2 + 1
+POL( subV_2(x_1, x_2) ) = max{0, 2x_1 - 2}
+POL( var_1(x_1) ) = 2x_1 + 2
+POL( tlam_1(x_1) ) = x_1
+POL( star ) = 2
+POL( lam_1(x_1) ) = max{0, -2}
+POL( all_2(x_1, x_2) ) = x_1 + 1
+POL( app_2(x_1, x_2) ) = x_1 + 2x_2 + 2
+POL( tapp_2(x_1, x_2) ) = 2
+POL( arr_2(x_1, x_2) ) = 2
+POL( vz ) = 2
+POL( vs_1(x_1) ) = 2x_1
+
+The following usable rules [FROCOS05] with respect to the argument filtering of the ordering [JAR06] were oriented:
+
+   liftS(emb(idR)) -> emb(idR)
+   liftS(emb(r)) -> emb(liftR(r))
+
+
+----------------------------------------
+
+(55)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   COMPS(emb(compR(r1, r2)), sg) -> COMPS(emb(r1), compS(emb(r2), sg))
+   COMPS(emb(compR(r1, r2)), sg) -> COMPS(emb(r2), sg)
+   COMPS(emb(liftR(r)), compS(liftS(sg), ta)) -> COMPS(liftS(compS(emb(r), sg)), ta)
+   COMPS(liftS(sg), emb(compR(liftR(r), r3))) -> COMPS(liftS(compS(sg, emb(r))), emb(r3))
+   COMPS(emb(wkR), compS(emb(liftR(r)), ta)) -> COMPS(emb(r), compS(emb(wkR), ta))
+   COMPS(emb(wkR), compS(emb(liftR(r)), ta)) -> COMPS(emb(wkR), ta)
+   COMPS(emb(wkR), compS(emb(consR(x, r)), ta)) -> COMPS(emb(r), ta)
+   COMPS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> COMPS(emb(liftR(compR(r1, r2))), ta)
+   COMPS(liftS(sg), compS(emb(liftR(r)), ta)) -> COMPS(liftS(compS(sg, emb(r))), ta)
+
+The TRS R consists of the following rules:
+
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(star, r) -> star
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   liftR(idR) -> idR
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   renV(x, idR) -> x
+   renT(t, idR) -> t
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(vz, liftS(sg)) -> var(vz)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subT(var(x), sg) -> subV(x, sg)
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(star, sg) -> star
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   liftS(emb(idR)) -> emb(idR)
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   liftS(emb(r)) -> emb(liftR(r))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(56) QDPOrderProof (EQUIVALENT)
+We use the reduction pair processor [LPAR04,JAR06].
+
+
+The following pairs can be oriented strictly and are deleted.
+
+   COMPS(emb(compR(r1, r2)), sg) -> COMPS(emb(r2), sg)
+   COMPS(emb(liftR(r)), compS(liftS(sg), ta)) -> COMPS(liftS(compS(emb(r), sg)), ta)
+   COMPS(liftS(sg), emb(compR(liftR(r), r3))) -> COMPS(liftS(compS(sg, emb(r))), emb(r3))
+   COMPS(emb(wkR), compS(emb(liftR(r)), ta)) -> COMPS(emb(r), compS(emb(wkR), ta))
+   COMPS(emb(wkR), compS(emb(liftR(r)), ta)) -> COMPS(emb(wkR), ta)
+   COMPS(emb(wkR), compS(emb(consR(x, r)), ta)) -> COMPS(emb(r), ta)
+   COMPS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> COMPS(emb(liftR(compR(r1, r2))), ta)
+   COMPS(liftS(sg), compS(emb(liftR(r)), ta)) -> COMPS(liftS(compS(sg, emb(r))), ta)
+The remaining pairs can at least be oriented weakly.
+Used ordering:  Polynomial interpretation with max and min functions [POLO,MAXPOLO]:
+
+   POL(COMPS(x_1, x_2)) = x_1 + x_2
+   POL(all(x_1, x_2)) = 0
+   POL(app(x_1, x_2)) = 0
+   POL(arr(x_1, x_2)) = 0
+   POL(compR(x_1, x_2)) = 1 + x_1 + x_2
+   POL(compS(x_1, x_2)) = 1 + x_1 + x_2
+   POL(consR(x_1, x_2)) = x_1 + x_2
+   POL(consS(x_1, x_2)) = 1 + max(x_1, x_2)
+   POL(emb(x_1)) = x_1
+   POL(idR) = 0
+   POL(lam(x_1)) = 0
+   POL(liftR(x_1)) = 1 + x_1
+   POL(liftS(x_1)) = 1 + x_1
+   POL(renT(x_1, x_2)) = 1 + x_1 + x_2
+   POL(renV(x_1, x_2)) = x_1 + x_2
+   POL(star) = 0
+   POL(subT(x_1, x_2)) = 1 + x_1 + x_2
+   POL(subV(x_1, x_2)) = 1 + x_1 + x_2
+   POL(tapp(x_1, x_2)) = 0
+   POL(tlam(x_1)) = 0
+   POL(var(x_1)) = x_1
+   POL(vs(x_1)) = 1 + x_1
+   POL(vz) = 0
+   POL(wkR) = 1
+
+The following usable rules [FROCOS05] with respect to the argument filtering of the ordering [JAR06] were oriented:
+
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   liftS(emb(idR)) -> emb(idR)
+   liftS(emb(r)) -> emb(liftR(r))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   liftR(idR) -> idR
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(star, r) -> star
+   renT(t, idR) -> t
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vz, liftS(sg)) -> var(vz)
+   subT(star, sg) -> star
+   subT(var(x), sg) -> subV(x, sg)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renV(x, idR) -> x
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+
+
+----------------------------------------
+
+(57)
+Obligation:
+Q DP problem:
+The TRS P consists of the following rules:
+
+   COMPS(emb(compR(r1, r2)), sg) -> COMPS(emb(r1), compS(emb(r2), sg))
+
+The TRS R consists of the following rules:
+
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(star, r) -> star
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   liftR(idR) -> idR
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   renV(x, idR) -> x
+   renT(t, idR) -> t
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(vz, liftS(sg)) -> var(vz)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subT(var(x), sg) -> subV(x, sg)
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(star, sg) -> star
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   liftS(emb(idR)) -> emb(idR)
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   liftS(emb(r)) -> emb(liftR(r))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(58) QDPOrderProof (EQUIVALENT)
+We use the reduction pair processor [LPAR04,JAR06].
+
+
+The following pairs can be oriented strictly and are deleted.
+
+   COMPS(emb(compR(r1, r2)), sg) -> COMPS(emb(r1), compS(emb(r2), sg))
+The remaining pairs can at least be oriented weakly.
+Used ordering:  Polynomial Order [NEGPOLO,POLO] with Interpretation:
+
+POL( COMPS_2(x_1, x_2) ) = x_1 + 2
+POL( compS_2(x_1, x_2) ) = max{0, x_1 + x_2 - 1}
+POL( emb_1(x_1) ) = 2x_1
+POL( wkR ) = 2
+POL( consS_2(x_1, x_2) ) = max{0, x_1 - 2}
+POL( idR ) = 1
+POL( liftS_1(x_1) ) = 2x_1 + 1
+POL( liftR_1(x_1) ) = 1
+POL( compR_2(x_1, x_2) ) = x_1 + 2
+POL( consR_2(x_1, x_2) ) = 1
+POL( renT_2(x_1, x_2) ) = x_1 + 2
+POL( tlam_1(x_1) ) = x_1 + 2
+POL( renV_2(x_1, x_2) ) = max{0, x_1 - 2}
+POL( subV_2(x_1, x_2) ) = 1
+POL( var_1(x_1) ) = 2
+POL( star ) = 1
+POL( lam_1(x_1) ) = 0
+POL( all_2(x_1, x_2) ) = 2x_1 + 2x_2
+POL( app_2(x_1, x_2) ) = 0
+POL( tapp_2(x_1, x_2) ) = 1
+POL( arr_2(x_1, x_2) ) = 1
+POL( vz ) = 1
+POL( subT_2(x_1, x_2) ) = 0
+POL( vs_1(x_1) ) = 2x_1 + 2
+
+The following usable rules [FROCOS05] with respect to the argument filtering of the ordering [JAR06] were oriented:
+none
+
+
+----------------------------------------
+
+(59)
+Obligation:
+Q DP problem:
+P is empty.
+The TRS R consists of the following rules:
+
+   renV(x, wkR) -> vs(x)
+   renV(vz, consR(x, r)) -> x
+   renV(vs(y), consR(x, r)) -> renV(y, r)
+   renV(vz, liftR(r)) -> vz
+   renV(vs(x), liftR(r)) -> vs(renV(x, r))
+   renT(var(x), r) -> var(renV(x, r))
+   renT(lam(e), r) -> lam(renT(e, liftR(r)))
+   renT(tlam(e), r) -> tlam(renT(e, liftR(r)))
+   renT(all(k, t), r) -> all(renT(k, r), renT(t, liftR(r)))
+   renT(app(e1, e2), r) -> app(renT(e1, r), renT(e2, r))
+   renT(tapp(e, t), r) -> tapp(renT(e, r), renT(t, r))
+   renT(arr(t1, t2), r) -> arr(renT(t1, r), renT(t2, r))
+   renT(star, r) -> star
+   compR(compR(r1, r2), r3) -> compR(r1, compR(r2, r3))
+   compR(idR, r) -> r
+   compR(r, idR) -> r
+   compR(wkR, consR(x, r)) -> r
+   liftR(idR) -> idR
+   compR(liftR(r1), liftR(r2)) -> liftR(compR(r1, r2))
+   compR(wkR, liftR(r)) -> compR(r, wkR)
+   renV(x, idR) -> x
+   renT(t, idR) -> t
+   renV(x, compR(r1, r2)) -> renV(renV(x, r1), r2)
+   renT(renT(t, r1), r2) -> renT(t, compR(r1, r2))
+   renV(renV(x, liftR(r1)), liftR(r2)) -> renV(x, liftR(compR(r1, r2)))
+   compR(wkR, compR(consR(x, r), r3)) -> compR(r, r3)
+   compR(wkR, compR(liftR(r), r3)) -> compR(r, compR(wkR, r3))
+   compR(liftR(r1), compR(liftR(r2), r3)) -> compR(liftR(compR(r1, r2)), r3)
+   subV(x, emb(r)) -> var(renV(x, r))
+   subV(vz, consS(t, sg)) -> t
+   subV(vs(x), consS(t, sg)) -> subV(x, sg)
+   subV(vz, liftS(sg)) -> var(vz)
+   subV(vs(x), liftS(sg)) -> subV(x, compS(sg, emb(wkR)))
+   subT(var(x), sg) -> subV(x, sg)
+   subT(lam(e), sg) -> lam(subT(e, liftS(sg)))
+   subT(tlam(e), sg) -> tlam(subT(e, liftS(sg)))
+   subT(all(k, t), sg) -> all(subT(k, sg), subT(t, liftS(sg)))
+   subT(app(e1, e2), sg) -> app(subT(e1, sg), subT(e2, sg))
+   subT(tapp(e, t), sg) -> tapp(subT(e, sg), subT(t, sg))
+   subT(arr(t1, t2), sg) -> arr(subT(t1, sg), subT(t2, sg))
+   subT(star, sg) -> star
+   compS(compS(sg1, sg2), sg3) -> compS(sg1, compS(sg2, sg3))
+   compS(consS(t, sg1), sg2) -> consS(subT(t, sg2), compS(sg1, sg2))
+   compS(emb(wkR), consS(t, sg)) -> sg
+   compS(emb(idR), sg) -> sg
+   compS(sg, emb(idR)) -> sg
+   liftS(emb(idR)) -> emb(idR)
+   compS(emb(wkR), liftS(sg)) -> compS(sg, emb(wkR))
+   compS(liftS(sg), consS(t, ta)) -> consS(t, compS(sg, ta))
+   compS(liftS(sg1), liftS(sg2)) -> liftS(compS(sg1, sg2))
+   subT(subV(x, sg1), sg2) -> subV(x, compS(sg1, sg2))
+   subT(subT(t, sg1), sg2) -> subT(t, compS(sg1, sg2))
+   subV(x, compS(emb(r), sg)) -> subV(renV(x, r), sg)
+   subV(vz, compS(liftS(sg), ta)) -> subV(vz, ta)
+   subV(vs(x), compS(liftS(sg), ta)) -> subV(x, compS(sg, compS(emb(wkR), ta)))
+   compS(emb(wkR), compS(liftS(sg), ta)) -> compS(sg, compS(emb(wkR), ta))
+   compS(liftS(sg1), compS(liftS(sg2), ta)) -> compS(liftS(compS(sg1, sg2)), ta)
+   subT(renT(t, r), sg) -> subT(t, compS(emb(r), sg))
+   renT(subV(x, sg), r) -> subV(x, compS(sg, emb(r)))
+   renT(subT(t, sg), r) -> subT(t, compS(sg, emb(r)))
+   compS(emb(liftR(r)), liftS(sg)) -> liftS(compS(emb(r), sg))
+   compS(liftS(sg), emb(liftR(r))) -> liftS(compS(sg, emb(r)))
+   compS(emb(liftR(r)), compS(liftS(sg), ta)) -> compS(liftS(compS(emb(r), sg)), ta)
+   compS(liftS(sg), compS(emb(liftR(r)), ta)) -> compS(liftS(compS(sg, emb(r))), ta)
+   subV(renV(x, liftR(r)), liftS(sg)) -> subV(x, liftS(compS(emb(r), sg)))
+   subV(renV(x, liftR(r)), compS(liftS(sg), ta)) -> subV(x, compS(liftS(compS(emb(r), sg)), ta))
+   subV(renV(x, liftR(r)), consS(t, sg)) -> subV(x, consS(t, compS(emb(r), sg)))
+   compS(emb(liftR(r)), consS(t, sg)) -> consS(t, compS(emb(r), sg))
+   subT(t, emb(r)) -> renT(t, r)
+   compS(emb(r1), emb(r2)) -> emb(compR(r1, r2))
+   compS(emb(compR(r1, r2)), sg) -> compS(emb(r1), compS(emb(r2), sg))
+   liftS(emb(r)) -> emb(liftR(r))
+   compS(emb(wkR), emb(liftR(r))) -> compS(emb(r), emb(wkR))
+   compS(emb(wkR), compS(emb(liftR(r)), ta)) -> compS(emb(r), compS(emb(wkR), ta))
+   compS(emb(wkR), emb(consR(x, r))) -> emb(r)
+   compS(emb(wkR), compS(emb(consR(x, r)), ta)) -> compS(emb(r), ta)
+   compS(emb(liftR(r1)), emb(liftR(r2))) -> emb(liftR(compR(r1, r2)))
+   compS(emb(liftR(r1)), compS(emb(liftR(r2)), ta)) -> compS(emb(liftR(compR(r1, r2))), ta)
+   compS(liftS(sg), emb(compR(liftR(r), r3))) -> compS(liftS(compS(sg, emb(r))), emb(r3))
+
+Q is empty.
+We have to consider all minimal (P,Q,R)-chains.
+----------------------------------------
+
+(60) PisEmptyProof (EQUIVALENT)
+The TRS P is empty. Hence, there is no (P,Q,R) chain.
+----------------------------------------
+
+(61)
+YES

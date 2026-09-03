@@ -20,28 +20,43 @@ open import Data.String using (String)
 open import Agda.Builtin.Equality.Rewrite public
 
 
-data Tm (n : Nat) : Set where
-  `_   : Fin n → Tm n
-  _·_  : Tm n → Tm n → Tm n
+data Sort : Set where
+  expr : Sort
+Scope = List Sort
 
-idᴿ : ∀ {n} → Fin n → Fin n
-idᴿ x = x
+variable
+  s s′     : Sort
+  S S₁ S₂  : Scope
 
-_[_] : ∀ {n m} → Tm n → (Fin n → Fin m) → Tm m
-(` x)     [ ξ ] = ` (ξ x)
-(t₁ · t₂) [ ξ ] = (t₁ [ ξ ]) · (t₂ [ ξ ])
+data _∋_ : Scope → Sort → Set where
+  zero  : (s ∷ S) ∋ s
+  suc   : S ∋ s → (s′ ∷ S) ∋ s
+
+data _⊢_ : Scope → Sort → Set where
+  `_   : S ∋ s → S ⊢ s
+  _·_  : S ⊢ s → S ⊢ s → S ⊢ s
+
+_→ᴿ_ : Scope → Scope → Set
+S₁ →ᴿ S₂ = ∀ s → S₁ ∋ s → S₂ ∋ s
+
+idᴿ : S →ᴿ S
+idᴿ _ x = x
+
+_[_]ᴿ : S₁ ⊢ s → S₁ →ᴿ S₂ → S₂ ⊢ s
+(` x)     [ ξ ]ᴿ = ` (ξ _ x)
+(t₁ · t₂) [ ξ ]ᴿ = (t₁ [ ξ ]ᴿ) · (t₂ [ ξ ]ᴿ)
 
 --! Rewrite
-[id] : ∀ {n} (t : Tm n) → t [ idᴿ ] ≡ t
-[id] (` x)      = refl
-[id] (t₁ · t₂)  = cong₂ _·_ ([id] t₁) ([id] t₂)
+right-idᴿ : ∀ (t : S ⊢ s) → t [ idᴿ ]ᴿ ≡ t
+right-idᴿ (` x)      = refl
+right-idᴿ (t₁ · t₂)  = cong₂ _·_ (right-idᴿ t₁) (right-idᴿ t₂)
 -- ...
 
 --!! RewriteIt
-{-# REWRITE [id] #-}
+{-# REWRITE right-idᴿ #-}
 
 --! RewriteEx
-_ : ∀ {n} {t : Tm n} → t [ idᴿ ] ≡ t
+_ : ∀ {t : S ⊢ s} → t [ idᴿ ]ᴿ ≡ t
 _ = refl
 
 --! Default

@@ -6,7 +6,7 @@
 -- ONE syntactic sort: types are terms.  The signature is Pi, lam, app, a
 -- universe, and Nat with a natrec whose successor branch binds TWO
 -- variables at once.  agdasubst.py accepted it unchanged and emitted the
--- 89 rules below, here in the vector model, so single-sortedness is the degenerate case of the
+-- 90 rules below, here in the vector model, so single-sortedness is the degenerate case of the
 -- multi-sorted setting rather than a separate one.
 --
 -- Typing is extrinsic (Curry/PTS), definitional equality of types is
@@ -429,6 +429,13 @@ opaque
     trans (sym (compositionalityᴿᴿ-var x {ξ₁ = ξ₁ ↑ᴿ _} {ξ₂ = ξ₂ ↑ᴿ _}))
           (cong (λ z → x [ z ]ᴿ) (lift-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂}))
 
+  lift-consᴿ-var : ∀ {x : (s ∷ S₁) ∋ s′} {x′ : S₃ ∋ s} {ξ : S₁ →ᴿ S₂}
+    {ξ′ : S₂ →ᴿ S₃} →
+    (x [ (ξ ↑ᴿ s) ]ᴿ) [ (x′ ∙ᴿ ξ′) ]ᴿ ≡ x [ (x′ ∙ᴿ (ξ ⨟ᴿ ξ′)) ]ᴿ
+  lift-consᴿ-var {x = x} {x′ = x′} {ξ = ξ} {ξ′ = ξ′} =
+    trans (sym (compositionalityᴿᴿ-var x {ξ₁ = ξ ↑ᴿ _} {ξ₂ = x′ ∙ᴿ ξ′}))
+          (cong (λ z → x [ z ]ᴿ) (lift-consᴿ {ξ = ξ} {x = x′} {ξ′ = ξ′}))
+
   -- ══ Vᴿ. monad laws, renaming world ═══════════════════════════════
   right-idᴿ : ∀ (x/t : S ⊢[ m ] s) → x/t [ idᴿ ]ᴿ ≡ x/t
   right-idᴿ zero    = refl
@@ -849,7 +856,7 @@ opaque
 -- stuck.  closure-vec.agda states every one of those absences and
 -- checks it by `refl`.
 
--- 66 rules -- 33 signature-independent, 15 for the
+-- 90 rules -- 57 signature-independent, 15 for the
 -- iterated (variable-arity) lifting, 18 traversal rules (one instᴿ-*
 -- and one inst-* per constructor, plus the variable case).
 
@@ -860,7 +867,7 @@ opaque
   assocᴿ comp-idₗᴿ comp-idᵣᴿ interactᴿ
   lift-idᴿ lift-dist-compᴿᴿ lift-wkᴿ
   right-idᴿ compositionalityᴿᴿ-var compositionalityᴿᴿ
-  lift-dist-compᴿᴿ-var interactᴿ-⨟ᴿ lift-wkᴿ-⨟ᴿ lift-dist-compᴿᴿ-⨟ᴿ
+  lift-dist-compᴿᴿ-var lift-consᴿ-var interactᴿ-⨟ᴿ lift-wkᴿ-⨟ᴿ lift-dist-compᴿᴿ-⨟ᴿ
   coincidence-var def-∙ˢ-zero def-∙ˢ-suc def-↑ˢ-zero def-↑ˢ-suc
   inst-var inst-Pi inst-lam inst-app inst-U inst-Nat inst-zeroN inst-sucN
   inst-natrec

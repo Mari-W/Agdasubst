@@ -63,77 +63,74 @@ data _⊢_∶_ : ∀ {S} → Ctx S → S ⊢ expr → Ty → Set where
         Γ ⊢ e₁ ∶ (A ⇒ᵗ B) → Γ ⊢ e₂ ∶ A → Γ ⊢ (e₁ · e₂) ∶ B
 
 -- ─── Lemmas 3.2 and 3.3: typed renamings ────────────────────────────
-
-_∶_→ᴿ_ : ∀ {S₁ S₂} → S₁ →ᴿ S₂ → Ctx S₁ → Ctx S₂ → Set
-_∶_→ᴿ_ {S₁} ξ Γ₁ Γ₂ = ∀ (x : S₁ ∋ expr) → Γ₂ (x [ ξ ]ᴿ) ≡ Γ₁ x
+-- Well-typedness of a map is a record, not a function type: the map and
+-- the two contexts occur only inside the indices of `_⊢_∶_`, where they
+-- cannot be recovered by unification.  As record parameters they are
+-- rigid, so every use site infers them.
+record _∶_→ᴿ_ {S₁ S₂} (ξ : S₁ →ᴿ S₂) (Γ₁ : Ctx S₁) (Γ₂ : Ctx S₂) : Set where
+  constructor mkᴿ
+  field atᴿ : ∀ (x : S₁ ∋ expr) → Γ₂ (x [ ξ ]ᴿ) ≡ Γ₁ x
+open _∶_→ᴿ_ public
 
 ⊢wkᴿ : ∀ {S} {Γ : Ctx S} (A : Ty) → wkᴿ expr ∶ Γ →ᴿ (A ∷ₜ Γ)
-⊢wkᴿ A x = refl
+⊢wkᴿ A = mkᴿ λ x → refl
 
 ⊢↑ᴿ : ∀ {S₁ S₂} {ξ : S₁ →ᴿ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} →
   ξ ∶ Γ₁ →ᴿ Γ₂ → (A : Ty) → (ξ ↑ᴿ expr) ∶ (A ∷ₜ Γ₁) →ᴿ (A ∷ₜ Γ₂)
-⊢↑ᴿ ⊢ξ A zero    = refl
-⊢↑ᴿ ⊢ξ A (suc x) = ⊢ξ x
+⊢↑ᴿ ⊢ξ A = mkᴿ λ where
+  zero    → refl
+  (suc x) → atᴿ ⊢ξ x
 
 infixl 5 _⊢⋯ᴿ_
 _⊢⋯ᴿ_ : ∀ {S₁ S₂} {ξ : S₁ →ᴿ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
   {e : S₁ ⊢ expr} {A} → Γ₁ ⊢ e ∶ A → ξ ∶ Γ₁ →ᴿ Γ₂ → Γ₂ ⊢ (e [ ξ ]ᴿ) ∶ A
-_⊢⋯ᴿ_ (⊢` {x = x} refl) ⊢ξ = ⊢` (⊢ξ x)
-_⊢⋯ᴿ_ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} (⊢λ {A = A} d) ⊢ξ =
-  ⊢λ (_⊢⋯ᴿ_ {ξ = ξ ↑ᴿ expr} {Γ₁ = A ∷ₜ Γ₁} {Γ₂ = A ∷ₜ Γ₂} d
-             (⊢↑ᴿ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} ⊢ξ A))
-_⊢⋯ᴿ_ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} (⊢· d₁ d₂) ⊢ξ =
-  ⊢· (_⊢⋯ᴿ_ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} d₁ ⊢ξ)
-     (_⊢⋯ᴿ_ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} d₂ ⊢ξ)
+(⊢` {x = x} refl) ⊢⋯ᴿ ⊢ξ = ⊢` (atᴿ ⊢ξ x)
+(⊢λ d)            ⊢⋯ᴿ ⊢ξ = ⊢λ (d ⊢⋯ᴿ ⊢↑ᴿ ⊢ξ _)
+(⊢· d₁ d₂)        ⊢⋯ᴿ ⊢ξ = ⊢· (d₁ ⊢⋯ᴿ ⊢ξ) (d₂ ⊢⋯ᴿ ⊢ξ)
 
 ⊢weaken : ∀ {S} {Γ : Ctx S} {e : S ⊢ expr} {B} (A : Ty) →
   Γ ⊢ e ∶ B → (A ∷ₜ Γ) ⊢ (e [ wkᴿ expr ]ᴿ) ∶ B
-⊢weaken {Γ = Γ} A d = _⊢⋯ᴿ_ {ξ = wkᴿ expr} {Γ₁ = Γ} {Γ₂ = A ∷ₜ Γ} d (⊢wkᴿ A)
+⊢weaken A d = d ⊢⋯ᴿ ⊢wkᴿ A
 
 -- Lemma 3.3: anti-renaming of typing.  The term is scrutinised first, so
 -- that `e [ ξ ]ᴿ` reduces to a constructor form.
 anti-ren-⊢ : ∀ {S₁ S₂} {ξ : S₁ →ᴿ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
   (e : S₁ ⊢ expr) {A} → ξ ∶ Γ₁ →ᴿ Γ₂ → Γ₂ ⊢ (e [ ξ ]ᴿ) ∶ A → Γ₁ ⊢ e ∶ A
-anti-ren-⊢ (` x) ⊢ξ (⊢` eq) = ⊢` (≡-trans (sym (⊢ξ x)) eq)
-anti-ren-⊢ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} (λx e) ⊢ξ (⊢λ {A = A} d) =
-  ⊢λ (anti-ren-⊢ {ξ = ξ ↑ᴿ expr} {Γ₁ = A ∷ₜ Γ₁} {Γ₂ = A ∷ₜ Γ₂} e
-                 (⊢↑ᴿ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} ⊢ξ A) d)
-anti-ren-⊢ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} (e₁ · e₂) ⊢ξ (⊢· d₁ d₂) =
-  ⊢· (anti-ren-⊢ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} e₁ ⊢ξ d₁)
-     (anti-ren-⊢ {ξ = ξ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} e₂ ⊢ξ d₂)
+anti-ren-⊢ (` x)     ⊢ξ (⊢` eq)      = ⊢` (≡-trans (sym (atᴿ ⊢ξ x)) eq)
+anti-ren-⊢ (λx e)    ⊢ξ (⊢λ d)       = ⊢λ (anti-ren-⊢ e (⊢↑ᴿ ⊢ξ _) d)
+anti-ren-⊢ (e₁ · e₂) ⊢ξ (⊢· d₁ d₂)   =
+  ⊢· (anti-ren-⊢ e₁ ⊢ξ d₁) (anti-ren-⊢ e₂ ⊢ξ d₂)
 
 -- ─── typed substitutions ────────────────────────────────────────────
 
-_∶_→ˢ_ : ∀ {S₁ S₂} → S₁ →ˢ S₂ → Ctx S₁ → Ctx S₂ → Set
-_∶_→ˢ_ {S₁} σ Γ₁ Γ₂ = ∀ (x : S₁ ∋ expr) → Γ₂ ⊢ (x [ σ ]ˢ) ∶ Γ₁ x
+record _∶_→ˢ_ {S₁ S₂} (σ : S₁ →ˢ S₂) (Γ₁ : Ctx S₁) (Γ₂ : Ctx S₂) : Set where
+  constructor mkˢ
+  field at : ∀ (x : S₁ ∋ expr) → Γ₂ ⊢ (x [ σ ]ˢ) ∶ Γ₁ x
+open _∶_→ˢ_ public
 
 ⊢↑ˢ : ∀ {S₁ S₂} {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} →
   σ ∶ Γ₁ →ˢ Γ₂ → (A : Ty) → (σ ↑ˢ expr) ∶ (A ∷ₜ Γ₁) →ˢ (A ∷ₜ Γ₂)
-⊢↑ˢ ⊢σ A zero    = ⊢` refl
-⊢↑ˢ {Γ₂ = Γ₂} ⊢σ A (suc x) =
-  _⊢⋯ᴿ_ {ξ = wkᴿ expr} {Γ₁ = Γ₂} {Γ₂ = A ∷ₜ Γ₂} (⊢σ x) (⊢wkᴿ A)
+⊢↑ˢ ⊢σ A = mkˢ λ where
+  zero    → ⊢` refl
+  (suc x) → at ⊢σ x ⊢⋯ᴿ ⊢wkᴿ A
 
 infixl 5 _⊢⋯ˢ_
 _⊢⋯ˢ_ : ∀ {S₁ S₂} {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
   {e : S₁ ⊢ expr} {A} → Γ₁ ⊢ e ∶ A → σ ∶ Γ₁ →ˢ Γ₂ → Γ₂ ⊢ (e [ σ ]ˢ) ∶ A
-_⊢⋯ˢ_ (⊢` {x = x} refl) ⊢σ = ⊢σ x
-_⊢⋯ˢ_ {σ = σ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} (⊢λ {A = A} d) ⊢σ =
-  ⊢λ (_⊢⋯ˢ_ {σ = σ ↑ˢ expr} {Γ₁ = A ∷ₜ Γ₁} {Γ₂ = A ∷ₜ Γ₂} d
-             (⊢↑ˢ {σ = σ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} ⊢σ A))
-_⊢⋯ˢ_ {σ = σ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} (⊢· d₁ d₂) ⊢σ =
-  ⊢· (_⊢⋯ˢ_ {σ = σ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} d₁ ⊢σ)
-     (_⊢⋯ˢ_ {σ = σ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} d₂ ⊢σ)
+(⊢` {x = x} refl) ⊢⋯ˢ ⊢σ = at ⊢σ x
+(⊢λ d)            ⊢⋯ˢ ⊢σ = ⊢λ (d ⊢⋯ˢ ⊢↑ˢ ⊢σ _)
+(⊢· d₁ d₂)        ⊢⋯ˢ ⊢σ = ⊢· (d₁ ⊢⋯ˢ ⊢σ) (d₂ ⊢⋯ˢ ⊢σ)
 
 ⊢∙ˢ : ∀ {S} {Γ : Ctx S} {n : S ⊢ expr} {A} →
   Γ ⊢ n ∶ A → (n ∙ˢ idˢ) ∶ (A ∷ₜ Γ) →ˢ Γ
-⊢∙ˢ dn zero    = dn
-⊢∙ˢ dn (suc x) = ⊢` refl
+⊢∙ˢ dn = mkˢ λ where
+  zero    → dn
+  (suc x) → ⊢` refl
 
 -- the substitution lemma
 ⊢[] : ∀ {S} {Γ : Ctx S} {e : (expr ∷ S) ⊢ expr} {n : S ⊢ expr} {A B} →
   (A ∷ₜ Γ) ⊢ e ∶ B → Γ ⊢ n ∶ A → Γ ⊢ (e [ n ]₀) ∶ B
-⊢[] {Γ = Γ} {n = n} {A = A} d dn =
-  _⊢⋯ˢ_ {σ = n ∙ˢ idˢ} {Γ₁ = A ∷ₜ Γ} {Γ₂ = Γ} d (⊢∙ˢ dn)
+⊢[] d dn = d ⊢⋯ˢ ⊢∙ˢ dn
 
 -- ─── the inductive characterisation of strong normalisation ─────────
 -- Fig. 3 of the challenge, transcribed rule for rule.  The paper's
@@ -186,33 +183,31 @@ ren-⟶SN (applSN st) ξ = applSN (ren-⟶SN st ξ)
 -- The term is scrutinised first, so that `e [ ξ ]ᴿ` reduces to a
 -- constructor form and the derivation can be matched directly.
 
-anti-SNe : ∀ {S₁ S₂} (e : S₁ ⊢ expr) {ξ : S₁ →ᴿ S₂} → SNe (e [ ξ ]ᴿ) → SNe e
-anti-SN  : ∀ {S₁ S₂} (e : S₁ ⊢ expr) {ξ : S₁ →ᴿ S₂} → SN (e [ ξ ]ᴿ) → SN e
-anti-⟶SN : ∀ {S₁ S₂} (e : S₁ ⊢ expr) {ξ : S₁ →ᴿ S₂} {n : S₂ ⊢ expr} →
+anti-SNe : ∀ {S₁ S₂} (e : S₁ ⊢ expr) (ξ : S₁ →ᴿ S₂) → SNe (e [ ξ ]ᴿ) → SNe e
+anti-SN  : ∀ {S₁ S₂} (e : S₁ ⊢ expr) (ξ : S₁ →ᴿ S₂) → SN (e [ ξ ]ᴿ) → SN e
+anti-⟶SN : ∀ {S₁ S₂} (e : S₁ ⊢ expr) (ξ : S₁ →ᴿ S₂) {n : S₂ ⊢ expr} →
   (e [ ξ ]ᴿ) ⟶SN n → Σ[ e′ ∈ S₁ ⊢ expr ] ((e ⟶SN e′) × (e′ [ ξ ]ᴿ ≡ n))
 
-anti-SNe (` x)     (var _)   = var x
-anti-SNe (λx e)    ()
-anti-SNe (e₁ · e₂) {ξ = ξ} (app r n) =
-  app (anti-SNe e₁ {ξ = ξ} r) (anti-SN e₂ {ξ = ξ} n)
+anti-SNe (` x)     ξ (var _)   = var x
+anti-SNe (λx e)    ξ ()
+anti-SNe (e₁ · e₂) ξ (app r n) = app (anti-SNe e₁ ξ r) (anti-SN e₂ ξ n)
 
-anti-SN (` x)  {ξ = ξ} (neu ne) = neu (anti-SNe (` x) {ξ = ξ} ne)
-anti-SN (` x)  (red () d)
-anti-SN (λx e) {ξ = ξ} (abs d)  = abs (anti-SN e {ξ = ξ ↑ᴿ _} d)
-anti-SN (λx e) (neu ())
-anti-SN (λx e) (red () d)
-anti-SN (e₁ · e₂) {ξ = ξ} (neu ne) = neu (anti-SNe (e₁ · e₂) {ξ = ξ} ne)
-anti-SN (e₁ · e₂) {ξ = ξ} (red st d) with anti-⟶SN (e₁ · e₂) {ξ = ξ} st
-... | (e′ , st′ , refl) = red st′ (anti-SN e′ {ξ = ξ} d)
+anti-SN (` x)     ξ (neu ne)  = neu (anti-SNe (` x) ξ ne)
+anti-SN (` x)     ξ (red () d)
+anti-SN (λx e)    ξ (abs d)   = abs (anti-SN e (ξ ↑ᴿ _) d)
+anti-SN (λx e)    ξ (neu ())
+anti-SN (λx e)    ξ (red () d)
+anti-SN (e₁ · e₂) ξ (neu ne)  = neu (anti-SNe (e₁ · e₂) ξ ne)
+anti-SN (e₁ · e₂) ξ (red st d) with anti-⟶SN (e₁ · e₂) ξ st
+... | (e′ , st′ , refl) = red st′ (anti-SN e′ ξ d)
 
-anti-⟶SN (` x)  ()
-anti-⟶SN (λx e) ()
+anti-⟶SN (` x)  ξ ()
+anti-⟶SN (λx e) ξ ()
 -- the β case: `(e [ n ]₀) [ ξ ]ᴿ ≡ (e [ (ξ ↑ᴿ expr) ]ᴿ) [ n [ ξ ]ᴿ ]₀` is refl
-anti-⟶SN ((λx b) · e₂) {ξ = ξ} (βSN n) =
-  (b [ e₂ ]₀) , βSN (anti-SN e₂ {ξ = ξ} n) , refl
-anti-⟶SN ((λx b) · e₂)   (applSN ())
-anti-⟶SN ((` x) · e₂)    (applSN ())
-anti-⟶SN ((f · a) · e₂) {ξ = ξ} (applSN st) with anti-⟶SN (f · a) {ξ = ξ} st
+anti-⟶SN ((λx b) · e₂) ξ (βSN n)     = (b [ e₂ ]₀) , βSN (anti-SN e₂ ξ n) , refl
+anti-⟶SN ((λx b) · e₂) ξ (applSN ())
+anti-⟶SN ((` x) · e₂)  ξ (applSN ())
+anti-⟶SN ((f · a) · e₂) ξ (applSN st) with anti-⟶SN (f · a) ξ st
 ... | (e′ , st′ , refl) = (e′ · e₂) , applSN st′ , refl
 
 -- ─── substituting a variable is a renaming ──────────────────────────
@@ -240,7 +235,7 @@ ext-SN : ∀ {S} {e : S ⊢ expr} {x : S ∋ expr} → SN (e · (` x)) → SN e
 ext-SN (neu (app r n))     = neu r
 ext-SN (red (applSN st) d) = red st (ext-SN d)
 ext-SN {x = x} (red (βSN {e = b} _) d) =
-  abs (anti-SN b {ξ = x ∙ᴿ idᴿ} (subst SN ([]-as-ren b x) d))
+  abs (anti-SN b (x ∙ᴿ idᴿ) (subst SN ([]-as-ren b x) d))
 
 -- ═══ challenge 2b: the Kripke logical predicate ═════════════════════
 -- Defined by recursion on the type; the world quantification sits in
@@ -263,7 +258,8 @@ cr3 : ∀ {S} (A : Ty) {e : S ⊢ expr} → SNe e → R A e
 
 cr1 ★ d = d
 cr1 (A ⇒ᵗ B) {e = e} f =
-  anti-SN e (ext-SN (cr1 B (f (wkᴿ expr) (` zero) (cr3 A (var zero)))))
+  anti-SN e (wkᴿ expr)
+            (ext-SN (cr1 B (f (wkᴿ expr) (` zero) (cr3 A (var zero)))))
 cr2 ★ st d         = red st d
 cr2 (A ⇒ᵗ B) st f  = λ ξ n rn → cr2 B (applSN (ren-⟶SN st ξ)) (f ξ n rn)
 cr3 ★ ne           = neu ne
@@ -272,39 +268,39 @@ cr3 (A ⇒ᵗ B) ne    = λ ξ n rn → cr3 B (app (ren-SNe ne ξ) (cr1 A rn))
 -- ─── Definition 3.3: semantic substitutions ─────────────────────────
 -- σ is reducible at Γ when it sends each variable to a term reducible
 -- at the type Γ gives it.
-Rˢ : ∀ {S₁ S₂} → Ctx S₁ → S₁ →ˢ S₂ → Set
-Rˢ {S₁} Γ σ = ∀ (x : S₁ ∋ expr) → R (Γ x) (x [ σ ]ˢ)
+record Rˢ {S₁ S₂} (Γ : Ctx S₁) (σ : S₁ →ˢ S₂) : Set where
+  constructor mkRˢ
+  field atᴿˢ : ∀ (x : S₁ ∋ expr) → R (Γ x) (x [ σ ]ˢ)
+open Rˢ public
 
 -- weakening of semantic substitutions
-Rˢ-ren : ∀ {S₁ S₂ S₃} {Γ : Ctx S₁} (σ : S₁ →ˢ S₂) → Rˢ Γ σ → (ξ : S₂ →ᴿ S₃) →
-  Rˢ Γ (σ ⨟ ⟨ ξ ⟩)
-Rˢ-ren σ rσ ξ x = R-ren _ (rσ x) ξ
+Rˢ-ren : ∀ {S₁ S₂ S₃} {Γ : Ctx S₁} {σ : S₁ →ˢ S₂} →
+  Rˢ Γ σ → (ξ : S₂ →ᴿ S₃) → Rˢ Γ (σ ⨟ ⟨ ξ ⟩)
+Rˢ-ren rσ ξ = mkRˢ λ x → R-ren _ (atᴿˢ rσ x) ξ
 
-Rˢ-ext : ∀ {S₁ S₂} {Γ : Ctx S₁} (σ : S₁ →ˢ S₂) {A} (n : S₂ ⊢ expr) →
+Rˢ-ext : ∀ {S₁ S₂} {Γ : Ctx S₁} {σ : S₁ →ˢ S₂} {A} (n : S₂ ⊢ expr) →
   R A n → Rˢ Γ σ → Rˢ (A ∷ₜ Γ) (n ∙ˢ σ)
-Rˢ-ext σ n rn rσ zero    = rn
-Rˢ-ext σ n rn rσ (suc x) = rσ x
+Rˢ-ext n rn rσ = mkRˢ λ where
+  zero    → rn
+  (suc x) → atᴿˢ rσ x
 
 -- ─── Lemma 3.20: the fundamental lemma ──────────────────────────────
 -- induction on the typing derivation
 fund : ∀ {S₁ S₂} {Γ : Ctx S₁} {e : S₁ ⊢ expr} {A} {σ : S₁ →ˢ S₂} →
   Γ ⊢ e ∶ A → Rˢ Γ σ → R A (e [ σ ]ˢ)
-fund (⊢` {x = x} refl) rσ = rσ x
-fund {σ = σ} (⊢λ d) rσ = λ ξ n rn →
-  cr2 _ (βSN (cr1 _ rn))
-        (fund {σ = n ∙ˢ (σ ⨟ ⟨ ξ ⟩)} d
-              (Rˢ-ext (σ ⨟ ⟨ ξ ⟩) n rn (Rˢ-ren σ rσ ξ)))
-fund {σ = σ} (⊢· d₁ d₂) rσ =
-  fund {σ = σ} d₁ rσ idᴿ _ (fund {σ = σ} d₂ rσ)
+fund (⊢` {x = x} refl) rσ = atᴿˢ rσ x
+fund (⊢λ d) rσ = λ ξ n rn →
+  cr2 _ (βSN (cr1 _ rn)) (fund d (Rˢ-ext n rn (Rˢ-ren rσ ξ)))
+fund (⊢· d₁ d₂) rσ = fund d₁ rσ idᴿ _ (fund d₂ rσ)
 
 Rˢ-id : ∀ {S} (Γ : Ctx S) → Rˢ Γ (idˢ {S})
-Rˢ-id Γ x = cr3 (Γ x) (var x)
+Rˢ-id Γ = mkRˢ λ x → cr3 (Γ x) (var x)
 
 -- ─── Corollary 3.4 ──────────────────────────────────────────────────
 -- every well-typed term is strongly normalising, in the inductive sense
 strong-normalisation : ∀ {S} {Γ : Ctx S} {e : S ⊢ expr} {A} →
   Γ ⊢ e ∶ A → SN e
-strong-normalisation {Γ = Γ} {A = A} d = cr1 A (fund {σ = idˢ} d (Rˢ-id Γ))
+strong-normalisation {Γ = Γ} {A = A} d = cr1 A (fund d (Rˢ-id Γ))
 
 -- ─── the syntax really does contain untypable terms ─────────────────
 -- so Corollary 3.4 is not the vacuous "every term is SN"
@@ -332,15 +328,14 @@ lemma-3-3-anti-renaming = anti-ren-⊢
 -- REDUCTION, which are `ren-↝` and `sub-↝` in the Soundness modules.
 typed-substitution : ∀ {S₁ S₂} {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
   {e : S₁ ⊢ expr} {A} → Γ₁ ⊢ e ∶ A → σ ∶ Γ₁ →ˢ Γ₂ → Γ₂ ⊢ (e [ σ ]ˢ) ∶ A
-typed-substitution {σ = σ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} d ⊢σ =
-  _⊢⋯ˢ_ {σ = σ} {Γ₁ = Γ₁} {Γ₂ = Γ₂} d ⊢σ
+typed-substitution = _⊢⋯ˢ_
 
 -- Lemma 3.17 [Renaming for SN]
 lemma-3-17-renaming : ∀ {S₁ S₂} {e : S₁ ⊢ expr} → SN e → (ξ : S₁ →ᴿ S₂) → SN (e [ ξ ]ᴿ)
 lemma-3-17-renaming = ren-SN
 
 -- Lemma 3.18 [Anti-renaming for SN]
-lemma-3-18-anti-renaming : ∀ {S₁ S₂} (e : S₁ ⊢ expr) {ξ : S₁ →ᴿ S₂} →
+lemma-3-18-anti-renaming : ∀ {S₁ S₂} (e : S₁ ⊢ expr) (ξ : S₁ →ᴿ S₂) →
   SN (e [ ξ ]ᴿ) → SN e
 lemma-3-18-anti-renaming = anti-SN
 
@@ -360,7 +355,7 @@ theorem-3-3-CR3 = cr3
 -- Lemma 3.20 [Fundamental Lemma]
 lemma-3-20-fundamental : ∀ {S₁ S₂} {Γ : Ctx S₁} {e : S₁ ⊢ expr} {A} {σ : S₁ →ˢ S₂} →
   Γ ⊢ e ∶ A → Rˢ Γ σ → R A (e [ σ ]ˢ)
-lemma-3-20-fundamental {σ = σ} d rσ = fund {σ = σ} d rσ
+lemma-3-20-fundamental = fund
 
 -- Corollary 3.4 [every well-typed term is in SN]
 corollary-3-4 : ∀ {S} {Γ : Ctx S} {e : S ⊢ expr} {A} → Γ ⊢ e ∶ A → SN e

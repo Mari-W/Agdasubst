@@ -6,7 +6,7 @@
 --
 -- Renamings are a second kind of map that survives in normal forms,
 -- rather than a termination device erased by `coincidence`.  That one
--- decision is what takes the rule set from 41 rules to 72.
+-- decision is what takes the rule set from 41 rules to 73.
 --
 -- The equational core is σ⇑ [Curien-Hardin-Levy JACM 1996; tables in
 -- Hardin-Maranget-Pagano JFP 8(2) 1998, figs. 1-2], instantiated at the
@@ -207,9 +207,10 @@ opaque
   assocᴿ    : (ξ₁ ⨟ᴿ ξ₂) ⨟ᴿ ξ₃ ≡ ξ₁ ⨟ᴿ (ξ₂ ⨟ᴿ ξ₃)
   comp-idₗᴿ : idᴿ ⨟ᴿ ξ ≡ ξ
   comp-idᵣᴿ : ξ ⨟ᴿ idᴿ ≡ ξ
-  -- distᴿ is a lemma, not a rule: with push at variables its pair
-  -- with assocᴿ demands a variable-level fold, which is what push
-  -- exists to avoid
+  -- distᴿ is a lemma, not a rule: its pair with compositionalityᴿᴿ-var
+  -- (push) is non-joinable, because joining needs a case split on the
+  -- variable that neither side can perform.  Measured: registering it
+  -- costs 2 non-joinable pairs (with push and with ⟨⟩-split-⨟).
   distᴿ     : (x ∙ᴿ ξ₁) ⨟ᴿ ξ₂ ≡ (x [ ξ₂ ]ᴿ) ∙ᴿ (ξ₁ ⨟ᴿ ξ₂)
   interactᴿ : wkᴿ s ⨟ᴿ (x ∙ᴿ ξ) ≡ ξ
 
@@ -234,9 +235,10 @@ opaque
 
   -- ══ VIᴿ. completion companions, renaming world ═══════════════════
   -- Push at V makes σ⇑'s VarShift2/FVarLift2/RVarLift2 unnecessary.
-  -- What remains is the join of push with lift-dist-compᴿᴿ, and
-  -- interact under a continuation.
+  -- What remains is the join of push with lift-dist-compᴿᴿ and with
+  -- lift-consᴿ, and interact under a continuation.
   lift-dist-compᴿᴿ-var : (x [ (ξ₁ ↑ᴿ s) ]ᴿ) [ (ξ₂ ↑ᴿ s) ]ᴿ ≡ x [ ((ξ₁ ⨟ᴿ ξ₂) ↑ᴿ s) ]ᴿ
+  lift-consᴿ-var       : (x [ (ξ ↑ᴿ s) ]ᴿ) [ (x′ ∙ᴿ ξ′) ]ᴿ ≡ x [ (x′ ∙ᴿ (ξ ⨟ᴿ ξ′)) ]ᴿ
   interactᴿ-⨟ᴿ         : wkᴿ s ⨟ᴿ ((x ∙ᴿ ξ) ⨟ᴿ ξ′) ≡ ξ ⨟ᴿ ξ′
   lift-wkᴿ-⨟ᴿ          : wkᴿ s ⨟ᴿ ((ξ ↑ᴿ s) ⨟ᴿ ξ′) ≡ ξ ⨟ᴿ (wkᴿ s ⨟ᴿ ξ′)
   lift-dist-compᴿᴿ-⨟ᴿ  : (ξ₁ ↑ᴿ s) ⨟ᴿ ((ξ₂ ↑ᴿ s) ⨟ᴿ ξ′) ≡ ((ξ₁ ⨟ᴿ ξ₂) ↑ᴿ s) ⨟ᴿ ξ′
@@ -408,6 +410,8 @@ opaque
 
   lift-dist-compᴿᴿ-var {x = zero}  = refl
   lift-dist-compᴿᴿ-var {x = suc x} = refl
+  lift-consᴿ-var {x = zero}  = refl
+  lift-consᴿ-var {x = suc x} = refl
   interactᴿ-⨟ᴿ    = refl
   lift-wkᴿ-⨟ᴿ {s = s} {ξ = ξ} {ξ′ = ξ′} =
     trans (sym (assocᴿ {ξ₁ = wkᴿ s} {ξ₂ = ξ ↑ᴿ s} {ξ₃ = ξ′}))
@@ -578,7 +582,7 @@ opaque
   assocᴿ comp-idₗᴿ comp-idᵣᴿ interactᴿ
   lift-idᴿ lift-dist-compᴿᴿ lift-wkᴿ
   right-idᴿ compositionalityᴿᴿ-var compositionalityᴿᴿ
-  lift-dist-compᴿᴿ-var interactᴿ-⨟ᴿ lift-wkᴿ-⨟ᴿ lift-dist-compᴿᴿ-⨟ᴿ
+  lift-dist-compᴿᴿ-var lift-consᴿ-var interactᴿ-⨟ᴿ lift-wkᴿ-⨟ᴿ lift-dist-compᴿᴿ-⨟ᴿ
   coincidence-var def-∙ˢ-zero def-∙ˢ-suc def-↑ˢ-zero def-↑ˢ-suc
   compositionalityᴿˢ-⨟-var def-↑ˢ-zero-⨟ def-↑ˢ-suc-⨟
   inst-x inst-λ inst-Λ inst-∀ inst-· inst-• inst-⇒ inst-*

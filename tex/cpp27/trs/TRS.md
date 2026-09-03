@@ -3,9 +3,9 @@
 Source of truth: [`systemf.agda`](../systemf.agda), declarations in the third
 `opaque` block and registration in the `{-# REWRITE #-}` block that follows it.
 
-**72 rules registered.** Nine further rule-shaped facts are proved but
-deliberately *not* registered (§7). Of the 72, 16 are one-per-constructor
-(`instᴿ-*`, `inst-*`); the schema-level system is **56 rules + 2·|constructors|**.
+**73 rules registered.** Nine further rule-shaped facts are proved but
+deliberately *not* registered (§7). Of the 73, 16 are one-per-constructor
+(`instᴿ-*`, `inst-*`); the schema-level system is **57 rules + 2·|constructors|**.
 
 The *absences* — the places where a completion operator does not need an image
 — are checked in [`closure.agda`](../closure.agda): eight `refl` assertions, each
@@ -87,7 +87,7 @@ A fourth rule, `lift-id` (number 46, σ⇑'s **LiftId**), is not retired but
 **subsumed**: its left-hand side `⟨ idᴿ ⟩ ↑ˢ s` is a strict instance of
 `⟨⟩-lift`'s `⟨ ξ ⟩ ↑ˢ s`, which sends it to `⟨ idᴿ ↑ᴿ s ⟩`, where `lift-idᴿ`
 finishes under the coercion. A base rule subsumed by its own coercion image is
-redundant, and the 72-rule system checks at **0 non-joinable critical pairs**.
+redundant, and the 73-rule system checks at **0 non-joinable critical pairs**.
 Nothing definitional is lost: `⟨ idᴿ ⟩ ↑ˢ s ≡ ⟨ idᴿ ⟩` still holds by `refl`
 for user code (verified outside the `opaque` block, where the rules apply).
 
@@ -98,18 +98,25 @@ pairs, Newman's lemma gives confluence without re-running the provers. This is
 checked mechanically by `check_archives.py`, next to this file, not
 asserted from memory.
 
+`lift-consᴿ-var` (77) is outside that export. Neither the 79-rule input nor the
+archives carry its first-order form, so `systemf.trs` stays at 75 rules and the
+SN argument above does not reach the new rule. Agda's local-confluence check
+does.
+
 ### 2.1 A load-bearing asymmetry: MapEnv
 
 `dist` (σ⇑'s **MapEnv**) is a rule in the substitution world; `distᴿ` is **not**
-a rule in the renaming world — decision 3 forbids it, since its pair with
-`assocᴿ` demands the variable-level fold that push exists to avoid.
+a rule in the renaming world — decision 3 forbids it: its pair with
+`compositionalityᴿᴿ-var` (*push*) needs a case split on the variable, and the
+variable-level fold that would join it is exactly what push exists to avoid.
+(The blocking partner is **push**, not `assocᴿ`; measured 2026-09-03.)
 
 That single choice explains the shape of the completion in both worlds:
 
 | | MapEnv/LiftEnv as rules? | companions needed |
 |---|---|---|
 | substitution world | yes (`dist`, `lift-cons`) | **exactly σ⇑'s five 2-rules** |
-| renaming world | no (`distᴿ`, `lift-consᴿ` are lemmas) | σ⇑'s ShiftLift2 + Lift2, **plus** `interactᴿ-⨟ᴿ` and `lift-dist-compᴿᴿ-var` |
+| renaming world | no (`distᴿ`, `lift-consᴿ` are lemmas) | σ⇑'s ShiftLift2 + Lift2, **plus** `interactᴿ-⨟ᴿ`, `lift-dist-compᴿᴿ-var` and `lift-consᴿ-var` |
 
 Why: in σ⇑ the term `↑∘((M·s)∘t)` is joinable *because MapEnv fires on the inner
 composition* — `(M·s)∘t → M[t]·(s∘t)`, then ShiftCons. That is why σ⇑ needs no
@@ -119,7 +126,7 @@ rules you keep**, not an arbitrary list.
 
 ---
 
-## 3. Renaming world — 27 rules
+## 3. Renaming world — 28 rules
 
 ### Iᴿ. Applied rules (variable meets map) — 5
 
@@ -165,7 +172,7 @@ only part the generator must read the `.sg` file for.
 | 18 | `lift-idᴿ` | `idᴿ ↑ᴿ s → idᴿ` | σ⇑ **LiftId** | lifting the identity |
 | 19 | `lift-dist-compᴿᴿ` | `(ξ₁ ↑ᴿ s) ⨟ᴿ (ξ₂ ↑ᴿ s) → (ξ₁ ⨟ᴿ ξ₂) ↑ᴿ s` | σ⇑ **Lift1** | lift is functorial — the rule that lets nested binders collapse |
 | 20 | `lift-wkᴿ` | `wkᴿ s ⨟ᴿ (ξ ↑ᴿ s) → ξ ⨟ᴿ wkᴿ s` | σ⇑ **ShiftLift1** | shift commutes past a lift |
-| — | *`lift-consᴿ`* | *(LiftEnv)* | σ⇑ **LiftEnv** | **demoted to a lemma** — §2.1 |
+| — | *`lift-consᴿ`* | *(LiftEnv)* | σ⇑ **LiftEnv** | **demoted to a lemma** — §2.1. Its variable-level companion 77 is a rule |
 
 ### Vᴿ. Monad laws — 3
 
@@ -175,7 +182,7 @@ only part the generator must read the `.sg` file for.
 | 22 | `compositionalityᴿᴿ-var` | `x [ (ξ₁ ⨟ᴿ ξ₂) ]ᴿ → (x [ ξ₁ ]ᴿ) [ ξ₂ ]ᴿ` | **new** (Clos at V, *reversed*) | **push**. Must point this way: a fold at V would leave `(x [ ξ₁ ]ᴿ) [ wkᴿ ]ᴿ s` reducible to `suc (x [ ξ₁ ]ᴿ)` on one side and stuck as `x [ (ξ₁ ⨟ᴿ wkᴿ s) ]ᴿ` on the other |
 | 23 | `compositionalityᴿᴿ` | `(t [ ξ₁ ]ᴿ) [ ξ₂ ]ᴿ → t [ (ξ₁ ⨟ᴿ ξ₂) ]ᴿ` | σ⇑ **Clos** (at T) | **fold**. The one place the V/T merge does not pay: the two halves point in opposite directions |
 
-### VIᴿ. Completion companions — 4
+### VIᴿ. Completion companions — 5
 
 Composition is right-nested by `assocᴿ`, so any rule whose LHS ends in a
 composition needs a variant that sees through a continuation `ξ′`.
@@ -186,6 +193,7 @@ composition needs a variant that sees through a continuation `ξ′`.
 | 25 | `interactᴿ-⨟ᴿ` | `wkᴿ s ⨟ᴿ ((x ∙ᴿ ξ) ⨟ᴿ ξ′) → ξ ⨟ᴿ ξ′` | **new** (a "ShiftCons2") | σ⇑ needs no such rule because MapEnv rescues the pair; we withdrew MapEnv, so we must post this — see §2.1 |
 | 26 | `lift-wkᴿ-⨟ᴿ` | `wkᴿ s ⨟ᴿ ((ξ ↑ᴿ s) ⨟ᴿ ξ′) → ξ ⨟ᴿ (wkᴿ s ⨟ᴿ ξ′)` | σ⇑ **ShiftLift2** | continuation form of 20 |
 | 27 | `lift-dist-compᴿᴿ-⨟ᴿ` | `(ξ₁ ↑ᴿ s) ⨟ᴿ ((ξ₂ ↑ᴿ s) ⨟ᴿ ξ′) → ((ξ₁ ⨟ᴿ ξ₂) ↑ᴿ s) ⨟ᴿ ξ′` | σ⇑ **Lift2** | continuation form of 19 |
+| 77 | `lift-consᴿ-var` | `(x [ (ξ ↑ᴿ s) ]ᴿ) [ (x′ ∙ᴿ ξ′) ]ᴿ → x [ (x′ ∙ᴿ (ξ ⨟ᴿ ξ′)) ]ᴿ` | **new** | join of *push* (22) with LiftEnv at an abstract variable. The map-level LiftEnv is a lemma, so this is where it acts. The LHS is already in push normal form, so it does not race 22 |
 
 ---
 
@@ -308,8 +316,8 @@ Their absence is the design, not a gap.
 
 | Agda | Statement | Source | Why not a rule |
 |---|---|---|---|
-| `distᴿ` | `(x ∙ᴿ ξ₁) ⨟ᴿ ξ₂ ≡ (x [ ξ₂ ]ᴿ) ∙ᴿ (ξ₁ ⨟ᴿ ξ₂)` | σw **MapEnv** | its pair with `assocᴿ` demands a variable-level fold, which *push* exists to avoid (§2.3, §2.1) |
-| `lift-consᴿ` | `(ξ ↑ᴿ s) ⨟ᴿ (x ∙ᴿ ξ′) ≡ x ∙ᴿ (ξ ⨟ᴿ ξ′)` | σ⇑ **LiftEnv** | same reason: push already decomposes `∙ᴿ`-headed maps at variables |
+| `distᴿ` | `(x ∙ᴿ ξ₁) ⨟ᴿ ξ₂ ≡ (x [ ξ₂ ]ᴿ) ∙ᴿ (ξ₁ ⨟ᴿ ξ₂)` | σw **MapEnv** | its pair with `compositionalityᴿᴿ-var` (*push*) needs a case split on the variable that neither side can perform. Measured 2026-09-03: registering it costs **2** non-joinable pairs (with push, and with `⟨⟩-split-⨟`) |
+| `lift-consᴿ` | `(ξ ↑ᴿ s) ⨟ᴿ (x ∙ᴿ ξ′) ≡ x ∙ᴿ (ξ ⨟ᴿ ξ′)` | σ⇑ **LiftEnv** | fails against *push* the same way, and against `assocᴿ` besides. Measured 2026-09-03: registering it costs **4** non-joinable pairs (`assocᴿ`, push, `⟨⟩-split-⨟`, `⟨⟩-split-tail`). Only the map law is excluded. The variable instance is rule 77 |
 | `⟨⟩-cons` | *(removed)* | **new** | the one member of the collapse family oriented ᴿ→ˢ; never registered and never used, so it was retired outright. Its ˢ→ᴿ mirror is the rule that would make `[]-as-ren` definitional — see §7.1 |
 | `η-idᴿ` | `zero ∙ᴿ wkᴿ s ≡ idᴿ` | σ_SP fig. 4.1; AS2 fig. 2(a) `0 , ↑ ≡ id` | **surjective pairing.** Non-left-linear LHS conflicts with `def-wkᴿ` (§2.2) |
 | `η-lawᴿ` | `(zero [ ξ ]ᴿ) ∙ᴿ (wkᴿ s ⨟ᴿ ξ) ≡ ξ` | σ_SP; AS2 `σ 0 , ↑ ⨟ᴿ σ ≡ σ` | as above |
@@ -329,21 +337,21 @@ along a σ-law.
 
 | Group | Registered | of which new |
 |---|---|---|
-| Iᴿ–VIᴿ renaming world | 27 | 3 (`compositionalityᴿᴿ-var`, `lift-dist-compᴿᴿ-var`, `interactᴿ-⨟ᴿ`) |
+| Iᴿ–VIᴿ renaming world | 28 | 4 (`compositionalityᴿᴿ-var`, `lift-dist-compᴿᴿ-var`, `interactᴿ-⨟ᴿ`, `lift-consᴿ-var`) |
 | Iˢ–VIˢ substitution world | 27 | 1 (`coincidence-var`) + 1 generalised (`compositionalityᴿˢ-⨟-var`) |
 | cross-world | 10 | 10 |
 | `⟨⟩`-collapse | 8 | 8 |
-| **total** | **72** | **22** |
+| **total** | **73** | **23** |
 | stated as lemmas only | 9 | — |
 
-Signature-dependent: 16 of the 72 (`instᴿ-*`, `inst-*`), i.e. two per
+Signature-dependent: 16 of the 73 (`instᴿ-*`, `inst-*`), i.e. two per
 constructor. Everything else is schematic — which is why
 [`agdasubst.py`](../supplement/generator/agdasubst.py) needs only the
 constructor list from a `.sg` file.
 
-**50 of 72 rules are σw/σ⇑ rules or their exact two-world duplicates.** The
+**50 of 73 rules are σw/σ⇑ rules or their exact two-world duplicates.** The
 system is not a new calculus: it is σ⇑ instantiated twice — once erased, once
 not — plus 19 rules that reconcile the two copies (10 cross-world, 8 collapse,
-and `coincidence-var`), plus 3 forced by native inductive variables and the
+and `coincidence-var`), plus 4 forced by native inductive variables and the
 resulting V/T mode split (`compositionalityᴿᴿ-var`, `lift-dist-compᴿᴿ-var`,
-`interactᴿ-⨟ᴿ`).
+`lift-consᴿ-var`, `interactᴿ-⨟ᴿ`).

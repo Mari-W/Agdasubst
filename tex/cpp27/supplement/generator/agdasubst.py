@@ -503,6 +503,7 @@ ALG_R = r'''
 
   -- ══ VIᴿ. completion companions, renaming world ═══════════════════
   lift-dist-compᴿᴿ-var  : (x [ (ξ₁ ↑ᴿ s) ]ᴿ) [ (ξ₂ ↑ᴿ s) ]ᴿ ≡ x [ ((ξ₁ ⨟ᴿ ξ₂) ↑ᴿ s) ]ᴿ
+  lift-consᴿ-var  : (x [ (ξ ↑ᴿ s) ]ᴿ) [ (x′ ∙ᴿ ξ′) ]ᴿ ≡ x [ (x′ ∙ᴿ (ξ ⨟ᴿ ξ′)) ]ᴿ
   interactᴿ-⨟ᴿ    : wkᴿ s ⨟ᴿ ((x ∙ᴿ ξ) ⨟ᴿ ξ′) ≡ ξ ⨟ᴿ ξ′
   lift-wkᴿ-⨟ᴿ     : wkᴿ s ⨟ᴿ ((ξ ↑ᴿ s) ⨟ᴿ ξ′) ≡ ξ ⨟ᴿ (wkᴿ s ⨟ᴿ ξ′)
   lift-dist-compᴿᴿ-⨟ᴿ : (ξ₁ ↑ᴿ s) ⨟ᴿ ((ξ₂ ↑ᴿ s) ⨟ᴿ ξ′) ≡ ((ξ₁ ⨟ᴿ ξ₂) ↑ᴿ s) ⨟ᴿ ξ′
@@ -613,6 +614,8 @@ CRR_VAR = r'''
 PROOF_MID = r'''
   lift-dist-compᴿᴿ-var {x = zero}  = refl
   lift-dist-compᴿᴿ-var {x = suc x} = refl
+  lift-consᴿ-var {x = zero}  = refl
+  lift-consᴿ-var {x = suc x} = refl
   interactᴿ-⨟ᴿ    = refl
   lift-wkᴿ-⨟ᴿ {s = s} {ξ = ξ} {ξ′ = ξ′} =
     trans (sym (assocᴿ {ξ₁ = wkᴿ s} {ξ₂ = ξ ↑ᴿ s} {ξ₃ = ξ′}))
@@ -934,6 +937,13 @@ ALG_R_VEC = r'''
   lift-dist-compᴿᴿ-var {x = x} {ξ₁ = ξ₁} {ξ₂ = ξ₂} =
     trans (sym (compositionalityᴿᴿ-var x {ξ₁ = ξ₁ ↑ᴿ _} {ξ₂ = ξ₂ ↑ᴿ _}))
           (cong (λ z → x [ z ]ᴿ) (lift-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂}))
+
+  lift-consᴿ-var : ∀ {x : (s ∷ S₁) ∋ s′} {x′ : S₃ ∋ s} {ξ : S₁ →ᴿ S₂}
+    {ξ′ : S₂ →ᴿ S₃} →
+    (x [ (ξ ↑ᴿ s) ]ᴿ) [ (x′ ∙ᴿ ξ′) ]ᴿ ≡ x [ (x′ ∙ᴿ (ξ ⨟ᴿ ξ′)) ]ᴿ
+  lift-consᴿ-var {x = x} {x′ = x′} {ξ = ξ} {ξ′ = ξ′} =
+    trans (sym (compositionalityᴿᴿ-var x {ξ₁ = ξ ↑ᴿ _} {ξ₂ = x′ ∙ᴿ ξ′}))
+          (cong (λ z → x [ z ]ᴿ) (lift-consᴿ {ξ = ξ} {x = x′} {ξ′ = ξ′}))
 
   -- ══ Vᴿ. monad laws, renaming world ═══════════════════════════════
   right-idᴿ : ∀ (x/t : S ⊢[ m ] s) → x/t [ idᴿ ]ᴿ ≡ x/t
@@ -1258,7 +1268,7 @@ def generate_rewrite_block_vec(sig: Signature, emit_star: bool = True) -> str:
     n_star = len(STAR_RULES)
     star = wrap(STAR_RULES) if emit_star else ""
     return f"""{REWRITE_VEC_HEAD}
--- {56 + n_star + n_inst} rules -- 56 signature-independent, {n_star} for the
+-- {57 + n_star + n_inst} rules -- 57 signature-independent, {n_star} for the
 -- iterated (variable-arity) lifting, {n_inst} traversal rules (one instᴿ-*
 -- and one inst-* per constructor, plus the variable case).
 
@@ -1268,7 +1278,7 @@ def generate_rewrite_block_vec(sig: Signature, emit_star: bool = True) -> str:
   assocᴿ comp-idₗᴿ comp-idᵣᴿ interactᴿ
   lift-idᴿ lift-dist-compᴿᴿ lift-wkᴿ
   right-idᴿ compositionalityᴿᴿ-var compositionalityᴿᴿ
-  lift-dist-compᴿᴿ-var interactᴿ-⨟ᴿ lift-wkᴿ-⨟ᴿ lift-dist-compᴿᴿ-⨟ᴿ
+  lift-dist-compᴿᴿ-var lift-consᴿ-var interactᴿ-⨟ᴿ lift-wkᴿ-⨟ᴿ lift-dist-compᴿᴿ-⨟ᴿ
   coincidence-var def-∙ˢ-zero def-∙ˢ-suc def-↑ˢ-zero def-↑ˢ-suc
 {instS}
   assoc dist interact comp-idₗ comp-idᵣ
@@ -2025,7 +2035,7 @@ def generate_rewrite_block(sig: Signature, register_star: bool = True) -> str:
     return f"""-- ═══ The completed two-world system ════════════════════════════════
 --
 -- The curated, locally confluent rule set:
--- {56 + n_star + n_inst} rules -- 56 signature-independent, {n_star} for the
+-- {57 + n_star + n_inst} rules -- 57 signature-independent, {n_star} for the
 -- iterated (variable-arity) lifting, {n_inst} traversal rules (one instᴿ-*
 -- and one inst-* per constructor, plus the variable case).
 
@@ -2035,7 +2045,7 @@ def generate_rewrite_block(sig: Signature, register_star: bool = True) -> str:
   assocᴿ comp-idₗᴿ comp-idᵣᴿ interactᴿ
   lift-idᴿ lift-dist-compᴿᴿ lift-wkᴿ
   right-idᴿ compositionalityᴿᴿ-var compositionalityᴿᴿ
-  lift-dist-compᴿᴿ-var interactᴿ-⨟ᴿ lift-wkᴿ-⨟ᴿ lift-dist-compᴿᴿ-⨟ᴿ
+  lift-dist-compᴿᴿ-var lift-consᴿ-var interactᴿ-⨟ᴿ lift-wkᴿ-⨟ᴿ lift-dist-compᴿᴿ-⨟ᴿ
   coincidence-var def-∙ˢ-zero def-∙ˢ-suc def-↑ˢ-zero def-↑ˢ-suc
   compositionalityᴿˢ-⨟-var def-↑ˢ-zero-⨟ def-↑ˢ-suc-⨟
 {instS}

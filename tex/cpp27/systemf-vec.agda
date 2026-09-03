@@ -3,7 +3,7 @@
 -- systemf.agda with maps as inductive vectors instead of functions.
 -- Equality of maps is then equality of data, so this module assumes
 -- nothing: no function extensionality and no postulates.  The same
--- syntax, the same 72 rules and the same subject reduction.  §3.4 of
+-- syntax, the same 73 rules and the same subject reduction.  §3.4 of
 -- the paper compares the two models.
 --
 -- Two halves, and only the first is generated:
@@ -17,8 +17,8 @@
 --
 -- Regenerating therefore replaces the first half only.
 --
--- The 72 rules are the same rules.  61 carry the same names as in
--- systemf.agda; the 11 traversal rules differ, because the generator
+-- The 73 rules are the same rules.  59 carry the same names as in
+-- systemf.agda; the 14 traversal rules differ, because the generator
 -- names them after their constructor (`inst-λx_`) where the
 -- hand-written file abbreviates (`inst-λ`).
 
@@ -54,7 +54,6 @@ Scope = List Sort
 variable
   s s₁ s₂ s′ : Sort
   S S₁ S₂ S₃ : Scope
-
 
 data Mode : Set where V T : Mode
 
@@ -190,7 +189,7 @@ wkˢ s′ = ⟨ wkᴿ s′ ⟩
 opaque
   unfolding wk*ᴿ idᴿ wkᴿ _↑ᴿ_ _[_]ᴿ _⨟ᴿ_ ⟨_⟩ _⨟ˢᴿ_ _↑ˢ_ _[_]ˢ _⨟_
 
-  -- ══ Iᴿ. applied rules, renaming world ═════════════════════════════
+  -- ══ Iᴿ. applied rules, renaming world ════════════════════════════
   def-∙ᴿ-zero : zero [ (x ∙ᴿ ξ) ]ᴿ ≡ x
   def-∙ᴿ-zero = refl
 
@@ -292,13 +291,13 @@ opaque
     wkᴿ s ⨟ᴿ ((x ∙ᴿ ξ) ⨟ᴿ ξ′) ≡ ξ ⨟ᴿ ξ′
   interactᴿ-⨟ᴿ {s = s} {x = x} {ξ = ξ} {ξ′ = ξ′} =
     trans (sym (assocᴿ {ξ₁ = wkᴿ s} {ξ₂ = x ∙ᴿ ξ} {ξ₃ = ξ′}))
-          (cong (_⨟ᴿ ξ′) (interactᴿ {s = s} {x = x} {ξ = ξ}))
+          (cong (_⨟ᴿ ξ′) (interactᴿ {s = s} {x = x}))
 
   lift-wkᴿ-⨟ᴿ : ∀ {ξ : S₁ →ᴿ S₂} {ξ′ : (s ∷ S₂) →ᴿ S₃} →
     wkᴿ s ⨟ᴿ ((ξ ↑ᴿ s) ⨟ᴿ ξ′) ≡ ξ ⨟ᴿ (wkᴿ s ⨟ᴿ ξ′)
   lift-wkᴿ-⨟ᴿ {s = s} {ξ = ξ} {ξ′ = ξ′} =
     trans (sym (assocᴿ {ξ₁ = wkᴿ s} {ξ₂ = ξ ↑ᴿ s} {ξ₃ = ξ′}))
-          (trans (cong (_⨟ᴿ ξ′) (lift-wkᴿ {s = s} {ξ = ξ}))
+          (trans (cong (_⨟ᴿ ξ′) (lift-wkᴿ {s = s}))
                  (assocᴿ {ξ₁ = ξ} {ξ₂ = wkᴿ s} {ξ₃ = ξ′}))
 
   lift-dist-compᴿᴿ-⨟ᴿ : ∀ {S₄ : Scope} {ξ₁ : S₁ →ᴿ S₂} {ξ₂ : S₂ →ᴿ S₃}
@@ -313,6 +312,13 @@ opaque
   lift-dist-compᴿᴿ-var {x = x} {ξ₁ = ξ₁} {ξ₂ = ξ₂} =
     trans (sym (compositionalityᴿᴿ-var x {ξ₁ = ξ₁ ↑ᴿ _} {ξ₂ = ξ₂ ↑ᴿ _}))
           (cong (λ z → x [ z ]ᴿ) (lift-dist-compᴿᴿ {ξ₁ = ξ₁} {ξ₂ = ξ₂}))
+
+  lift-consᴿ-var : ∀ {x : (s ∷ S₁) ∋ s′} {x′ : S₃ ∋ s} {ξ : S₁ →ᴿ S₂}
+    {ξ′ : S₂ →ᴿ S₃} →
+    (x [ (ξ ↑ᴿ s) ]ᴿ) [ (x′ ∙ᴿ ξ′) ]ᴿ ≡ x [ (x′ ∙ᴿ (ξ ⨟ᴿ ξ′)) ]ᴿ
+  lift-consᴿ-var {x = x} {x′ = x′} {ξ = ξ} {ξ′ = ξ′} =
+    trans (sym (compositionalityᴿᴿ-var x {ξ₁ = ξ ↑ᴿ _} {ξ₂ = x′ ∙ᴿ ξ′}))
+          (cong (λ z → x [ z ]ᴿ) (lift-consᴿ {ξ = ξ} {x = x′} {ξ′ = ξ′}))
 
   -- ══ Vᴿ. monad laws, renaming world ═══════════════════════════════
   right-idᴿ : ∀ (x/t : S ⊢[ m ] s) → x/t [ idᴿ ]ᴿ ≡ x/t
@@ -341,7 +347,7 @@ opaque
   compositionalityᴿᴿ (_⇒_ type0 type1)     = cong2 _⇒_ (compositionalityᴿᴿ type0) (compositionalityᴿᴿ type1)
   compositionalityᴿᴿ *                     = refl
 
-  -- ─── the substitution world ───────────────────────────────────────
+  -- ══ the substitution world ═══════════════════════════════════════
 
   ⟨⟩-⨟ˢᴿ-wk : ∀ (ξ : S₁ →ᴿ S₂) → ⟨ ξ ⟩ ⨟ˢᴿ wkᴿ s ≡ ⟨ wk*ᴿ s ξ ⟩
   ⟨⟩-⨟ˢᴿ-wk []       = refl
@@ -356,9 +362,9 @@ opaque
 
   coincidence : ∀ (t : S₁ ⊢ s) (ξ : S₁ →ᴿ S₂) → t [ ⟨ ξ ⟩ ]ˢ ≡ t [ ξ ]ᴿ
   coincidence (`_ x) ξ = coincidence-var x ξ
-  coincidence (λx_ expr0) ξ           = cong1 λx_ (trans (cong (expr0 [_]ˢ) (⟨⟩-lift {ξ = ξ})) (coincidence expr0 (ξ ↑ᴿ expr)))
-  coincidence (Λα_ expr0) ξ           = cong1 Λα_ (trans (cong (expr0 [_]ˢ) (⟨⟩-lift {ξ = ξ})) (coincidence expr0 (ξ ↑ᴿ type)))
-  coincidence (∀[α∶_]_ kind0 type0) ξ = cong2 ∀[α∶_]_ (coincidence kind0 ξ) (trans (cong (type0 [_]ˢ) (⟨⟩-lift {ξ = ξ})) (coincidence type0 (ξ ↑ᴿ type)))
+  coincidence (λx_ expr0) ξ           = cong1 λx_ (trans (cong (expr0 [_]ˢ) ⟨⟩-lift) (coincidence expr0 (ξ ↑ᴿ expr)))
+  coincidence (Λα_ expr0) ξ           = cong1 Λα_ (trans (cong (expr0 [_]ˢ) ⟨⟩-lift) (coincidence expr0 (ξ ↑ᴿ type)))
+  coincidence (∀[α∶_]_ kind0 type0) ξ = cong2 ∀[α∶_]_ (coincidence kind0 ξ) (trans (cong (type0 [_]ˢ) ⟨⟩-lift) (coincidence type0 (ξ ↑ᴿ type)))
   coincidence (_·_ expr0 expr1) ξ     = cong2 _·_ (coincidence expr0 ξ) (coincidence expr1 ξ)
   coincidence (_•_ expr0 type0) ξ     = cong2 _•_ (coincidence expr0 ξ) (coincidence type0 ξ)
   coincidence (_⇒_ type0 type1) ξ     = cong2 _⇒_ (coincidence type0 ξ) (coincidence type1 ξ)
@@ -418,8 +424,8 @@ opaque
 
   -- ══ the mixed compositionality laws, stratified ══════════════════
   -- the variable instance, kept separate: registering it alongside a
-  -- mode-generic compositionalityᴿˢ would loop, since at mode V the two
-  -- are inverse.  At V everything pushes, at T everything folds.
+  -- mode-generic compositionalityᴿˢ would loop, because at mode V the
+  -- two are inverse.  At V everything pushes, at T everything folds.
   compositionalityᴿˢ-var : ∀ (x : S₁ ∋ s) {ξ : S₁ →ᴿ S₂} {σ : S₂ →ˢ S₃} →
     (x [ ξ ]ᴿ) [ σ ]ˢ ≡ x [ (⟨ ξ ⟩ ⨟ σ) ]ˢ
   compositionalityᴿˢ-var zero    {ξ = y ∙ᴿ ξ} = refl
@@ -531,13 +537,12 @@ opaque
   ⟨⟩-lift-cons : ⟨ ξ ↑ᴿ s ⟩ ⨟ (t ∙ˢ σ) ≡ t ∙ˢ (⟨ ξ ⟩ ⨟ σ)
   ⟨⟩-lift-cons {ξ = ξ} {t = t} {σ = σ} = cong (t ∙ˢ_) (⟨wk*⟩-cons ξ t σ)
 
-
   -- ══ VIˢ. completion companions, substitution world ═══════════════
   lift-wk-⨟ : ∀ {σ : S₁ →ˢ S₂} {τ : (s ∷ S₂) →ˢ S₃} →
     ⟨ wkᴿ s ⟩ ⨟ ((σ ↑ˢ s) ⨟ τ) ≡ σ ⨟ (⟨ wkᴿ s ⟩ ⨟ τ)
   lift-wk-⨟ {σ = σ} {τ = τ} =
     trans (sym (assoc {σ₁ = ⟨ wkᴿ _ ⟩} {σ₂ = σ ↑ˢ _} {σ₃ = τ}))
-          (trans (cong (_⨟ τ) (lift-wk {σ = σ}))
+          (trans (cong (_⨟ τ) lift-wk)
                  (assoc {σ₁ = σ} {σ₂ = ⟨ wkᴿ _ ⟩} {σ₃ = τ}))
 
   lift-dist-compˢˢ-⨟ : ∀ {S₄ : Scope} {σ₁ : S₁ →ˢ S₂} {σ₂ : S₂ →ˢ S₃}
@@ -552,28 +557,28 @@ opaque
     ⟨ ξ ↑ᴿ s ⟩ ⨟ ((σ ↑ˢ s) ⨟ τ) ≡ ((⟨ ξ ⟩ ⨟ σ) ↑ˢ s) ⨟ τ
   lift-dist-compᴿˢ-⨟ {ξ = ξ} {σ = σ} {τ = τ} =
     trans (sym (assoc {σ₁ = ⟨ ξ ↑ᴿ _ ⟩} {σ₂ = σ ↑ˢ _} {σ₃ = τ}))
-          (cong (_⨟ τ) (lift-dist-compᴿˢ {ξ = ξ} {σ = σ}))
+          (cong (_⨟ τ) lift-dist-compᴿˢ)
 
   lift-dist-compˢᴿ-⨟ : ∀ {S₄ : Scope} {σ : S₁ →ˢ S₂} {ξ : S₂ →ᴿ S₃}
     {τ : (s ∷ S₃) →ˢ S₄} →
     (σ ↑ˢ s) ⨟ (⟨ ξ ↑ᴿ s ⟩ ⨟ τ) ≡ ((σ ⨟ ⟨ ξ ⟩) ↑ˢ s) ⨟ τ
   lift-dist-compˢᴿ-⨟ {σ = σ} {ξ = ξ} {τ = τ} =
     trans (sym (assoc {σ₁ = σ ↑ˢ _} {σ₂ = ⟨ ξ ↑ᴿ _ ⟩} {σ₃ = τ}))
-          (cong (_⨟ τ) (lift-dist-compˢᴿ {σ = σ} {ξ = ξ}))
+          (cong (_⨟ τ) lift-dist-compˢᴿ)
 
   ⟨⟩-comp-⨟-interactᴿ : ∀ {ξ : S₁ →ᴿ S₂} {x : S₂ ∋ s} {τ : S₂ →ˢ S₃} →
     ⟨ wkᴿ s ⟩ ⨟ (⟨ x ∙ᴿ ξ ⟩ ⨟ τ) ≡ ⟨ ξ ⟩ ⨟ τ
   ⟨⟩-comp-⨟-interactᴿ {ξ = ξ} {x = x} {τ = τ} =
     trans (sym (assoc {σ₁ = ⟨ wkᴿ _ ⟩} {σ₂ = ⟨ x ∙ᴿ ξ ⟩} {σ₃ = τ}))
           (trans (cong (_⨟ τ) (⟨⟩-comp {ξ₁ = wkᴿ _} {ξ₂ = x ∙ᴿ ξ}))
-                 (cong (λ z → ⟨ z ⟩ ⨟ τ) (interactᴿ {x = x} {ξ = ξ})))
+                 (cong (λ z → ⟨ z ⟩ ⨟ τ) (interactᴿ {x = x})))
 
   ⟨⟩-comp-⨟-lift-wkᴿ : ∀ {S₄ : Scope} {ξ : S₁ →ᴿ S₂} {τ : (s ∷ S₂) →ˢ S₄} →
     ⟨ wkᴿ s ⟩ ⨟ (⟨ ξ ↑ᴿ s ⟩ ⨟ τ) ≡ ⟨ ξ ⟩ ⨟ (⟨ wkᴿ s ⟩ ⨟ τ)
   ⟨⟩-comp-⨟-lift-wkᴿ {ξ = ξ} {τ = τ} =
     trans (sym (assoc {σ₁ = ⟨ wkᴿ _ ⟩} {σ₂ = ⟨ ξ ↑ᴿ _ ⟩} {σ₃ = τ}))
           (trans (cong (_⨟ τ) (⟨⟩-comp {ξ₁ = wkᴿ _} {ξ₂ = ξ ↑ᴿ _}))
-          (trans (cong (λ z → ⟨ z ⟩ ⨟ τ) (lift-wkᴿ {ξ = ξ}))
+          (trans (cong (λ z → ⟨ z ⟩ ⨟ τ) lift-wkᴿ)
           (trans (cong (_⨟ τ) (sym (⟨⟩-comp {ξ₁ = ξ} {ξ₂ = wkᴿ _})))
                  (assoc {σ₁ = ⟨ ξ ⟩} {σ₂ = ⟨ wkᴿ _ ⟩} {σ₃ = τ}))))
 
@@ -591,7 +596,7 @@ opaque
   ⟨⟩-split-tail {σ = σ} {ξ = ξ} {ξ′ = ξ′} =
     trans (cong ((σ ↑ˢ _) ⨟_) (sym (⟨⟩-comp {ξ₁ = ξ ↑ᴿ _} {ξ₂ = ξ′})))
           (trans (sym (assoc {σ₁ = σ ↑ˢ _} {σ₂ = ⟨ ξ ↑ᴿ _ ⟩} {σ₃ = ⟨ ξ′ ⟩}))
-                 (cong (_⨟ ⟨ ξ′ ⟩) (lift-dist-compˢᴿ {σ = σ} {ξ = ξ})))
+                 (cong (_⨟ ⟨ ξ′ ⟩) lift-dist-compˢᴿ))
 
   compositionalityᴿˢ-⨟-var : ∀ {x : S₁ ∋ s} {ξ : S₁ →ᴿ S₂} {σ : S₂ →ˢ S₃} →
     x [ (⟨ ξ ⟩ ⨟ σ) ]ˢ ≡ (x [ ξ ]ᴿ) [ σ ]ˢ
@@ -599,9 +604,9 @@ opaque
 
   lift-dist-compᴿˢ-var : ∀ {x : (s ∷ S₁) ∋ s′} {ξ : S₁ →ᴿ S₂} {σ : S₂ →ˢ S₃} →
     (x [ (ξ ↑ᴿ s) ]ᴿ) [ (σ ↑ˢ s) ]ˢ ≡ x [ ((⟨ ξ ⟩ ⨟ σ) ↑ˢ s) ]ˢ
-  lift-dist-compᴿˢ-var {x = x} {ξ = ξ} {σ = σ} =
+  lift-dist-compᴿˢ-var {x = x} =
     trans (compositionalityᴿˢ-var x)
-          (cong (λ z → x [ z ]ˢ) (lift-dist-compᴿˢ {ξ = ξ} {σ = σ}))
+          (cong (λ z → x [ z ]ˢ) lift-dist-compᴿˢ)
 
   lift-dist-compᴿˢ-⨟-var : ∀ {S₄ : Scope} {x : (s ∷ S₁) ∋ s′} {ξ : S₁ →ᴿ S₂}
     {σ : S₂ →ˢ S₃} {τ : (s ∷ S₃) →ˢ S₄} →
@@ -610,14 +615,14 @@ opaque
     trans (compositionalityᴿˢ-var x)
           (trans (cong (λ z → x [ z ]ˢ)
                        (sym (assoc {σ₁ = ⟨ ξ ↑ᴿ _ ⟩} {σ₂ = σ ↑ˢ _} {σ₃ = τ})))
-                 (cong (λ z → x [ (z ⨟ τ) ]ˢ) (lift-dist-compᴿˢ {ξ = ξ} {σ = σ})))
+                 (cong (λ z → x [ (z ⨟ τ) ]ˢ) lift-dist-compᴿˢ))
 
   ⟨⟩-lift-cons-var : ∀ {x : (s ∷ S₁) ∋ s′} {ξ : S₁ →ᴿ S₂} {t : S₃ ⊢ s}
     {σ : S₂ →ˢ S₃} →
     (x [ (ξ ↑ᴿ s) ]ᴿ) [ (t ∙ˢ σ) ]ˢ ≡ x [ (t ∙ˢ (⟨ ξ ⟩ ⨟ σ)) ]ˢ
-  ⟨⟩-lift-cons-var {x = x} {ξ = ξ} {t = t} {σ = σ} =
+  ⟨⟩-lift-cons-var {x = x} {t = t} =
     trans (compositionalityᴿˢ-var x)
-          (cong (λ z → x [ z ]ˢ) (⟨⟩-lift-cons {ξ = ξ} {t = t} {σ = σ}))
+          (cong (λ z → x [ z ]ˢ) (⟨⟩-lift-cons {t = t}))
 
   def-↑ˢ-zero-⨟ : ∀ {σ : S₁ →ˢ S₂} {τ : (s ∷ S₂) →ˢ S₃} →
     zero [ ((σ ↑ˢ s) ⨟ τ) ]ˢ ≡ zero [ τ ]ˢ
@@ -627,14 +632,12 @@ opaque
     (suc x) [ ((σ ↑ˢ s) ⨟ τ) ]ˢ ≡ x [ (σ ⨟ (⟨ wkᴿ s ⟩ ⨟ τ)) ]ˢ
   def-↑ˢ-suc-⨟ {x = x} {σ = σ} {τ = τ} =
     trans (lookup-⨟ˢ (suc x) (σ ↑ˢ _) τ)
-          (trans (cong (_[ τ ]ˢ) (def-↑ˢ-suc {x = x} {σ = σ}))
+          (trans (cong (_[ τ ]ˢ) (def-↑ˢ-suc {x = x}))
                  (trans (sym (lookup-⨟ˢ x (σ ⨟ ⟨ wkᴿ _ ⟩) τ))
                         (cong (x [_]ˢ) (assoc {σ₁ = σ} {σ₂ = ⟨ wkᴿ _ ⟩} {σ₃ = τ}))))
 
   lift-id : (⟨ idᴿ {S} ⟩ ↑ˢ s) ≡ ⟨ idᴿ ⟩
   lift-id = ⟨⟩-lift
-
-
 
   -- ══ IIˢ. traversal rules, substitution world ═════════════════════
   inst-var : (`_ x) [ σ ]ˢ ≡ x [ σ ]ˢ
@@ -653,12 +656,9 @@ opaque
   inst-_•_     = refl
   inst-_⇒_     = refl
   inst-*       = refl
--- ═══ The completed two-world system ════════════════════════════════
---
--- The vector model needs no completion families: a vector composition
--- reduces structurally where a function composition is stuck.
 
--- 72 rules: 56 signature-independent, and 16 traversal rules, one
+-- ─── the completed two-world system ─────────────────────────────────
+-- 73 rules: 57 signature-independent, and 16 traversal rules, one
 -- instᴿ-* and one inst-* per constructor plus the variable case.
 
 {-# REWRITE
@@ -668,7 +668,7 @@ opaque
   assocᴿ comp-idₗᴿ comp-idᵣᴿ interactᴿ
   lift-idᴿ lift-dist-compᴿᴿ lift-wkᴿ
   right-idᴿ compositionalityᴿᴿ-var compositionalityᴿᴿ
-  lift-dist-compᴿᴿ-var interactᴿ-⨟ᴿ lift-wkᴿ-⨟ᴿ lift-dist-compᴿᴿ-⨟ᴿ
+  lift-dist-compᴿᴿ-var lift-consᴿ-var interactᴿ-⨟ᴿ lift-wkᴿ-⨟ᴿ lift-dist-compᴿᴿ-⨟ᴿ
   coincidence-var def-∙ˢ-zero def-∙ˢ-suc def-↑ˢ-zero def-↑ˢ-suc
   inst-var inst-λx_ inst-Λα_ inst-∀[α∶_]_ inst-_·_ inst-_•_ inst-_⇒_ inst-*
   assoc dist interact comp-idₗ comp-idᵣ
@@ -679,7 +679,6 @@ opaque
   lift-dist-compᴿˢ-var lift-dist-compᴿˢ-⨟-var ⟨⟩-lift-cons-var
   ⟨⟩-comp-⨟-lift-wkᴿ ⟨⟩-comp-⨟-interactᴿ ⟨⟩-comp-⨟-lift-dist-compᴿᴿ ⟨⟩-split-tail
   coincidence ⟨⟩-comp ⟨⟩-split-⨟ ⟨⟩-lift ⟨⟩-lift-cons
-
 #-}
 
 -- ─── the derived operations ─────────────────────────────────────────
@@ -693,18 +692,19 @@ weaken t = t [ wkᴿ _ ]ᴿ
 _[_]₀ : (s′ ∷ S) ⊢ s → S ⊢ s′ → S ⊢ s
 t [ t′ ]₀ = t [ (t′ ∙ˢ idˢ) ]ˢ
 
--- ═══ The theory is definitional, in both worlds ════════════════════
--- The checks systemf.agda makes, verbatim.  Each is `refl` here too.
+-- ─── the theory is definitional, in both worlds ─────────────────────
+-- The checks systemf.agda makes, rule for rule.  Each is `refl` here
+-- too, with ⨟ for systemf.agda's ⨟ˢ.
 
 var-zero : ∀ {t′ : S ⊢ s′} → (` zero) [ t′ ]₀ ≡ t′
 var-zero = refl
 var-suc : ∀ {x : S ∋ s} {t′ : S ⊢ s′} → (` suc x) [ t′ ]₀ ≡ ` x
 var-suc = refl
-wk-cancel : ∀ {t : S ⊢ s} {t′ : S ⊢ s′} → (weaken t) [ t′ ]₀ ≡ t
-wk-cancel = refl
 wk-comm : ∀ {t : S₁ ⊢ s} {σ : S₁ →ˢ S₂} →
   (weaken {s′ = s′} t) [ (σ ↑ˢ s′) ]ˢ ≡ weaken (t [ σ ]ˢ)
 wk-comm = refl
+wk-cancel : ∀ {t : S ⊢ s} {t′ : S ⊢ s′} → (weaken t) [ t′ ]₀ ≡ t
+wk-cancel = refl
 subst-commute : ∀ {t : (s′ ∷ S₁) ⊢ s} {t′ : S₁ ⊢ s′}
   {σ : S₁ →ˢ S₂} →
   (t [ (σ ↑ˢ s′) ]ˢ) [ t′ [ σ ]ˢ ]₀ ≡ (t [ t′ ]₀) [ σ ]ˢ
@@ -733,8 +733,8 @@ mixed-SR = refl
 emb-collapse : ∀ {t : S₁ ⊢ s} {ξ : S₁ →ᴿ S₂} → t [ ⟨ ξ ⟩ ]ˢ ≡ t [ ξ ]ᴿ
 emb-collapse = refl
 
--- ═══ Typing and subject reduction ══════════════════════════════════
--- Copied from systemf.agda without a single change.
+-- ─── typing and subject reduction ───────────────────────────────────
+-- The typing rules and subject reduction of systemf.agda, unchanged.
 
 ↑ˢᵗ_ : Sort → Sort
 ↑ˢᵗ expr = type
@@ -778,8 +778,8 @@ data _⊢_∶_ : Ctx S → S ⊢ s → S ∶⊢ s → Set where
     Γ ∋ x ∶ t →
     Γ ⊢ (` x) ∶ t
   ⊢λ :
-    (t ∷ₜ Γ) ⊢ e ∶ (weaken t′) →
-    Γ ⊢ (λx e) ∶ (t ⇒ t′)
+    (t₁ ∷ₜ Γ) ⊢ e ∶ (weaken t₂) →
+    Γ ⊢ (λx e) ∶ (t₁ ⇒ t₂)
   ⊢Λ :
     (k ∷ₜ Γ) ⊢ e ∶ t →
     Γ ⊢ (Λα e) ∶ (∀[α∶ k ] t)
@@ -796,9 +796,11 @@ data _⊢_∶_ : Ctx S → S ⊢ s → S ∶⊢ s → Set where
     Γ ⊢ t ∶ *
 
 -- one notion of well-typed map
-_∶_→ˢ_ : S₁ →ˢ S₂ → Ctx S₁ → Ctx S₂ → Set
-_∶_→ˢ_ {S₁} σ Γ₁ Γ₂ = ∀ s (x : S₁ ∋ s) (t : S₁ ∶⊢ s) →
-  Γ₁ ∋ x ∶ t → Γ₂ ⊢ (x [ σ ]ˢ) ∶ (t [ σ ]ˢ)
+record _∶_→ˢ_ {S₁ S₂} (σ : S₁ →ˢ S₂) (Γ₁ : Ctx S₁) (Γ₂ : Ctx S₂) : Set where
+  constructor mkˢ
+  field at : ∀ s (x : S₁ ∋ s) (t : S₁ ∶⊢ s) →
+               Γ₁ ∋ x ∶ t → Γ₂ ⊢ (x [ σ ]ˢ) ∶ (t [ σ ]ˢ)
+open _∶_→ˢ_ public
 
 -- Phase 1 of the preservation lemma.  With renamings first class this
 -- is a plain judgment on ᴿ-maps: _[_]ᴿ preserves the mode, so a typed
@@ -819,17 +821,20 @@ _∶_→ᴿ_ {S₁} ξ Γ₁ Γ₂ = ∀ s (x : S₁ ∋ s) (t : S₁ ∶⊢ s) 
 
 ren-pres : ∀ {ξ : S₁ →ᴿ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
   {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} →
-  Γ₁ ⊢ e ∶ t → ξ ∶ Γ₁ →ᴿ Γ₂ → Γ₂ ⊢ (e [ ξ ]ᴿ) ∶ (t [ ξ ]ᴿ)
-ren-pres (⊢` ⊢x) ⊢ξ = ⊢` (⊢ξ _ _ _ ⊢x)   -- no transport, no Σ
+  Γ₁ ⊢ e ∶ t → ξ ∶ Γ₁ →ᴿ Γ₂ →
+  Γ₂ ⊢ (e [ ξ ]ᴿ) ∶ (t [ ξ ]ᴿ)
+ren-pres (⊢` ⊢x) ⊢ξ = ⊢` (⊢ξ _ _ _ ⊢x)
 ren-pres (⊢λ ⊢e) ⊢ξ = ⊢λ (ren-pres ⊢e (⊢↑ᴿ ⊢ξ _))
 ren-pres (⊢Λ ⊢e) ⊢ξ = ⊢Λ (ren-pres ⊢e (⊢↑ᴿ ⊢ξ _))
 ren-pres (⊢· ⊢e₁ ⊢e₂) ⊢ξ = ⊢· (ren-pres ⊢e₁ ⊢ξ) (ren-pres ⊢e₂ ⊢ξ)
 ren-pres (⊢• ⊢e ⊢t ⊢t′) ⊢ξ = ⊢• (ren-pres ⊢e ⊢ξ) (ren-pres ⊢t ⊢ξ) (ren-pres ⊢t′ (⊢↑ᴿ ⊢ξ _))
 ren-pres ⊢*             ⊢ξ = ⊢*
 
--- phase 2: the entry typings go through ren-pres, so this stays structural
--- the binder cases pin the lifted σ: the goal's type index is already
--- rewritten, so it no longer determines σ by unification
+-- Phase 2.  The entry typings go through ren-pres, so this stays
+-- structural.  _∶_→ˢ_ is a record with the map as a parameter, which is
+-- what lets every recursive call infer it: the rewritten type index in
+-- the goal does not determine σ, but the record type constructor is
+-- rigid, so the unifier reads σ off the argument's own type.
 sub-pres : ∀ {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
   {e : S₁ ⊢ s} {t : S₁ ∶⊢ s} →
   Γ₁ ⊢ e ∶ t → σ ∶ Γ₁ →ˢ Γ₂ →
@@ -837,27 +842,29 @@ sub-pres : ∀ {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂}
 ⊢↑ˢ : ∀ {σ : S₁ →ˢ S₂} {Γ₁ : Ctx S₁} {Γ₂ : Ctx S₂} →
   σ ∶ Γ₁ →ˢ Γ₂ → (t : S₁ ∶⊢ s) →
   (σ ↑ˢ s) ∶ (t ∷ₜ Γ₁) →ˢ ((t [ σ ]ˢ) ∷ₜ Γ₂)
-⊢↑ˢ ⊢σ t _ zero    _ refl = ⊢` refl
-⊢↑ˢ {σ = σ} ⊢σ t _ (suc x) _ refl = ren-pres (⊢σ _ x _ refl) (⊢wkᴿ (t [ σ ]ˢ))
-sub-pres (⊢` ⊢x)                     ⊢σ = ⊢σ _ _ _ ⊢x
+⊢↑ˢ {σ = σ} ⊢σ t = mkˢ λ where
+  _ zero    _ refl → ⊢` refl
+  _ (suc x) _ refl → ren-pres (at ⊢σ _ x _ refl) (⊢wkᴿ (t [ σ ]ˢ))
+sub-pres (⊢` ⊢x)                     ⊢σ = at ⊢σ _ _ _ ⊢x
 -- the induction hypothesis types the body at (weaken t′) [ σ ↑ˢ _ ]ˢ,
 -- while ⊢λ demands weaken (t′ [ σ ]ˢ).  Discharged by wk-comm.
-sub-pres {σ = σ} (⊢λ ⊢e)             ⊢σ = ⊢λ (sub-pres {σ = σ ↑ˢ _} ⊢e (⊢↑ˢ {σ = σ} ⊢σ _))
+sub-pres (⊢λ ⊢e)                     ⊢σ = ⊢λ (sub-pres ⊢e (⊢↑ˢ ⊢σ _))
 -- ⊢Λ and ⊢· use no substitution law: neither typing rule moves a
 -- substitution past a binder in its conclusion.
-sub-pres {σ = σ} (⊢Λ ⊢e)             ⊢σ = ⊢Λ (sub-pres {σ = σ ↑ˢ _} ⊢e (⊢↑ˢ {σ = σ} ⊢σ _))
-sub-pres {σ = σ} (⊢· ⊢e₁ ⊢e₂)        ⊢σ = ⊢· (sub-pres {σ = σ} ⊢e₁ ⊢σ) (sub-pres {σ = σ} ⊢e₂ ⊢σ)
+sub-pres (⊢Λ ⊢e)                     ⊢σ = ⊢Λ (sub-pres ⊢e (⊢↑ˢ ⊢σ _))
+sub-pres (⊢· ⊢e₁ ⊢e₂)                ⊢σ = ⊢· (sub-pres ⊢e₁ ⊢σ) (sub-pres ⊢e₂ ⊢σ)
 -- ⊢• concludes at t′ [ t ]₀, so the two sides are
 -- (t′ [ σ ↑ˢ _ ]ˢ) [ t [ σ ]ˢ ]₀  and  (t′ [ t ]₀) [ σ ]ˢ.
 -- Discharged by subst-commute.
-sub-pres {σ = σ} (⊢• ⊢e ⊢t ⊢t′)      ⊢σ = ⊢• (sub-pres {σ = σ} ⊢e ⊢σ) (sub-pres {σ = σ} ⊢t ⊢σ)
-                                         (sub-pres {σ = σ ↑ˢ _} ⊢t′ (⊢↑ˢ {σ = σ} ⊢σ _))
+sub-pres (⊢• ⊢e ⊢t ⊢t′) ⊢σ =
+  ⊢• (sub-pres ⊢e ⊢σ) (sub-pres ⊢t ⊢σ) (sub-pres ⊢t′ (⊢↑ˢ ⊢σ _))
 sub-pres ⊢*                          ⊢σ = ⊢*
 
 ⊢[] : ∀ {Γ : Ctx S} {e : S ⊢ s} {t : S ∶⊢ s} →
   Γ ⊢ e ∶ t → (e ∙ˢ idˢ) ∶ (t ∷ₜ Γ) →ˢ Γ
-⊢[] ⊢e _ zero    _ refl = ⊢e
-⊢[] ⊢e _ (suc x) _ refl = ⊢` refl
+⊢[] ⊢e = mkˢ λ where
+  _ zero    _ refl → ⊢e
+  _ (suc x) _ refl → ⊢` refl
 
 data Val : S ⊢ expr → Set where
   vλ : Val (λx e)
@@ -880,17 +887,12 @@ data _↪_ : S ⊢ expr → S ⊢ expr → Set where
     e ↪ e′ →
     (e • t) ↪ (e′ • t)
 
--- the two β-cases pin σ explicitly: with the two-world rule set the
--- index of the goal has already been rewritten, so Agda can no longer
--- read σ back off  e [ σ ]ˢ ≟ e [ (v ]ˢ ∙ˢ idˢ)
 sr : Γ ⊢ e ∶ t → e ↪ e′ → Γ ⊢ e′ ∶ t
 -- ⊢λ stores the result type weakened, so the redex is typed at
 -- (weaken t₂) [ e₂ ]₀ where the goal is t₂.  Discharged by wk-cancel.
-sr (⊢· {e₂ = e₂} (⊢λ ⊢e₁) ⊢e₂) (β-λ v₂) =
-  sub-pres {σ = e₂ ∙ˢ idˢ} ⊢e₁ (⊢[] ⊢e₂)
+sr (⊢· (⊢λ ⊢e₁) ⊢e₂) (β-λ v₂) = sub-pres ⊢e₁ (⊢[] ⊢e₂)
 -- the type-application β-case uses no law: t′ [ t ]₀ is t′ [ t ∙ˢ idˢ ]ˢ.
-sr (⊢• {t = t} (⊢Λ ⊢e) ⊢t ⊢t′) β-Λ =
-  sub-pres {σ = t ∙ˢ idˢ} ⊢e (⊢[] ⊢t)
+sr (⊢• (⊢Λ ⊢e) ⊢t ⊢t′) β-Λ      = sub-pres ⊢e (⊢[] ⊢t)
 sr (⊢· ⊢e₁ ⊢e₂) (ξ-·₁ st)       = ⊢· (sr ⊢e₁ st) ⊢e₂
 sr (⊢· ⊢e₁ ⊢e₂) (ξ-·₂ st v₁)    = ⊢· ⊢e₁ (sr ⊢e₂ st)
 sr (⊢• ⊢e ⊢t ⊢t′) (ξ-• st)      = ⊢• (sr ⊢e st) ⊢t ⊢t′
